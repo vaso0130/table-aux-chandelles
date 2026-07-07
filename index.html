@@ -151,14 +151,16 @@
 
   /* 牌陣槽位 */
   #slots-scroll { overflow-x: auto; padding: 6px 2px 14px; }
-  #slots { display: grid; gap: 14px; justify-content: center; --cw: 118px; }
-  #slots.tableau { --cw: 82px; gap: 10px; min-width: calc(8 * (var(--cw) + 10px)); }
+  /* width:max-content + margin:auto——窄於螢幕時置中，寬於螢幕時可完整捲動
+     （justify-content:center 會讓超出的左半邊無法捲到） */
+  #slots { display: grid; gap: 14px; width: max-content; margin: 0 auto; --cw: 118px; }
+  #slots.tableau { --cw: 82px; gap: 10px; }
 
   .slot { width: var(--cw); }
   .slot .pos-label {
     text-align: center; font-size: 12px; color: var(--muted);
     letter-spacing: .1em; margin-bottom: 6px; min-height: 1.5em;
-    white-space: nowrap;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .slot .pos-label.house { color: var(--gold-dim); font-size: 11px; }
 
@@ -255,8 +257,8 @@
   .deck-caption b { color: var(--gold-bright); font-weight: 600; }
   #fan-scroll { overflow-x: auto; padding: 26px 12px 18px; }
   #fan {
-    display: flex; justify-content: safe center;
-    min-width: min-content;
+    display: flex;
+    width: max-content; margin: 0 auto;
     padding: 0 20px;
   }
   .fan-card {
@@ -301,7 +303,7 @@
     transition: transform .38s cubic-bezier(.3, .7, .3, 1);
   }
   #cut-scroll { overflow-x: auto; padding: 26px 12px 8px; }
-  #cut-strip { display: flex; justify-content: safe center; min-width: min-content; padding: 0 20px; }
+  #cut-strip { display: flex; width: max-content; margin: 0 auto; padding: 0 20px; }
   #cut-strip .fan-card { cursor: pointer; }
 
   /* 專屬卡背（back.png 載入成功時啟用；缺圖退回花紋） */
@@ -1020,6 +1022,7 @@ function buildSlots() {
       label.title = `第 ${i + 1} 宮（${CARDS[i].zh}）：${CARDS[i].keys}`;
     } else {
       label.textContent = spread.positions[i];
+      label.title = spread.positions[i];
     }
 
     const well = document.createElement("div");
@@ -1055,6 +1058,7 @@ function addExtensionSlots() {
     const label = document.createElement("div");
     label.className = "pos-label";
     label.textContent = ext.labels[k];
+    label.title = ext.labels[k];
     const well = document.createElement("div");
     well.className = "card-well";
     slot.appendChild(label);
@@ -1486,4 +1490,20 @@ function replayReading(rec) {
 }
 
 renderHistory();
+
+/* 開發測試鉤子：?rwdtest=盤面id 自動抽完整個盤面 */
+if (location.search.includes("rwdtest")) {
+  const id = new URLSearchParams(location.search).get("rwdtest") || "gt";
+  const idx = SPREADS.findIndex((s) => s.id === id);
+  if (idx >= 0) {
+    document.querySelectorAll(".spread-btn")[idx].click();
+    deck = riffle(deck); shuffleCount++;
+    btnBegin.disabled = false;
+    btnBegin.click();
+    [...elFan.querySelectorAll(".fan-card")].slice(0, target).forEach((el, i) => {
+      el.classList.add("gone");
+      placeCard(deck[i]);
+    });
+  }
+}
 </script>
