@@ -18,18 +18,8 @@
 | 路徑 | 說明 |
 | --- | --- |
 | `index.html` | 整個應用(HTML + CSS + JS 單檔) |
-| `cards/` | 36 張牌面 + 卡背(600px 寬 JPEG,網頁用壓縮版,共約 6.4MB) |
-| `cards-hd/` | 高解析 PNG 原檔(不進版控) |
-| `cards-v1-engraving/` | 第一版素雅銅版雕刻風備份(不進版控) |
-| `tools/generate-cards.ps1` | 以 Gemini `gemini-3.1-flash-image` 批次生成牌面 |
+| `cards/` | 36 張牌面 + 卡背(600px 寬 JPEG,共約 6.4MB) |
 
-## 重新生成牌面
+## 牌面
 
-API key 讀自上層目錄 `..\.env` 的 `gemini-api-key`。
-
-```powershell
-.\tools\generate-cards.ps1          # 只補缺少的牌面(可續跑)
-.\tools\generate-cards.ps1 -Force   # 全部重生成
-```
-
-風格模板在腳本內的 `$style`;每張牌保留傳統撲克牌對應符號(如騎士=紅心9)與經典意象。缺圖時,網頁自動退回符號版牌面。
+牌面依十九世紀鍍金石版畫式樣重繪,每張保留傳統撲克牌對應符號(如騎士=紅心9、鑰匙=方塊8)與經典意象。缺圖時,網頁自動退回符號版牌面。
