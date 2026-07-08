@@ -472,7 +472,7 @@
     <div class="plate">
       <p class="eyebrow">Petit Lenormand · MDCCCXLVI</p>
       <h1>雷諾曼占卜</h1>
-      <p class="subtitle">三十六張牌，一張夜裡的牌桌。牌由你親手抽。</p>
+      <p class="subtitle">燭已點好。三十六張牌裡，藏著你尚未聽見的答案。</p>
     </div>
   </header>
 
@@ -871,12 +871,21 @@ SPREADS.forEach((s, i) => {
   elSpreads.appendChild(b);
 });
 
+let preloaded = false;
+function preloadCards() {
+  if (preloaded) return;
+  preloaded = true;
+  /* 洗切牌的空檔預載全部牌面，翻牌時圖已在快取 */
+  CARDS.forEach((c) => { const i = new Image(); i.src = c.img; });
+}
+
 function selectSpread(s, btn) {
   document.querySelectorAll(".spread-btn").forEach((x) => x.classList.remove("active"));
   btn.classList.add("active");
   spread = s;
   $("#q-input").value = "";
   resetTable();
+  preloadCards();
   elTable.classList.add("on");
   elTable.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -1146,19 +1155,33 @@ function placeCard(cardIdx) {
     <div class="cface back"></div>`;
   well.appendChild(c3);
 
-  /* 生成的牌面圖：載入成功才切換版式，缺圖則維持符號版 */
+  /* 生成的牌面圖：圖就緒才翻面，避免先閃出符號備援版 */
   const front = c3.querySelector(".cface.front");
   const img = document.createElement("img");
   img.className = "c-img";
   img.alt = "";
-  img.addEventListener("load", () => front.classList.add("has-img"));
-  img.addEventListener("error", () => img.remove());
+  const placedAt = performance.now();
+  let revealed = false;
+  const reveal = () => {
+    if (revealed) return;
+    revealed = true;
+    /* 保留最短發牌節奏（320ms），圖已快取時也不顯得倉促 */
+    const wait = Math.max(0, 320 - (performance.now() - placedAt));
+    setTimeout(() => { c3.classList.remove("dealing"); c3.classList.add("revealed"); }, wait);
+  };
+  const failsafe = setTimeout(reveal, 4000);   /* 圖載太久就先翻（符號版），載到再無縫換圖 */
+  img.addEventListener("load", () => {
+    front.classList.add("has-img");
+    clearTimeout(failsafe);
+    reveal();
+  });
+  img.addEventListener("error", () => {
+    img.remove();
+    clearTimeout(failsafe);
+    reveal();
+  });
   img.src = card.img;
   front.appendChild(img);
-
-  requestAnimationFrame(() => {
-    setTimeout(() => { c3.classList.remove("dealing"); c3.classList.add("revealed"); }, 320);
-  });
 
   /* 牌義跟著牌走：滑過顯示、點按切換（觸控） */
   c3.classList.add("clickable");
