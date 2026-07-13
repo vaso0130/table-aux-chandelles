@@ -175,7 +175,9 @@
   .slot .pos-label.house { color: var(--gold-dim); font-size: 11px; }
 
   .card-well {
-    width: var(--cw); aspect-ratio: 2 / 3;
+    /* 明確算出高度——部分行動版 WebKit 對 aspect-ratio 容器內的
+       百分比高度會解析成 0，導致卡面被壓成一條 */
+    width: var(--cw); height: calc(var(--cw) * 1.5);
     border: 1px dashed var(--felt-line);
     border-radius: 8px;
     perspective: 900px;
@@ -273,7 +275,7 @@
   }
   .fan-card {
     flex: 0 0 auto;
-    width: 52px; aspect-ratio: 2 / 3;
+    width: 52px; height: 78px;
     margin-left: -30px;
     border-radius: 6px;
     border: 1px solid rgba(201,164,92,.4);
@@ -459,7 +461,7 @@
 
   @media (max-width: 640px) {
     #slots { --cw: 92px; }
-    .fan-card { width: 46px; margin-left: -26px; }
+    .fan-card { width: 46px; height: 69px; margin-left: -26px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
