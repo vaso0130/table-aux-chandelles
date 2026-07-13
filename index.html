@@ -116,6 +116,23 @@
   .spread-btn .s-count { flex: 0 0 auto; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .spread-btn .s-desc { font-size: 13px; color: var(--muted); line-height: 1.6; margin-top: 4px; padding-left: calc(1.6em + 12px); }
 
+  /* ── 牌組選單 ─────────────────────────────── */
+  .decks { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+  .deck-btn {
+    font-family: inherit;
+    background: none;
+    border: 1px solid var(--felt-line); border-radius: 2px;
+    padding: 12px 26px; cursor: pointer;
+    text-align: center;
+    transition: border-color .2s, background-color .2s;
+  }
+  .deck-btn:hover, .deck-btn:focus-visible { background: rgba(201,164,92,.06); }
+  .deck-btn:focus-visible { outline: 1px solid var(--gold-dim); outline-offset: -1px; }
+  .deck-btn.active { border-color: var(--gold-dim); }
+  .deck-btn .d-name { display: block; font-size: 16.5px; letter-spacing: .14em; text-indent: .14em; color: var(--ivory); }
+  .deck-btn.active .d-name { color: var(--gold-bright); }
+  .deck-btn .d-sub { display: block; font-size: 11px; letter-spacing: .14em; color: var(--muted); margin-top: 5px; }
+
   /* ── 牌桌 ─────────────────────────────────── */
   #table { display: none; margin-top: 40px; }
   #table.on { display: block; }
@@ -251,8 +268,24 @@
     letter-spacing: .12em;
     color: var(--ink-soft);
     text-transform: uppercase;
+    /* 西碧拉的義大利文牌名較長，超出時截斷 */
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    padding: 0 2px;
   }
   .card3d.spotlit .cface.front { box-shadow: inset 0 0 0 3px var(--ivory), inset 0 0 0 4px rgba(138,114,69,.55), 0 0 0 2px var(--gold), 0 0 24px rgba(201,164,92,.45); }
+
+  /* 逆位牌：牌面圖與圖騰倒轉，文字銘牌保持可讀 */
+  .card3d.rev .cface.front .c-art,
+  .card3d.rev .cface.front .c-img { transform: rotate(180deg); }
+
+  /* 正逆位標記（解讀帳冊） */
+  .o-tag {
+    font-size: 11.5px; letter-spacing: .18em; text-indent: .18em;
+    border: 1px solid rgba(138,114,69,.5); border-radius: 3px;
+    padding: 1px 4px 1px 8px;
+    color: var(--gold-dim); white-space: nowrap;
+  }
+  .o-tag.rev { color: var(--red); border-color: rgba(168,64,47,.45); }
 
   @keyframes deal-in {
     from { opacity: 0; transform: translateY(26px) rotateY(180deg) scale(.92); }
@@ -478,6 +511,9 @@
     </div>
   </header>
 
+  <p class="section-label">選擇牌組</p>
+  <div class="decks" id="decks" role="group" aria-label="牌組選擇"></div>
+
   <p class="section-label">選擇盤面</p>
   <div class="spreads" id="spreads" role="group" aria-label="盤面選擇"></div>
 
@@ -568,7 +604,7 @@
 /* ── 三十六張牌 ──────────────────────────────
    noun：作為主詞的短語　mod：作為後續牌的謂語修飾
    pol：吉 good / 凶 bad / 中 mid                      */
-const CARDS = [
+const LEN_CARDS = [
   { n:1,  zh:"騎士",   latin:"The Rider",    glyph:"🐎", pol:"good", keys:"消息・來訪・速度・行動",
     text:"有消息正在路上——訪客、通知或新的進展即將抵達。事情開始移動，保持敏捷。",
     noun:"一則消息或新的行動", mod:"正快速地朝你而來" },
@@ -682,7 +718,7 @@ const CARDS = [
 /* 撲克牌對應與牌面圖檔 */
 const PK = ["紅心9","方塊6","黑桃10","紅心K","紅心7","梅花K","梅花Q","方塊9","黑桃Q","方塊J","梅花J","方塊7","黑桃J","梅花9","梅花10","紅心6","紅心Q","紅心10","黑桃6","黑桃8","梅花8","方塊Q","梅花7","紅心J","梅花A","方塊10","黑桃7","紅心A","黑桃A","黑桃K","方塊A","紅心8","方塊8","方塊K","黑桃9","梅花6"];
 const SLUGS = ["rider","clover","ship","house","tree","clouds","snake","coffin","bouquet","scythe","whip","birds","child","fox","bear","stars","stork","dog","tower","garden","mountain","crossroad","mice","heart","ring","book","letter","man","woman","lily","sun","moon","key","fish","anchor","cross"];
-CARDS.forEach((c, i) => {
+LEN_CARDS.forEach((c, i) => {
   c.pk = PK[i];
   c.img = "cards/" + String(c.n).padStart(2, "0") + "-" + SLUGS[i] + ".jpg";
 });
@@ -705,8 +741,8 @@ const HOUSES = [
   { label:"第12宮・玄秘宮", sign:"雙魚座", title:"潛意識與小人",  hint:"隱藏的小人、潛意識、秘密、孤獨隱遁與心靈深處的困擾" },
 ];
 
-/* ── 盤面定義 ──────────────────────────────── */
-const SPREADS = [
+/* ── 盤面定義（雷諾曼） ────────────────────── */
+const LEN_SPREADS = [
   {
     id:"daily", name:"單卡・今日指引", count:1, cols:1,
     desc:"一張牌，一句話。適合每天早晨為自己抽一張。",
@@ -800,10 +836,246 @@ function pair(a, b, label) {
   return { label, a, b, text: `${a.noun}${b.mod}。` };
 }
 
+/* ── 西碧拉 五十二張（Vera Sibilla Italiana） ──
+   四花色各十三張：紅心＝情感、梅花＝幸運與契約、
+   方塊＝消息與利益、黑桃＝考驗與陰影。
+   正逆位皆可讀：text＝正位、rtext＝逆位。       */
+const SIB_CARDS = [
+  /* ♥ 紅心 Cuori */
+  { n:1,  zh:"交談",   latin:"Conversazione", glyph:"🗣️", pol:"good", keys:"對話・會面・澄清・邀約",
+    text:"一場愉快而重要的交談正要發生——會面、邀約或誤會的澄清。把話說開，關係就往前走。",
+    rtext:"逆位時，對話變了調：言不及義、約會延宕，或談話中藏著保留。先聽再說，別急著表態。" },
+  { n:2,  zh:"家宅",   latin:"Casa",          glyph:"🏡", pol:"good", keys:"家庭・安定・團圓・居所",
+    text:"家是此刻的重心：家人和樂、居所安穩，或與房屋有關的好消息。可以安心扎根。",
+    rtext:"逆位時，家中有些不寧——小摩擦、搬遷延遲或家人間的心結。先把家裡的事安頓好。" },
+  { n:3,  zh:"眺望樓", latin:"Belvedere",     glyph:"🔭", pol:"good", keys:"佳音・盼望・遠景・將至",
+    text:"站上高樓便能望見：好消息、等待中的人或結果即將出現。再等一下，消息已在路上。",
+    rtext:"逆位時，盼望的消息姍姍來遲，或不如預期。調整期待，把眼光放遠一點。" },
+  { n:4,  zh:"愛情",   latin:"Amore",         glyph:"💘", pol:"good", keys:"真愛・告白・婚約・心動",
+    text:"真愛降臨或舊情更堅——告白、求婚、承諾。整副牌中最溫柔的一張，順著心走。",
+    rtext:"逆位時，感情蒙上薄霧：遲疑、單戀或時機未到。愛還在，只是需要時間與誠實。" },
+  { n:5,  zh:"心之喜", latin:"Allegrezza al Cuore", glyph:"💖", pol:"good", keys:"如願・喜悅・穩定・幸福",
+    text:"心願成真的喜悅：感情穩定、長久的幸福正在成形。值得慶祝，也值得珍惜。",
+    rtext:"逆位時，喜悅打了折扣——小失落或樂極生悲的提醒。惜福，別把幸福視為理所當然。" },
+  { n:6,  zh:"金錢",   latin:"Denaro",        glyph:"💰", pol:"good", keys:"財運・收穫・利益・隱情",
+    text:"財務好轉：加薪、進帳或划算的投資。有時也暗示一份未說出口的情意或隱藏的好處。",
+    rtext:"逆位時，錢財有出無進，或利益背後有隱情。看緊荷包，凡事先問清楚。" },
+  { n:7,  zh:"藝術家", latin:"Artista",       glyph:"🎨", pol:"good", keys:"才華・創作・青年・實現",
+    text:"一位有才華、值得信任的年輕人，或你自己的創造力正在發光。作品與計畫都能開花結果。",
+    rtext:"逆位時，才華被埋沒或計畫卡在半路——別讓自我懷疑蓋過靈感，作品需要被完成。" },
+  { n:8,  zh:"希望",   latin:"Speranza",      glyph:"🕊️", pol:"good", keys:"希望・願望・樂觀・意志",
+    text:"希望重新點燃：願望有機會實現，樂觀與意志力回到你身上。往前看，路會亮。",
+    rtext:"逆位時，信心動搖、願望懸而未決。希望沒有熄滅，只是需要你親手再點一次。" },
+  { n:9,  zh:"忠誠",   latin:"Fedeltà",       glyph:"🐕", pol:"good", keys:"忠貞・信任・可靠・堅定",
+    text:"身邊的人值得信任：伴侶忠貞、朋友可靠。這份關係經得起時間。",
+    rtext:"逆位時，信任出現裂縫，或忠誠變成固執。先確認事實，別讓猜疑先行。" },
+  { n:10, zh:"恆心",   latin:"Costanza",      glyph:"⏳", pol:"good", keys:"堅持・耐心・累積・回報",
+    text:"成功是確定的，但需要耐心——持續耕耘，回報會在對的時候到來。",
+    rtext:"逆位時，耐心快被磨光，或堅持錯了方向。休息可以，放棄可惜；先確認方向再走。" },
+  { n:11, zh:"情郎",   latin:"Amante",        glyph:"🤵", pol:"mid",  keys:"男性・戀人・熱情・追求",
+    text:"一位重要的男性：戀人、丈夫或熱烈的追求者。也代表你熱愛的事物正在召喚。",
+    rtext:"逆位時，這位男性心思不明，或熱情正在降溫。看行動，別只聽言語。" },
+  { n:12, zh:"佳人",   latin:"Amatrice",      glyph:"👰", pol:"mid",  keys:"女性・愛人・溫柔・慷慨",
+    text:"一位重要的女性：愛人、妻子或一位慷慨溫暖的女子。她帶著善意而來。",
+    rtext:"逆位時，這位女性有所保留，或情感中摻著佔有。溫柔仍在，只是需要空間。" },
+  { n:13, zh:"大貴人", latin:"Gransignore",   glyph:"👑", pol:"good", keys:"貴人・權勢・庇護・智慧",
+    text:"一位成熟有力的貴人：長輩、上位者或有智慧的男性。他的庇護與建議值得倚重。",
+    rtext:"逆位時，貴人幫不上忙，或權威變成壓力。尊重但不依附，自己的路自己走。" },
+  /* ♣ 梅花 Fiori */
+  { n:14, zh:"姻盟",   latin:"Imeneo",        glyph:"💒", pol:"good", keys:"契約・婚約・結盟・承諾",
+    text:"白紙黑字的結合：婚約、合約、合夥。凡是立下承諾的事，都會被牢牢綁定——確認後再簽。",
+    rtext:"逆位時，契約生變：婚期延宕、合約有瑕疵。條款再讀一遍，別倉促落筆。" },
+  { n:15, zh:"傲慢",   latin:"Superbia",      glyph:"🦚", pol:"bad",  keys:"自負・虛榮・表象・輕視",
+    text:"傲慢當道——某人（或你自己）被虛榮蒙蔽。放下身段，看穿表象之下的真實。",
+    rtext:"逆位時，傲慢開始鬆動：面子放下了，和解與學習才有空間。承認不足，就是轉機。" },
+  { n:16, zh:"旅行",   latin:"Viaggio",       glyph:"🧳", pol:"good", keys:"旅程・移動・轉變・進展",
+    text:"一段旅程展開：出行、搬遷或計畫的推進。移動帶來好運，堅持走完這段路。",
+    rtext:"逆位時，行程延誤或計畫改道。多留一點緩衝，繞路有時看見更好的風景。" },
+  { n:17, zh:"摯友",   latin:"Amica",         glyph:"👭", pol:"good", keys:"友誼・支持・信賴・安穩",
+    text:"一位可信賴的女性朋友在你身旁，或一段令人安心的穩定情勢。友誼是此刻的資產。",
+    rtext:"逆位時，朋友幫不上忙或關係變淡。友誼需要經營，主動伸出手。" },
+  { n:18, zh:"鴻運",   latin:"Fortuna",       glyph:"🍀", pol:"good", keys:"勝利・好運・成就・應得",
+    text:"確實的好運與勝利——而且是你努力掙來的。放手一搏，命運站在你這邊。",
+    rtext:"逆位時，好運遲到或與你擦身。不是無緣，是時候未到；把實力備好，運來擋不住。" },
+  { n:19, zh:"驚喜",   latin:"Consolante Sorpresa", glyph:"🎁", pol:"good", keys:"驚喜・小勝・慰藉・轉折",
+    text:"一份意想不到的美好：小小的勝利、貼心的舉動、圓滿的轉折。生活正偷偷對你好。",
+    rtext:"逆位時，驚喜變成空歡喜，或好事打了折。降低期待，反而容易被感動。" },
+  { n:20, zh:"大慰藉", latin:"Gran Consolazione", glyph:"🌈", pol:"good", keys:"苦盡甘來・滿足・回報・釋懷",
+    text:"苦盡甘來——艱難的日子之後，成功與滿足終於到來。你熬過來了，值得。",
+    rtext:"逆位時，安慰還在路上，傷口需要更多時間。別急著說沒事，先好好照顧自己。" },
+  { n:21, zh:"重聚",   latin:"Riunione",      glyph:"🫂", pol:"good", keys:"重逢・和解・回歸・團圓",
+    text:"分離的人事物回到身邊：重逢、和解、失而復得。敞開懷抱迎接。",
+    rtext:"逆位時，重逢延宕或和解不順。有些回歸，需要先放下舊帳。" },
+  { n:22, zh:"歡愉",   latin:"Allegria",      glyph:"🎉", pol:"good", keys:"快樂・輕鬆・日常・平靜",
+    text:"寧靜的快樂：享受日常的小事，和喜歡的人虛度美好時光。這就是福氣本身。",
+    rtext:"逆位時，歡樂變得勉強，或玩樂過了頭。找回真正讓你放鬆的事。" },
+  { n:23, zh:"輕浮",   latin:"Leggerezza",    glyph:"🪶", pol:"bad",  keys:"輕率・善變・不可靠・敷衍",
+    text:"有人輕諾寡信——感情不誠、承諾隨風。別把重要的事託付給輕浮的人。",
+    rtext:"逆位時，輕率開始收斂，或你終於看清誰不可靠。及時止損，就是成長。" },
+  { n:24, zh:"僕從",   latin:"Domestico",     glyph:"🛎️", pol:"mid",  keys:"消息・效力・青年・協助",
+    text:"一位盡責的年輕人為你帶來消息或提供協助。小人物，大幫忙。",
+    rtext:"逆位時，幫手靠不住或消息有誤。重要的事，親自確認。" },
+  { n:25, zh:"少女",   latin:"Giovane Fanciulla", glyph:"🌸", pol:"good", keys:"真誠・新芽・純粹・優雅",
+    text:"一位真誠優雅的年輕女子，或一個剛萌芽的計畫。新而純粹，值得呵護。",
+    rtext:"逆位時，天真過了頭，或新計畫還不成熟。多一點耐心與保護。" },
+  { n:26, zh:"博士",   latin:"Dottore",       glyph:"🩺", pol:"good", keys:"智者・忠告・保護・專業",
+    text:"一位受敬重的專業人士——醫師、學者或顧問——帶來保護與珍貴的建議。該請教就請教。",
+    rtext:"逆位時，建議未必適用，或專業意見彼此矛盾。多聽幾方，最後自己判斷。" },
+  /* ♦ 方塊 Quadri */
+  { n:27, zh:"內室",   latin:"Stanza",        glyph:"🚪", pol:"mid",  keys:"私密・內在・獨處・近事",
+    text:"好消息即將進門；也指私密的空間——兩人的親密，或一個人的沉澱。此刻答案在室內，不在遠方。",
+    rtext:"逆位時，獨處變成封閉，私事被打擾。留一扇窗，讓空氣流通。" },
+  { n:28, zh:"信函",   latin:"Lettera",       glyph:"✉️", pol:"mid",  keys:"訊息・文件・通知・邀請",
+    text:"一封信正要抵達：訊息、文件、邀請或突如其來的通知。留意白紙黑字的細節。",
+    rtext:"逆位時，消息延誤、文件出錯，或內容令人失望。收到先查證，回覆別衝動。" },
+  { n:29, zh:"女僕",   latin:"Donna di Servizio", glyph:"🧹", pol:"good", keys:"助力・餽贈・小財・服務",
+    text:"意外的餽贈與貼心的援手：小獎、贈禮或他人及時的幫忙。好運藏在日常裡。",
+    rtext:"逆位時，幫忙變成負擔，或好意被辜負。心領之外，也要學會婉拒。" },
+  { n:30, zh:"虛偽",   latin:"Falsità",       glyph:"🎭", pol:"bad",  keys:"欺瞞・不忠・假象・自欺",
+    text:"有一層假面：欺騙、不忠，或你對現況的一廂情願。撕開表象，看清再走。",
+    rtext:"逆位時，謊言即將被拆穿，或你終於不再自欺。真相傷人，但也放人自由。" },
+  { n:31, zh:"憂鬱",   latin:"Malinconia",    glyph:"🌧️", pol:"bad",  keys:"低潮・失落・分離・愁緒",
+    text:"一陣憂鬱襲來：失落、別離或財務的煩惱。允許自己難過，但別在雨裡久站。",
+    rtext:"逆位時，陰霾漸散，心情正在回暖。低潮的出口已經出現，慢慢走出去。" },
+  { n:32, zh:"思緒",   latin:"Pensiero",      glyph:"💭", pol:"mid",  keys:"思考・靈感・掛念・清明",
+    text:"腦中清明：好點子與解方浮現；也代表某人正在想你。讓思緒沉澱，答案自現。",
+    rtext:"逆位時，思緒打結、想太多而動不了。先寫下來，再挑一件事做。" },
+  { n:33, zh:"孩童",   latin:"Bambino",       glyph:"👶", pol:"good", keys:"新生・開始・純真・幼苗",
+    text:"新的生命力：新計畫、新成員或一顆赤子之心。剛起步的事需要溫柔對待。",
+    rtext:"逆位時，新事物長得慢或遇到早期的挫折。幼苗經不起拔，只能澆水等待。" },
+  { n:34, zh:"珍禮",   latin:"Omaggio di Preziosi", glyph:"💎", pol:"good", keys:"贈禮・機會・賞識・價值",
+    text:"一份貴重的禮物或難得的機會擺在眼前——賞識、提拔、有價值的建議。伸手接住。",
+    rtext:"逆位時，禮物背後或許有價碼，機會未必如表面豐厚。收下之前，想想代價。" },
+  { n:35, zh:"迷亂",   latin:"Deliranti",     glyph:"🌀", pol:"bad",  keys:"混亂・失序・恍惚・難成",
+    text:"思緒與局面一片混亂：計畫失序、心神恍惚、事情難以收尾。先停下來，理清再動。",
+    rtext:"逆位時，混亂見底，秩序正在恢復。一次整理一件事，清明會回來。" },
+  { n:36, zh:"竊賊",   latin:"Ladro",         glyph:"🥷", pol:"bad",  keys:"失竊・背叛・侵擾・提防",
+    text:"有東西可能被偷走——財物、點子或感情的注意力。提高警覺，鎖好重要的東西。",
+    rtext:"逆位時，失去的可能找回，或竊者現形。損失可以止住，教訓要記住。" },
+  { n:37, zh:"信使",   latin:"Messaggiero",   glyph:"📯", pol:"mid",  keys:"遠訊・中介・傳話・往來",
+    text:"遠方捎來消息，或有人居中傳話。訊息在移動——注意誰替你說話、說了什麼。",
+    rtext:"逆位時，傳話走樣、中間人不牢靠。重要訊息，最好當面說。" },
+  { n:38, zh:"婦人",   latin:"Donna Maritata", glyph:"👩", pol:"good", keys:"支持・母性・照拂・務實",
+    text:"一位成熟務實的女性給你實質的支持——精神上與物質上都靠得住。",
+    rtext:"逆位時，她的關照可能帶著干涉，或幫助有限。感謝之餘，保持界線。" },
+  { n:39, zh:"商賈",   latin:"Mercante",      glyph:"⚖️", pol:"good", keys:"事業・生意・進展・精明",
+    text:"事業傳來好消息：升遷、成交、生意興隆，或一位精明可靠的生意人。談判桌上有你的位置。",
+    rtext:"逆位時，生意人未必實在，交易條件要再磨。數字算清楚，再握手。" },
+  /* ♠ 黑桃 Picche */
+  { n:40, zh:"悲淚",   latin:"Dispiacere",    glyph:"💧", pol:"bad",  keys:"噩耗・悲傷・失落・裂痕",
+    text:"突來的壞消息帶來眼淚：關係的裂痕、損失或委屈。哭完，把眼淚化成看清事實的清水。",
+    rtext:"逆位時，悲傷開始退潮，壞消息沒有想像中致命。傷口會好，別反覆撕開。" },
+  { n:41, zh:"老婦",   latin:"Vecchia Signora", glyph:"👵", pol:"mid",  keys:"長者・舊識・經驗・拖延",
+    text:"一位年長的智慧女性，或來自故人的消息；也指一件拖了很久的事。老經驗值得一聽。",
+    rtext:"逆位時，舊事糾纏或長輩的意見成為束縛。尊重過去，但日子要往前過。" },
+  { n:42, zh:"鰥夫",   latin:"Vedovo",        glyph:"🖤", pol:"bad",  keys:"孤獨・遺憾・隱退・清冷",
+    text:"一段孤獨的時光：選擇或被迫的獨處、心中的遺憾、工作上的孤立。孤獨也能長出力量。",
+    rtext:"逆位時，孤獨鬆動，有人正試著靠近。門別關死，留一道縫。" },
+  { n:43, zh:"病榻",   latin:"Ammalato",      glyph:"🛌", pol:"bad",  keys:"病痛・低迷・倦怠・休養",
+    text:"身體或心靈發出警訊：病痛、憂鬱、倦怠。這張牌的指令只有一個——去休息，去照顧自己。",
+    rtext:"逆位時，康復開始了，元氣一點點回來。痊癒急不得，按自己的步調。" },
+  { n:44, zh:"死神",   latin:"Morte",         glyph:"💀", pol:"bad",  keys:"終結・轉化・斷捨・重生",
+    text:"一個徹底的結束——也因此是一次徹底的轉化。周圍的牌決定它是重生還是失去；無論如何，舊的回不去了。",
+    rtext:"逆位時，該結束的拖著不結束，轉化被卡住。親手放下，新的才進得來。" },
+  { n:45, zh:"嘆息",   latin:"Sospiri",       glyph:"🌬️", pol:"mid",  keys:"等待・思念・懸念・被動",
+    text:"一聲長長的嘆息：等待、思念、懸而未決。牌的建議是——別只嘆氣，去做點什麼。",
+    rtext:"逆位時，等待接近尾聲，或你終於決定不再空等。主動，是嘆息的解藥。" },
+  { n:46, zh:"厄運",   latin:"Disgrazia",     glyph:"⚡", pol:"bad",  keys:"禍事・糾紛・意外・警訊",
+    text:"全副牌中最沉的一張：麻煩、糾紛甚至官非可能來襲。繫好安全帶，重要的事務必再三確認。",
+    rtext:"逆位時，災禍擦身而過或損害可控。這是警鐘不是判決——趁現在補強弱點。" },
+  { n:47, zh:"嫉妒",   latin:"Gelosia",       glyph:"👁️", pol:"bad",  keys:"猜忌・比較・中傷・自疑",
+    text:"嫉妒的毒在流動：猜忌、比較、背後的閒言。可能來自他人，也可能長在你心裡。",
+    rtext:"逆位時，猜忌鬆開，或你認清了中傷的來源。把注意力收回自己身上。" },
+  { n:48, zh:"監牢",   latin:"Prigione",      glyph:"⛓️", pol:"bad",  keys:"困局・停滯・壓抑・受限",
+    text:"一種被困住的感覺：局面僵住、心情壓抑、進退不得。牢門未必上鎖——找找鑰匙在哪。",
+    rtext:"逆位時，枷鎖正在鬆脫，出口露出光。自由要自己走出去。" },
+  { n:49, zh:"軍士",   latin:"Militare",      glyph:"🎖️", pol:"mid",  keys:"阻礙・紀律・強硬・對峙",
+    text:"前方有障礙與強硬的力量：對峙、規則、不得不面對的考驗。必要時，尋求有力的指引。",
+    rtext:"逆位時，對峙緩和或障礙後撤。趁勢而進，但別鬆懈紀律。" },
+  { n:50, zh:"仇敵",   latin:"Nemico",        glyph:"⚔️", pol:"bad",  keys:"對手・背叛・算計・提防",
+    text:"一位懷有敵意的男性：對手、背叛者或口是心非的人。別正面硬碰，先看清他的棋路。",
+    rtext:"逆位時，敵人露出馬腳或敵意消退。警戒可以降，底線不能丟。" },
+  { n:51, zh:"仇婦",   latin:"Nemica",        glyph:"🗡️", pol:"bad",  keys:"敵意・暗算・流言・提防",
+    text:"一位懷有敵意的女性：競爭者、搬弄是非者、暗處的算計。保持距離，別交出把柄。",
+    rtext:"逆位時，她的影響力正在減弱，流言不攻自破。清者自清，穩住就好。" },
+  { n:52, zh:"神父",   latin:"Sacerdote",     glyph:"⛪", pol:"good", keys:"信靠・傾聽・引導・撫慰",
+    text:"一位值得信靠的長者：傾聽你、守護你的秘密、給你正直建議的人。把心事說出來，會輕很多。",
+    rtext:"逆位時，引導者未必全對，或安慰流於形式。信仰歸信仰，決定還是要自己做。" },
+];
+
+const SIB_SLUGS = ["conversazione","casa","belvedere","amore","allegrezza","denaro","artista","speranza","fedelta","costanza","amante","amatrice","gransignore","imeneo","superbia","viaggio","amica","fortuna","sorpresa","consolazione","riunione","allegria","leggerezza","domestico","fanciulla","dottore","stanza","lettera","servizio","falsita","malinconia","pensiero","bambino","omaggio","deliranti","ladro","messaggiero","maritata","mercante","dispiacere","vecchia","vedovo","ammalato","morte","sospiri","disgrazia","gelosia","prigione","militare","nemico","nemica","sacerdote"];
+const SIB_SUITS = [["♥","紅心"],["♣","梅花"],["♦","方塊"],["♠","黑桃"]];
+const SIB_RANKS = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+SIB_CARDS.forEach((c, i) => {
+  const suit = SIB_SUITS[Math.floor(i / 13)], rank = SIB_RANKS[i % 13];
+  c.pks = suit[0] + rank;          /* 牌面角標：♥A */
+  c.pk = suit[1] + rank;           /* 口語對應：紅心A */
+  c.img = "cards-sibilla/" + String(c.n).padStart(2, "0") + "-" + SIB_SLUGS[i] + ".jpg";
+});
+
+/* ── 盤面定義（西碧拉） ────────────────────── */
+const SIB_SPREADS = [
+  {
+    id:"sib-daily", name:"單卡・今日低語", count:1, cols:1,
+    desc:"一張牌、一個正逆——聽今天命運壓低了嗓音說什麼。",
+    positions:["今日低語"],
+    combos: () => [],
+  },
+  {
+    id:"sib-three", name:"三卡・時間之流", count:3, cols:3,
+    desc:"過去、現在、未來——正逆位決定每一段的順流或逆流。",
+    positions:["過去","現在","未來"],
+    combos: () => [],
+  },
+  {
+    id:"sib-cross", name:"五卡・十字陣", count:5, cols:3,
+    desc:"中央是核心，左右是來路與去向，上下是意識與潛流。",
+    positions:["核心現況","過去・來路","未來・去向","意識・目標","潛流・根基"],
+    place:[[2,2],[1,2],[3,2],[2,1],[2,3]],
+    combos: () => [],
+  },
+  {
+    id:"sib-nine", name:"九宮格・全景", count:9, cols:3,
+    desc:"3 × 3 的完整快照：橫向是時間，縱向是層次，中央是核心。",
+    positions:[
+      "過去 × 想法","現在 × 想法","未來 × 想法",
+      "過去 × 現實","核心","未來 × 現實",
+      "過去 × 潛藏","現在 × 潛藏","未來 × 潛藏",
+    ],
+    combos: () => [],
+  },
+  {
+    id:"sib-fifteen", name:"十五卡・大陣", count:15, cols:5,
+    desc:"西碧拉的經典大陣：三列五欄，上列過去、中列現在、下列未來，逐列連成一句話。",
+    positions:[
+      "過去・一","過去・二","過去・三","過去・四","過去・五",
+      "現在・一","現在・二","現在・三","現在・四","現在・五",
+      "未來・一","未來・二","未來・三","未來・四","未來・五",
+    ],
+    combos: () => [],
+  },
+];
+
+/* ── 牌組註冊表 ───────────────────────────── */
+const DECKS = [
+  { id:"len", name:"雷諾曼", short:"Petit Lenormand · 36 張",
+    eyebrow:"Petit Lenormand · MDCCCXLVI", title:"雷諾曼占卜",
+    sub:"燭已點好。三十六張牌裡，藏著你尚未聽見的答案。",
+    cards: LEN_CARDS, spreads: LEN_SPREADS, reversible:false, preload:true },
+  { id:"sib", name:"西碧拉", short:"Vera Sibilla · 52 張 · 正逆位",
+    eyebrow:"Vera Sibilla Italiana", title:"西碧拉占卜",
+    sub:"五十二張牌，正與逆之間，低語著命運的細節。",
+    cards: SIB_CARDS, spreads: SIB_SPREADS, reversible:true, preload:true },
+];
+let deckDef = DECKS[0];
+let CARDS = deckDef.cards;      /* 目前牌組的牌（其餘程式一律讀這兩個） */
+let SPREADS = deckDef.spreads;
+
 /* ── 狀態 ─────────────────────────────────── */
 let spread = null;     // 當前盤面
 let deck = [];         // 目前牌序（索引指向 CARDS；由使用者親手洗切）
 let drawn = [];        // 已抽出的牌（依槽位順序）
+let drawnRev = [];     // 與 drawn 對應的正逆位（true＝逆位；僅正逆位牌組使用）
 let target = 0;        // 本輪需抽的張數（補牌後會增加）
 let phase = "ritual";  // ritual（洗切牌）→ draw（抽牌）
 let shuffleCount = 0, cutCount = 0, ritualBusy = false;
@@ -857,26 +1129,57 @@ function cutDeck(arr, pos) {
   return arr.slice(pos).concat(arr.slice(0, pos));
 }
 
-/* ── 盤面選單 ─────────────────────────────── */
-const NUMERALS = ["壹","貳","參","肆","伍","陸","柒","捌","玖","拾"];
-SPREADS.forEach((s, i) => {
+/* ── 牌組選單 ─────────────────────────────── */
+const elDecks = $("#decks");
+DECKS.forEach((d, i) => {
   const b = document.createElement("button");
-  b.className = "spread-btn";
-  b.innerHTML = `<div class="s-row">
-      <span class="s-idx">${NUMERALS[i] || i + 1}</span>
-      <span class="s-name">${s.name}</span>
-      <span class="s-leader"></span>
-      <span class="s-count">${s.count} 張</span>
-    </div>
-    <div class="s-desc">${s.desc}</div>`;
-  b.addEventListener("click", () => selectSpread(s, b));
-  elSpreads.appendChild(b);
+  b.className = "deck-btn" + (i === 0 ? " active" : "");
+  b.innerHTML = `<span class="d-name">${d.name}</span><span class="d-sub">${d.short}</span>`;
+  b.addEventListener("click", () => selectDeck(d));
+  elDecks.appendChild(b);
 });
 
-let preloaded = false;
+function selectDeck(d) {
+  if (deckDef === d) return;
+  if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+  deckDef = d;
+  CARDS = d.cards;
+  SPREADS = d.spreads;
+  document.querySelectorAll(".deck-btn").forEach((b, i) => b.classList.toggle("active", DECKS[i] === d));
+  document.title = d.title;
+  $(".eyebrow").textContent = d.eyebrow;
+  $("h1").textContent = d.title;
+  $(".subtitle").textContent = d.sub;
+  buildSpreadMenu();
+  spread = null;
+  elTable.classList.remove("on");
+  elReading.classList.remove("on");
+  hideTip();
+}
+
+/* ── 盤面選單 ─────────────────────────────── */
+const NUMERALS = ["壹","貳","參","肆","伍","陸","柒","捌","玖","拾"];
+function buildSpreadMenu() {
+  elSpreads.innerHTML = "";
+  SPREADS.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.className = "spread-btn";
+    b.innerHTML = `<div class="s-row">
+        <span class="s-idx">${NUMERALS[i] || i + 1}</span>
+        <span class="s-name">${s.name}</span>
+        <span class="s-leader"></span>
+        <span class="s-count">${s.count} 張</span>
+      </div>
+      <div class="s-desc">${s.desc}</div>`;
+    b.addEventListener("click", () => selectSpread(s, b));
+    elSpreads.appendChild(b);
+  });
+}
+buildSpreadMenu();
+
 function preloadCards() {
-  if (preloaded) return;
-  preloaded = true;
+  if (!deckDef.preload || deckDef.preloaded) return;
+  deckDef.preloaded = true;
   /* 洗切牌的空檔預載全部牌面，翻牌時圖已在快取 */
   CARDS.forEach((c) => { const i = new Image(); i.src = c.img; });
 }
@@ -898,6 +1201,7 @@ function resetTable() {
   if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
   deck = CARDS.map((_, i) => i);   /* 出廠順序——牌序全由你的手決定 */
   drawn = [];
+  drawnRev = [];
   target = spread.count;
   phase = "ritual";
   shuffleCount = 0; cutCount = 0; ritualBusy = false;
@@ -1137,19 +1441,28 @@ elExtend.addEventListener("click", () => {
 });
 
 /* ── 發牌與翻面 ───────────────────────────── */
-function placeCard(cardIdx) {
+function placeCard(cardIdx, forcedRev) {
   const slotIdx = drawn.length;
   const card = CARDS[cardIdx];
+  /* 正逆位：重看紀錄時沿用當時的牌位，否則由命運決定 */
+  const rev = deckDef.reversible
+    ? (forcedRev !== undefined ? !!forcedRev : rand01() < 0.5)
+    : false;
   drawn.push(card);
+  drawnRev.push(rev);
 
   const well = elSlots.querySelector(`.slot[data-idx="${slotIdx}"] .card-well`);
   well.classList.add("filled");
 
+  const corner = deckDef.id === "sib" ? card.pks : `№ ${card.n}`;
+  const mark = rev
+    ? `<span class="pol bad">⟲</span>`
+    : `<span class="pol ${card.pol}">${POL_MARK[card.pol].slice(0, 1)}</span>`;
   const c3 = document.createElement("div");
-  c3.className = "card3d dealing";
+  c3.className = "card3d dealing" + (rev ? " rev" : "");
   c3.innerHTML = `
     <div class="cface front">
-      <div class="c-num"><span>№ ${card.n}</span><span class="pol ${card.pol}">${POL_MARK[card.pol].slice(0, 1)}</span></div>
+      <div class="c-num"><span>${corner}</span>${mark}</div>
       <div class="c-art">${card.glyph}</div>
       <div class="c-zh">${card.zh}</div>
       <div class="c-latin">${card.latin}</div>
@@ -1212,6 +1525,10 @@ function addEntry(card, slotIdx) {
   elReading.classList.add("on");
   $("#reading-sub").textContent = spread.name;
 
+  const rev = drawnRev[slotIdx];
+  const oTag = deckDef.reversible
+    ? `<span class="o-tag${rev ? " rev" : ""}">${rev ? "逆位" : "正位"}</span>`
+    : "";
   const e = document.createElement("div");
   e.className = "entry";
   e.dataset.idx = slotIdx;
@@ -1220,10 +1537,11 @@ function addEntry(card, slotIdx) {
     <div class="e-head">
       <span class="e-glyph">${card.glyph}</span>
       <span class="e-name">${card.zh}<small style="color:var(--ink-soft)"> · ${card.latin}</small></span>
+      ${oTag}
       <span class="pol ${card.pol}">${POL_MARK[card.pol]}</span>
     </div>
     <div class="e-keys">${card.keys}</div>
-    <p class="e-text">${card.text}${gtHouseNote(card, slotIdx)}</p>`;
+    <p class="e-text">${rev && card.rtext ? card.rtext : card.text}${gtHouseNote(card, slotIdx)}</p>`;
   elEntries.appendChild(e);
 }
 
@@ -1279,7 +1597,10 @@ function finishReading() {
 /* ── AI 解讀提示詞 ────────────────────────── */
 function buildAiPrompt() {
   const L = [];
-  L.push("你是一位經驗豐富的雷諾曼（Petit Lenormand）占卜解讀師，熟悉牌義、位置意義與牌與牌之間的組合技法。請以繁體中文為我解讀以下牌陣。");
+  L.push(deckDef.id === "sib"
+    ? "你是一位經驗豐富的義大利西碧拉（Vera Sibilla Italiana）占卜解讀師，熟悉五十二張牌的牌義、正逆位差異、位置意義與牌與牌之間的組合技法。請以繁體中文為我解讀以下牌陣。"
+    : "你是一位經驗豐富的雷諾曼（Petit Lenormand）占卜解讀師，熟悉牌義、位置意義與牌與牌之間的組合技法。請以繁體中文為我解讀以下牌陣。");
+  if (deckDef.reversible) L.push("本牌陣使用正逆位：逆位請解讀為該牌能量的受阻、延遲、內化或反面。");
   L.push("");
   L.push(`【盤面】${spread.name}（共 ${drawn.length} 張）`);
   if (spread.id === "gt") {
@@ -1293,7 +1614,9 @@ function buildAiPrompt() {
   L.push("");
   L.push("【抽牌結果】（依抽出順序）");
   drawn.forEach((c, i) => {
-    L.push(`${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（№${c.n}，撲克對應 ${c.pk}）— 關鍵詞：${c.keys}`);
+    L.push(deckDef.id === "sib"
+      ? `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（${c.pk}，${drawnRev[i] ? "逆位" : "正位"}）— 關鍵詞：${c.keys}`
+      : `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（№${c.n}，撲克對應 ${c.pk}）— 關鍵詞：${c.keys}`);
   });
   L.push("");
   L.push("【請提供】");
@@ -1378,12 +1701,14 @@ let tipSlot = -1;
 
 function tipHtml(slotIdx) {
   const card = drawn[slotIdx];
+  const rev = drawnRev[slotIdx];
+  const ori = deckDef.reversible ? ` ・ ${rev ? "逆位" : "正位"}` : "";
   return `
-    <div class="tip-pos">${posName(slotIdx)}</div>
+    <div class="tip-pos">${posName(slotIdx)}${ori}</div>
     <div class="tip-name"><span class="tip-glyph">${card.glyph}</span> ${card.zh}
       <small>${card.latin} · ${card.pk}</small></div>
     <div class="tip-keys">${card.keys}</div>
-    <p class="tip-text">${card.text}${gtHouseNote(card, slotIdx)}</p>`;
+    <p class="tip-text">${rev && card.rtext ? card.rtext : card.text}${gtHouseNote(card, slotIdx)}</p>`;
 }
 
 function showTip(slotIdx, cardEl) {
@@ -1436,10 +1761,13 @@ function saveHistoryRecord() {
   const rec = {
     id: Date.now(),
     when: new Date().toLocaleString("zh-TW", { hour12: false }),
+    deck: deckDef.id,
+    deckName: deckDef.name,
     spread: spread.id,
     spreadName: spread.name,
     q: $("#q-input").value.trim(),
     cards: drawn.map((c) => c.n),
+    revs: deckDef.reversible ? drawnRev.map((r) => (r ? 1 : 0)) : undefined,
   };
   currentRecId = rec.id;
   const list = loadHist();
@@ -1454,6 +1782,7 @@ function updateHistoryRecord() {
   const rec = list.find((r) => r.id === currentRecId);
   if (rec) {
     rec.cards = drawn.map((c) => c.n);
+    if (deckDef.reversible) rec.revs = drawnRev.map((r) => (r ? 1 : 0));
     rec.q = $("#q-input").value.trim();
     storeHist(list);
     renderHistory();
@@ -1470,13 +1799,19 @@ function renderHistory() {
     return;
   }
   list.forEach((rec) => {
-    const glyphs = rec.cards.slice(0, 10).map((n) => CARDS[n - 1].zh).join("・")
+    const dk = DECKS.find((x) => x.id === (rec.deck || "len")) || DECKS[0];
+    const glyphs = rec.cards.slice(0, 10)
+      .map((n, i) => {
+        const c = dk.cards[n - 1];
+        if (!c) return "？";
+        return c.zh + (rec.revs && rec.revs[i] ? "⟲" : "");
+      }).join("・")
       + (rec.cards.length > 10 ? `・⋯（共 ${rec.cards.length} 張）` : "");
     const item = document.createElement("div");
     item.className = "hist-item";
     item.innerHTML = `
       <span class="h-when">${rec.when}</span>
-      <span class="h-spread">${rec.spreadName}</span>
+      <span class="h-spread">${dk.name} · ${rec.spreadName}</span>
       ${rec.q ? `<div class="h-q">「${rec.q}」</div>` : ""}
       <div class="h-cards">${glyphs}</div>
       <div class="h-actions">
@@ -1501,6 +1836,9 @@ $("#btn-hist-clear").addEventListener("click", () => {
 
 /* 重看：把紀錄還原到牌桌與解讀帳冊（不重新保存） */
 function replayReading(rec) {
+  const dk = DECKS.find((x) => x.id === (rec.deck || "len"));
+  if (!dk) return;
+  if (deckDef !== dk) selectDeck(dk);
   const s = SPREADS.find((x) => x.id === rec.spread);
   if (!s) return;
   const idx = SPREADS.indexOf(s);
@@ -1514,12 +1852,13 @@ function replayReading(rec) {
   elFanScroll.hidden = true;   /* 重看不需要牌堆 */
 
   suppressSave = true;
+  const revAt = (i) => (rec.revs ? !!rec.revs[i] : false);
   const base = Math.min(rec.cards.length, s.count);
-  for (let i = 0; i < base; i++) placeCard(rec.cards[i] - 1);
+  for (let i = 0; i < base; i++) placeCard(rec.cards[i] - 1, revAt(i));
   if (rec.cards.length > s.count && s.extend) {
     target = s.count + s.extend.count;
     addExtensionSlots();
-    for (let i = s.count; i < rec.cards.length; i++) placeCard(rec.cards[i] - 1);
+    for (let i = s.count; i < rec.cards.length; i++) placeCard(rec.cards[i] - 1, revAt(i));
   }
   suppressSave = false;
 
@@ -1533,9 +1872,11 @@ function replayReading(rec) {
 
 renderHistory();
 
-/* 開發測試鉤子：?rwdtest=盤面id 自動抽完整個盤面 */
+/* 開發測試鉤子：?rwdtest=盤面id 自動抽完整個盤面（跨牌組） */
 if (location.search.includes("rwdtest")) {
   const id = new URLSearchParams(location.search).get("rwdtest") || "gt";
+  const dk = DECKS.find((d) => d.spreads.some((s) => s.id === id));
+  if (dk && deckDef !== dk) selectDeck(dk);
   const idx = SPREADS.findIndex((s) => s.id === id);
   if (idx >= 0) {
     document.querySelectorAll(".spread-btn")[idx].click();
