@@ -1,6 +1,6 @@
-# 雷諾曼・西碧拉・貝林占卜
+# 燭光牌桌 · La Table aux Chandelles
 
-單檔網頁版占卜系統,內含三副牌組:雷諾曼(Petit Lenormand,36 張)、西碧拉(Vera Sibilla Italiana,52 張、正逆位)、貝林神諭(L'Oracle Belline,53 張、正逆位)。直接用瀏覽器開啟 `index.html` 即可,無需伺服器。
+單檔網頁版占卜牌桌,內含三副牌組:雷諾曼(Petit Lenormand,36 張)、西碧拉(Vera Sibilla Italiana,52 張、正逆位)、貝林神諭(L'Oracle Belline,53 張、正逆位)。直接用瀏覽器開啟 `index.html` 即可,無需伺服器。
 
 ## 牌組
 

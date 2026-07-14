@@ -1,4 +1,4 @@
-<title>雷諾曼占卜</title>
+<title>燭光牌桌 · La Table aux Chandelles</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root {
@@ -573,8 +573,8 @@
 <div class="wrap">
   <header>
     <div class="plate">
-      <p class="eyebrow">Petit Lenormand · MDCCCXLVI</p>
-      <h1>雷諾曼占卜</h1>
+      <p class="eyebrow">La Table aux Chandelles</p>
+      <h1>燭光牌桌</h1>
       <p class="subtitle">燭已點好。三十六張牌裡，藏著你尚未聽見的答案。</p>
     </div>
   </header>
@@ -677,7 +677,7 @@
     <div id="dict-detail" class="paper" hidden></div>
   </section>
 
-  <footer>牌面依十九世紀式樣重繪 · 牌序由你的手決定 · 僅供靜心與娛樂</footer>
+  <footer>燭光牌桌 La Table aux Chandelles · 牌面依十九世紀式樣重繪 · 牌序由你的手決定 · 僅供靜心與娛樂</footer>
 </div>
 
 <script>
@@ -1378,17 +1378,17 @@ const BEL_SPREADS = [
 /* ── 牌組註冊表 ───────────────────────────── */
 const DECKS = [
   { id:"len", name:"雷諾曼", short:"Petit Lenormand · 36 張",
-    eyebrow:"Petit Lenormand · MDCCCXLVI", title:"雷諾曼占卜",
+    title:"雷諾曼占卜",
     sub:"燭已點好。三十六張牌裡，藏著你尚未聽見的答案。",
     cards: LEN_CARDS, spreads: LEN_SPREADS, reversible:false, preload:true,
     back:"cards/back.jpg" },
   { id:"sib", name:"西碧拉", short:"Vera Sibilla · 52 張 · 正逆位",
-    eyebrow:"Vera Sibilla Italiana", title:"西碧拉占卜",
+    title:"西碧拉占卜",
     sub:"五十二張牌，正與逆之間，低語著命運的細節。",
     cards: SIB_CARDS, spreads: SIB_SPREADS, reversible:true, preload:true,
     back:"cards-sibilla/back.jpg" },
   { id:"bel", name:"貝林神諭", short:"Oracle Belline · 53 張 · 正逆位",
-    eyebrow:"L'Oracle Belline · MDCCCLXIII", title:"貝林神諭",
+    title:"貝林神諭占卜",
     sub:"七大星體、五十三道低語——星辰早已寫好給你的信。",
     cards: BEL_CARDS, spreads: BEL_SPREADS, reversible:true, preload:true,
     back:"cards-belline/back.jpg" },
@@ -1478,9 +1478,7 @@ function selectDeck(d) {
   CARDS = d.cards;
   SPREADS = d.spreads;
   document.querySelectorAll(".deck-btn").forEach((b, i) => b.classList.toggle("active", DECKS[i] === d));
-  document.title = d.title;
-  $(".eyebrow").textContent = d.eyebrow;
-  $("h1").textContent = d.title;
+  document.title = `燭光牌桌 ─ ${d.title}`;
   $(".subtitle").textContent = d.sub;
   buildSpreadMenu();
   applyDeckBack();
