@@ -938,7 +938,7 @@ const LEN_SPREADS = [
     combos: () => [],
   },
   {
-    id:"gt", name:"大盤・Grand Tableau", count:36, cols:8,
+    id:"gt", name:"大盤・Grand Tableau", count:36, cols:8, gt:true,
     desc:"三十六張全數入陣，8 × 4 加底部命運四牌。含宮位對照。",
     positions:null,
     combos: () => [],
@@ -1767,6 +1767,9 @@ const GRA_SPREADS = [
       "過去 × 現實","核心","未來 × 現實",
       "過去 × 潛藏","現在 × 潛藏","未來 × 潛藏",
     ], combos: () => [] },
+  { id:"gra-gt", name:"大版圖・Grand Tableau", count:54, cols:9,  gt:true,
+    desc:"五十四張全數入陣，9 × 6 大版圖。含宮位對照與問卜者落點。",
+    positions:null, combos: () => [] },
 ];
 
 /* ── 易經 六十四卦（周易・文王卦序） ──────────
@@ -2407,7 +2410,7 @@ function resetTable() {
   $("#spread-title").textContent = spread.name;
   $("#spread-hint").textContent = spread.cast
     ? "三枚銅錢擲六次起卦——擲出動爻，之卦自現。"
-    : spread.id === "gt"
+    : spread.gt
     ? "洗牌切牌之後抽牌入盤——或交給命運一次抽完。"
     : "先洗牌、切牌，再點選你被吸引的那幾張。";
   $("#btn-reset").textContent = spread.cast ? "重新起卦" : "重新洗牌";
@@ -2622,7 +2625,7 @@ btnBegin.addEventListener("click", () => {
 /* 位置名稱（含大盤宮位與補牌） */
 function posName(i) {
   if (i >= spread.count) return spread.extend.labels[i - spread.count];
-  if (spread.id === "gt")
+  if (spread.gt)
     return `第 ${i + 1} 宮 ・ ${CARDS[i].zh}宮（${CARDS[i].keys.split("・")[0]}之所）`;
   if (spread.id === "houses")
     return `${HOUSES[i].label}（${HOUSES[i].sign}・${HOUSES[i].title}）`;
@@ -2632,7 +2635,7 @@ function posName(i) {
 /* ── 槽位 ─────────────────────────────────── */
 function buildSlots() {
   elSlots.innerHTML = "";
-  elSlots.classList.toggle("tableau", spread.id === "gt");
+  elSlots.classList.toggle("tableau", !!spread.gt);
   /* span2：以半格欄位排出金字塔的交錯置中（欄寬 = 半張牌扣掉半個間距） */
   elSlots.style.gridTemplateColumns = spread.span2
     ? `repeat(${spread.cols}, calc(var(--cw) / 2 - 7px))`
@@ -2645,7 +2648,7 @@ function buildSlots() {
 
     const label = document.createElement("div");
     label.className = "pos-label";
-    if (spread.id === "gt") {
+    if (spread.gt) {
       label.classList.add("house");
       label.textContent = `${CARDS[i].zh}宮`;
       label.title = `第 ${i + 1} 宮（${CARDS[i].zh}）：${CARDS[i].keys}`;
@@ -2847,10 +2850,11 @@ function gtHouseNote(card, slotIdx) {
     const h = HOUSES[slotIdx];
     return `<br><em>${h.label}（${h.sign}）掌管${h.title}：${h.hint}——${card.noun}正在這個領域發酵。</em>`;
   }
-  if (spread.id !== "gt") return "";
+  if (!spread.gt) return "";
   const house = CARDS[slotIdx];
   if (house.n === card.n) return `<br><em>此牌落在自己的宮位——「${card.zh}」的主題在此刻格外強烈。</em>`;
-  return `<br><em>落於${house.zh}宮：${card.noun}${house.mod}。</em>`;
+  if (card.noun && house.mod) return `<br><em>落於${house.zh}宮：${card.noun}${house.mod}。</em>`;
+  return `<br><em>落於${house.zh}宮（${house.keys.split("・")[0]}之所）——這張牌的訊息，正發生在「${house.zh}」掌管的領域。</em>`;
 }
 
 function finishReading() {
@@ -2876,14 +2880,17 @@ function finishReading() {
     elCombos.appendChild(block);
   }
 
-  if (spread.id === "gt") {
-    const man = drawn.findIndex((c) => c.n === 28);
-    const woman = drawn.findIndex((c) => c.n === 29);
+  if (spread.gt) {
+    /* 指示牌：雷諾曼為男人 28／女人 29，大雷諾曼為問卜者 1／問卜者(女) 2 */
+    const sigs = deckDef.id === "gra" ? [[1, "他"], [2, "她"]] : [[28, "他"], [29, "她"]];
+    const rows = sigs.map(([n, pron]) => {
+      const at = drawn.findIndex((c) => c.n === n);
+      const sig = CARDS.find((c) => c.n === n);
+      return `<p class="combo">「${sig.zh}」落在第 ${at + 1} 宮（${CARDS[at].zh}宮）——${pron}的處境圍繞著「${CARDS[at].keys.split("・")[0]}」。</p>`;
+    }).join("");
     const block = document.createElement("div");
     block.className = "combo-block";
-    block.innerHTML = `<div class="cb-title">指 示 牌 落 點</div>
-      <p class="combo">「男人」落在第 ${man + 1} 宮（${CARDS[man].zh}宮）——他的處境圍繞著「${CARDS[man].keys.split("・")[0]}」。</p>
-      <p class="combo">「女人」落在第 ${woman + 1} 宮（${CARDS[woman].zh}宮）——她的處境圍繞著「${CARDS[woman].keys.split("・")[0]}」。</p>
+    block.innerHTML = `<div class="cb-title">指 示 牌 落 點</div>${rows}
       <p class="combo" style="color:var(--ink-soft)">讀大盤時，以你的指示牌為中心：它周圍八張牌是眼下的處境，它注視的方向是未來。</p>`;
     elCombos.appendChild(block);
   }
@@ -2908,8 +2915,10 @@ function buildAiPrompt() {
   if (deckDef.reversible) L.push("本牌陣使用正逆位：逆位請解讀為該牌能量的受阻、延遲、內化或反面。");
   L.push("");
   L.push(`【盤面】${spread.name}（共 ${drawn.length} 張）`);
-  if (spread.id === "gt") {
-    L.push("排列方式：Grand Tableau 大盤，8×4 加底部置中 4 張（第 33–36 張）。第 n 張牌落在第 n 宮，宮位以傳統 36 張牌的順序命名。");
+  if (spread.gt) {
+    L.push(spread.id === "gt"
+      ? "排列方式：Grand Tableau 大盤，8×4 加底部置中 4 張（第 33–36 張）。第 n 張牌落在第 n 宮，宮位以傳統 36 張牌的順序命名。"
+      : "排列方式：Grand Tableau 大版圖，9×6 共五十四席。第 n 張牌落在第 n 宮，宮位以大雷諾曼五十四張牌的順序命名。");
   } else if (spread.id === "houses") {
     L.push("排列方式：占星十二宮位，每宮一張牌。宮位對應如下：");
     HOUSES.forEach((h) => L.push(`- ${h.label}（${h.sign}）｜${h.title}：${h.hint}`));
@@ -2935,8 +2944,10 @@ function buildAiPrompt() {
   L.push("1. 整體牌陣的基調與核心訊息");
   L.push("2. 逐一位置的解讀（牌義結合位置意義）");
   L.push("3. 相鄰或相關牌之間的組合意義");
-  if (spread.id === "gt") {
-    L.push("4. 以指示牌（男人／女人，視我的身分）為中心，解讀其周圍八張牌與注視方向");
+  if (spread.gt) {
+    L.push(deckDef.id === "gra"
+      ? "4. 以指示牌（問卜者／問卜者(女)，視我的身分）為中心，解讀其落宮、周圍八張牌與注視方向"
+      : "4. 以指示牌（男人／女人，視我的身分）為中心，解讀其周圍八張牌與注視方向");
     L.push(`5. 給問卜者的具體建議（${currentTone()}）`);
   } else {
     L.push(`4. 給問卜者的具體建議（${currentTone()}）`);
@@ -3255,6 +3266,11 @@ function showDictCard(i) {
         <p class="combo">作為句子的開頭（主詞）：<b>${c.noun}</b></p>
         <p class="combo">接在別張牌之後（謂語）：⋯⋯<b>${c.mod}</b></p>
         <p class="combo">大盤宮位：第 ${c.n} 宮・${c.zh}宮——落入此宮的牌，都${c.mod}。</p>
+      </div>`;
+  } else if (deckDef.id === "gra") {
+    extra = `
+      <div class="dict-sec"><div class="cb-title">大 版 圖 宮 位</div>
+        <p class="combo">第 ${c.n} 宮・${c.zh}宮（${c.keys.split("・")[0]}之所）——大版圖中落入此宮的牌，事情發生在「${c.zh}」掌管的領域。</p>
       </div>`;
   }
   const revBlock = deckDef.reversible && c.rtext
