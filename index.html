@@ -2524,7 +2524,9 @@ function doCut(pos) {
   }
   exitCutView();
   ritualStatus();
-  if (pos > 0) elRitualCaption.textContent = `已從第 ${pos + 1} 張切牌，下疊翻上成為牌頂。` + (shuffleCount ? "" : "（記得也要洗牌）");
+  elRitualCaption.textContent = pos > 0
+    ? `已從第 ${pos + 1} 張切牌，下疊翻上成為牌頂。` + (shuffleCount ? "" : "（記得也要洗牌）")
+    : "你點的是牌頂——等於不切，牌序保持原樣。想切牌請點第二張以後的位置。";
 }
 
 /* ── 擲卦（易經：三枚銅錢六擲起卦） ────────── */
