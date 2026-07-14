@@ -180,6 +180,18 @@
   .ghost-btn:hover, .ghost-btn:focus-visible { color: var(--gold-bright); border-color: var(--gold-dim); }
   .ghost-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
+  /* 問卜者之視：指示牌選擇 */
+  #sigpick-btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 560px; margin: 0 auto; }
+  .sig-btn {
+    font-family: inherit; font-size: 15px; letter-spacing: .1em;
+    background: none; border: 1px solid var(--felt-line); border-radius: 2px;
+    color: var(--gold-bright); padding: 10px 16px 8px; cursor: pointer;
+    transition: border-color .2s, background-color .2s;
+  }
+  .sig-btn span { display: block; font-size: 11.5px; letter-spacing: .05em; color: var(--muted); margin-top: 3px; }
+  .sig-btn:hover, .sig-btn:focus-visible { border-color: var(--gold-dim); background: rgba(201,164,92,.06); }
+  .sig-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
   /* 問題輸入 */
   .question-row {
     display: flex; align-items: center; gap: 14px;
@@ -633,6 +645,10 @@
     <div id="slots-scroll"><div id="slots"></div></div>
 
     <div id="deck-area">
+      <div id="sigpick" hidden>
+        <p class="deck-caption">先選你的指示牌——它代表這一問的主體，將置於陣的中央。</p>
+        <div id="sigpick-btns"></div>
+      </div>
       <div id="cast" hidden>
         <p class="deck-caption" id="cast-caption">三枚銅錢,擲六次——由下而上,六爻成卦。</p>
         <div id="cast-lines" aria-live="polite"></div>
@@ -936,6 +952,17 @@ const LEN_SPREADS = [
     desc:"占星十二宮位各落一張牌——從命宮到玄秘宮，一次掃描生活的十二個領域。",
     positions: HOUSES.map((h) => h.label),
     combos: () => [],
+  },
+  {
+    id:"sig-view", name:"問卜者之視", count:5, cols:3, sig:true,
+    desc:"承偉特置指示牌之古法：先擇一張指示牌置中——你，或你所問之事——再抽四張，看它眼前所求、身後過去、頭上所想、腳下現實。",
+    positions:["指示牌・中心","目視・所求（前方）","身後・過去","頭上・心中所想","腳下・立足的現實"],
+    sigs:[[28,"男人","以男性當事人為中心"],[29,"女人","以女性當事人為中心"],[24,"心","問感情"],[34,"魚","問財運與生意"],[35,"錨","問工作與長久之計"],[26,"書","問學問、計畫或未知之事"]],
+    place:[[2,2],[1,2],[3,2],[2,1],[2,3]],
+    combos: (d) => [
+      pair(d[0], d[1], "指示牌 × 目視（所求）"),
+      pair(d[0], d[4], "指示牌 × 腳下（現實）"),
+    ],
   },
   {
     id:"gt", name:"大盤・Grand Tableau", count:36, cols:8, gt:true,
@@ -1821,6 +1848,11 @@ const GRA_SPREADS = [
       "過去 × 現實","核心","未來 × 現實",
       "過去 × 潛藏","現在 × 潛藏","未來 × 潛藏",
     ], combos: () => [] },
+  { id:"gra-sig-view", name:"問卜者之視", count:5, cols:3, sig:true,
+    desc:"承偉特置指示牌之古法：先擇一張指示牌置中——你，或你所問之事——再抽四張，看它眼前所求、身後過去、頭上所想、腳下現實。",
+    positions:["指示牌・中心","目視・所求（前方）","身後・過去","頭上・心中所想","腳下・立足的現實"],
+    sigs:[[1,"問卜者","以男性當事人為中心"],[2,"問卜者(女)","以女性當事人為中心"],[11,"情場大捷","問感情"],[16,"財富之鑰","問財富"],[3,"家宅之喜","問家庭"],[42,"判決","問契約與是非"]],
+    place:[[2,2],[1,2],[3,2],[2,1],[2,3]], combos: () => [] },
   { id:"gra-gt", name:"大版圖・Grand Tableau", count:54, cols:9,  gt:true,
     desc:"五十四張全數入陣，9 × 6 大版圖。含宮位對照與問卜者落點。",
     positions:null, combos: () => [] },
@@ -2464,6 +2496,8 @@ function resetTable() {
   $("#spread-title").textContent = spread.name;
   $("#spread-hint").textContent = spread.cast
     ? "三枚銅錢擲六次起卦——擲出動爻，之卦自現。"
+    : spread.sig
+    ? "先選一張指示牌置中，再洗牌、切牌，抽出它的四方。"
     : spread.gt
     ? "洗牌切牌之後抽牌入盤——或交給命運一次抽完。"
     : "先洗牌、切牌，再點選你被吸引的那幾張。";
@@ -2481,7 +2515,11 @@ function resetTable() {
     $("#cast-caption").textContent = "三枚銅錢,擲六次——由下而上,六爻成卦。";
     renderCastLines();
   }
-  elRitual.hidden = isCast;
+  /* 問卜者之視:先擇指示牌置中,再走洗切抽流程 */
+  const isSig = !!spread.sig;
+  elSigPick.hidden = !isSig;
+  if (isSig) { phase = "sig"; renderSigPick(); }
+  elRitual.hidden = isCast || isSig;
   elStackWrap.hidden = false;
   elCutScroll.hidden = true;
   btnBegin.disabled = true;
@@ -2570,6 +2608,31 @@ btnCut.addEventListener("click", () => {
   if (elCutScroll.hidden) enterCutView();
   else { exitCutView(); ritualStatus(); }
 });
+
+/* ── 問卜者之視：指示牌選擇 ───────────────── */
+const elSigPick = $("#sigpick"), elSigBtns = $("#sigpick-btns");
+
+function renderSigPick() {
+  elSigBtns.innerHTML = "";
+  spread.sigs.forEach(([n, zh, hint]) => {
+    const b = document.createElement("button");
+    b.className = "sig-btn";
+    b.innerHTML = `${zh}<span>${hint}</span>`;
+    b.addEventListener("click", () => pickSig(n));
+    elSigBtns.appendChild(b);
+  });
+}
+
+function pickSig(n) {
+  if (phase !== "sig") return;
+  const idx = CARDS.findIndex((c) => c.n === n);
+  deck = deck.filter((i) => i !== idx);   /* 指示牌自牌堆取出，不再被抽到 */
+  elSigPick.hidden = true;
+  elRitual.hidden = false;
+  phase = "ritual";
+  placeCard(idx, false);                  /* 指示牌面朝上置中，恆為正位 */
+  elRitualCaption.textContent = `指示牌「${CARDS[idx].zh}」已置於陣中央——現在洗牌、切牌，抽出它的四方。`;
+}
 
 function doCut(pos) {
   if (pos > 0) {
@@ -2997,7 +3060,8 @@ function buildAiPrompt() {
   } else if (spread.id === "houses") {
     L.push("排列方式：占星十二宮位，每宮一張牌。宮位對應如下：");
     HOUSES.forEach((h) => L.push(`- ${h.label}（${h.sign}）｜${h.title}：${h.hint}`));
-  } else if (spread.positions) {
+  } else if (spread.sig) {
+    L.push(`排列方式：問卜者之視（承偉特置指示牌之法）。指示牌「${drawn[0].zh}」為事先指定、非隨機抽出，面朝上置於中央，代表這一問的主體；其餘四張自洗切後的牌堆抽出：左＝目視・所求（前方與未來）、右＝身後・過去、上＝頭上・心中所想、下＝腳下・立足的現實。`);
     L.push(`位置依序為：${spread.positions.join("、")}${drawn.length > spread.count ? "，另補兩張澄清牌" : ""}。`);
   }
   if (spread.cast && castInfo) {
@@ -3248,6 +3312,7 @@ function replayReading(rec) {
   phase = "draw";
   elRitual.hidden = true;
   elCast.hidden = true;        /* 重看不需要重擲 */
+  elSigPick.hidden = true;     /* 重看不需要重選指示牌 */
   castInfo = rec.cast || null;
   if (spread.cast && castInfo) {
     $("#spread-hint").textContent = castInfo.moving && castInfo.moving.length
@@ -3432,10 +3497,11 @@ if (location.search.includes("rwdtest")) {
     if (spread.cast) {
       for (let i = 0; i < 6; i++) btnThrow.click();   /* 擲卦盤面:擲滿六爻 */
     } else {
+      if (spread.sig) $("#sigpick-btns .sig-btn").click();   /* 問卜者之視:先選第一張指示牌 */
       deck = riffle(deck); shuffleCount++;
       btnBegin.disabled = false;
       btnBegin.click();
-      [...elFan.querySelectorAll(".fan-card")].slice(0, target).forEach((el, i) => {
+      [...elFan.querySelectorAll(".fan-card")].slice(0, target - drawn.length).forEach((el, i) => {
         el.classList.add("gone");
         placeCard(deck[i]);
       });
