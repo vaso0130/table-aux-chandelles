@@ -2405,9 +2405,12 @@ function resetTable() {
   phase = "ritual";
   shuffleCount = 0; cutCount = 0; ritualBusy = false;
   $("#spread-title").textContent = spread.name;
-  $("#spread-hint").textContent = spread.id === "gt"
+  $("#spread-hint").textContent = spread.cast
+    ? "三枚銅錢擲六次起卦——擲出動爻，之卦自現。"
+    : spread.id === "gt"
     ? "洗牌切牌之後抽牌入盤——或交給命運一次抽完。"
     : "先洗牌、切牌，再點選你被吸引的那幾張。";
+  $("#btn-reset").textContent = spread.cast ? "重新起卦" : "重新洗牌";
   buildSlots();
   buildStack();
   /* 擲卦盤面:以銅錢起卦,不走洗切抽流程 */
@@ -2595,6 +2598,11 @@ function finishCast() {
   $("#cast-caption").textContent = zhi
     ? `得「${yiShort(ben)}之${yiShort(zhi)}」——動爻:${moving.map((i) => YAO_NAMES[i]).join("、")};本卦為體,之卦為變。`
     : `得「${yiShort(ben)}」,六爻皆靜——以本卦卦辭為斷。`;
+  if (!zhi) {
+    /* 六爻皆靜:之卦格明確標示,不留懸念 */
+    const zhiLabel = elSlots.querySelector('.slot[data-idx="1"] .pos-label');
+    if (zhiLabel) zhiLabel.textContent = "之卦・無（六爻皆靜）";
+  }
   btnThrow.disabled = true;
   setTimeout(() => placeCard(ben - 1), 450);
   if (zhi) setTimeout(() => placeCard(zhi - 1), 1150);
