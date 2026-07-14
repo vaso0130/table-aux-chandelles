@@ -351,11 +351,11 @@
   #cut-strip { display: flex; width: max-content; margin: 0 auto; padding: 0 20px; }
   #cut-strip .fan-card { cursor: pointer; }
 
-  /* 專屬卡背（back.png 載入成功時啟用；缺圖退回花紋） */
+  /* 專屬卡背（各牌組一款；載入成功時啟用，缺圖退回花紋） */
   body.has-back .fan-card,
   body.has-back .stack-card,
   body.has-back .cface.back {
-    background: #1E2A4A url("cards/back.jpg") center / cover no-repeat;
+    background: #1E2A4A var(--back-url, url("cards/back.jpg")) center / cover no-repeat;
     border-color: rgba(201,164,92,.55);
   }
   body.has-back .cface.back::after { content: none; }
@@ -487,6 +487,55 @@
   #tip .tip-text { margin: 0; }
   #tip .tip-text em { color: var(--ink-soft); }
 
+  /* ── 牌義字典 ─────────────────────────────── */
+  .dict-hint { text-align: center; color: var(--muted); font-size: 13.5px; margin: -6px 0 20px; }
+  #dict-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    gap: 14px 12px;
+  }
+  .dict-card {
+    font-family: inherit;
+    background: none; border: none; padding: 5px;
+    cursor: pointer; text-align: center;
+    border-radius: 6px;
+    transition: background-color .2s;
+  }
+  .dict-card:hover, .dict-card:focus-visible { background: rgba(201,164,92,.08); }
+  .dict-card:focus-visible { outline: 1px solid var(--gold-dim); }
+  .dict-card .dc-img {
+    width: 100%; display: block;
+    border-radius: 5px;
+    border: 1px solid rgba(201,164,92,.35);
+  }
+  .dict-card .dc-glyph {
+    width: 100%; height: 118px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px;
+    background: linear-gradient(170deg, var(--ivory), var(--ivory-shade));
+    border: 1px solid var(--gold-dim); border-radius: 5px;
+    filter: sepia(.35) saturate(.8);
+  }
+  .dict-card .dc-name { font-size: 12.5px; color: var(--ivory); margin-top: 7px; letter-spacing: .08em; }
+  .dict-card .dc-sub { font-size: 10.5px; color: var(--muted); margin-top: 2px; letter-spacing: .06em; }
+  #dict-detail { margin-top: 26px; }
+  .dict-head { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+  .dict-head .dd-img {
+    width: 150px; display: block;
+    border-radius: 8px; border: 1px solid var(--gold-dim);
+    box-shadow: 0 10px 26px rgba(0,0,0,.25);
+  }
+  .dict-head .dd-glyph {
+    width: 150px; height: 225px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 64px;
+    background: linear-gradient(170deg, var(--ivory), var(--ivory-shade));
+    border: 1px solid var(--gold-dim); border-radius: 8px;
+    filter: sepia(.35) saturate(.8);
+  }
+  .dict-head .dd-meta { flex: 1; min-width: 220px; }
+  .dict-sec { border-top: 1px solid rgba(138,114,69,.3); margin-top: 18px; padding-top: 16px; }
+
   footer {
     text-align: center; color: var(--muted); opacity: .7;
     font-size: 12px; letter-spacing: .2em; margin-top: 64px;
@@ -593,6 +642,13 @@
     <div class="deck-tools">
       <button class="ghost-btn" id="btn-hist-clear" hidden>清空全部歷史</button>
     </div>
+  </section>
+
+  <section id="dict">
+    <p class="section-label">牌義字典</p>
+    <p class="dict-hint">目前牌組的每一張牌都在這裡——點開學習定義、正逆位，以及它落在不同位置時的讀法。</p>
+    <div id="dict-grid"></div>
+    <div id="dict-detail" class="paper" hidden></div>
   </section>
 
   <footer>牌面依十九世紀式樣重繪 · 牌序由你的手決定 · 僅供靜心與娛樂</footer>
@@ -1056,16 +1112,260 @@ const SIB_SPREADS = [
   },
 ];
 
+/* ── 貝林神諭 五十三張（L'Oracle Belline, 1863） ──
+   三張主牌（命運、男性之星、女性之星）＋七星體各七張
+   （太陽、月亮、水星、金星、火星、木星、土星）＋藍卡守護牌。
+   正逆位皆可讀：text＝正位、rtext＝逆位。               */
+const BEL_CARDS = [
+  /* ★ 主牌 */
+  { n:1,  zh:"命運",     latin:"La Destinée",        glyph:"🌌", pol:"mid",  keys:"命運・轉折・道路・啟示",
+    text:"命運之輪開始轉動——一個重要的轉捩點就在眼前。這張牌指向你此生正走的路，周圍的牌訴說它將轉向何方。",
+    rtext:"逆位時，你或許正在抗拒命運的推動：該轉彎的地方硬要直行。放軟一點，讓路帶著你走。" },
+  { n:2,  zh:"男性之星", latin:"L'Étoile de l'Homme", glyph:"🌟", pol:"mid", keys:"男性・當事人・他・指示牌",
+    text:"代表問卜者本人（男性）或生命中重要的男性。他站在牌陣的哪裡、身旁是誰，就是他的處境。",
+    rtext:"逆位時，這位男性正處於低潮或自我懷疑，能量被壓抑。先把他扶正，再看周圍的牌。" },
+  { n:3,  zh:"女性之星", latin:"L'Étoile de la Femme", glyph:"💫", pol:"mid", keys:"女性・當事人・她・指示牌",
+    text:"代表問卜者本人（女性）或生命中重要的女性。她站在牌陣的哪裡、身旁是誰，就是她的處境。",
+    rtext:"逆位時，這位女性正處於低潮或迷惘，光被雲遮住了。溫柔地等她亮回來。" },
+  /* ☉ 太陽 */
+  { n:4,  zh:"誕生",     latin:"La Nativité",   glyph:"🌅", pol:"good", keys:"新生・開端・黎明・希望",
+    text:"太陽升起：一個嶄新的開始——新計畫、新關係、新生命。一切都還帶著露水，前景光明。",
+    rtext:"逆位時，新的開始被推遲，或起步時磕磕絆絆。黎明不會缺席，只是來得慢一些。" },
+  { n:5,  zh:"成功",     latin:"La Réussite",   glyph:"🏆", pol:"good", keys:"成功・達成・勝利・豐收",
+    text:"努力開花結果：目標達成、計畫成功。太陽家族最實在的一張——你值得這份成果。",
+    rtext:"逆位時，成功延後或打了折扣。差的不是實力，是火候；再燒一會兒。" },
+  { n:6,  zh:"晉升",     latin:"L'Élévation",   glyph:"🦅", pol:"good", keys:"高升・進階・抱負・視野",
+    text:"像鷹一樣上升：升遷、地位提高、境界開闊。你正被抬向更高的位置，站穩了。",
+    rtext:"逆位時，上升的氣流減弱：晉升受阻或高處不勝寒。先鞏固現在的高度。" },
+  { n:7,  zh:"榮耀",     latin:"Honneurs",      glyph:"🏅", pol:"good", keys:"榮譽・肯定・聲望・加冕",
+    text:"榮耀加身：獎賞、表彰、眾人的肯定。你的名字被鄭重地說出來。",
+    rtext:"逆位時，該來的肯定遲遲未到，或虛名多於實質。把事做好，掌聲會補上。" },
+  { n:8,  zh:"思念",     latin:"Pensée-Amitié", glyph:"💭", pol:"good", keys:"思念・友誼・掛念・善意",
+    text:"有人正想著你——一份真誠的友誼、一顆掛念你的心。溫柔的念頭正朝你飛來。",
+    rtext:"逆位時，思念變成單向，或友誼淡了。想誰，就主動告訴誰。" },
+  { n:9,  zh:"田園",     latin:"Campagne-Santé", glyph:"🌾", pol:"good", keys:"健康・田園・休養・自然",
+    text:"回到自然的節奏：健康良好、身心舒展，或一段鄉間的休養時光。土地會把力氣還給你。",
+    rtext:"逆位時，身體在提醒你慢下來：疲勞累積、作息失衡。先養好，再拚。" },
+  { n:10, zh:"禮物",     latin:"Présents",      glyph:"🎁", pol:"good", keys:"禮物・餽贈・驚喜・報償",
+    text:"一份禮物正在路上：餽贈、好處或一個貼心的驚喜。大方收下，也記得回禮。",
+    rtext:"逆位時，禮物遲到，或背後另有所圖。看清送禮的手，再伸出你的手。" },
+  /* ☽ 月亮 */
+  { n:11, zh:"背叛",     latin:"Trahison",      glyph:"🐍", pol:"bad",  keys:"背叛・欺瞞・暗流・失信",
+    text:"月光下有影子在動：背叛、欺瞞或口是心非。別把所有的信任放在同一個人身上。",
+    rtext:"逆位時，背叛即將敗露，或傷害比預期輕。看清了人，就別再回頭試探。" },
+  { n:12, zh:"啟程",     latin:"Départ",        glyph:"⛵", pol:"mid",  keys:"出發・離別・旅程・移動",
+    text:"該啟程了：一趟旅行、一次離別或一個階段的告別。行囊收拾好，路已經在等。",
+    rtext:"逆位時，出發被耽擱，或你其實還捨不得走。想清楚是誰在拉住你。" },
+  { n:13, zh:"無常",     latin:"Inconstance",   glyph:"🌗", pol:"bad",  keys:"善變・不定・搖擺・浮動",
+    text:"月有陰晴圓缺：情勢反覆、人心搖擺，說好的事可能生變。別在流沙上蓋房子。",
+    rtext:"逆位時，搖擺開始收斂，情勢逐漸定下來。等塵埃落定再做決定。" },
+  { n:14, zh:"發現",     latin:"Découverte",    glyph:"🔍", pol:"good", keys:"發現・揭露・真相・靈光",
+    text:"謎底揭曉：一個發現、一個真相或一道靈光。看見了，就回不去無知——這是好事。",
+    rtext:"逆位時，真相還藏在霧裡，或你不太想看見它。慢慢來，眼睛會適應。" },
+  { n:15, zh:"水",       latin:"L'Eau",         glyph:"🌊", pol:"mid",  keys:"情感・直覺・流動・淨化",
+    text:"水在流動：情緒、直覺與潛意識的訊息。順流而下比逆流掙扎省力——先感受，再判斷。",
+    rtext:"逆位時，情緒氾濫或直覺失靈。先上岸，把自己晾乾再說。" },
+  { n:16, zh:"家神",     latin:"Les Pénates",   glyph:"🏠", pol:"good", keys:"家庭・庇護・歸屬・安居",
+    text:"家神守著爐火：家庭和睦、居所安穩，一個可以完全放鬆的地方。回家吧。",
+    rtext:"逆位時，家的溫度降了：口角、疏離或居所的煩惱。爐火要有人添柴。" },
+  { n:17, zh:"疾病",     latin:"Maladie",       glyph:"🌡️", pol:"bad",  keys:"病痛・虛弱・警訊・休息",
+    text:"身心發出警訊：疾病、虛弱或深層的倦怠。這張牌唯一的指令：停下來，照顧自己。",
+    rtext:"逆位時，病勢轉緩、康復開始。別急著全速前進，痊癒有自己的節奏。" },
+  /* ☿ 水星 */
+  { n:18, zh:"變化",     latin:"Changement",    glyph:"🦋", pol:"mid",  keys:"改變・轉換・更新・過渡",
+    text:"改變來了：環境、工作或心境的轉換。蛹裡的日子不舒服，但翅膀正在成形。",
+    rtext:"逆位時，改變卡在半途，或你在抗拒必要的轉換。舊殼不脫，新皮長不出來。" },
+  { n:19, zh:"金錢",     latin:"Argent",        glyph:"💰", pol:"good", keys:"金錢・收入・價值・流通",
+    text:"財源流動：進帳、報酬或一筆及時的錢。錢是工具不是目的——讓它為你做事。",
+    rtext:"逆位時，金流受阻或開銷失控。先堵漏洞，再談開源。" },
+  { n:20, zh:"才智",     latin:"Intelligence",  glyph:"💡", pol:"good", keys:"才智・機敏・分析・解方",
+    text:"腦筋正亮：好點子、快分析、對的判斷。這一局用腦不用力——想清楚再出手。",
+    rtext:"逆位時，聰明反被聰明誤，或想太多而錯過時機。簡單的答案往往是對的。" },
+  { n:21, zh:"失竊",     latin:"Vol-Perte",     glyph:"🥷", pol:"bad",  keys:"失竊・損失・流失・提防",
+    text:"有東西正在失去：財物、機會或信任被悄悄拿走。清點你的口袋，鎖好你的門。",
+    rtext:"逆位時，失物可能復得，或損失止住了。記住教訓，補上那道鎖。" },
+  { n:22, zh:"事業",     latin:"Entreprises",   glyph:"🛠️", pol:"good", keys:"事業・計畫・開創・執行",
+    text:"動工的時刻：新事業、新計畫正要展開。藍圖已畫好，捲起袖子來蓋。",
+    rtext:"逆位時，計畫停擺或資源不到位。先把地基打穩，別急著上樑。" },
+  { n:23, zh:"商貿",     latin:"Trafic",        glyph:"🪙", pol:"mid",  keys:"交易・往來・斡旋・利益",
+    text:"生意往來熱絡：交易、斡旋、利益的流轉。檯面上談得攏，但條款要看仔細。",
+    rtext:"逆位時，交易背後有貓膩，或往來只是空轉。帳目攤開，再決定續不續。" },
+  { n:24, zh:"消息",     latin:"Nouvelle",      glyph:"📨", pol:"mid",  keys:"消息・通知・信件・傳達",
+    text:"一則消息正要抵達：信件、電話或口信。內容吉凶看周圍的牌——先把信箱清空。",
+    rtext:"逆位時，消息延誤、失真或令人失望。查證來源，別讓一句話攪亂一池水。" },
+  /* ♀ 金星 */
+  { n:25, zh:"逸樂",     latin:"Plaisirs",      glyph:"🥂", pol:"good", keys:"享樂・愉悅・慶祝・滋養",
+    text:"生活的甜：宴飲、慶祝、感官的愉悅。允許自己好好享受——這也是一種滋養。",
+    rtext:"逆位時，樂過了頭或樂不起來。節制與品味，是享樂的兩隻手。" },
+  { n:26, zh:"和平",     latin:"La Paix",       glyph:"🕊️", pol:"good", keys:"和平・和解・平靜・修復",
+    text:"干戈化為玉帛：爭執平息、關係修復、內心回到安寧。深呼吸，仗打完了。",
+    rtext:"逆位時，和平還脆弱，停火而未和解。別急著揭傷疤，先把橋修好。" },
+  { n:27, zh:"結合",     latin:"Union",         glyph:"💍", pol:"good", keys:"結合・盟約・婚姻・合夥",
+    text:"兩條線結成一股繩：婚姻、盟約、合夥。彼此承諾的事，會走得比想像更遠。",
+    rtext:"逆位時，結合有了裂縫或步調不一。繩子鬆了就重新編，別等它斷。" },
+  { n:28, zh:"家庭",     latin:"Famille",       glyph:"👨‍👩‍👧", pol:"good", keys:"家人・親情・團聚・支持",
+    text:"家人圍坐：親情的溫暖、家族的支持、一次團聚。你不是一個人在走。",
+    rtext:"逆位時，家裡有心結或聚少離多。血緣不會自動變成親密——要經營。" },
+  { n:29, zh:"愛",       latin:"Amour",         glyph:"❤️", pol:"good", keys:"愛情・真心・吸引・幸福",
+    text:"愛正當頭：戀情萌芽或感情加溫，真心被真心接住。金星家族最亮的一張。",
+    rtext:"逆位時，愛蒙上陰影：錯過、單戀或心結。愛還在，先把話說開。" },
+  { n:30, zh:"宴席",     latin:"La Table",      glyph:"🍽️", pol:"good", keys:"豐盛・聚會・款待・共享",
+    text:"桌上有豐盛的一餐：聚會、款待、物質的富足。找人一起分享，福氣會加倍。",
+    rtext:"逆位時，餐桌冷清或入不敷出。豐盛從感恩現有的開始。" },
+  { n:31, zh:"激情",     latin:"Passions",      glyph:"🌹", pol:"mid",  keys:"激情・慾望・熾烈・沉溺",
+    text:"火一般的感情：熾烈的愛、強烈的渴望。它能點亮你，也能燒著你——握好火把。",
+    rtext:"逆位時，激情失控或迅速冷卻。分清楚是愛，還是癮。" },
+  /* ♂ 火星 */
+  { n:32, zh:"惡意",     latin:"Méchanceté",    glyph:"🕷️", pol:"bad",  keys:"惡意・中傷・小人・暗箭",
+    text:"有惡意在暗處結網：中傷、閒話、使絆子的人。行得正之外，也要看好背後。",
+    rtext:"逆位時，惡意漸退或搬石頭砸了自己的腳。不必反擊，時間會清算。" },
+  { n:33, zh:"訴訟",     latin:"Procès",        glyph:"⚖️", pol:"bad",  keys:"訴訟・糾紛・對簿・是非",
+    text:"是非對簿公堂：訴訟、申訴或難分難解的糾紛。文件備齊、證據留好，別靠運氣。",
+    rtext:"逆位時，糾紛有望庭外和解，或判決對你有利。能和則和，贏了官司別輸了人。" },
+  { n:34, zh:"專橫",     latin:"Despotisme",    glyph:"👊", pol:"bad",  keys:"壓迫・強權・控制・霸道",
+    text:"一股壓人的力量：專橫的上位者、被控制的關係。低頭不等於認輸——保存實力，等待時機。",
+    rtext:"逆位時，高壓開始鬆動，或你終於挺直了腰。界線畫下去，就別再擦掉。" },
+  { n:35, zh:"敵人",     latin:"Ennemis",       glyph:"⚔️", pol:"bad",  keys:"敵人・對立・競爭・防備",
+    text:"對面有人與你為敵：競爭者、反對者或懷恨的人。知己知彼——先弄清楚他要什麼。",
+    rtext:"逆位時，敵意消退或敵人自亂陣腳。警戒降級，風度不能降。" },
+  { n:36, zh:"談判",     latin:"Pourparlers",   glyph:"🤝", pol:"mid",  keys:"談判・協商・折衝・對話",
+    text:"坐上談判桌：協商、折衝、把立場攤開來談。話說得好，刀就不用出鞘。",
+    rtext:"逆位時，談判膠著或誠意不足。先聽懂對方要什麼，再開你的價。" },
+  { n:37, zh:"火",       latin:"Feu",           glyph:"🔥", pol:"mid",  keys:"能量・爆發・淨化・危險",
+    text:"火在燒：巨大的能量、突然的爆發。它可以煉金，也可以燎原——看你把它放在哪裡。",
+    rtext:"逆位時，火勢失控或熱情燒盡。收攏火苗，留著過冬。" },
+  { n:38, zh:"意外",     latin:"Accident",      glyph:"⚡", pol:"bad",  keys:"意外・突發・打擊・警覺",
+    text:"天有不測風雲：突發的事故或打擊。繫好安全帶，重要的事留備份。",
+    rtext:"逆位時，意外擦身而過或有驚無險。這是警鐘——趁現在檢查每一顆螺絲。" },
+  /* ♃ 木星 */
+  { n:39, zh:"支持",     latin:"Appui",         glyph:"🛡️", pol:"good", keys:"奧援・靠山・保護・貴人",
+    text:"背後有靠山：貴人、資源、有力的保護。需要幫忙就開口——援手已經伸出來了。",
+    rtext:"逆位時，靠山靠不住或援助有條件。感謝之餘，練好自己站穩的腿。" },
+  { n:40, zh:"美麗",     latin:"Beauté",        glyph:"🌺", pol:"good", keys:"美・和諧・魅力・欣賞",
+    text:"美在綻放：和諧的關係、動人的魅力、值得欣賞的一切。把自己活成喜歡的樣子。",
+    rtext:"逆位時，美被忽略或流於表面。擦亮眼睛——真正的美不在濾鏡裡。" },
+  { n:41, zh:"繼承",     latin:"Héritage",      glyph:"📜", pol:"good", keys:"繼承・遺產・傳承・果實",
+    text:"前人種樹：遺產、繼承或一份傳承下來的果實。接住它，也想想你要留下什麼。",
+    rtext:"逆位時，繼承有糾葛或遲遲未定。白紙黑字寫清楚，親情才不會被數字磨損。" },
+  { n:42, zh:"睿智",     latin:"Sagesse",       glyph:"🦉", pol:"good", keys:"智慧・沉穩・洞察・分寸",
+    text:"貓頭鷹睜著眼：深思熟慮、洞察全局的智慧。少說兩句，多看一步。",
+    rtext:"逆位時，智慧被情緒蓋過，或過度謹慎錯失良機。想七分，做三分，開始吧。" },
+  { n:43, zh:"名聲",     latin:"La Renommée",   glyph:"🎺", pol:"good", keys:"名聲・聲望・傳揚・口碑",
+    text:"號角為你吹響：名聲遠播、口碑發酵。被看見的時刻到了——站好，別怯場。",
+    rtext:"逆位時，名聲有雜音或譽不符實。經營口碑不如經營實力。" },
+  { n:44, zh:"機緣",     latin:"Le Hasard",     glyph:"🎲", pol:"mid",  keys:"機運・偶然・賭注・變數",
+    text:"骰子在空中：一個偶然、一次機緣、一場值得的冒險。運氣偏愛敢伸手的人。",
+    rtext:"逆位時，賭注太大或時機不對。留住本錢，等下一把好牌。" },
+  { n:45, zh:"幸福",     latin:"Bonheur",       glyph:"☀️", pol:"good", keys:"幸福・圓滿・順遂・光明",
+    text:"木星家族最亮的一張：幸福、圓滿、諸事順遂。好日子來了——記得抬頭看看太陽。",
+    rtext:"逆位時，幸福被小事遮住了。它沒有走遠，換個角度就看得見。" },
+  /* ♄ 土星 */
+  { n:46, zh:"不幸",     latin:"Infortune",     glyph:"🌩️", pol:"bad",  keys:"不順・挫折・低谷・磨練",
+    text:"烏雲罩頂：挫折、逆境、諸事不順。土星的功課從不討喜，但都算數——撐過去就是你的。",
+    rtext:"逆位時，霉運見底，情勢開始回穩。抖掉泥，繼續走。" },
+  { n:47, zh:"荒蕪",     latin:"Stérilité",     glyph:"🥀", pol:"bad",  keys:"停滯・枯竭・徒勞・休耕",
+    text:"田地荒著：計畫不結果、努力不見效、靈感枯竭。有些季節就是用來休耕的。",
+    rtext:"逆位時，荒地冒出綠芽，枯竭開始緩解。小小的萌發也要當真照顧。" },
+  { n:48, zh:"宿命",     latin:"Fatalité",      glyph:"🌑", pol:"bad",  keys:"宿命・不可抗・課題・承受",
+    text:"有些事不由人：不可抗的變局、必須面對的課題。改變不了的就承受，承受不了的就求助。",
+    rtext:"逆位時，命運的鉗子鬆了一點，事情有轉圜。在能動的地方全力動。" },
+  { n:49, zh:"恩典",     latin:"La Grâce",      glyph:"🕯️", pol:"good", keys:"恩典・轉圜・救贖・饒恕",
+    text:"土星家族裡的一盞燈：絕處逢生的恩典、意外的寬恕與轉圜。你被溫柔地接住了。",
+    rtext:"逆位時，恩典還在路上，或你不肯原諒（別人或自己）。先鬆開拳頭，才接得住禮物。" },
+  { n:50, zh:"崩毀",     latin:"Ruine",         glyph:"🏚️", pol:"bad",  keys:"崩塌・損毀・歸零・重建",
+    text:"有東西塌了：計畫、財務或一段關係的崩毀。廢墟不是終點——是重建的工地。",
+    rtext:"逆位時，崩塌止住了，損失比想像中小。清點還站著的，從那裡蓋起。" },
+  { n:51, zh:"延遲",     latin:"Retard",        glyph:"⌛", pol:"bad",  keys:"延遲・等待・受阻・熟成",
+    text:"事情慢了下來：延誤、受阻、遙遙無期的等待。土星在教你一件事——好東西需要時間。",
+    rtext:"逆位時，僵局鬆動，進度重新啟動。把等待期間磨的刀拿出來用。" },
+  { n:52, zh:"隱修",     latin:"Cloître",       glyph:"🔔", pol:"mid",  keys:"獨處・靜修・沉澱・內觀",
+    text:"退回內心的迴廊：獨處、靜修、與自己對話的時光。安靜不是空白，是深呼吸。",
+    rtext:"逆位時，獨處變成逃避，或你已經靜得夠久了。鐘響了——該回到人間。" },
+  /* ❖ 藍卡 */
+  { n:53, zh:"藍卡",     latin:"Carte Bleue",   glyph:"💠", pol:"good", keys:"守護・恩寵・化解・平安",
+    text:"至高的守護：無論局面多難，有一股看不見的力量護著你。它出現的地方，凶牌的鋒芒都被鈍化。",
+    rtext:"藍卡沒有真正的逆位——守護依然成立，只是提醒你：奇蹟也需要你伸出手去接。" },
+];
+
+const BEL_SLUGS = ["destinee","etoile-homme","etoile-femme","nativite","reussite","elevation","honneurs","pensee-amitie","campagne-sante","presents","trahison","depart","inconstance","decouverte","eau","penates","maladie","changement","argent","intelligence","vol-perte","entreprises","trafic","nouvelle","plaisirs","paix","union","famille","amour","table","passions","mechancete","proces","despotisme","ennemis","pourparlers","feu","accident","appui","beaute","heritage","sagesse","renommee","hasard","bonheur","infortune","sterilite","fatalite","grace","ruine","retard","cloitre","carte-bleue"];
+const BEL_FAMILIES = [
+  ["★","主牌",   1,  3],
+  ["☉","太陽",   4, 10],
+  ["☽","月亮",  11, 17],
+  ["☿","水星",  18, 24],
+  ["♀","金星",  25, 31],
+  ["♂","火星",  32, 38],
+  ["♃","木星",  39, 45],
+  ["♄","土星",  46, 52],
+  ["❖","守護牌", 53, 53],
+];
+BEL_CARDS.forEach((c, i) => {
+  const f = BEL_FAMILIES.find((x) => c.n >= x[2] && c.n <= x[3]);
+  c.pks = c.n === 53 ? "❖" : f[0] + c.n;   /* 牌面角標：☉5 */
+  c.pk = f[1];                              /* 口語：太陽家族 */
+  c.img = "cards-belline/" + String(c.n).padStart(2, "0") + "-" + BEL_SLUGS[i] + ".jpg";
+});
+
+/* ── 盤面定義（貝林神諭） ──────────────────── */
+const BEL_SPREADS = [
+  {
+    id:"bel-daily", name:"單卡・今日神諭", count:1, cols:1,
+    desc:"一張牌、一個正逆——今天星辰為你留的一句話。",
+    positions:["今日神諭"],
+    combos: () => [],
+  },
+  {
+    id:"bel-three", name:"三卡・時間之流", count:3, cols:3,
+    desc:"過去、現在、未來——正逆位決定每一段的順流或逆流。",
+    positions:["過去","現在","未來"],
+    combos: () => [],
+  },
+  {
+    id:"bel-cross", name:"五卡・十字陣", count:5, cols:3,
+    desc:"中央是核心，左右是來路與去向，上下是意識與潛流。",
+    positions:["核心現況","過去・來路","未來・去向","意識・目標","潛流・根基"],
+    place:[[2,2],[1,2],[3,2],[2,1],[2,3]],
+    combos: () => [],
+  },
+  {
+    id:"bel-seven", name:"七卡・七星陣", count:7, cols:7,
+    desc:"貝林專屬：七個位置對應七星體的領域，一次掃描生活的七個面向。",
+    positions:[
+      "☉ 太陽・成就與榮耀","☽ 月亮・情緒與變動","☿ 水星・消息與財源",
+      "♀ 金星・情感與人和","♂ 火星・衝突與行動","♃ 木星・機運與庇佑",
+      "♄ 土星・課題與考驗",
+    ],
+    combos: () => [],
+  },
+  {
+    id:"bel-nine", name:"九宮格・全景", count:9, cols:3,
+    desc:"3 × 3 的完整快照：橫向是時間，縱向是層次，中央是核心。",
+    positions:[
+      "過去 × 想法","現在 × 想法","未來 × 想法",
+      "過去 × 現實","核心","未來 × 現實",
+      "過去 × 潛藏","現在 × 潛藏","未來 × 潛藏",
+    ],
+    combos: () => [],
+  },
+];
+
 /* ── 牌組註冊表 ───────────────────────────── */
 const DECKS = [
   { id:"len", name:"雷諾曼", short:"Petit Lenormand · 36 張",
     eyebrow:"Petit Lenormand · MDCCCXLVI", title:"雷諾曼占卜",
     sub:"燭已點好。三十六張牌裡，藏著你尚未聽見的答案。",
-    cards: LEN_CARDS, spreads: LEN_SPREADS, reversible:false, preload:true },
+    cards: LEN_CARDS, spreads: LEN_SPREADS, reversible:false, preload:true,
+    back:"cards/back.jpg" },
   { id:"sib", name:"西碧拉", short:"Vera Sibilla · 52 張 · 正逆位",
     eyebrow:"Vera Sibilla Italiana", title:"西碧拉占卜",
     sub:"五十二張牌，正與逆之間，低語著命運的細節。",
-    cards: SIB_CARDS, spreads: SIB_SPREADS, reversible:true, preload:true },
+    cards: SIB_CARDS, spreads: SIB_SPREADS, reversible:true, preload:true,
+    back:"cards-sibilla/back.jpg" },
+  { id:"bel", name:"貝林神諭", short:"Oracle Belline · 53 張 · 正逆位",
+    eyebrow:"L'Oracle Belline · MDCCCLXIII", title:"貝林神諭",
+    sub:"七大星體、五十三道低語——星辰早已寫好給你的信。",
+    cards: BEL_CARDS, spreads: BEL_SPREADS, reversible:true, preload:true,
+    back:"cards-belline/back.jpg" },
 ];
 let deckDef = DECKS[0];
 let CARDS = deckDef.cards;      /* 目前牌組的牌（其餘程式一律讀這兩個） */
@@ -1093,12 +1393,18 @@ const elCutScroll = $("#cut-scroll"), elCutStrip = $("#cut-strip");
 const btnShuffle = $("#btn-shuffle"), btnCut = $("#btn-cut"), btnBegin = $("#btn-begin");
 const elFanScroll = $("#fan-scroll");
 
-/* 專屬卡背：載入成功才啟用圖片卡背 */
-(function () {
+/* 專屬卡背：每副牌一款，載入成功才啟用圖片卡背 */
+function applyDeckBack() {
+  const src = deckDef.back;
   const probe = new Image();
-  probe.onload = () => document.body.classList.add("has-back");
-  probe.src = "cards/back.jpg";
-})();
+  probe.onload = () => {
+    document.body.classList.add("has-back");
+    document.body.style.setProperty("--back-url", `url("${src}")`);
+  };
+  probe.onerror = () => document.body.classList.remove("has-back");
+  probe.src = src;
+}
+applyDeckBack();
 
 /* 加密級 0–1 隨機數 */
 function rand01() {
@@ -1151,10 +1457,12 @@ function selectDeck(d) {
   $("h1").textContent = d.title;
   $(".subtitle").textContent = d.sub;
   buildSpreadMenu();
+  applyDeckBack();
   spread = null;
   elTable.classList.remove("on");
   elReading.classList.remove("on");
   hideTip();
+  if (typeof renderDict === "function") renderDict();
 }
 
 /* ── 盤面選單 ─────────────────────────────── */
@@ -1454,7 +1762,7 @@ function placeCard(cardIdx, forcedRev) {
   const well = elSlots.querySelector(`.slot[data-idx="${slotIdx}"] .card-well`);
   well.classList.add("filled");
 
-  const corner = deckDef.id === "sib" ? card.pks : `№ ${card.n}`;
+  const corner = card.pks || `№ ${card.n}`;
   const mark = rev
     ? `<span class="pol bad">⟲</span>`
     : `<span class="pol ${card.pol}">${POL_MARK[card.pol].slice(0, 1)}</span>`;
@@ -1597,9 +1905,11 @@ function finishReading() {
 /* ── AI 解讀提示詞 ────────────────────────── */
 function buildAiPrompt() {
   const L = [];
-  L.push(deckDef.id === "sib"
-    ? "你是一位經驗豐富的義大利西碧拉（Vera Sibilla Italiana）占卜解讀師，熟悉五十二張牌的牌義、正逆位差異、位置意義與牌與牌之間的組合技法。請以繁體中文為我解讀以下牌陣。"
-    : "你是一位經驗豐富的雷諾曼（Petit Lenormand）占卜解讀師，熟悉牌義、位置意義與牌與牌之間的組合技法。請以繁體中文為我解讀以下牌陣。");
+  L.push({
+    len:"你是一位經驗豐富的雷諾曼（Petit Lenormand）占卜解讀師，熟悉牌義、位置意義與牌與牌之間的組合技法。請以繁體中文為我解讀以下牌陣。",
+    sib:"你是一位經驗豐富的義大利西碧拉（Vera Sibilla Italiana）占卜解讀師，熟悉五十二張牌的牌義、正逆位差異、位置意義與牌與牌之間的組合技法。請以繁體中文為我解讀以下牌陣。",
+    bel:"你是一位經驗豐富的貝林神諭卡（L'Oracle Belline）占卜解讀師，熟悉五十三張牌、七星體家族的象徵、正逆位差異與位置意義。請以繁體中文為我解讀以下牌陣。",
+  }[deckDef.id]);
   if (deckDef.reversible) L.push("本牌陣使用正逆位：逆位請解讀為該牌能量的受阻、延遲、內化或反面。");
   L.push("");
   L.push(`【盤面】${spread.name}（共 ${drawn.length} 張）`);
@@ -1614,7 +1924,7 @@ function buildAiPrompt() {
   L.push("");
   L.push("【抽牌結果】（依抽出順序）");
   drawn.forEach((c, i) => {
-    L.push(deckDef.id === "sib"
+    L.push(deckDef.reversible
       ? `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（${c.pk}，${drawnRev[i] ? "逆位" : "正位"}）— 關鍵詞：${c.keys}`
       : `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（№${c.n}，撲克對應 ${c.pk}）— 關鍵詞：${c.keys}`);
   });
@@ -1871,6 +2181,116 @@ function replayReading(rec) {
 }
 
 renderHistory();
+
+/* ── 牌義字典 ─────────────────────────────── */
+const elDictGrid = $("#dict-grid"), elDictDetail = $("#dict-detail");
+
+/* 八種常見位置的讀法：依牌的關鍵詞與吉凶組句 */
+function dictPosLines(c) {
+  const K = c.keys.split("・");
+  const last = K[K.length - 1];
+  const isLen = deckDef.id === "len";
+  return [
+    ["過去・根源", isLen
+      ? `${c.noun}是這件事的來處，它的影響仍未散去。`
+      : `事情的來處帶著「${K[0]}」的痕跡——${c.zh}的能量塑造了現在的局面。`],
+    ["現在・處境", `此刻的主旋律是「${K[0]}」：${c.zh}正當令，先讀懂它，再決定動作。`],
+    ["未來・去向", isLen
+      ? `前方的路上，${c.noun}正在等你。`
+      : `事情正往「${K[0]}」的方向移動——提前把自己安排到對的位置。`],
+    ["核心・課題", `問題的心臟是${c.zh}——一切繞著「${K[0]}」打轉，避開它就讀不懂這個局。`],
+    ["意識・目標", `檯面上，你追求的是「${K[0]}」。確認這真的是你要的，而不只是習慣。`],
+    ["潛藏・根基", `檯面下真正作用的，是「${last}」與「${K[0]}」的暗流——它不說話，但它做決定。`],
+    ["建議・指引", c.pol === "good"
+      ? `讓「${K[0]}」發生：大方迎接、順勢而為，別擋自己的路。`
+      : c.pol === "bad"
+      ? `把「${K[0]}」當作警訊：預作準備、及早止損，別跟它硬碰。`
+      : `「${K[0]}」本身無吉凶——分寸的拿捏，就是這張牌給你的功課。`],
+    ["結果・落點", c.pol === "good"
+      ? `結局傾向順遂，以「${K[0]}」圓滿收尾。`
+      : c.pol === "bad"
+      ? `若路線不變，落點就是「${K[0]}」——現在轉舵還來得及。`
+      : `落點是「${K[0]}」，成色由你此刻的選擇決定。`],
+  ];
+}
+
+function renderDict() {
+  elDictDetail.hidden = true;
+  elDictGrid.innerHTML = "";
+  CARDS.forEach((c, i) => {
+    const b = document.createElement("button");
+    b.className = "dict-card";
+    b.innerHTML = `
+      <img class="dc-img" loading="lazy" alt="" src="${c.img}">
+      <div class="dc-name">${c.zh}</div>
+      <div class="dc-sub">${c.pks || "№ " + c.n}</div>`;
+    const img = b.querySelector("img");
+    img.addEventListener("error", () => {
+      const g = document.createElement("div");
+      g.className = "dc-glyph";
+      g.textContent = c.glyph;
+      img.replaceWith(g);
+    });
+    b.addEventListener("click", () => showDictCard(i));
+    elDictGrid.appendChild(b);
+  });
+}
+
+function showDictCard(i) {
+  const c = CARDS[i];
+  let extra = "";
+  if (deckDef.id === "len") {
+    extra = `
+      <div class="dict-sec"><div class="cb-title">組 合 語 法</div>
+        <p class="combo">作為句子的開頭（主詞）：<b>${c.noun}</b></p>
+        <p class="combo">接在別張牌之後（謂語）：⋯⋯<b>${c.mod}</b></p>
+        <p class="combo">大盤宮位：第 ${c.n} 宮・${c.zh}宮——落入此宮的牌，都${c.mod}。</p>
+      </div>`;
+  }
+  const revBlock = deckDef.reversible && c.rtext
+    ? `<div class="dict-sec"><div class="cb-title">逆 位 牌 義</div><p class="e-text">${c.rtext}</p></div>`
+    : "";
+  const posRows = dictPosLines(c)
+    .map(([p, t]) => `<p class="combo"><b>${p}</b><br>${t}</p>`).join("");
+  const corr = deckDef.id === "len" ? `№ ${c.n} ・ 撲克對應 ${c.pk}` : `${c.pks} ・ ${c.pk}`;
+  elDictDetail.innerHTML = `
+    <div class="dict-head">
+      <img class="dd-img" alt="" src="${c.img}">
+      <div class="dd-meta">
+        <div class="e-pos">${deckDef.name} ・ ${corr}</div>
+        <div class="e-name" style="font-size:24px">${c.zh} <small style="color:var(--ink-soft);font-weight:400">${c.latin}</small></div>
+        <div class="e-keys" style="margin-top:8px">${c.keys}</div>
+        <div style="margin-top:8px"><span class="pol ${c.pol}">${POL_MARK[c.pol]}</span></div>
+      </div>
+    </div>
+    <div class="dict-sec"><div class="cb-title">${deckDef.reversible ? "正 位 牌 義" : "牌 義"}</div><p class="e-text">${c.text}</p></div>
+    ${revBlock}
+    ${extra}
+    <div class="dict-sec"><div class="cb-title">位 置 解 讀</div>
+      <p class="ai-note" style="margin:0 0 4px">同一張牌落在不同位置，說的是不同層面的話——以下用八種常見位置示範讀法。</p>
+      ${posRows}
+    </div>`;
+  const img = elDictDetail.querySelector(".dd-img");
+  img.addEventListener("error", () => {
+    const g = document.createElement("div");
+    g.className = "dd-glyph";
+    g.textContent = c.glyph;
+    img.replaceWith(g);
+  });
+  elDictDetail.hidden = false;
+  elDictDetail.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+renderDict();
+
+/* 開發測試鉤子：?dicttest=牌序 直接打開字典詳細頁 */
+if (location.search.includes("dicttest")) {
+  const di = parseInt(new URLSearchParams(location.search).get("dicttest"), 10) || 0;
+  const dd = new URLSearchParams(location.search).get("deck");
+  const dk = DECKS.find((d) => d.id === dd);
+  if (dk && deckDef !== dk) selectDeck(dk);
+  showDictCard(Math.min(di, CARDS.length - 1));
+}
 
 /* 開發測試鉤子：?rwdtest=盤面id 自動抽完整個盤面（跨牌組） */
 if (location.search.includes("rwdtest")) {
