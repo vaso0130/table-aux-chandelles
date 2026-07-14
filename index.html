@@ -116,6 +116,25 @@
   .spread-btn .s-count { flex: 0 0 auto; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .spread-btn .s-desc { font-size: 13px; color: var(--muted); line-height: 1.6; margin-top: 4px; padding-left: calc(1.6em + 12px); }
 
+  /* ── 頁面切換（占卜牌桌／牌義字典） ────────── */
+  .views {
+    display: flex; justify-content: center;
+    width: max-content; margin: 34px auto 0;
+    border: 1px solid var(--felt-line); border-radius: 2px;
+  }
+  .view-btn {
+    font-family: inherit;
+    background: none; border: none;
+    color: var(--muted);
+    font-size: 14px; letter-spacing: .22em; text-indent: .22em;
+    padding: 11px 30px; cursor: pointer;
+    transition: color .2s, background-color .2s;
+  }
+  .view-btn + .view-btn { border-left: 1px solid var(--felt-line); }
+  .view-btn:hover, .view-btn:focus-visible { color: var(--ivory); }
+  .view-btn:focus-visible { outline: 1px solid var(--gold-dim); outline-offset: -1px; }
+  .view-btn.active { color: var(--gold-bright); background: rgba(201,164,92,.08); }
+
   /* ── 牌組選單 ─────────────────────────────── */
   .decks { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
   .deck-btn {
@@ -560,9 +579,15 @@
     </div>
   </header>
 
+  <nav class="views" id="views" aria-label="頁面切換">
+    <button class="view-btn active" data-view="divine">占卜牌桌</button>
+    <button class="view-btn" data-view="dict">牌義字典</button>
+  </nav>
+
   <p class="section-label">選擇牌組</p>
   <div class="decks" id="decks" role="group" aria-label="牌組選擇"></div>
 
+  <div id="view-divine">
   <p class="section-label">選擇盤面</p>
   <div class="spreads" id="spreads" role="group" aria-label="盤面選擇"></div>
 
@@ -643,8 +668,9 @@
       <button class="ghost-btn" id="btn-hist-clear" hidden>清空全部歷史</button>
     </div>
   </section>
+  </div><!-- /view-divine -->
 
-  <section id="dict">
+  <section id="dict" hidden>
     <p class="section-label">牌義字典</p>
     <p class="dict-hint">目前牌組的每一張牌都在這裡——點開學習定義、正逆位，以及它落在不同位置時的讀法。</p>
     <div id="dict-grid"></div>
@@ -2283,12 +2309,38 @@ function showDictCard(i) {
 
 renderDict();
 
+/* ── 頁面切換：占卜牌桌 ⇄ 牌義字典 ─────────── */
+const elViewDivine = $("#view-divine"), elDictSection = $("#dict");
+
+function setView(v) {
+  const dict = v === "dict";
+  elViewDivine.hidden = dict;
+  elDictSection.hidden = !dict;
+  document.querySelectorAll(".view-btn").forEach((b) =>
+    b.classList.toggle("active", (b.dataset.view === "dict") === dict));
+  hideTip();
+  const hash = dict ? "#dict" : "";
+  if (location.hash !== hash) {
+    history.replaceState(null, "", location.pathname + location.search + hash);
+  }
+}
+
+document.querySelectorAll(".view-btn").forEach((b) => {
+  b.addEventListener("click", () => {
+    setView(b.dataset.view);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+});
+window.addEventListener("hashchange", () => setView(location.hash === "#dict" ? "dict" : "divine"));
+setView(location.hash === "#dict" ? "dict" : "divine");
+
 /* 開發測試鉤子：?dicttest=牌序 直接打開字典詳細頁 */
 if (location.search.includes("dicttest")) {
   const di = parseInt(new URLSearchParams(location.search).get("dicttest"), 10) || 0;
   const dd = new URLSearchParams(location.search).get("deck");
   const dk = DECKS.find((d) => d.id === dd);
   if (dk && deckDef !== dk) selectDeck(dk);
+  setView("dict");
   showDictCard(Math.min(di, CARDS.length - 1));
 }
 
