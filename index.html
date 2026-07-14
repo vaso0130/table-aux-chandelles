@@ -2943,12 +2943,30 @@ function finishReading() {
     const rows = sigs.map(([n, pron]) => {
       const at = drawn.findIndex((c) => c.n === n);
       const sig = CARDS.find((c) => c.n === n);
-      return `<p class="combo">「${sig.zh}」落在第 ${at + 1} 宮（${CARDS[at].zh}宮）——${pron}的處境圍繞著「${CARDS[at].keys.split("・")[0]}」。</p>`;
+      let s = `<p class="combo">「${sig.zh}」落在第 ${at + 1} 宮（${CARDS[at].zh}宮）——${pron}的處境圍繞著「${CARDS[at].keys.split("・")[0]}」。`;
+      /* 本副大雷諾曼的問卜者牌面皆面朝左：同列左側＝注視的未來，右側＝身後的過去 */
+      if (deckDef.id === "gra") {
+        const row = Math.floor(at / spread.cols), col = at % spread.cols;
+        const ahead = [], behind = [];
+        for (let k = 0; k < spread.cols; k++) {
+          const j = row * spread.cols + k;
+          if (j === at || j >= drawn.length) continue;
+          (k < col ? ahead : behind).push(drawn[j].zh);
+        }
+        ahead.reverse();   /* 由近而遠 */
+        s += ahead.length
+          ? `<br>${pron}面朝左方，注視著（由近而遠）：${ahead.join("、")}——這是${pron}正走向的未來與所求。`
+          : `<br>${pron}面朝左方，已站在這一列的最前端——所求就在眼前，前方再無遮擋。`;
+        if (behind.length) s += `身後是：${behind.join("、")}——已經走過、可以放下的事。`;
+      }
+      return s + `</p>`;
     }).join("");
     const block = document.createElement("div");
     block.className = "combo-block";
     block.innerHTML = `<div class="cb-title">指 示 牌 落 點</div>${rows}
-      <p class="combo" style="color:var(--ink-soft)">讀大盤時，以你的指示牌為中心：它周圍八張牌是眼下的處境，它注視的方向是未來。</p>`;
+      <p class="combo" style="color:var(--ink-soft)">${deckDef.id === "gra"
+        ? "讀大版圖時，以你的指示牌為中心：周圍八張牌是眼下的處境；本副牌的問卜者皆面朝左方——左側是注視的未來，右側是身後的過去。"
+        : "讀大盤時，以你的指示牌為中心：它周圍八張牌是眼下的處境，它注視的方向是未來。"}</p>`;
     elCombos.appendChild(block);
   }
 
@@ -2975,7 +2993,7 @@ function buildAiPrompt() {
   if (spread.gt) {
     L.push(spread.id === "gt"
       ? "排列方式：Grand Tableau 大盤，8×4 加底部置中 4 張（第 33–36 張）。第 n 張牌落在第 n 宮，宮位以傳統 36 張牌的順序命名。"
-      : "排列方式：Grand Tableau 大版圖，9×6 共五十四席。第 n 張牌落在第 n 宮，宮位以大雷諾曼五十四張牌的順序命名。");
+      : "排列方式：Grand Tableau 大版圖，9×6 共五十四席。第 n 張牌落在第 n 宮，宮位以大雷諾曼五十四張牌的順序命名。本副牌的問卜者與問卜者(女)牌面皆面朝左方：其同列左側的牌是他們注視的未來與所求，右側的牌是身後的過去。");
   } else if (spread.id === "houses") {
     L.push("排列方式：占星十二宮位，每宮一張牌。宮位對應如下：");
     HOUSES.forEach((h) => L.push(`- ${h.label}（${h.sign}）｜${h.title}：${h.hint}`));
@@ -3003,7 +3021,7 @@ function buildAiPrompt() {
   L.push("3. 相鄰或相關牌之間的組合意義");
   if (spread.gt) {
     L.push(deckDef.id === "gra"
-      ? "4. 以指示牌（問卜者／問卜者(女)，視我的身分）為中心，解讀其落宮、周圍八張牌與注視方向"
+      ? "4. 以指示牌（問卜者／問卜者(女)，視我的身分）為中心，解讀其落宮、周圍八張牌，以及面朝方向（左側＝注視的未來、右側＝身後的過去）"
       : "4. 以指示牌（男人／女人，視我的身分）為中心，解讀其周圍八張牌與注視方向");
     L.push(`5. 給問卜者的具體建議（${currentTone()}）`);
   } else {
