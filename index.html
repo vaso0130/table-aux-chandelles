@@ -135,13 +135,20 @@
   .view-btn:focus-visible { outline: 1px solid var(--gold-dim); outline-offset: -1px; }
   .view-btn.active { color: var(--gold-bright); background: rgba(201,164,92,.08); }
 
-  /* ── 牌組選單 ─────────────────────────────── */
-  .decks { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+  /* ── 牌組選單（西方館／東方館） ────────────── */
+  .decks { display: flex; flex-direction: column; gap: 20px; }
+  .hall-label {
+    text-align: center;
+    font-size: 11px; letter-spacing: .42em; text-indent: .42em;
+    color: var(--gold-dim);
+    margin-bottom: 10px;
+  }
+  .hall-decks { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
   .deck-btn {
     font-family: inherit;
     background: none;
     border: 1px solid var(--felt-line); border-radius: 2px;
-    padding: 12px 26px; cursor: pointer;
+    padding: 10px 20px; cursor: pointer;
     text-align: center;
     transition: border-color .2s, background-color .2s;
   }
@@ -1375,24 +1382,402 @@ const BEL_SPREADS = [
   },
 ];
 
+/* ── 奇卜 三十六張（Kipperkarten, 1890 巴伐利亞） ──
+   人物與情境導向，讀法重方向與距離；傳統只讀正位。 */
+const KIP_CARDS = [
+  { n:1,  zh:"男主人翁", latin:"Hauptperson",        glyph:"🎩", pol:"mid",  keys:"男性・當事人・他・指示牌",
+    text:"問卜者本人（男性）或事件的男主角。他面朝的方向是未來，背後是過去；身旁的牌就是他的處境。" },
+  { n:2,  zh:"女主人翁", latin:"Hauptperson weiblich", glyph:"👒", pol:"mid", keys:"女性・當事人・她・指示牌",
+    text:"問卜者本人（女性）或事件的女主角。她面朝的方向是未來，背後是過去；身旁的牌就是她的處境。" },
+  { n:3,  zh:"婚姻",     latin:"Ehestandskarte",     glyph:"💍", pol:"good", keys:"婚姻・承諾・結合・長久",
+    text:"一段正式的結合：婚姻、訂約或深度的承諾。距離主角越近，這份關係越緊密。" },
+  { n:4,  zh:"相會",     latin:"Zusammenkunft",      glyph:"🤝", pol:"good", keys:"會面・聚會・相遇・交集",
+    text:"一場會面或聚會正要發生——可能是久別重逢，也可能是改變局勢的新相遇。" },
+  { n:5,  zh:"善紳士",   latin:"Guter Herr",         glyph:"🤵", pol:"good", keys:"貴人・善意男子・幫助・年長",
+    text:"一位心懷善意的男士：長輩、朋友或貴人。他站在你這邊，願意出手相助。" },
+  { n:6,  zh:"善夫人",   latin:"Gute Dame",          glyph:"👸", pol:"good", keys:"貴人・善意女子・照拂・年長",
+    text:"一位心懷善意的女士：長輩、閨中密友或女性貴人。她的關照溫和而實際。" },
+  { n:7,  zh:"信件",     latin:"Ein Brief",          glyph:"✉️", pol:"mid",  keys:"訊息・文件・通知・書面",
+    text:"白紙黑字的消息正在路上：信件、文件、簡訊。內容吉凶，看它身旁靠著誰。" },
+  { n:8,  zh:"偽善者",   latin:"Falsche Person",     glyph:"🎭", pol:"bad",  keys:"虛偽・兩面・欺瞞・提防",
+    text:"一個口是心非的人就在附近：當面笑著，背後打算著別的。看它挨著誰，誰就要當心。" },
+  { n:9,  zh:"轉變",     latin:"Eine Veränderung",   glyph:"🔄", pol:"mid",  keys:"改變・轉折・換局・更新",
+    text:"局面要換了：搬遷、轉職或心境的翻頁。改變本身中性——方向由周圍的牌決定。" },
+  { n:10, zh:"旅程",     latin:"Eine Reise",         glyph:"🧳", pol:"mid",  keys:"旅行・移動・距離・出行",
+    text:"一段旅程或一次移動：出差、遠行，或某人某事正在靠近／遠離。" },
+  { n:11, zh:"橫財",     latin:"Viel Geld gewinnen", glyph:"💰", pol:"good", keys:"大筆進帳・獲利・獎金・豐收",
+    text:"一大筆錢要進來了:獲利、獎金或一次豐厚的回收。錢會照亮它身旁的牌。" },
+  { n:12, zh:"富家女",   latin:"Reiches Mädchen",    glyph:"👧", pol:"good", keys:"年輕女子・條件優渥・機會・善緣",
+    text:"一位條件優渥的年輕女性，或一段帶著資源而來的善緣。" },
+  { n:13, zh:"富家子",   latin:"Guter junger Herr",  glyph:"🎓", pol:"good", keys:"年輕男子・條件優渥・機會・善緣",
+    text:"一位條件優渥的年輕男性，或一個帶著資源而來的機會。" },
+  { n:14, zh:"悲訊",     latin:"Traurige Nachricht", glyph:"🥀", pol:"bad",  keys:"壞消息・失落・遺憾・通知",
+    text:"一則令人難過的消息即將抵達。先深呼吸——它的份量，由周圍的牌決定。" },
+  { n:15, zh:"情場圓滿", latin:"Guter Ausgang in der Liebe", glyph:"💞", pol:"good", keys:"愛情善果・和好・圓滿・修成",
+    text:"感情有個好結局：告白成功、和好如初或修成正果。愛情的問題,這張牌是最好的答案。" },
+  { n:16, zh:"心思",     latin:"Seine Gedanken",     glyph:"💭", pol:"mid",  keys:"想法・掛念・心事・意向",
+    text:"某人的腦海正被一件事（或一個人）佔據。它指向誰,誰就是被想著的那位。" },
+  { n:17, zh:"獲贈",     latin:"Ein Geschenk",       glyph:"🎁", pol:"good", keys:"禮物・好處・餽贈・心意",
+    text:"一份禮物或好處正要送到你手上——有形的或無形的，都值得好好收下。" },
+  { n:18, zh:"幼童",     latin:"Ein kleines Kind",   glyph:"👶", pol:"good", keys:"孩子・新開始・稚嫩・信任",
+    text:"一個孩子，或一個像孩子一樣新的開始。它還小，需要時間與呵護。" },
+  { n:19, zh:"喪逝",     latin:"Ein Todesfall",      glyph:"⚰️", pol:"bad",  keys:"結束・告別・落幕・轉化",
+    text:"某件事正式落幕:一段關係、一個階段的終結。哀悼它，然後把位置讓給新的。" },
+  { n:20, zh:"屋宅",     latin:"Ein Haus",           glyph:"🏠", pol:"good", keys:"房屋・家庭・安穩・不動產",
+    text:"與房屋和家庭有關的一切：居所、產業、安身之處。根基穩固。" },
+  { n:21, zh:"內室",     latin:"Wohnzimmer",         glyph:"🛋️", pol:"mid",  keys:"私領域・親密・室內・私事",
+    text:"門關起來之後的世界：私事、親密關係、不欲人知的空間。事情發生在檯面下。" },
+  { n:22, zh:"軍士",     latin:"Militärperson",      glyph:"🎖️", pol:"mid",  keys:"制服者・紀律・執行・強硬",
+    text:"一位穿制服的人:軍警、公務或任何紀律的化身。事情將被嚴格地執行。" },
+  { n:23, zh:"法庭",     latin:"Das Gericht",        glyph:"⚖️", pol:"bad",  keys:"訴訟・裁決・官方・是非",
+    text:"是非要有個說法了:訴訟、仲裁、官方裁決。文件備齊，據理力爭。" },
+  { n:24, zh:"竊案",     latin:"Ein Diebstahl",      glyph:"🥷", pol:"bad",  keys:"失竊・損失・被奪・提防",
+    text:"有東西被拿走了——財物、機會或感情。清點損失，鎖好門窗。" },
+  { n:25, zh:"殊榮",     latin:"Hohe Ehren",         glyph:"🏅", pol:"good", keys:"榮譽・晉升・肯定・地位",
+    text:"高規格的肯定:晉升、得獎、名譽加身。你被鄭重其事地看見了。" },
+  { n:26, zh:"鴻福",     latin:"Großes Glück",       glyph:"🍀", pol:"good", keys:"大幸運・順遂・天時・福氣",
+    text:"整副牌最亮的一張:大幸運當頭,諸事皆宜。它能化解身旁凶牌的大半戾氣。" },
+  { n:27, zh:"意外之財", latin:"Unverhofftes Geld",  glyph:"🪙", pol:"good", keys:"意外進帳・小財・驚喜・紅利",
+    text:"沒算到的錢進來了:退稅、紅利、遺忘的欠款。數目不一定大，但來得巧。" },
+  { n:28, zh:"期待",     latin:"Erwartung",          glyph:"⏳", pol:"mid",  keys:"等待・盼望・懸而未決・耐心",
+    text:"一件事懸在半空:你在等消息、等答覆、等時機。急不得——但也別只是空等。" },
+  { n:29, zh:"囹圄",     latin:"Gefängnis",          glyph:"⛓️", pol:"bad",  keys:"受困・停滯・孤立・受限",
+    text:"一種被關住的狀態:計畫卡死、行動受限、心情封閉。找出那道門——它未必上了鎖。" },
+  { n:30, zh:"官吏",     latin:"Amtsperson",         glyph:"🏛️", pol:"mid",  keys:"官方・機構・程序・權責",
+    text:"與官方打交道:公家機關、主管機構、正式程序。照規矩走，文件備齊。" },
+  { n:31, zh:"小恙",     latin:"Kurze Krankheit",    glyph:"🤒", pol:"bad",  keys:"短病・疲勞・小挫・休息",
+    text:"一場來得快去得也快的不適:小病、疲勞或短暫的低潮。好好休息就過去了。" },
+  { n:32, zh:"憂煩",     latin:"Kummer und Verdruss", glyph:"🌫️", pol:"bad", keys:"煩惱・不快・摩擦・消耗",
+    text:"日常的煩心事堆起來了:摩擦、不快、瑣碎的消耗。別讓小事磨掉你的神。" },
+  { n:33, zh:"陰鬱",     latin:"Trübe Gedanken",     glyph:"🌑", pol:"bad",  keys:"低潮・憂思・灰暗・自擾",
+    text:"灰暗的念頭籠罩著:想不開、放不下、往壞處想。念頭不是事實——先出門走走。" },
+  { n:34, zh:"勞作",     latin:"Arbeit und Beschäftigung", glyph:"⚒️", pol:"mid", keys:"工作・任務・勤勉・生計",
+    text:"工作正忙:任務、案子、生計的日常。踏實做事的時期，收穫在後頭。" },
+  { n:35, zh:"遠路",     latin:"Ein weiter Weg",     glyph:"🛤️", pol:"mid",  keys:"漫長・距離・過程・遠期",
+    text:"目標不近:這件事需要時間與路程。把長路切成一段一段，走就是了。" },
+  { n:36, zh:"望洋",     latin:"Hoffnung, großes Wasser", glyph:"🌊", pol:"mid", keys:"希望・遠方・水域・未知",
+    text:"一片大水橫在眼前:遠方的希望、跨海的緣分，或一團看不清的未知。抱著希望，但備好船。" },
+];
+KIP_CARDS.forEach((c, i) => {
+  c.pk = `Nr. ${c.n}`;
+  c.img = "cards-kipper/" + String(c.n).padStart(2, "0") + "-" + ["hauptperson","hauptperson-w","ehestand","zusammenkunft","guter-herr","gute-dame","brief","falsche-person","veraenderung","reise","viel-geld","reiches-maedchen","junger-herr","traurige-nachricht","liebe-ausgang","gedanken","geschenk","kind","todesfall","haus","wohnzimmer","militaer","gericht","diebstahl","ehren","glueck","unverhofftes-geld","erwartung","gefaengnis","amtsperson","krankheit","kummer","truebe-gedanken","arbeit","weiter-weg","hoffnung"][i] + ".jpg";
+});
+
+const KIP_SPREADS = [
+  { id:"kip-daily", name:"單卡・今日一景", count:1, cols:1,
+    desc:"一張牌、一個場景——今天的主舞台在哪裡。",
+    positions:["今日一景"], combos: () => [] },
+  { id:"kip-three", name:"三卡・時間之流", count:3, cols:3,
+    desc:"過去、現在、未來——人物與場景的三幕劇。",
+    positions:["過去","現在","未來"], combos: () => [] },
+  { id:"kip-nine", name:"九宮格・全景", count:9, cols:3,
+    desc:"3 × 3 的完整快照：橫向是時間，縱向是層次，中央是核心。",
+    positions:[
+      "過去 × 想法","現在 × 想法","未來 × 想法",
+      "過去 × 現實","核心","未來 × 現實",
+      "過去 × 潛藏","現在 × 潛藏","未來 × 潛藏",
+    ], combos: () => [] },
+  { id:"kip-gt", name:"大盤・6 × 6", count:36, cols:6,
+    desc:"三十六張全數入陣。找出主人翁，他面朝的方向是未來，背後是過去，身旁的牌是眼下的處境。",
+    positions: Array.from({ length: 36 }, (_, i) => `第 ${i + 1} 席`),
+    combos: () => [] },
+];
+
+/* ── 盧恩 二十四符（Elder Futhark 古弗薩克） ──
+   正位＝順勢之意；逆位（merkstave）＝受阻或反面。
+   正逆同形的符文，逆位讀作能量的恆定。          */
+const RUN_CARDS = [
+  { n:1,  zh:"費胡",   latin:"Fehu",     glyph:"ᚠ", pol:"good", keys:"財富・收穫・資源・流動",
+    text:"牛群與穀倉之富：流動的財富、應得的報酬。財要流動才生財——善用它，也分享它。",
+    rtext:"逆位時，財富流失或貪念作祟：破財、吝嗇或把價值錯放在錢上。先守住已有的。" },
+  { n:2,  zh:"烏魯茲", latin:"Uruz",     glyph:"ᚢ", pol:"good", keys:"原力・體魄・野性・突破",
+    text:"野牛的原始力量：強健的體魄、旺盛的生命力、破除障礙的蠻勁。你比自己以為的更有力。",
+    rtext:"逆位時，力量失控或元氣不足：蠻幹、透支或錯失使力的時機。養精蓄銳再上。" },
+  { n:3,  zh:"索里沙茲", latin:"Thurisaz", glyph:"ᚦ", pol:"bad", keys:"荊棘・考驗・防衛・破壞力",
+    text:"巨人的荊棘：一股具破壞性的力量，可以是護身的刺，也可以是傷人的刃。慎用，並提防它。",
+    rtext:"逆位時，荊棘朝向自己：固執招災、防衛過當，或低估了對手。先冷靜，別急著出手。" },
+  { n:4,  zh:"安蘇茲", latin:"Ansuz",    glyph:"ᚨ", pol:"good", keys:"神諭・言語・智慧・啟示",
+    text:"眾神之父的氣息：一則重要的訊息、一句點醒你的話、來自長者的智慧。豎起耳朵。",
+    rtext:"逆位時，訊息失真：誤解、謊言或聽不進忠告。查證來源，也檢查自己的偏見。" },
+  { n:5,  zh:"萊多",   latin:"Raidho",   glyph:"ᚱ", pol:"mid",  keys:"車輪・旅程・節奏・正軌",
+    text:"車輪滾動：一段旅程展開，事情回到正確的節奏與軌道上。順著路走，別搶拍。",
+    rtext:"逆位時，行程受阻或節奏亂了：延誤、繞路、計畫脫軌。檢查方向，重新對錶。" },
+  { n:6,  zh:"肯納茲", latin:"Kenaz",    glyph:"ᚲ", pol:"good", keys:"火炬・洞見・技藝・照明",
+    text:"黑暗中的火炬：靈感點燃、真相照亮、技藝精進。你手上有光——用它去看，也用它去做。",
+    rtext:"逆位時，火炬黯淡：靈感枯竭、視而不見，或知識被誤用。先把心靜下來，光會回來。" },
+  { n:7,  zh:"給勃",   latin:"Gebo",     glyph:"ᚷ", pol:"good", keys:"禮物・交換・盟誼・平衡",
+    text:"禮物與交換：一份餽贈、一段對等的關係、彼此成全的盟誼。收禮，也記得回禮。",
+    rtext:"（給勃正逆同形）能量恆定——但提醒你檢視：這段交換是否仍然對等？單方面的付出不是禮物。" },
+  { n:8,  zh:"溫佑",   latin:"Wunjo",    glyph:"ᚹ", pol:"good", keys:"喜悅・和諧・圓滿・同樂",
+    text:"旗幟飄揚的喜悅：願望達成、群體和睦、發自內心的快樂。好日子——與人分享會更甜。",
+    rtext:"逆位時，喜悅延遲或強顏歡笑：狂歡之下有空虛。找回真正讓你快樂的事。" },
+  { n:9,  zh:"哈格拉茲", latin:"Hagalaz", glyph:"ᚺ", pol:"bad", keys:"冰雹・驟變・天災・清場",
+    text:"冰雹驟降：突如其來的破壞與不可抗力。它砸壞舊的，也為新的騰出田地——先避險，再重建。",
+    rtext:"（哈格拉茲正逆同形）風暴就是風暴——躲不掉,但會過去。把損失當作大自然的犁田。" },
+  { n:10, zh:"瑙提茲", latin:"Nauthiz",  glyph:"ᚾ", pol:"bad",  keys:"匱乏・需求・磨練・自律",
+    text:"匱乏之火：資源吃緊、需求未滿的煎熬。限制是最嚴格的老師——它逼你分清想要與需要。",
+    rtext:"逆位時，匱乏感被放大：明明夠用卻恐慌，或用錯方法填補空缺。先盤點，再行動。" },
+  { n:11, zh:"伊薩",   latin:"Isa",      glyph:"ᛁ", pol:"bad",  keys:"冰・凍結・停滯・靜止",
+    text:"萬物結冰：進度凍結、關係降溫、一切靜止。冰下仍有水流——等待解凍，別硬敲。",
+    rtext:"（伊薩正逆同形）凍結仍在——把這段靜止當作蟄伏：磨刀、讀書、養神。" },
+  { n:12, zh:"耶拉",   latin:"Jera",     glyph:"ᛃ", pol:"good", keys:"豐年・收成・週期・善報",
+    text:"四季輪轉，穀物成熟：耕耘得到收成，善因結出善果。時間站在你這邊。",
+    rtext:"（耶拉正逆同形）收成的定律不變——現在種什麼，將來收什麼。急不得，也賴不掉。" },
+  { n:13, zh:"艾瓦茲", latin:"Eihwaz",   glyph:"ᛇ", pol:"mid",  keys:"紫杉・韌性・生死・貫通",
+    text:"連通天地的紫杉：巨大的韌性、直面終結的勇氣、貫通上下的視野。可靠而深沉的力量。",
+    rtext:"（艾瓦茲正逆同形）韌性仍在——彎而不折。眼下的壓力，是在把你鍛成弓。" },
+  { n:14, zh:"佩斯洛", latin:"Perthro",  glyph:"ᛈ", pol:"mid",  keys:"命運杯・機運・未知・奧秘",
+    text:"擲骰的命運之杯：機運、賭注、尚未揭曉的秘密。有些事只能交給命運——但籌碼由你決定。",
+    rtext:"逆位時，別碰運氣：賭注過大、秘密外洩或期待落空。收手觀望，等牌面翻開。" },
+  { n:15, zh:"埃爾哈茲", latin:"Algiz",  glyph:"ᛉ", pol:"good", keys:"麋角・守護・庇佑・警覺",
+    text:"揚起的麋角：強大的守護與庇佑，直覺敏銳、貴人在側。你被保護著——但警覺別鬆。",
+    rtext:"逆位時，防護出現缺口：容易受騙、暴露弱點或所託非人。收緊圈子，聽從直覺。" },
+  { n:16, zh:"索維洛", latin:"Sowilo",   glyph:"ᛊ", pol:"good", keys:"太陽・勝利・生命力・指引",
+    text:"不敗的太陽：勝利、榮光、源源不絕的生命力。烏雲擋不住它——朝著光走。",
+    rtext:"（索維洛正逆同形）太陽依舊升起——若感到刺眼,是你太久沒抬頭。調整步伐,別燃燒過度。" },
+  { n:17, zh:"提瓦茲", latin:"Tiwaz",    glyph:"ᛏ", pol:"good", keys:"戰神・勝利・公義・犧牲",
+    text:"戰神提爾之矛：正義的勝利、果敢的行動、為原則付出代價的勇氣。指向目標，直取。",
+    rtext:"逆位時，鬥志渙散或師出無名：為錯的事而戰、耗損過度。先確認值不值得。" },
+  { n:18, zh:"貝卡諾", latin:"Berkano",  glyph:"ᛒ", pol:"good", keys:"樺樹・新生・孕育・滋養",
+    text:"春天的樺樹：新生命、新計畫在萌芽。溫柔地照料它——生長需要安靜的時間。",
+    rtext:"逆位時，生長受阻：計畫難產、照顧過度或養分不足。檢查土壤，別急著拔苗。" },
+  { n:19, zh:"埃瓦茲", latin:"Ehwaz",    glyph:"ᛖ", pol:"good", keys:"駿馬・夥伴・信任・並肩",
+    text:"人馬一體：可靠的夥伴、默契的合作、彼此信任的推進。結伴走得更遠。",
+    rtext:"逆位時，夥伴失和或進度失衡：互不信任、步調不一。先修關係，再趕路。" },
+  { n:20, zh:"瑪納茲", latin:"Mannaz",   glyph:"ᛗ", pol:"mid",  keys:"人・自我・群體・互助",
+    text:"人之為人：認識自己、善用理性、在群體中彼此成全。答案在人身上——包括你自己。",
+    rtext:"逆位時，人際失衡：孤立、自我懷疑或被群體淹沒。先站穩自己，再回到人群。" },
+  { n:21, zh:"拉古茲", latin:"Laguz",    glyph:"ᛚ", pol:"mid",  keys:"水・直覺・潛流・情感",
+    text:"深水流動：直覺、夢境、情感的潛流。理性到不了的地方，讓水帶你去。",
+    rtext:"逆位時，水濁了：情緒氾濫、直覺失準、被暗流帶偏。先上岸，等水澄清。" },
+  { n:22, zh:"英瓦茲", latin:"Ingwaz",   glyph:"ᛜ", pol:"good", keys:"種子・蓄勢・完成・安居",
+    text:"大地之神的種子：能量蓄滿、階段完成、安居的滿足。收束一件事，然後安心休息。",
+    rtext:"（英瓦茲正逆同形）種子已埋好——剩下的交給時間。此刻的安靜不是停滯,是醞釀。" },
+  { n:23, zh:"達嘎茲", latin:"Dagaz",    glyph:"ᛞ", pol:"good", keys:"破曉・覺醒・轉機・光明",
+    text:"黑夜盡頭的破曉：關鍵的轉機、豁然的覺醒。最暗的時刻已經過去——天亮了。",
+    rtext:"（達嘎茲正逆同形）晝夜輪轉不息——若仍在黑裡,記住:破曉從不缺席,只是需要你撐到那刻。" },
+  { n:24, zh:"歐瑟拉", latin:"Othala",   glyph:"ᛟ", pol:"good", keys:"祖產・家園・傳承・根基",
+    text:"祖傳的家園：家族、遺產、深厚的根基與歸屬。你站在前人堆好的土丘上——守好它，傳下去。",
+    rtext:"逆位時，根基有紛爭：家族失和、繼承糾葛或戀舊成枷。分清楚該守的與該放的。" },
+];
+RUN_CARDS.forEach((c, i) => {
+  c.pks = c.glyph;
+  c.pk = `Elder Futhark・第 ${c.n} 符`;
+  c.img = "cards-runes/" + String(c.n).padStart(2, "0") + "-" + c.latin.toLowerCase() + ".jpg";
+});
+
+const RUN_SPREADS = [
+  { id:"run-daily", name:"單符・奧丁之籤", count:1, cols:1,
+    desc:"從符袋裡摸出一枚——今天世界樹要對你說的一個字。",
+    positions:["今日符文"], combos: () => [] },
+  { id:"run-norns", name:"三符・諾恩三女神", count:3, cols:3,
+    desc:"兀爾德、薇兒丹蒂、詩寇蒂——已織成的、正在織的、將要織的。",
+    positions:["兀爾德・已成之事","薇兒丹蒂・正在成形","詩寇蒂・將織之線"], combos: () => [] },
+  { id:"run-cross", name:"五符・十字陣", count:5, cols:3,
+    desc:"中央是核心，左右是來路與去向，上下是助力與阻力。",
+    positions:["核心現況","過去・來路","未來・去向","助力・可倚","阻力・當防"],
+    place:[[2,2],[1,2],[3,2],[2,1],[2,3]], combos: () => [] },
+  { id:"run-nine", name:"九符・世界樹陣", count:9, cols:3,
+    desc:"3 × 3 的完整快照：橫向是時間，縱向是層次，中央是核心。",
+    positions:[
+      "過去 × 想法","現在 × 想法","未來 × 想法",
+      "過去 × 現實","核心","未來 × 現實",
+      "過去 × 潛藏","現在 × 潛藏","未來 × 潛藏",
+    ], combos: () => [] },
+];
+
+/* ── 大雷諾曼 五十四張（Grand Jeu de Mlle Lenormand, 1845） ──
+   男女問卜者二張＋整副撲克五十二張。牌面疊著金羊毛、特洛伊戰爭、
+   煉金術、時序、意外事件五大神話系列；此處取其占算主義。傳統讀正位。 */
+const GRA_CARDS = [
+  { n:1,  zh:"問卜者",   latin:"Le Consultant",  glyph:"🎩", pol:"mid", keys:"男性・當事人・他・指示牌",
+    text:"問卜者本人（男性）。他落在牌陣的哪裡，就是他此刻站的位置；周圍的牌是他的天時與人和。" },
+  { n:2,  zh:"問卜者(女)", latin:"La Consultante", glyph:"👒", pol:"mid", keys:"女性・當事人・她・指示牌",
+    text:"問卜者本人（女性）。她落在牌陣的哪裡，就是她此刻站的位置；周圍的牌是她的天時與人和。" },
+  /* ♥ 紅心（情感與家宅） */
+  { n:3,  zh:"家宅之喜", latin:"As de Cœur",     glyph:"🏡", pol:"good", keys:"家中大喜・親密計畫・圓滿・爐火",
+    text:"家中傳來大喜:親密的計畫開花結果、家庭氣氛回暖。爐火正旺，好事從家裡開始。" },
+  { n:4,  zh:"摯友之助", latin:"Deux de Cœur",   glyph:"🤝", pol:"good", keys:"友誼・支持・真誠・後盾",
+    text:"一份真誠的友誼在此刻成為你的後盾。有人不求回報地站在你這邊。" },
+  { n:5,  zh:"得意之喜", latin:"Trois de Cœur",  glyph:"🎉", pol:"good", keys:"成功・共享・喜訊・光彩",
+    text:"漂亮的成功,而且是能與人分享的那種。喜訊傳開，光彩照人。" },
+  { n:6,  zh:"和睦復歸", latin:"Quatre de Cœur", glyph:"🕊️", pol:"good", keys:"和解・平靜・修復・安定",
+    text:"動盪之後，和平回來了:誤會冰釋、關係修復、心安定下來。" },
+  { n:7,  zh:"家族之贈", latin:"Cinq de Cœur",   glyph:"📜", pol:"good", keys:"繼承・家族利益・受贈・血緣",
+    text:"來自家族的收穫:繼承、餽贈或親人的實質幫助。血緣在此刻是資產。" },
+  { n:8,  zh:"良言",     latin:"Six de Cœur",    glyph:"💬", pol:"good", keys:"忠告・善意・親近之人・提點",
+    text:"身邊親近的人給了一句中肯的話。這個忠告值錢——聽進去。" },
+  { n:9,  zh:"護佑",     latin:"Sept de Cœur",   glyph:"🛡️", pol:"good", keys:"保護・願望實現・庇蔭・安心",
+    text:"你的盼望正被護送著前進:有一股力量罩著你，願望比你以為的更接近實現。" },
+  { n:10, zh:"歡宴",     latin:"Huit de Cœur",   glyph:"🥂", pol:"good", keys:"慶祝・社交・出遊・熱鬧",
+    text:"熱鬧的日子:宴會、出遊、豐富的社交生活。露面吧,人緣正旺。" },
+  { n:11, zh:"情場大捷", latin:"Neuf de Cœur",   glyph:"🏆", pol:"good", keys:"如願・克服・滿足・勝利",
+    text:"紅心九是願望之牌:跨過障礙,情感獲得完全的滿足。要什麼,說出口。" },
+  { n:12, zh:"安穩之光", latin:"Dix de Cœur",    glyph:"☀️", pol:"good", keys:"長久安定・光芒・幸福・圓熟",
+    text:"長長久久的安定與個人光芒。事情進入圓熟期，可以放心經營未來。" },
+  { n:13, zh:"忠實信使", latin:"Valet de Cœur",  glyph:"💌", pol:"good", keys:"忠誠青年・好消息・金髮・善意",
+    text:"一位忠誠的年輕人捎來安慰人心的消息。他值得信任。" },
+  { n:14, zh:"慈心之后", latin:"Dame de Cœur",   glyph:"👸", pol:"good", keys:"守護女性・母性・溫暖・問卜者",
+    text:"一位母性溫暖的女性守護著局面——也可能就是問卜者自己。她的心是軟的,手是穩的。" },
+  { n:15, zh:"仁厚之王", latin:"Roi de Cœur",    glyph:"🤴", pol:"good", keys:"寬厚男性・威望・慷慨・高貴",
+    text:"一位有威望又慷慨的男性,行事寬厚高貴。他的支持份量十足。" },
+  /* ♣ 梅花（財富與事業） */
+  { n:16, zh:"財富之鑰", latin:"As de Trèfle",   glyph:"💰", pol:"good", keys:"財運大開・勝券・富貴・王牌",
+    text:"財富的王牌:無可爭辯的財務勝利。金羊毛就在眼前——伸手。" },
+  { n:17, zh:"天佑",     latin:"Deux de Trèfle", glyph:"🍀", pol:"good", keys:"庇護・化險・及時・轉圜",
+    text:"在物質困難面前,有一道及時的庇護:貴人、轉機或剛好接住你的運氣。" },
+  { n:18, zh:"商機",     latin:"Trois de Trèfle", glyph:"📈", pol:"good", keys:"獲利機會・晉升・生意・快進",
+    text:"有利可圖的機會出現,職涯快速推進。生意上門了,別讓它等太久。" },
+  { n:19, zh:"守成",     latin:"Quatre de Trèfle", glyph:"🔒", pol:"mid", keys:"謹慎・管理・節制・盤點",
+    text:"這一手要穩:謹慎理財、嚴格管理資產。守成不是不動,是動得有章法。" },
+  { n:20, zh:"意外進帳", latin:"Cinq de Trèfle", glyph:"🪙", pol:"good", keys:"不期之財・商業驚喜・紅利・意外",
+    text:"沒預料到的錢流進來:突然的訂單、紅利或商業上的驚喜。" },
+  { n:21, zh:"慧財",     latin:"Six de Trèfle",  glyph:"💡", pol:"good", keys:"以智生財・遠利・判斷・佈局",
+    text:"聰明才智正在變現:對的判斷帶來將來的利益。現在的佈局,是以後的收成。" },
+  { n:22, zh:"小利",     latin:"Sept de Trèfle", glyph:"✨", pol:"good", keys:"小財・犒賞・工作回饋・甜頭",
+    text:"一筆小財或工作上的犒賞。數目不大,但滋味很好——這是勢頭的預告。" },
+  { n:23, zh:"恆業",     latin:"Huit de Trèfle", glyph:"⚒️", pol:"mid",  keys:"堅持・預算・穩定・累積",
+    text:"財務要靠恆心撐穩:編好預算、按部就班。不性感,但有效。" },
+  { n:24, zh:"豐盈",     latin:"Neuf de Trèfle", glyph:"🌾", pol:"good", keys:"繁榮・豐收・圓滿收尾・厚實",
+    text:"繁榮之牌:倉廩充實,收成厚實。一段耕耘正以豐盈收尾。" },
+  { n:25, zh:"轉富",     latin:"Dix de Trèfle",  glyph:"🔑", pol:"good", keys:"重大轉變・致富・保障・升級",
+    text:"一次重大的轉變,方向是富足與保障。換跑道、簽大約、上一個台階。" },
+  { n:26, zh:"得力夥伴", latin:"Valet de Trèfle", glyph:"🧾", pol:"good", keys:"能幹協力・合約・幫手・效率",
+    text:"一位能幹的協力者出現,或一紙有利的合約成形。把他留在身邊。" },
+  { n:27, zh:"財慧之婦", latin:"Dame de Trèfle", glyph:"💼", pol:"good", keys:"精明女性・理財・商才・建言",
+    text:"一位精明的女性:會做生意、懂理財,她的建議與人脈都值錢。" },
+  { n:28, zh:"有力靠山", latin:"Roi de Trèfle",  glyph:"🦁", pol:"good", keys:"影響力・護持・穩固・成事",
+    text:"一位有影響力的保護者,根基穩固,能確保你的計畫成事。大樹底下好乘涼。" },
+  /* ♦ 方塊（消息與行動） */
+  { n:29, zh:"要訊",     latin:"As de Carreau",  glyph:"✉️", pol:"mid",  keys:"重大消息・官方文件・通知・關鍵",
+    text:"一則關鍵消息或重要的官方文件抵達。它會改變你接下來的走法——仔細讀。" },
+  { n:30, zh:"契合",     latin:"Deux de Carreau", glyph:"🧩", pol:"good", keys:"合作・協議・敲定・互補",
+    text:"一項合作正在敲定:彼此互補,協議成形。趁熱把字簽了。" },
+  { n:31, zh:"快旅",     latin:"Trois de Carreau", glyph:"🐎", pol:"good", keys:"短程旅行・快節奏・交流・刺激",
+    text:"一趟說走就走的短旅,或一場激盪腦力的交流。動起來,靈感在路上。" },
+  { n:32, zh:"遠緣",     latin:"Quatre de Carreau", glyph:"🌍", pol:"mid", keys:"國外・擴張・遠方人脈・跨界",
+    text:"與遠方有關:國外的聯繫、地理上的擴張、跨界的計畫。把地圖攤開一點。" },
+  { n:33, zh:"銳意",     latin:"Cinq de Carreau", glyph:"🎯", pol:"good", keys:"大膽行動・革新・日常改造・果敢",
+    text:"大膽的行動正在改造你的日常。這股銳氣是對的——瞄準了就出手。" },
+  { n:34, zh:"讒言之防", latin:"Six de Carreau", glyph:"🕵️", pol:"bad",  keys:"可疑訊息・誤導・查證・耳語",
+    text:"有訊息帶著誤導的成分:片面之詞、斷章取義。任何重要決定前,先查證。" },
+  { n:35, zh:"巧勝",     latin:"Sept de Carreau", glyph:"🧠", pol:"good", keys:"機敏・小勝・臨場・靈活",
+    text:"靠腦筋靈活拿下一分:臨場反應、急智的小成功。這局用巧不用力。" },
+  { n:36, zh:"文書",     latin:"Huit de Carreau", glyph:"🗂️", pol:"mid",  keys:"手續・行政・小額往來・流程",
+    text:"跑流程的時候到了:行政手續、文件往返、小額交易。瑣碎但必要——一次辦齊。" },
+  { n:37, zh:"小挫",     latin:"Neuf de Carreau", glyph:"🌧️", pol:"bad",  keys:"暫時受挫・調整・應變・過渡",
+    text:"暫時的挫折:計畫卡了一下,需要快速應變。這是過渡,不是終局。" },
+  { n:38, zh:"遠行",     latin:"Dix de Carreau", glyph:"⛵", pol:"mid",  keys:"遠途・環境劇變・遷徙・新天地",
+    text:"一段遠途旅程,或生活環境的徹底改變。舊地圖到此為止,新天地在前面。" },
+  { n:39, zh:"信差",     latin:"Valet de Carreau", glyph:"📯", pol:"mid", keys:"傳訊者・意外訊息・中介・往來",
+    text:"占卜的信差:有人帶著意想不到的訊息前來。訊息本身,比帶信的人重要。" },
+  { n:40, zh:"異鄉之女", latin:"Dame de Carreau", glyph:"💃", pol:"mid", keys:"外地女性・過客・活躍・新面孔",
+    text:"一位活躍的外地女性,或一段萍水相逢的緣分。她帶來新的視角——但未必久留。" },
+  { n:41, zh:"行旅之王", latin:"Roi de Carreau", glyph:"🚢", pol:"mid",  keys:"四海男子・商旅・果斷・機動",
+    text:"一位四處奔走的男性:商人、軍旅或行動派。他決斷快、動作快——跟上他的節奏。" },
+  /* ♠ 黑桃（考驗與命運） */
+  { n:42, zh:"判決",     latin:"As de Pique",    glyph:"⚖️", pol:"mid",  keys:"正義・契約・轉向・攤牌",
+    text:"強而有力的一張:正義、契約,或一次不可迴避的轉向。事情要攤牌了——站在理字這邊。" },
+  { n:43, zh:"兩難",     latin:"Deux de Pique",  glyph:"🌗", pol:"bad",  keys:"對立・抉擇・拉鋸・取捨",
+    text:"兩股力量對立,你被夾在中間。艱難的選擇躲不掉——先弄清自己最不能失去什麼。" },
+  { n:44, zh:"微愁",     latin:"Trois de Pique", glyph:"💧", pol:"bad",  keys:"小悲傷・摩擦・陰霾・可越",
+    text:"一點小小的悲傷或短暫的不合。會過去的——別讓它在心裡過夜。" },
+  { n:45, zh:"靜思",     latin:"Quatre de Pique", glyph:"🕯️", pol:"mid", keys:"沉澱・獨處・面對考驗・內省",
+    text:"命運的考驗前,需要一段獨處與沉思。安靜不是退縮,是把刀磨利。" },
+  { n:46, zh:"割捨",     latin:"Cinq de Pique",  glyph:"✂️", pol:"bad",  keys:"必要之失・放手・輕裝・代價",
+    text:"要前進,就得放下一些東西。這次的失去是必要的代價——割得乾脆,走得輕鬆。" },
+  { n:47, zh:"未卜",     latin:"Six de Pique",   glyph:"🌫️", pol:"bad",  keys:"懸而未決・膽識・迷霧・堅持",
+    text:"結局還在迷霧裡,這段路考驗的是心性。抓穩方向盤,慢,但別停。" },
+  { n:48, zh:"小叛",     latin:"Sept de Pique",  glyph:"🐍", pol:"bad",  keys:"小背叛・關係障礙・失信・提防",
+    text:"一次小規模的背叛或關係裡的暗礁:失約、洩密、口風不緊。調整信任的額度。" },
+  { n:49, zh:"養息",     latin:"Huit de Pique",  glyph:"🛌", pol:"bad",  keys:"健康・疲憊・休養・回氣",
+    text:"身體在對你說話:累了。把行程讓給睡眠與休養——元氣回來,一切好談。" },
+  { n:50, zh:"至暗",     latin:"Neuf de Pique",  glyph:"🌑", pol:"bad",  keys:"重大困難・哀傷・低谷・撐住",
+    text:"整副牌最沉的一張:重大的困難或象徵性的哀悼。撐住——至暗之後,天光從這裡算起。" },
+  { n:51, zh:"夜變",     latin:"Dix de Pique",   glyph:"🌩️", pol:"bad",  keys:"劇烈轉折・週期告終・驟然・翻頁",
+    text:"一次劇烈的轉折,常在夜裡降臨:一個生命週期就此關閉。翻頁吧——下一章由你寫。" },
+  { n:52, zh:"讒人",     latin:"Valet de Pique", glyph:"👂", pol:"bad",  keys:"嫉妒者・流言・小人・戒備",
+    text:"附近有個嫉妒的人,流言從他嘴裡出來。不必對質——把嘴閉緊,把事做好。" },
+  { n:53, zh:"孀婦",     latin:"Dame de Pique",  glyph:"🖤", pol:"bad",  keys:"孤獨女性・對手・寡言・謹慎",
+    text:"一位孤獨或寡居的女性,也可能是需要謹慎以對的競爭者。保持禮貌,保持距離。" },
+  { n:54, zh:"法家",     latin:"Roi de Pique",   glyph:"🏛️", pol:"mid",  keys:"執法者・嚴峻男性・法律・程序",
+    text:"一位法律或紀律的化身:法官、嚴峻的掌權者,或一樁複雜的法務。照程序走,別抄捷徑。" },
+];
+(function () {
+  const suits = [["♥","紅心"],["♣","梅花"],["♦","方塊"],["♠","黑桃"]];
+  const ranks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+  const slugs = ["consultant","consultante",
+    "coeur-as","coeur-2","coeur-3","coeur-4","coeur-5","coeur-6","coeur-7","coeur-8","coeur-9","coeur-10","coeur-valet","coeur-dame","coeur-roi",
+    "trefle-as","trefle-2","trefle-3","trefle-4","trefle-5","trefle-6","trefle-7","trefle-8","trefle-9","trefle-10","trefle-valet","trefle-dame","trefle-roi",
+    "carreau-as","carreau-2","carreau-3","carreau-4","carreau-5","carreau-6","carreau-7","carreau-8","carreau-9","carreau-10","carreau-valet","carreau-dame","carreau-roi",
+    "pique-as","pique-2","pique-3","pique-4","pique-5","pique-6","pique-7","pique-8","pique-9","pique-10","pique-valet","pique-dame","pique-roi"];
+  GRA_CARDS.forEach((c, i) => {
+    if (c.n <= 2) {
+      c.pks = "★" + c.n;
+      c.pk = "指示牌";
+    } else {
+      const suit = suits[Math.floor((c.n - 3) / 13)], rank = ranks[(c.n - 3) % 13];
+      c.pks = suit[0] + rank;
+      c.pk = suit[1] + rank;
+    }
+    c.img = "cards-grand/" + String(c.n).padStart(2, "0") + "-" + slugs[i] + ".jpg";
+  });
+})();
+
+const GRA_SPREADS = [
+  { id:"gra-daily", name:"單卡・今日一葉", count:1, cols:1,
+    desc:"五十四片神話之葉,抽一片看今天。",
+    positions:["今日一葉"], combos: () => [] },
+  { id:"gra-three", name:"三卡・時間之流", count:3, cols:3,
+    desc:"過去、現在、未來——三張牌說一段史詩。",
+    positions:["過去","現在","未來"], combos: () => [] },
+  { id:"gra-cross", name:"五卡・十字陣", count:5, cols:3,
+    desc:"中央是核心，左右是來路與去向，上下是意識與潛流。",
+    positions:["核心現況","過去・來路","未來・去向","意識・目標","潛流・根基"],
+    place:[[2,2],[1,2],[3,2],[2,1],[2,3]], combos: () => [] },
+  { id:"gra-nine", name:"九宮格・全景", count:9, cols:3,
+    desc:"3 × 3 的完整快照：橫向是時間，縱向是層次，中央是核心。",
+    positions:[
+      "過去 × 想法","現在 × 想法","未來 × 想法",
+      "過去 × 現實","核心","未來 × 現實",
+      "過去 × 潛藏","現在 × 潛藏","未來 × 潛藏",
+    ], combos: () => [] },
+];
+
 /* ── 牌組註冊表 ───────────────────────────── */
 const DECKS = [
-  { id:"len", name:"雷諾曼", short:"Petit Lenormand · 36 張",
+  { id:"len", hall:"west", name:"雷諾曼", short:"Petit Lenormand · 36 張",
     title:"雷諾曼占卜",
     sub:"燭已點好。三十六張牌裡，藏著你尚未聽見的答案。",
     cards: LEN_CARDS, spreads: LEN_SPREADS, reversible:false, preload:true,
     back:"cards/back.jpg" },
-  { id:"sib", name:"西碧拉", short:"Vera Sibilla · 52 張 · 正逆位",
+  { id:"sib", hall:"west", name:"西碧拉", short:"Vera Sibilla · 52 張 · 正逆位",
     title:"西碧拉占卜",
     sub:"五十二張牌，正與逆之間，低語著命運的細節。",
     cards: SIB_CARDS, spreads: SIB_SPREADS, reversible:true, preload:true,
     back:"cards-sibilla/back.jpg" },
-  { id:"bel", name:"貝林神諭", short:"Oracle Belline · 53 張 · 正逆位",
+  { id:"bel", hall:"west", name:"貝林神諭", short:"Oracle Belline · 53 張 · 正逆位",
     title:"貝林神諭占卜",
     sub:"七大星體、五十三道低語——星辰早已寫好給你的信。",
     cards: BEL_CARDS, spreads: BEL_SPREADS, reversible:true, preload:true,
     back:"cards-belline/back.jpg" },
+  { id:"kip", hall:"west", name:"奇卜", short:"Kipperkarten · 36 張",
+    title:"奇卜占卜",
+    sub:"三十六個人物與場景——你的故事，正在哪一幕上演。",
+    cards: KIP_CARDS, spreads: KIP_SPREADS, reversible:false, preload:true,
+    back:"cards-kipper/back.jpg" },
+  { id:"gra", hall:"west", name:"大雷諾曼", short:"Grand Jeu · 54 張",
+    title:"大雷諾曼占卜",
+    sub:"金羊毛與特洛伊的餘燼——五十四片神話，占你此刻的戰局。",
+    cards: GRA_CARDS, spreads: GRA_SPREADS, reversible:false, preload:true,
+    back:"cards-grand/back.jpg" },
+  { id:"run", hall:"west", name:"盧恩符文", short:"Elder Futhark · 24 符 · 正逆位",
+    title:"盧恩占卜",
+    sub:"奧丁倒懸九夜換來的二十四個字——世界樹為你落下一枚。",
+    cards: RUN_CARDS, spreads: RUN_SPREADS, reversible:true, preload:true,
+    back:"cards-runes/back.jpg" },
 ];
+const HALLS = [["west","西方館"], ["east","東方館"]];
 let deckDef = DECKS[0];
 let CARDS = deckDef.cards;      /* 目前牌組的牌（其餘程式一律讀這兩個） */
 let SPREADS = deckDef.spreads;
@@ -1461,14 +1846,29 @@ function cutDeck(arr, pos) {
   return arr.slice(pos).concat(arr.slice(0, pos));
 }
 
-/* ── 牌組選單 ─────────────────────────────── */
+/* ── 牌組選單（依館分組） ─────────────────── */
 const elDecks = $("#decks");
-DECKS.forEach((d, i) => {
-  const b = document.createElement("button");
-  b.className = "deck-btn" + (i === 0 ? " active" : "");
-  b.innerHTML = `<span class="d-name">${d.name}</span><span class="d-sub">${d.short}</span>`;
-  b.addEventListener("click", () => selectDeck(d));
-  elDecks.appendChild(b);
+HALLS.forEach(([hid, hname]) => {
+  const list = DECKS.filter((d) => d.hall === hid);
+  if (!list.length) return;
+  const wrap = document.createElement("div");
+  wrap.className = "hall";
+  const label = document.createElement("div");
+  label.className = "hall-label";
+  label.textContent = hname;
+  wrap.appendChild(label);
+  const row = document.createElement("div");
+  row.className = "hall-decks";
+  list.forEach((d) => {
+    const b = document.createElement("button");
+    b.className = "deck-btn" + (d === deckDef ? " active" : "");
+    b.dataset.deck = d.id;
+    b.innerHTML = `<span class="d-name">${d.name}</span><span class="d-sub">${d.short}</span>`;
+    b.addEventListener("click", () => selectDeck(d));
+    row.appendChild(b);
+  });
+  wrap.appendChild(row);
+  elDecks.appendChild(wrap);
 });
 
 function selectDeck(d) {
@@ -1477,7 +1877,7 @@ function selectDeck(d) {
   deckDef = d;
   CARDS = d.cards;
   SPREADS = d.spreads;
-  document.querySelectorAll(".deck-btn").forEach((b, i) => b.classList.toggle("active", DECKS[i] === d));
+  document.querySelectorAll(".deck-btn").forEach((b) => b.classList.toggle("active", b.dataset.deck === d.id));
   document.title = `燭光牌桌 ─ ${d.title}`;
   $(".subtitle").textContent = d.sub;
   buildSpreadMenu();
@@ -1933,6 +2333,9 @@ function buildAiPrompt() {
     len:"你是一位經驗豐富的雷諾曼（Petit Lenormand）占卜解讀師，熟悉牌義、位置意義與牌與牌之間的組合技法。請以繁體中文為我解讀以下牌陣。",
     sib:"你是一位經驗豐富的義大利西碧拉（Vera Sibilla Italiana）占卜解讀師，熟悉五十二張牌的牌義、正逆位差異、位置意義與牌與牌之間的組合技法。請以繁體中文為我解讀以下牌陣。",
     bel:"你是一位經驗豐富的貝林神諭卡（L'Oracle Belline）占卜解讀師，熟悉五十三張牌、七星體家族的象徵、正逆位差異與位置意義。請以繁體中文為我解讀以下牌陣。",
+    kip:"你是一位經驗豐富的奇卜牌（Kipperkarten）占卜解讀師，熟悉三十六張牌的人物與情境語彙、方向與距離的讀法。請以繁體中文為我解讀以下牌陣。",
+    gra:"你是一位經驗豐富的大雷諾曼（Grand Jeu de Mlle Lenormand）占卜解讀師，熟悉五十四張牌的撲克對應、神話系列象徵與位置意義。請以繁體中文為我解讀以下牌陣。",
+    run:"你是一位經驗豐富的盧恩符文（Elder Futhark）占卜師，熟悉二十四符文的正逆位（merkstave）意涵與符文間的呼應。請以繁體中文為我解讀以下符陣。",
   }[deckDef.id]);
   if (deckDef.reversible) L.push("本牌陣使用正逆位：逆位請解讀為該牌能量的受阻、延遲、內化或反面。");
   L.push("");
@@ -2276,7 +2679,9 @@ function showDictCard(i) {
     : "";
   const posRows = dictPosLines(c)
     .map(([p, t]) => `<p class="combo"><b>${p}</b><br>${t}</p>`).join("");
-  const corr = deckDef.id === "len" ? `№ ${c.n} ・ 撲克對應 ${c.pk}` : `${c.pks} ・ ${c.pk}`;
+  const corr = deckDef.id === "len"
+    ? `№ ${c.n} ・ 撲克對應 ${c.pk}`
+    : [c.pks, c.pk].filter(Boolean).join(" ・ ") || `№ ${c.n}`;
   elDictDetail.innerHTML = `
     <div class="dict-head">
       <img class="dd-img" alt="" src="${c.img}">
