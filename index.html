@@ -1356,10 +1356,10 @@ const BEL_CARDS = [
   { n:52, zh:"隱修",     latin:"Cloître",       glyph:"🔔", pol:"mid",  keys:"獨處・靜修・沉澱・內觀",
     text:"退回內心的迴廊：獨處、靜修、與自己對話的時光。安靜不是空白，是深呼吸。",
     rtext:"逆位時，獨處變成逃避，或你已經靜得夠久了。鐘響了——該回到人間。" },
-  /* ❖ 藍卡 */
-  { n:53, zh:"藍卡",     latin:"Carte Bleue",   glyph:"💠", pol:"good", keys:"守護・恩寵・化解・平安",
+  /* ❖ 藍卡（傳統上不分正逆位，恆以守護本義讀） */
+  { n:53, zh:"藍卡",     latin:"Carte Bleue",   glyph:"💠", pol:"good", keys:"守護・恩寵・化解・平安", norev:true,
     text:"至高的守護：無論局面多難，有一股看不見的力量護著你。它出現的地方，凶牌的鋒芒都被鈍化。",
-    rtext:"藍卡沒有真正的逆位——守護依然成立，只是提醒你：奇蹟也需要你伸出手去接。" },
+    rtext:"藍卡不分正逆位——無論怎麼落下，守護恆常成立。" },
 ];
 
 const BEL_SLUGS = ["destinee","etoile-homme","etoile-femme","nativite","reussite","elevation","honneurs","pensee-amitie","campagne-sante","presents","trahison","depart","inconstance","decouverte","eau","penates","maladie","changement","argent","intelligence","vol-perte","entreprises","trafic","nouvelle","plaisirs","paix","union","famille","amour","table","passions","mechancete","proces","despotisme","ennemis","pourparlers","feu","accident","appui","beaute","heritage","sagesse","renommee","hasard","bonheur","infortune","sterilite","fatalite","grace","ruine","retard","cloitre","carte-bleue"];
@@ -2861,8 +2861,8 @@ elExtend.addEventListener("click", () => {
 function placeCard(cardIdx, forcedRev) {
   const slotIdx = drawn.length;
   const card = CARDS[cardIdx];
-  /* 正逆位：重看紀錄時沿用當時的牌位，否則由命運決定 */
-  const rev = deckDef.reversible
+  /* 正逆位：重看紀錄時沿用當時的牌位，否則由命運決定；norev 的牌（如貝林藍卡）恆為正位 */
+  const rev = deckDef.reversible && !card.norev
     ? (forcedRev !== undefined ? !!forcedRev : rand01() < 0.5)
     : false;
   drawn.push(card);
@@ -2944,7 +2944,7 @@ function addEntry(card, slotIdx) {
 
   const rev = drawnRev[slotIdx];
   const oTag = deckDef.reversible
-    ? `<span class="o-tag${rev ? " rev" : ""}">${rev ? "逆位" : "正位"}</span>`
+    ? `<span class="o-tag${rev ? " rev" : ""}">${card.norev ? "不分正逆" : rev ? "逆位" : "正位"}</span>`
     : "";
   const e = document.createElement("div");
   e.className = "entry";
@@ -3046,7 +3046,10 @@ function buildAiPrompt() {
     zw:"你是一位經驗豐富的紫微斗數老師，熟悉十四主星、六吉六煞、四化與諸雜曜的星情，以及廟旺落陷的差異。請以繁體中文為我解讀以下星陣（正位視為入廟得力，逆位視為落陷失輝）。",
     dt:"你是一位經驗豐富的塔羅解讀師，眼前是一副以華夏意象重詮的東方塔羅（四象為花色：青龍財帛、朱雀行動、白虎思辨、玄武情感），結構對應標準塔羅。請以繁體中文為我解讀以下牌陣。",
   }[deckDef.id]);
-  if (deckDef.reversible) L.push("本牌陣使用正逆位：逆位請解讀為該牌能量的受阻、延遲、內化或反面。");
+  if (deckDef.reversible) {
+    const norevs = CARDS.filter((c) => c.norev).map((c) => `「${c.zh}」`).join("、");
+    L.push(`本牌陣使用正逆位：逆位請解讀為該牌能量的受阻、延遲、內化或反面。${norevs ? `唯${norevs}不分正逆位，請恆以其本義解讀，勿作逆位發揮。` : ""}`);
+  }
   L.push("");
   L.push(`【盤面】${spread.name}（共 ${drawn.length} 張）`);
   if (spread.gt) {
@@ -3071,7 +3074,7 @@ function buildAiPrompt() {
   L.push("【抽牌結果】（依抽出順序）");
   drawn.forEach((c, i) => {
     L.push(deckDef.reversible
-      ? `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（${c.pk}，${drawnRev[i] ? "逆位" : "正位"}）— 關鍵詞：${c.keys}`
+      ? `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（${c.pk}，${c.norev ? "不分正逆位" : drawnRev[i] ? "逆位" : "正位"}）— 關鍵詞：${c.keys}`
       : `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（№${c.n}，撲克對應 ${c.pk}）— 關鍵詞：${c.keys}`);
   });
   L.push("");
@@ -3160,7 +3163,7 @@ let tipSlot = -1;
 function tipHtml(slotIdx) {
   const card = drawn[slotIdx];
   const rev = drawnRev[slotIdx];
-  const ori = deckDef.reversible ? ` ・ ${rev ? "逆位" : "正位"}` : "";
+  const ori = deckDef.reversible ? ` ・ ${card.norev ? "不分正逆" : rev ? "逆位" : "正位"}` : "";
   return `
     <div class="tip-pos">${posName(slotIdx)}${ori}</div>
     <div class="tip-name"><span class="tip-glyph">${card.glyph}</span> ${card.zh}
@@ -3416,7 +3419,7 @@ function showDictCard(i) {
       </div>`;
   }
   const revBlock = deckDef.reversible && c.rtext
-    ? `<div class="dict-sec"><div class="cb-title">逆 位 牌 義</div><p class="e-text">${c.rtext}</p></div>`
+    ? `<div class="dict-sec"><div class="cb-title">${c.norev ? "正 逆 之 辨" : "逆 位 牌 義"}</div><p class="e-text">${c.rtext}</p></div>`
     : "";
   const posRows = dictPosLines(c)
     .map(([p, t]) => `<p class="combo"><b>${p}</b><br>${t}</p>`).join("");
@@ -3433,7 +3436,7 @@ function showDictCard(i) {
         <div style="margin-top:8px"><span class="pol ${c.pol}">${POL_MARK[c.pol]}</span></div>
       </div>
     </div>
-    <div class="dict-sec"><div class="cb-title">${deckDef.reversible ? "正 位 牌 義" : "牌 義"}</div><p class="e-text">${c.text}</p></div>
+    <div class="dict-sec"><div class="cb-title">${deckDef.reversible && !c.norev ? "正 位 牌 義" : "牌 義"}</div><p class="e-text">${c.text}</p></div>
     ${revBlock}
     ${extra}
     <div class="dict-sec"><div class="cb-title">位 置 解 讀</div>
