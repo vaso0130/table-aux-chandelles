@@ -234,7 +234,8 @@
   #slots.qiu { display: block; width: auto; max-width: 100%; }
   .qslip {
     --qred: #9b2b1f; --qink: #3d2e19;
-    display: inline-block; margin: 0 auto; padding: 10px;
+    /* 直排內容不會隨容器縮寬:紙框必須跟著內容走，平移交給外層捲動 */
+    display: inline-block; width: max-content; max-width: none; margin: 0 auto; padding: 10px;
     background: linear-gradient(165deg, #f7eed6, #efe0ba 55%, #e7d3a4);
     border: 1px solid #c9a45c; border-radius: 2px;
     box-shadow: 0 8px 28px rgba(0,0,0,.5), inset 0 0 70px rgba(150,95,30,.14);
@@ -242,6 +243,7 @@
   }
   .qslip-inner {
     border: 3px double var(--qred); padding: 20px 16px 20px 20px; position: relative;
+    width: max-content;
     background:
       radial-gradient(ellipse at 18% 8%, rgba(155,43,31,.05), transparent 42%),
       radial-gradient(ellipse at 85% 92%, rgba(155,43,31,.05), transparent 42%);
@@ -2499,7 +2501,7 @@ const QS_CARDS = QS_DATA.map((d, i) => ({
 
 const QS_SPREADS = [
   { id:"qs-qiu", name:"求籤・擲筊", count:1, cols:1, qiu:true,
-    desc:"上香默稟，請筊求籤；聖筊得籤、笑筊再擲、陰筊退籤重求。此桌無神——司籤者，機緣也。",
+    desc:"上香默稟，請筊開筒；連得三聖筊，方為此籤——笑筊退籤重搖，陰筊三至則機緣未到、今日不取。此桌無神——司籤者，機緣也。",
     positions:["靈籤"], combos: () => [] },
 ];
 
@@ -2719,7 +2721,7 @@ function resetTable() {
   $("#spread-hint").textContent = spread.cast
     ? "三枚銅錢擲六次起卦——擲出動爻，之卦自現。"
     : spread.qiu
-    ? "上香默稟、請筊、搖籤、問籤——聖筊定籤，陰筊退籤重求。"
+    ? "上香默稟、請筊、搖籤——連三聖筊定籤；陰筊三至，今日不取。"
     : spread.sig
     ? "可先指定一張指示牌置中，或不指定——五張全憑抽。"
     : spread.gt
@@ -2750,6 +2752,7 @@ function resetTable() {
   if (isQiu) {
     phase = "qiu";
     qiuStep = "bing"; qiuStick = 0; qiuLog = []; qiuBusy = false;
+    qiuSheng = 0; qiuYin = 0;
     elQiuCap.textContent = "燭已點好。心中默想所問之事——此桌無神，司籤者機緣；誠心即可上香。";
     elQiuLog.textContent = "";
     elJiao.hidden = true;
@@ -2884,11 +2887,23 @@ function pickSig(n) {
 
 /* ── 求籤・擲筊 ────────────────────────────
    此桌無神:筊以 crypto 真隨機為斷——聖筊 1/2、笑筊 1/4、陰筊 1/4。
-   流程:上香默稟 → 請籤筊(聖筊開筒) → 搖籤 → 問籤筊(聖定/笑再擲/陰退籤重搖)。 */
+   流程:上香默稟 → 請籤筊(聖筊開筒) → 搖籤 → 問籤筊。
+   定籤須「連得三聖筊」;笑筊退籤重搖;全程陰筊累計三次,
+   即告機緣未到,今日不取籤。 */
 const elQiu = $("#qiu"), elQiuCap = $("#qiu-caption"), elQiuLog = $("#qiu-log");
 const elJiao = $("#jiao"), elJiaoA = $("#jiao-a"), elJiaoB = $("#jiao-b");
 const elQiuStick = $("#qiu-stick"), btnQiu = $("#btn-qiu");
 let qiuStep = "bing", qiuStick = 0, qiuLog = [], qiuBusy = false;
+let qiuSheng = 0, qiuYin = 0;   /* 本支籤的連續聖筊數／本次求籤累計陰筊數 */
+
+/* 陰筊三至:機緣未到,收筊歇手 */
+function qiuRest() {
+  qiuStep = "rest";
+  qiuStick = 0;
+  elQiuStick.hidden = true;
+  btnQiu.hidden = true;
+  elQiuCap.textContent = "三陰筊至——機緣不到，尚不是時候取籤。靜下心，把所問之事想得更清楚，改日再來請筊。";
+}
 
 function tossJiao(cb) {
   qiuBusy = true;
@@ -2963,7 +2978,9 @@ btnQiu.addEventListener("click", () => {
         elQiuCap.textContent = "笑筊——未聞其詳。把所問之事在心中說得更清楚，再擲。";
       } else {
         qiuLog.push("請籤筊：陰筊");
-        elQiuCap.textContent = "陰筊——機緣未至。靜心三息，再擲一次。";
+        qiuYin++;
+        if (qiuYin >= 3) { elQiuLog.textContent = qiuLog.join("　"); qiuRest(); return; }
+        elQiuCap.textContent = `陰筊——機緣未至。靜心三息，再擲一次。（陰筊已 ${qiuYin} 次，三至則今日不取）`;
       }
       elQiuLog.textContent = qiuLog.join("　");
     });
@@ -2971,10 +2988,11 @@ btnQiu.addEventListener("click", () => {
   }
   if (qiuStep === "yao") {
     qiuStick = 1 + Math.floor(rand01() * CARDS.length);
+    qiuSheng = 0;
     elQiuStick.textContent = `第${cnNum(qiuStick)}籤`;
     elQiuStick.hidden = false;
     elQiuStick.classList.remove("out"); void elQiuStick.offsetWidth; elQiuStick.classList.add("out");
-    elQiuCap.textContent = `籤筒傾落一支——第${cnNum(qiuStick)}籤。擲筊問：是此籤否？`;
+    elQiuCap.textContent = `籤筒傾落一支——第${cnNum(qiuStick)}籤。連得三聖筊，方為此籤。`;
     btnQiu.textContent = "擲 筊 問 籤";
     qiuStep = "que";
     return;
@@ -2982,20 +3000,31 @@ btnQiu.addEventListener("click", () => {
   if (qiuStep === "que") {
     tossJiao((r) => {
       if (r === "sheng") {
-        qiuLog.push(`第${qiuStick}籤・問籤筊：聖筊——即是此籤`);
+        qiuSheng++;
+        qiuLog.push(`第${qiuStick}籤・聖筊 ${qiuSheng}／3`);
         elQiuLog.textContent = qiuLog.join("　");
-        elQiuStick.hidden = true;
-        elJiao.hidden = true;
-        confirmQian();
+        if (qiuSheng >= 3) {
+          elQiuStick.hidden = true;
+          elJiao.hidden = true;
+          confirmQian();
+        } else {
+          elQiuCap.textContent = `聖筊${cnNum(qiuSheng)}——再擲。連得三聖筊，方為此籤。`;
+        }
       } else if (r === "xiao") {
-        qiuLog.push(`第${qiuStick}籤・問籤筊：笑筊`);
-        elQiuCap.textContent = "笑筊——莞爾未答。再擲一次。";
+        qiuLog.push(`第${qiuStick}籤・笑筊——退籤`);
+        elQiuCap.textContent = `笑筊——莞爾未答。第${cnNum(qiuStick)}籤退回筒中，重新搖籤。`;
         elQiuLog.textContent = qiuLog.join("　");
+        qiuStick = 0; qiuSheng = 0;
+        elQiuStick.hidden = true;
+        btnQiu.textContent = "搖 籤 筒";
+        qiuStep = "yao";
       } else {
-        qiuLog.push(`第${qiuStick}籤・問籤筊：陰筊——退籤`);
-        elQiuCap.textContent = `陰筊——非此籤。第${cnNum(qiuStick)}籤退回筒中，重新搖籤。`;
+        qiuLog.push(`第${qiuStick}籤・陰筊——退籤`);
+        qiuYin++;
         elQiuLog.textContent = qiuLog.join("　");
-        qiuStick = 0;
+        if (qiuYin >= 3) { qiuRest(); return; }
+        elQiuCap.textContent = `陰筊——非此籤。第${cnNum(qiuStick)}籤退回筒中，重新搖籤。（陰筊已 ${qiuYin} 次，三至則今日不取）`;
+        qiuStick = 0; qiuSheng = 0;
         elQiuStick.hidden = true;
         btnQiu.textContent = "搖 籤 筒";
         qiuStep = "yao";
@@ -3930,8 +3959,8 @@ if (location.search.includes("rwdtest")) {
         }, 700);
       } else {
         /* 求籤盤面:略過筊,直接搖籤定籤 */
-        qiuLog = ["請籤筊：聖筊——允", "問籤筊：聖筊——即是此籤"];
         qiuStick = 1 + Math.floor(rand01() * CARDS.length);
+        qiuLog = ["請籤筊：聖筊——允", `第${qiuStick}籤・聖筊 1／3`, `第${qiuStick}籤・聖筊 2／3`, `第${qiuStick}籤・聖筊 3／3`];
         confirmQian();
       }
     } else {
