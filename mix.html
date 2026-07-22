@@ -107,7 +107,7 @@ const POOL = [
   ]},
   { g: "命術", items: [
     ["b-bazi", "八字四柱", "birth"], ["b-ziwei", "紫微斗數", "birth"], ["b-shichu", "四柱推命(和流)", "birth"],
-    ["b-nine", "九星氣學", "birth"]
+    ["b-nine", "九星氣學", "birth"], ["b-dang", "唐四柱(당사주)", "birth"]
   ]},
   { g: "式占(三式)", items: [
     ["n-taiyi", "太乙歲計", ""], ["b-qimen", "奇門遁甲", ""], ["b-liuren", "大六壬", ""]
@@ -314,6 +314,18 @@ GEN["b-shichu"] = () => {
     html: "<p>" + bz.pillars.map(p => p.gz).join(" ") + "・十二運:" + bz.pillars.map(p => un(p.b)).join("/") + "</p>",
     lines: ["四柱推命(和流," + B.str + "):" + bz.pillars.map(p => p.tag + p.gz).join(" "),
       "  通変星:" + bz.pillars.map((p, i) => i === 2 ? "日主" : DC.tenGod(dS, p.s).replace("七殺", "偏官").replace("正印", "印綬")).join("、") + ";十二運:" + bz.pillars.map(p => p.tag + un(p.b)).join("、") + ";天中殺 " + bz.kong.join("")] };
+};
+GEN["b-dang"] = () => {
+  const B = birth();
+  const lun = DC.lunar(B.y, B.m, B.d, B.tz);
+  const lunarYear = (B.m <= 2 && lun.month >= 11) ? B.y - 1 : B.y;
+  const yB = ((lunarYear - 4) % 12 + 12) % 12;
+  const hb = Math.floor(((B.h % 24) + 1) / 2) % 12;
+  const DS = ["天貴", "天厄", "天權", "天破", "天奸", "天文", "天福", "天驛", "天孤", "天刃", "天藝", "天壽"];
+  const pM = (yB + lun.month - 1) % 12, pD = (pM + lun.day - 1) % 12, pH = (pD + hb) % 12;
+  return { title: "唐四柱(당사주)",
+    html: "<p>初年" + DS[yB] + "・青年" + DS[pM] + "・中年" + DS[pD] + "・晚年" + DS[pH] + "</p>",
+    lines: ["唐四柱(당사주,陰曆 " + DC.BRANCHES[yB] + "年" + (lun.isLeap ? "閏" : "") + lun.month + "月" + lun.day + "日" + DC.BRANCHES[hb] + "時):初年運" + DS[yB] + "、青年運" + DS[pM] + "、中年運" + DS[pD] + "、晚年運" + DS[pH]] };
 };
 GEN["b-nine"] = () => {
   const B = birth();

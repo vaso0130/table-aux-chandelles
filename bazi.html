@@ -78,7 +78,9 @@ const SYS = [
   { id: "shichu", name: "四柱推命", sub: "和流・通変星十二運", birth: true,
     hint: "同樣的四柱,日本流派的讀法:通変星、十二運星、身強身弱。" },
   { id: "ninestar", name: "九星氣學", sub: "本命星與吉方位", birth: true,
-    hint: "一白到九紫,你的本命星、月命星與今年的方位吉凶。" }
+    hint: "一白到九紫,你的本命星、月命星與今年的方位吉凶。" },
+  { id: "dangsaju", name: "唐四柱", sub: "당사주・韓流民俗", birth: true,
+    hint: "朝鮮民間的看圖四柱:年支起星,數月、數日、數時——十二天星定初年/青年/中年/晚年四段人生。" }
 ];
 let sysId = "bazi";
 
@@ -256,6 +258,49 @@ function runNinestar(out, pr) {
   pr.push("請以九星氣學解讀:1. 本命星×月命星的性格與天職。2. 今年本命星所在宮位的運勢主題(回座/被剋/受生)。3. 今年的吉方位與凶方位(祐氣取り建議)。4. 與哪些九星的人相生相剋。5. 未來三年的運勢曲線。");
 }
 
+/* ── 唐四柱(당사주)── */
+const DS_STARS = [ // 子起天貴,依地支序
+  ["天貴", "천귀", "👑", "天生貴氣,得長輩貴人提攜,福祿早發,宜近貴而行"],
+  ["天厄", "천액", "🌊", "多病多厄,先苦後甘——健康是第一功課,熬過便是福"],
+  ["天權", "천권", "⚔️", "掌權柄之星,有領導統御之才,宜掌印帶人,忌濫權"],
+  ["天破", "천파", "💥", "破敗之星,財來財去——破而後立,忌投機,宜學一技防身"],
+  ["天奸", "천간", "🦊", "智謀之星,機敏過人,善謀善變——防聰明反被聰明誤"],
+  ["天文", "천문", "📜", "文章之星,學問文才,清貴之命——宜讀書、著述、執教"],
+  ["天福", "천복", "💰", "福德之星,衣食豐足,財帛自來——一生安樂,施則更旺"],
+  ["天驛", "천역", "🐎", "驛馬之星,奔波遷徙,動中得財——離鄉發展反而開闊"],
+  ["天孤", "천고", "🍂", "孤獨之星,六親緣薄,宜自立與修行——學會與自己相處"],
+  ["天刃", "천인", "🗡️", "刀刃之星,剛烈易有刑傷血光——宜武職、技術、外科,化刃為器"],
+  ["天藝", "천예", "🎨", "藝術之星,多才多藝,以技藝風雅立身——才華即是飯碗"],
+  ["天壽", "천수", "🐢", "長壽之星,溫厚平穩,晚福深厚——細水長流,笑到最後"]
+];
+function runDangsaju(out, pr) {
+  const B = readBirth();
+  const lun = DC.lunar(B.y, B.m, B.d, B.tz);
+  if (!lun) throw fail("農曆換算失敗");
+  const lunarYear = (B.m <= 2 && lun.month >= 11) ? B.y - 1 : B.y; // 唐四柱以陰曆年(正月初一換歲)
+  const yB = ((lunarYear - 4) % 12 + 12) % 12;
+  const hb = Math.floor(((B.h % 24) + 1) / 2) % 12;
+  const posY = yB;
+  const posM = (posY + lun.month - 1) % 12;
+  const posD = (posM + lun.day - 1) % 12;
+  const posH = (posD + hb) % 12;
+  const stages = [
+    ["初年運(~20)", posY, "年支起星"], ["青年運(20-40)", posM, "數至" + (lun.isLeap ? "閏" : "") + DC.CN_MONTH[lun.month - 1] + "月"],
+    ["中年運(40-60)", posD, "數至" + DC.CN_DAY[lun.day - 1]], ["晚年運(60~)", posH, "數至" + DC.BRANCHES[hb] + "時"]
+  ];
+  out.push(card("唐四柱・十二天星", "당사주(" + DC.BRANCHES[yB] + "年 " + (lun.isLeap ? "閏" : "") + DC.CN_MONTH[lun.month - 1] + "月" + DC.CN_DAY[lun.day - 1] + DC.BRANCHES[hb] + "時)",
+    '<div class="pillars">' + stages.map(([tag, p]) => {
+      const s = DS_STARS[p];
+      return '<div class="pillar"><span class="p-tag">' + tag + '</span><span class="p-char" style="font-size:26px">' + s[2] + "<br>" + s[0] + '</span><span class="p-ten">' + s[1] + "</span></div>";
+    }).join("") + "</div>" +
+    stages.map(([tag, p]) => { const s = DS_STARS[p]; return "<p><b style='color:var(--gold-bright)'>" + tag + " " + s[0] + "(" + s[1] + ")</b>——" + s[3] + "。</p>"; }).join("") +
+    "<p>唐四柱為朝鮮時代流行的民間看圖命書(당사주책):不論格局用神,只以十二天星說四段人生,直白如畫。" + (lun.isLeap ? "閏月依本月起數。" : "") + "</p>"));
+  pr.push("唐四柱(당사주,韓國民俗四柱):");
+  pr.push("  陰曆生辰:" + DC.BRANCHES[yB] + "年" + (lun.isLeap ? "閏" : "") + lun.month + "月" + lun.day + "日" + DC.BRANCHES[hb] + "時(" + B.str + ")");
+  pr.push("  " + stages.map(([tag, p, how]) => tag + " " + DS_STARS[p][0] + "(" + DS_STARS[p][1] + "," + how + ")").join(";"), "");
+  pr.push("請以唐四柱(당사주)的民俗風格解讀:1. 四段人生各星的圖像與故事——請像朝鮮命書一樣「看圖說話」,直白生動。2. 四星連起來的人生曲線(何時起、何時伏)。3. 若同星重出或吉凶星相鄰,其加乘之義。4. 給命主一句民間老先生式的忠告。");
+}
+
 /* ── 主流程 ── */
 $("btn-go").onclick = () => {
   $("go-hint").textContent = "";
@@ -265,7 +310,7 @@ $("btn-go").onclick = () => {
   const head = ["你是一位深研中國命理與式占的老師。以下是完整的起盤資料,請以繁體中文、溫暖而誠實的口吻解讀。", ""];
   if (q) head.push("我的問題:" + q, "");
   try {
-    ({ bazi: runBazi, ziwei: runZiwei, shichu: runShichu, ninestar: runNinestar })[sysId](out, pr);
+    ({ bazi: runBazi, ziwei: runZiwei, shichu: runShichu, ninestar: runNinestar, dangsaju: runDangsaju })[sysId](out, pr);
   } catch (e) { if (!$("go-hint").textContent) $("go-hint").textContent = "起盤失敗:" + e.message; return; }
   $("out").innerHTML = out.join("");
   $("prompt-box").value = head.concat(pr).join("\n");
