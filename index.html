@@ -135,6 +135,26 @@
   .view-btn:focus-visible { outline: 1px solid var(--gold-dim); outline-offset: -1px; }
   .view-btn.active { color: var(--gold-bright); background: rgba(201,164,92,.08); }
 
+  /* ── 館別導覽(牌桌/占星/數字/八字/MIX) ── */
+  .halls-nav {
+    display: flex; justify-content: center; flex-wrap: wrap;
+    width: max-content; max-width: 100%;
+    margin: 34px auto 0;
+    border: 1px solid var(--felt-line); border-radius: 2px;
+  }
+  .halls-nav a {
+    color: var(--muted); text-decoration: none;
+    font-size: 14px; letter-spacing: .18em; text-indent: .18em;
+    padding: 11px 22px;
+    transition: color .2s, background-color .2s;
+  }
+  .halls-nav a + a { border-left: 1px solid var(--felt-line); }
+  .halls-nav a:hover, .halls-nav a:focus-visible { color: var(--ivory); background: rgba(201,164,92,.06); }
+  .halls-nav a.here { color: var(--gold-bright); background: rgba(201,164,92,.08); }
+  @media (max-width: 640px) {
+    .halls-nav a { padding: 10px 12px; font-size: 12.5px; letter-spacing: .1em; text-indent: .1em; }
+  }
+
   /* ── 牌組選單（西方館／東方館） ────────────── */
   .decks { display: flex; flex-direction: column; gap: 20px; }
   .hall-label {
@@ -702,6 +722,14 @@
       <p class="subtitle">燭已點好。三十六張牌裡，藏著你尚未聽見的答案。</p>
     </div>
   </header>
+
+  <nav class="halls-nav" aria-label="館別導覽">
+    <a href="index.html" class="here">牌桌館</a>
+    <a href="astro.html">占星館</a>
+    <a href="numbers.html">數字館</a>
+    <a href="bazi.html">八字館</a>
+    <a href="mix.html">MIX 三術合參</a>
+  </nav>
 
   <nav class="views" id="views" aria-label="頁面切換">
     <button class="view-btn active" data-view="divine">占卜牌桌</button>

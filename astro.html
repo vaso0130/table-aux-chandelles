@@ -1,0 +1,661 @@
+<title>燭光星壇 · 占星館</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="hall.css">
+
+<div class="wrap">
+  <header>
+    <div class="plate">
+      <p class="eyebrow">L'Autel des Astres</p>
+      <h1>燭光星壇</h1>
+      <p class="subtitle">行星不會說謊——它們只是沉默地站在你出生的那一刻。</p>
+    </div>
+  </header>
+
+  <nav class="halls-nav">
+    <a href="index.html">牌桌館</a>
+    <a href="astro.html" class="here">占星館</a>
+    <a href="numbers.html">數字館</a>
+    <a href="bazi.html">八字館</a>
+    <a href="mix.html">MIX 三術合參</a>
+  </nav>
+
+  <p class="section-label">選擇星學</p>
+  <div class="sys-row" id="sys"></div>
+
+  <p class="section-label" id="modes-label">選擇盤式</p>
+  <div class="modes" id="modes"></div>
+
+  <section class="panel" id="panel">
+    <h2 id="p-title"></h2>
+    <span class="hint" id="p-hint"></span>
+    <div id="form-birth">
+      <p class="fieldset-label">本命資料</p>
+      <div class="form-grid">
+        <div class="field"><label>出生日期</label><input id="b-date" type="date"></div>
+        <div class="field"><label>出生時間</label><input id="b-time" type="time" value="12:00">
+          <div class="note">不確定可先用 12:00(上升與宮位會存疑)</div></div>
+        <div class="field"><label>出生地</label><select id="b-city"></select></div>
+        <div class="field"><label>緯度 / 經度 / 時區</label>
+          <div style="display:flex;gap:6px">
+            <input id="b-lat" type="number" step="0.01" style="width:33%" title="緯度">
+            <input id="b-lon" type="number" step="0.01" style="width:33%" title="經度(東正西負)">
+            <input id="b-tz" type="number" step="0.5" style="width:33%" title="時區">
+          </div></div>
+      </div>
+    </div>
+    <div id="form-partner" hidden>
+      <p class="fieldset-label">對方資料</p>
+      <div class="form-grid">
+        <div class="field"><label>對方出生日期</label><input id="p-date" type="date"></div>
+        <div class="field"><label>對方出生時間</label><input id="p-time" type="time" value="12:00"></div>
+        <div class="field"><label>對方出生地</label><select id="p-city"></select></div>
+        <div class="field"><label>緯度 / 經度 / 時區</label>
+          <div style="display:flex;gap:6px">
+            <input id="p-lat" type="number" step="0.01" style="width:33%">
+            <input id="p-lon" type="number" step="0.01" style="width:33%">
+            <input id="p-tz" type="number" step="0.5" style="width:33%">
+          </div></div>
+      </div>
+    </div>
+    <div id="form-now" hidden>
+      <p class="fieldset-label">起卦時刻與地點(預設為此刻此地)</p>
+      <div class="form-grid">
+        <div class="field"><label>日期</label><input id="n-date" type="date"></div>
+        <div class="field"><label>時間</label><input id="n-time" type="time"></div>
+        <div class="field"><label>所在地</label><select id="n-city"></select></div>
+        <div class="field"><label>緯度 / 經度 / 時區</label>
+          <div style="display:flex;gap:6px">
+            <input id="n-lat" type="number" step="0.01" style="width:33%">
+            <input id="n-lon" type="number" step="0.01" style="width:33%">
+            <input id="n-tz" type="number" step="0.5" style="width:33%">
+          </div></div>
+      </div>
+    </div>
+    <div class="form-grid" style="margin-top:14px">
+      <div class="field full"><label>你的問題</label>
+        <input id="q-input" type="text" maxlength="200" placeholder="默想並寫下你想問的事(卜卦與問事占星必填,其餘選填)"></div>
+    </div>
+    <div class="btn-row">
+      <button class="gold-btn" id="btn-go">起 盤</button>
+      <span class="hint" id="go-hint"></span>
+    </div>
+  </section>
+
+  <section id="out"></section>
+
+  <section class="prompt-sec" id="prompt-sec" hidden>
+    <p class="section-label">AI 解讀提示詞</p>
+    <textarea class="prompt-box" id="prompt-box" readonly></textarea>
+    <div class="btn-row">
+      <button class="gold-btn" id="btn-copy">複製提示詞</button>
+      <span class="copy-ok" id="copy-ok" hidden>已複製,貼給任何 AI 即可。</span>
+    </div>
+  </section>
+
+  <p class="footnote">
+    行星位置採簡化天文根數(精度約 ±0.1°,月亮 ±0.5°),宮位採<b>整宮制</b>;印度與宿曜採 Lahiri 恆星黃道。<br>
+    此壇無星官——起盤者,天體與時刻也。解讀交給你信任的眼睛,或交給 AI。
+  </p>
+</div>
+
+<script src="divine-core.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/* ── 城市 ── */
+const CITIES = [
+  ["台北", 25.04, 121.51, 8], ["新北", 25.01, 121.46, 8], ["桃園", 24.99, 121.30, 8], ["台中", 24.15, 120.67, 8],
+  ["台南", 22.99, 120.21, 8], ["高雄", 22.63, 120.30, 8], ["香港", 22.32, 114.17, 8], ["北京", 39.90, 116.41, 8],
+  ["上海", 31.23, 121.47, 8], ["東京", 35.68, 139.69, 9], ["首爾", 37.57, 126.98, 9], ["新加坡", 1.35, 103.82, 8],
+  ["倫敦", 51.51, -0.13, 0], ["巴黎", 48.86, 2.35, 1], ["紐約", 40.71, -74.01, -5], ["洛杉磯", 34.05, -118.24, -8],
+  ["自訂", null, null, null]
+];
+function fillCity(sel, latI, lonI, tzI) {
+  CITIES.forEach(([n], i) => { const o = document.createElement("option"); o.value = i; o.textContent = n; sel.appendChild(o); });
+  sel.addEventListener("change", () => {
+    const c = CITIES[+sel.value];
+    if (c[1] != null) { $(latI).value = c[1]; $(lonI).value = c[2]; $(tzI).value = c[3]; }
+  });
+  sel.value = 0; $(latI).value = CITIES[0][1]; $(lonI).value = CITIES[0][2]; $(tzI).value = CITIES[0][3];
+}
+fillCity($("b-city"), "b-lat", "b-lon", "b-tz");
+fillCity($("p-city"), "p-lat", "p-lon", "p-tz");
+fillCity($("n-city"), "n-lat", "n-lon", "n-tz");
+
+/* ── 個人資料記憶 ── */
+const PK = "dc-astro-profile";
+function saveProfile() {
+  try { localStorage.setItem(PK, JSON.stringify({
+    bd: $("b-date").value, bt: $("b-time").value, blat: $("b-lat").value, blon: $("b-lon").value, btz: $("b-tz").value,
+    pd: $("p-date").value, pt: $("p-time").value, plat: $("p-lat").value, plon: $("p-lon").value, ptz: $("p-tz").value
+  })); } catch (e) {}
+}
+try {
+  const p = JSON.parse(localStorage.getItem(PK) || "{}");
+  if (p.bd) { $("b-date").value = p.bd; $("b-time").value = p.bt || "12:00"; $("b-lat").value = p.blat; $("b-lon").value = p.blon; $("b-tz").value = p.btz; }
+  if (p.pd) { $("p-date").value = p.pd; $("p-time").value = p.pt || "12:00"; $("p-lat").value = p.plat; $("p-lon").value = p.plon; $("p-tz").value = p.ptz; }
+} catch (e) {}
+
+function setNowFields() {
+  const n = new Date();
+  $("n-date").value = n.getFullYear() + "-" + DC.pad2(n.getMonth() + 1) + "-" + DC.pad2(n.getDate());
+  $("n-time").value = DC.pad2(n.getHours()) + ":" + DC.pad2(n.getMinutes());
+}
+setNowFields();
+
+/* ── 解讀資料 ── */
+const SIGN_TRAIT = ["衝勁與開創,先做再說", "穩定與感官,慢而堅定", "好奇與傳訊,一心多用", "感受與歸屬,以殼護心",
+  "光芒與尊嚴,需要舞台", "分析與服務,精益求精", "衡量與關係,以和為貴", "深潛與轉化,愛恨分明",
+  "遠方與意義,自由射手", "攀登與承擔,大器晚成", "理想與群體,特立獨行", "共感與想像,無邊之海"];
+const PLANET_MEAN = { sun: "核心自我與生命力", moo: "情緒、需求與內在小孩", mer: "思考與溝通", ven: "愛、美與價值",
+  mar: "行動力與慾望", jup: "擴張與幸運", sat: "限制、責任與功課", ura: "顛覆與覺醒", nep: "夢境與消融",
+  plu: "深層轉化與權力", nod: "今生的成長方向" };
+const HOUSE_MEAN = ["自我與形象", "金錢與價值", "溝通與手足", "家與根", "創造與戀愛", "工作與健康",
+  "伴侶與合作", "共享與轉化", "遠行與信念", "事業與聲望", "朋友與願景", "潛意識與退隱"];
+const SANKU_MEAN = { "命": "命日——與你共鳴最深,吉凶都放大,宜靜觀本心", "業": "業日——過去的積累回聲,舊事重現,宜還願結清",
+  "胎": "胎日——未來的種子萌動,新念頭浮現,宜播種立願", "榮": "榮日——榮華顯達,諸事亨通,宜進取受賞",
+  "衰": "衰日——氣運低迷,宜守不宜攻,養精蓄銳", "安": "安日——平穩安泰,宜日常庶務、修繕安頓",
+  "危": "危日——險象環生,忌冒進簽約,謹言慎行", "成": "成日——水到渠成,宜成交、告白、完成之事",
+  "壞": "壞日——破敗之象,忌開新局,舊物該放手", "友": "友日——貴人來助,宜社交合作、託付請託",
+  "親": "親日——親密相得,宜家聚、深談、修復關係" };
+
+/* ── 系統與盤式 ── */
+const SYS = [
+  { id: "west", name: "西洋占星", sub: "Western Astrology", modes: [
+    ["natal", "本命星盤", "出生那一刻的天空——十一星體、上升天頂、整宮十二宮與相位。"],
+    ["transit", "行運星盤", "此刻行星走到哪裡、觸動你本命的哪根弦——外行星相位與時機。"],
+    ["synastry", "關係星盤", "兩張本命盤的對話:日月金火的交纏,誰的行星落進誰的宮。"],
+    ["composite", "關係變化", "組合中點盤——這段關係本身的星盤,再看此刻行運如何搖動它。"],
+    ["returns", "時機與返照", "太陽返照(生日年運)與月亮返照(月度情緒),加上未來九十日的重大行運時刻。"],
+    ["stars", "恆星解讀", "軒轅十四、角宿一、大陵五……古老恆星落在你星盤要點上的訊息。"]
+  ]},
+  { id: "horary", name: "卜卦占星", sub: "Horary", modes: [
+    ["horary", "卜卦起盤", "以「提問此刻」起盤:上升主星、月亮走勢與空亡、宮主星落宮——問題本身就是星盤。"]
+  ]},
+  { id: "vedic", name: "印度占星", sub: "Jyotiṣa", modes: [
+    ["vnatal", "本命盤 Rāśi", "恆星黃道十二宮、月宿(Nakṣatra)與上升,南印度式方盤。"],
+    ["dasha", "大運 Daśā", "Vimśottarī 百二十年大運——你現在走在哪顆星的時代,下一站是誰。"],
+    ["navamsa", "九分盤 Navāṃśa", "D9 靈魂之盤:婚姻、法性與行星的真實力量。"],
+    ["gochara", "行運 Gochara", "恆星制行運:土星試煉(Sade Sati)、木星祝福、羅睺蝕軸。"]
+  ]},
+  { id: "prashna", name: "印度問事", sub: "Praśna", modes: [
+    ["prashna", "問事起盤", "印度卜卦:以提問此刻的恆星黃道盤直斷吉凶——月亮與上升即是答案的骨架。"]
+  ]},
+  { id: "xiuyao", name: "宿曜占星", sub: "宿曜經二十七宿", modes: [
+    ["xnatal", "本命宿", "生辰月亮所在之宿,即是你的本命宿——性情、格局與宿命的底色。"],
+    ["xtoday", "今日宿運", "三九秘法:今日之宿與本命宿的距離,定命業胎、榮親友壞衰安危成。"],
+    ["xbond", "宿曜相性", "兩人本命宿的互距——安壞、榮親、危成、友衰、業胎,宿命的緣分幾何。"]
+  ]}
+];
+let sysId = "west", modeId = "natal";
+
+function renderSys() {
+  $("sys").innerHTML = "";
+  SYS.forEach(s => {
+    const b = document.createElement("button");
+    b.className = "sys-btn" + (s.id === sysId ? " active" : "");
+    b.innerHTML = '<span class="d-name">' + s.name + '</span><span class="d-sub">' + s.sub + '</span>';
+    b.onclick = () => { sysId = s.id; modeId = s.modes[0][0]; renderSys(); renderModes(); updateForm(); };
+    $("sys").appendChild(b);
+  });
+}
+function renderModes() {
+  const s = SYS.find(x => x.id === sysId);
+  $("modes").innerHTML = "";
+  s.modes.forEach(([id, name, desc], i) => {
+    const b = document.createElement("button");
+    b.className = "mode-btn" + (id === modeId ? " active" : "");
+    b.innerHTML = '<span class="s-row"><span class="s-idx">' + "壹貳參肆伍陸"[i] + '</span><span class="s-name">' + name +
+      '</span><span class="s-leader"></span></span><span class="s-desc">' + desc + '</span>';
+    b.onclick = () => { modeId = id; renderModes(); updateForm(); };
+    $("modes").appendChild(b);
+  });
+  $("modes-label").hidden = s.modes.length === 1;
+}
+const NEED = { // [本命, 對方, 此刻]
+  natal: [1, 0, 0], transit: [1, 0, 1], synastry: [1, 1, 0], composite: [1, 1, 1], returns: [1, 0, 1], stars: [1, 0, 0],
+  horary: [0, 0, 1], vnatal: [1, 0, 0], dasha: [1, 0, 0], navamsa: [1, 0, 0], gochara: [1, 0, 1],
+  prashna: [0, 0, 1], xnatal: [1, 0, 0], xtoday: [1, 0, 1], xbond: [1, 1, 0]
+};
+function updateForm() {
+  const need = NEED[modeId];
+  $("form-birth").hidden = !need[0];
+  $("form-partner").hidden = !need[1];
+  $("form-now").hidden = !need[2];
+  const s = SYS.find(x => x.id === sysId), m = s.modes.find(x => x[0] === modeId);
+  $("p-title").textContent = s.name + "・" + m[1];
+  $("p-hint").textContent = m[2];
+  $("out").innerHTML = ""; $("prompt-sec").hidden = true;
+  if (need[2]) setNowFields();
+}
+renderSys(); renderModes(); updateForm();
+
+/* ── 起盤工具 ── */
+function readWhen(dId, tId, tzId) {
+  const dv = $(dId).value, tv = $(tId).value || "12:00";
+  if (!dv) return null;
+  const [y, mo, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
+  const tz = parseFloat($(tzId).value) || 8;
+  return { y, mo, d, h, mi, tz, jd: DC.jd(y, mo, d, h, mi, tz), str: dv + " " + tv + "(UTC" + (tz >= 0 ? "+" : "") + tz + ")" };
+}
+function fullChart(when, lat, lon) {
+  const list = DC.chart(when.jd);
+  const am = DC.ascMc(when.jd, lat, lon);
+  const ascSign = DC.signOf(am.asc);
+  for (const p of list) p.house = ((DC.signOf(p.lon) - ascSign) % 12 + 12) % 12 + 1;
+  return { list, asc: am.asc, mc: am.mc, ascSign, when, lat, lon };
+}
+function chartTable(ch, withHouse) {
+  let h = '<div class="tbl-scroll"><table class="data"><tr><th>星體</th><th>位置</th>' + (withHouse ? "<th>宮位</th>" : "") + '<th>狀態</th></tr>';
+  for (const p of ch.list)
+    h += "<tr><td>" + p.gl + " " + p.zh + '</td><td class="hl">' + DC.fmtLon(p.lon) + "</td>" +
+      (withHouse ? "<td>第 " + p.house + " 宮</td>" : "") +
+      "<td>" + (p.retro ? '<span class="red">℞ 逆行</span>' : "順行") + "</td></tr>";
+  h += "<tr><td>↑ 上升</td><td class=\"hl\">" + DC.fmtLon(ch.asc) + "</td>" + (withHouse ? "<td>第 1 宮</td>" : "") + "<td>—</td></tr>";
+  h += "<tr><td>MC 天頂</td><td class=\"hl\">" + DC.fmtLon(ch.mc) + "</td>" + (withHouse ? "<td>—</td>" : "") + "<td>—</td></tr>";
+  return h + "</table></div>";
+}
+function aspectRows(asps, n, tagA, tagB) {
+  let h = '<div class="tbl-scroll"><table class="data"><tr><th>' + (tagA || "星") + '</th><th>相位</th><th>' + (tagB || "星") + '</th><th>容許度</th></tr>';
+  for (const a of asps.slice(0, n || 12))
+    h += "<tr><td>" + a.a.zh + '</td><td class="hl">' + a.gl + " " + a.name + "</td><td>" + a.b.zh + "</td><td>" + a.orb.toFixed(1) + "°</td></tr>";
+  return h + "</table></div>";
+}
+function svgWheel(ch) {
+  const R = 170, cx = 190, cy = 190;
+  const pt = (lon, r) => { const t = (180 + (lon - ch.asc)) * Math.PI / 180; return [cx + r * Math.cos(t), cy - r * Math.sin(t)]; };
+  let s = '<svg viewBox="0 0 380 380" width="380">';
+  s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="#0A110D" stroke="#2E4237"/>';
+  s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (R - 26) + '" fill="none" stroke="#2E4237"/>';
+  s += '<circle cx="' + cx + '" cy="' + cy + '" r="60" fill="none" stroke="#1C2B24"/>';
+  for (let k = 0; k < 12; k++) {
+    const [x1, y1] = pt(k * 30, R), [x2, y2] = pt(k * 30, R - 26);
+    s += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#2E4237"/>';
+    const [tx, ty] = pt(k * 30 + 15, R - 13);
+    s += '<text x="' + tx + '" y="' + (ty + 4) + '" text-anchor="middle" font-size="13" fill="#8A7245">' + DC.ZOD_GL[k] + "</text>";
+  }
+  const sorted = ch.list.slice().sort((a, b) => a.lon - b.lon);
+  let lastLon = -99, bump = 0;
+  for (const p of sorted) {
+    if (Math.abs(p.lon - lastLon) < 7) bump += 16; else bump = 0;
+    lastLon = p.lon;
+    const [x, y] = pt(p.lon, R - 44 - bump);
+    s += '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" font-size="14" fill="#E5CC8F">' + p.gl + "</text>";
+    const [mx, my] = pt(p.lon, R - 26), [nx2, ny2] = pt(p.lon, R - 32);
+    s += '<line x1="' + mx + '" y1="' + my + '" x2="' + nx2 + '" y2="' + ny2 + '" stroke="#8A7245"/>';
+  }
+  const [ax, ay] = pt(ch.asc, R + 8);
+  s += '<text x="' + ax + '" y="' + (ay + 4) + '" text-anchor="middle" font-size="11" fill="#C9A45C">ASC</text>';
+  const [mx2, my2] = pt(ch.mc, R + 8);
+  s += '<text x="' + mx2 + '" y="' + (my2 + 4) + '" text-anchor="middle" font-size="11" fill="#C9A45C">MC</text>';
+  return '<div class="wheel-box">' + s + "</svg></div>";
+}
+function card(title, en, body) { return '<div class="result-card"><h3>' + title + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
+function chartLines(ch, tag) { // 提示詞用
+  const L = [tag + ":"];
+  for (const p of ch.list) L.push("  " + p.zh + " " + DC.fmtLon(p.lon) + (p.retro ? "(逆行)" : "") + " 第" + p.house + "宮");
+  L.push("  上升 " + DC.fmtLon(ch.asc) + "/天頂 " + DC.fmtLon(ch.mc) + "(整宮制)");
+  return L;
+}
+function sidLines(ch, ay, tag) {
+  const L = [tag + "(恆星黃道 Lahiri,ayanāṃśa " + ay.toFixed(2) + "°):"];
+  for (const p of ch.list) {
+    const sl = DC.rev(p.lon - ay);
+    L.push("  " + p.zh + " " + DC.fmtLon(sl) + (p.id === "moo" ? "(月宿 " + DC.nakOf(sl).name + " 第" + DC.nakOf(sl).pada + "步)" : "") + (p.retro ? "(逆行)" : ""));
+  }
+  L.push("  上升 " + DC.fmtLon(DC.rev(ch.asc - ay)));
+  return L;
+}
+function moonVoC(jd) { // 月亮離開本星座前是否還有入相位(他星視為近似不動)
+  const sign = DC.signOf(DC.moonLon(jd));
+  const others = DC.chart(jd).filter(p => p.id !== "moo" && p.id !== "nod");
+  for (let t = jd; t < jd + 3; t += 0.02) {
+    const ml = DC.moonLon(t);
+    if (DC.signOf(ml) !== sign) return { voc: true, exit: t };
+    for (const p of others)
+      for (const [ang, name] of DC.ASPECTS) {
+        const d = Math.abs((((ml - p.lon) % 360) + 540) % 360 - 180);
+        if (Math.abs(d - ang) < 0.14) return { voc: false, hit: p.zh, asp: name, at: t };
+      }
+  }
+  return { voc: true };
+}
+
+/* ── 起盤主流程 ── */
+$("btn-go").onclick = () => { saveProfile(); run(); };
+function need(cond, msg) { if (!cond) { $("go-hint").textContent = msg; throw new Error(msg); } $("go-hint").textContent = ""; }
+
+function run() {
+  const q = $("q-input").value.trim();
+  const [nb, np, nn] = NEED[modeId];
+  let B = null, P = null, N = null;
+  if (nb) { B = readWhen("b-date", "b-time", "b-tz"); need(B, "請填出生日期"); B.lat = +$("b-lat").value; B.lon = +$("b-lon").value; }
+  if (np) { P = readWhen("p-date", "p-time", "p-tz"); need(P, "請填對方出生日期"); P.lat = +$("p-lat").value; P.lon = +$("p-lon").value; }
+  if (nn) { N = readWhen("n-date", "n-time", "n-tz"); need(N, "請填此刻時間"); N.lat = +$("n-lat").value; N.lon = +$("n-lon").value; }
+  if (sysId === "horary" || sysId === "prashna") need(q, "卜卦/問事占星必須先寫下問題");
+  const out = [], pr = [];
+  MODES[modeId](B, P, N, q, out, pr);
+  $("out").innerHTML = out.join("");
+  const head = ["你是一位資深占星師。以下是完整的起盤資料,請以繁體中文、溫暖而誠實的口吻解讀。",
+    "(本盤由「燭光星壇」以真實天文計算起出;宮位採整宮制,恆星制採 Lahiri。)", ""];
+  if (q) head.push("我的問題:" + q, "");
+  $("prompt-box").value = head.concat(pr).join("\n");
+  $("prompt-sec").hidden = false;
+}
+
+const MODES = {};
+MODES.natal = (B, P, N, q, out, pr) => {
+  const ch = fullChart(B, B.lat, B.lon);
+  const asps = DC.aspects(ch.list);
+  const sun = ch.list[0], moo = ch.list[1];
+  out.push(card("本命星盤", "Natal Chart", svgWheel(ch) +
+    '<p class="lead">太陽 ' + DC.ZODIAC[DC.signOf(sun.lon)] + "・月亮 " + DC.ZODIAC[DC.signOf(moo.lon)] + "・上升 " + DC.ZODIAC[ch.ascSign] + "</p>" +
+    "<p>太陽落" + DC.ZODIAC[DC.signOf(sun.lon)] + "——" + SIGN_TRAIT[DC.signOf(sun.lon)] + ";月亮落" + DC.ZODIAC[DC.signOf(moo.lon)] + "——內在需要" + SIGN_TRAIT[DC.signOf(moo.lon)] + ";上升" + DC.ZODIAC[ch.ascSign] + ",給世界的第一印象是" + SIGN_TRAIT[ch.ascSign] + "。</p>" +
+    chartTable(ch, true)));
+  out.push(card("主要相位", "Aspects", aspectRows(asps, 14)));
+  pr.push(...chartLines(ch, "本命盤(" + B.str + ",北緯" + B.lat + " 東經" + B.lon + ")"));
+  pr.push("主要相位:" + asps.slice(0, 14).map(a => a.a.zh + a.name + a.b.zh + "(" + a.orb.toFixed(1) + "°)").join("、"), "");
+  pr.push("請解讀:1. 太陽/月亮/上升的三位一體人格。2. 各行星落宮的人生領域展開。3. 三個最重要的相位格局。4. 此生的天賦與功課。5. 給我一段誠實的總結。");
+};
+MODES.transit = (B, P, N, q, out, pr) => {
+  const nat = fullChart(B, B.lat, B.lon), tr = fullChart(N, N.lat, N.lon);
+  for (const p of tr.list) p.house = ((DC.signOf(p.lon) - nat.ascSign) % 12 + 12) % 12 + 1; // 行運落本命宮
+  const asps = DC.aspects(tr.list.filter(p => ["jup", "sat", "ura", "nep", "plu", "nod"].includes(p.id)),
+    nat.list.concat([{ id: "asc", zh: "上升", lon: nat.asc }, { id: "mc", zh: "天頂", lon: nat.mc }]));
+  let slow = tr.list.filter(p => ["jup", "sat", "ura", "nep", "plu"].includes(p.id))
+    .map(p => "行運" + p.zh + "在" + DC.ZODIAC[DC.signOf(p.lon)] + "(你的第 " + p.house + " 宮:" + HOUSE_MEAN[p.house - 1] + ")").join("<br>");
+  out.push(card("行運概況", "Transits " + N.str, "<p>" + slow + "</p>" + chartTable(tr, true)));
+  out.push(card("行運 × 本命 相位", "", aspectRows(asps, 14, "行運", "本命")));
+  pr.push(...chartLines(nat, "本命盤(" + B.str + ")"));
+  pr.push("", ...chartLines(tr, "行運盤(" + N.str + ",宮位為行運星落入的本命宮)"));
+  pr.push("行運×本命相位:" + asps.slice(0, 14).map(a => "行運" + a.a.zh + a.name + "本命" + a.b.zh + "(" + a.orb.toFixed(1) + "°)").join("、"), "");
+  pr.push("請解讀:1. 目前最強的二至三個行運主題。2. 外行星走到哪個人生領域、帶來什麼課題。3. 這段時間的機會與提醒。4. 若我有提問,結合行運直接回答。");
+};
+MODES.synastry = (B, P, N, q, out, pr) => {
+  const a = fullChart(B, B.lat, B.lon), b = fullChart(P, P.lat, P.lon);
+  const asps = DC.aspects(a.list, b.list).filter(x => ["sun", "moo", "ven", "mar", "mer", "asc"].includes(x.a.id) || ["sun", "moo", "ven", "mar"].includes(x.b.id));
+  const overlay = a.list.map(p => ({ ...p, house: ((DC.signOf(p.lon) - b.ascSign) % 12 + 12) % 12 + 1 }));
+  out.push(card("我的星盤", "", svgWheel(a) + chartTable(a, true)));
+  out.push(card("對方星盤", "", svgWheel(b) + chartTable(b, true)));
+  out.push(card("關係相位(合盤)", "Synastry", aspectRows(asps, 16, "我", "對方") +
+    "<p>我的行星落入對方的宮位:" + overlay.filter(p => ["sun", "moo", "ven", "mar"].includes(p.id)).map(p => p.zh + "→對方第" + p.house + "宮(" + HOUSE_MEAN[p.house - 1] + ")").join("、") + "</p>"));
+  pr.push(...chartLines(a, "我的本命盤(" + B.str + ")"), "", ...chartLines(b, "對方本命盤(" + P.str + ")"));
+  pr.push("合盤相位:" + asps.slice(0, 16).map(x => "我方" + x.a.zh + x.name + "對方" + x.b.zh + "(" + x.orb.toFixed(1) + "°)").join("、"));
+  pr.push("我的日月金火落入對方宮位:" + overlay.filter(p => ["sun", "moo", "ven", "mar"].includes(p.id)).map(p => p.zh + "→第" + p.house + "宮").join("、"), "");
+  pr.push("請解讀:1. 吸引力的來源(日月金火交角)。2. 摩擦與功課在哪。3. 誰影響誰較深(宮位疊置)。4. 這段關係的長期樣貌與建議。");
+};
+MODES.composite = (B, P, N, q, out, pr) => {
+  const a = fullChart(B, B.lat, B.lon), b = fullChart(P, P.lat, P.lon);
+  const mid = (x, y) => DC.rev(x + ((((y - x) % 360) + 540) % 360 - 180) / 2);
+  const comp = { list: a.list.map((p, i) => ({ ...p, lon: mid(p.lon, b.list[i].lon), retro: false })), asc: mid(a.asc, b.asc), mc: mid(a.mc, b.mc) };
+  comp.ascSign = DC.signOf(comp.asc);
+  for (const p of comp.list) p.house = ((DC.signOf(p.lon) - comp.ascSign) % 12 + 12) % 12 + 1;
+  const inner = DC.aspects(comp.list);
+  const tr = fullChart(N, N.lat, N.lon);
+  const hits = DC.aspects(tr.list.filter(p => ["jup", "sat", "ura", "nep", "plu"].includes(p.id)), comp.list);
+  out.push(card("組合中點盤(關係之盤)", "Composite", svgWheel(comp) +
+    '<p class="lead">關係的太陽在' + DC.ZODIAC[DC.signOf(comp.list[0].lon)] + "・月亮在" + DC.ZODIAC[DC.signOf(comp.list[1].lon)] + "</p>" + chartTable(comp, true)));
+  out.push(card("此刻行運對關係的擾動", "Transit → Composite", aspectRows(hits, 12, "行運", "組合盤")));
+  pr.push(...chartLines(comp, "組合中點盤(兩人星盤逐星取中點)"));
+  pr.push("盤內相位:" + inner.slice(0, 12).map(x => x.a.zh + x.name + x.b.zh).join("、"));
+  pr.push("此刻(" + N.str + ")行運對組合盤:" + hits.slice(0, 12).map(x => "行運" + x.a.zh + x.name + "組合" + x.b.zh + "(" + x.orb.toFixed(1) + "°)").join("、"), "");
+  pr.push("請解讀:1. 這段關係本身的性格(組合日月)。2. 關係的目的與弱點。3. 目前行運正把關係推向哪裡、是聚是散。4. 給兩人的共同建議。");
+};
+MODES.returns = (B, P, N, q, out, pr) => {
+  const nat = fullChart(B, B.lat, B.lon);
+  const natSun = nat.list[0].lon, natMoon = nat.list[1].lon;
+  let srJd = DC.sunCross(natSun, N.jd - 366); // 最近一次太陽返照(今年生日)
+  if (srJd > N.jd) srJd = DC.sunCross(natSun, N.jd - 732);
+  const srCh = fullChart({ jd: srJd, str: DC.fmtJD(srJd, N.tz) }, N.lat, N.lon);
+  const lrJd = DC.lunarReturnAfter(N.jd, natMoon);
+  const lrCh = fullChart({ jd: lrJd, str: DC.fmtJD(lrJd, N.tz) }, N.lat, N.lon);
+  // 未來 90 日重大行運
+  const events = [];
+  const natPts = [{ zh: "太陽", lon: natSun }, { zh: "月亮", lon: natMoon }, { zh: "上升", lon: nat.asc }, { zh: "天頂", lon: nat.mc }];
+  for (let dDay = 0; dDay <= 90; dDay += 1) {
+    const t = N.jd + dDay, lons = DC.chart(t).filter(p => ["jup", "sat", "ura", "nep", "plu"].includes(p.id));
+    for (const p of lons) for (const n2 of natPts) for (const [ang, name] of DC.ASPECTS) {
+      const d = Math.abs((((p.lon - n2.lon) % 360) + 540) % 360 - 180);
+      if (Math.abs(d - ang) < 0.25 && !events.some(e => e.p === p.zh && e.n === n2.zh && e.a === name && Math.abs(e.t - t) < 20))
+        events.push({ p: p.zh, n: n2.zh, a: name, t });
+    }
+  }
+  events.sort((x, y) => x.t - y.t);
+  out.push(card("太陽返照盤(本年生日盤)", "Solar Return " + srCh.when.str,
+    svgWheel(srCh) + '<p class="lead">返照上升' + DC.ZODIAC[srCh.ascSign] + "——今年的主旋律由此起。</p>" + chartTable(srCh, true)));
+  out.push(card("月亮返照盤(未來一月)", "Lunar Return " + lrCh.when.str, chartTable(lrCh, true)));
+  out.push(card("未來九十日・重大行運時刻", "Timing",
+    events.length ? '<div class="tbl-scroll"><table class="data"><tr><th>日期</th><th>行運</th></tr>' +
+      events.map(e => "<tr><td>" + DC.fmtJD(e.t, N.tz, false) + '</td><td class="hl">行運' + e.p + e.a + "本命" + e.n + "</td></tr>").join("") + "</table></div>"
+      : "<p>未來九十日外行星對你的四要點無精確相位——平流層,適合按部就班。</p>"));
+  pr.push(...chartLines(nat, "本命盤(" + B.str + ")"), "");
+  pr.push(...chartLines(srCh, "太陽返照盤(" + srCh.when.str + ",效期至下個生日)"), "");
+  pr.push(...chartLines(lrCh, "月亮返照盤(" + lrCh.when.str + ",效期約一月)"));
+  pr.push("未來九十日精確行運:" + (events.map(e => DC.fmtJD(e.t, N.tz, false) + " 行運" + e.p + e.a + "本命" + e.n).join("、") || "無外行星精確相位"), "");
+  pr.push("請解讀:1. 太陽返照盤給今年定的調。2. 月亮返照給這個月的情緒節奏。3. 列出的行運時刻各代表什麼、如何準備。4. 綜合給我未來三個月的行動曆。");
+};
+MODES.stars = (B, P, N, q, out, pr) => {
+  const ch = fullChart(B, B.lat, B.lon);
+  const pts = ch.list.concat([{ id: "asc", zh: "上升", gl: "↑", lon: ch.asc }, { id: "mc", zh: "天頂", gl: "MC", lon: ch.mc }]);
+  const hits = DC.fixedStarHits(pts, B.jd, 1.5);
+  out.push(card("恆星合相", "Fixed Stars(容許 1.5°)",
+    hits.length ? hits.map(h => '<p><b style="color:var(--gold-bright)">' + h.star + "</b> 合 " + h.planet.zh + "(" + h.orb.toFixed(1) + "°)——" + h.note + "</p>").join("")
+      : "<p>你的星盤要點與十六大恆星皆無緊密合相——你的故事由行星自己來寫。</p>"));
+  pr.push(...chartLines(ch, "本命盤(" + B.str + ")"));
+  pr.push("恆星合相(歲差修正後,容許 1.5°):" + (hits.map(h => h.star + "合" + h.planet.zh + "(" + h.orb.toFixed(1) + "°)").join("、") || "無"), "");
+  pr.push("請解讀:1. 每個恆星合相的神話原型與人生劇本。2. 恆星的榮耀與代價各是什麼。3. 如何有意識地「活出」而不是「被動承受」這些恆星。");
+};
+MODES.horary = (B, P, N, q, out, pr) => {
+  const ch = fullChart(N, N.lat, N.lon);
+  const ascDeg = ch.asc % 30;
+  const ruler = DC.RULER[ch.ascSign];
+  const rulerP = ch.list.find(p => p.zh === ruler);
+  const moon = ch.list[1];
+  const voc = moonVoC(N.jd);
+  const warns = [];
+  if (ascDeg < 3) warns.push("上升在星座最初 3°——事情太早,尚未成形,判斷保留");
+  if (ascDeg > 27) warns.push("上升在星座最後 3°——事情太遲,大局已定,判斷保留");
+  if (voc.voc) warns.push("月亮空亡(離開本星座前無入相位)——事情多半「不了了之」或不如預期");
+  const sat = ch.list.find(p => p.id === "sat");
+  if (sat.house === 7) warns.push("土星在第七宮——占星師易誤判,此盤宜慎讀");
+  if (DC.signOf(moon.lon) === 7) warns.push("月亮在天蠍(落陷)——所問之事帶著情緒暗流");
+  const houses = Array.from({ length: 12 }, (_, i) => {
+    const sign = (ch.ascSign + i) % 12, r = DC.RULER[sign], rp = ch.list.find(p => p.zh === r);
+    return "第" + (i + 1) + "宮(" + HOUSE_MEAN[i] + ")在" + DC.ZODIAC[sign] + ",宮主" + r + "落第" + rp.house + "宮";
+  });
+  out.push(card("卜卦盤", "Horary " + N.str, svgWheel(ch) +
+    '<p class="lead">上升' + DC.ZODIAC[ch.ascSign] + " " + ascDeg.toFixed(0) + "°,問卜者主星為" + ruler + "(落第" + rulerP.house + "宮" + (rulerP.retro ? ",逆行" : "") + ")</p>" +
+    (warns.length ? "<p>" + warns.map(w => '<span class="badge red">' + w + "</span>").join(" ") + "</p>" : '<p><span class="badge">盤面具根性,可以放心論斷</span></p>') +
+    chartTable(ch, true)));
+  out.push(card("十二宮宮主星", "House Rulers(傳統守護)", "<p>" + houses.join("<br>") + "</p>" +
+    "<p>月亮" + (voc.voc ? "空亡" : "下一個入相位:" + voc.asp + rulerNote(voc)) + "。月亮代表事情的走向與問卜者的心。</p>"));
+  function rulerNote(v) { return v.hit ? v.hit + "(約 " + ((v.at - N.jd) * 24).toFixed(0) + " 小時後)" : ""; }
+  pr.push(...chartLines(ch, "卜卦盤(以提問此刻 " + N.str + " 起盤,北緯" + N.lat + " 東經" + N.lon + ")"));
+  pr.push("上升主星(問卜者):" + ruler + " 落第" + rulerP.house + "宮" + (rulerP.retro ? "(逆行)" : ""));
+  pr.push("宮主星表:" + houses.join(";"));
+  pr.push("月亮狀態:" + (voc.voc ? "空亡" : "入相位 " + voc.asp + " " + (voc.hit || "")));
+  if (warns.length) pr.push("根性警訊:" + warns.join(";"));
+  pr.push("", "請依傳統卜卦占星法則解讀:1. 判定問題歸屬哪一宮,找出用事宮主星。2. 問卜者主星與用事主星之間有無入相位、何種相位——事成或不成。3. 月亮的下一步告訴我們什麼。4. 給出明確的是/否傾向與時間量尺(宮位速度換算)。5. 若有根性警訊,說明判斷的保留程度。");
+};
+MODES.vnatal = (B, P, N, q, out, pr) => {
+  const ch = fullChart(B, B.lat, B.lon);
+  const ay = DC.ayanamsa(B.jd);
+  const sid = ch.list.map(p => ({ ...p, lon: DC.rev(p.lon - ay) }));
+  const lagna = DC.rev(ch.asc - ay), lagnaSign = DC.signOf(lagna);
+  const moonSid = sid.find(p => p.id === "moo");
+  const nak = DC.nakOf(moonSid.lon);
+  sid.push({ id: "ket", zh: "Ketu 南交", gl: "☋", lon: DC.rev(sid.find(p => p.id === "nod").lon + 180), retro: true });
+  out.push(card("印度本命盤(南印式)", "Rāśi Chart", southChart(sid, lagnaSign) +
+    '<p class="lead">上升(Lagna)' + DC.ZODIAC[lagnaSign] + "・月亮在 " + nak.name + " 第" + nak.pada + "步(主星 " + nak.lord + ")</p>" +
+    "<p>月宿即心性:" + nak.key + "。</p>" +
+    '<div class="tbl-scroll"><table class="data"><tr><th>星體</th><th>恆星黃道位置</th><th>宮位</th></tr>' +
+    sid.map(p => "<tr><td>" + p.gl + " " + p.zh + '</td><td class="hl">' + DC.fmtLon(p.lon) + "</td><td>第 " + (((DC.signOf(p.lon) - lagnaSign) % 12 + 12) % 12 + 1) + " 宮</td></tr>").join("") + "</table></div>"));
+  pr.push(...sidLines(ch, ay, "印度本命盤(" + B.str + ")"));
+  pr.push("Ketu " + DC.fmtLon(DC.rev(sid.find(p => p.id === "nod").lon + 180)), "");
+  pr.push("請以印度占星(Jyotiṣa)解讀:1. Lagna 與 Lagna 主星的人生格局。2. 月宿 " + nak.name + " 的心性與命運母題。3. 各宮行星吉凶(自然吉星凶星、友敵廟旺)。4. 羅睺/計都軸線的業力課題。5. 綜合此生法(dharma)、財(artha)、欲(kāma)、解脫(mokṣa)四大方向。");
+};
+MODES.dasha = (B, P, N, q, out, pr) => {
+  const ay = DC.ayanamsa(B.jd);
+  const moonSid = DC.rev(DC.moonLon(B.jd) - ay);
+  const das = DC.vimshottari(moonSid, B.jd);
+  const nowJd = DC.jd(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate(), 12, 0, 8);
+  const cur = das.find(d => nowJd >= d.from && nowJd < d.to) || das[das.length - 1];
+  // 當前大運的 antardasha
+  const seq = DC.DASHA_SEQ, si = seq.findIndex(s => s[0] === cur.lord);
+  let t = cur.from; const antar = [];
+  for (let k = 0; k < 9; k++) {
+    const s = seq[(si + k) % 9], len = (cur.to - cur.from) * s[1] / 120;
+    antar.push({ lord: s[0], from: t, to: t + len }); t += len;
+  }
+  const curA = antar.find(a => nowJd >= a.from && nowJd < a.to);
+  out.push(card("Vimśottarī 大運", "Mahādaśā",
+    '<p class="lead">現行大運:' + cur.lord + "(至 " + DC.fmtJD(cur.to, 8, false) + ")・現行副運:" + (curA ? curA.lord + "(至 " + DC.fmtJD(curA.to, 8, false) + ")" : "—") + "</p>" +
+    '<div class="tbl-scroll"><table class="data"><tr><th>大運主</th><th>起</th><th>訖</th><th>年數</th></tr>' +
+    das.map(d => '<tr' + (d === cur ? ' style="color:var(--gold-bright)"' : "") + "><td>" + d.lord + "</td><td>" + DC.fmtJD(d.from, 8, false) + "</td><td>" + DC.fmtJD(d.to, 8, false) + "</td><td>" + (d.balance ? d.balance.toFixed(1) : d.years) + "</td></tr>").join("") + "</table></div>"));
+  out.push(card("現行大運的副運(Antardaśā)", "",
+    '<div class="tbl-scroll"><table class="data"><tr><th>副運主</th><th>起</th><th>訖</th></tr>' +
+    antar.map(a => '<tr' + (a === curA ? ' style="color:var(--gold-bright)"' : "") + "><td>" + a.lord + "</td><td>" + DC.fmtJD(a.from, 8, false) + "</td><td>" + DC.fmtJD(a.to, 8, false) + "</td></tr>").join("") + "</table></div>"));
+  pr.push("出生:" + B.str + ",月亮恆星黃經 " + DC.fmtLon(moonSid) + "(" + DC.nakOf(moonSid).name + ")");
+  pr.push("Vimśottarī 大運時間軸:" + das.map(d => d.lord + " " + DC.fmtJD(d.from, 8, false) + "~" + DC.fmtJD(d.to, 8, false)).join(";"));
+  pr.push("現行大運 " + cur.lord + ",副運 " + (curA ? curA.lord : "—") + "(副運表:" + antar.map(a => a.lord + "至" + DC.fmtJD(a.to, 8, false)).join("、") + ")", "");
+  pr.push("請解讀:1. 現行大運主星的時代主題。2. 大運×副運的組合效應。3. 前後兩個大運的轉折怎麼準備。4. 未來三年內最值得把握的副運區間。");
+};
+MODES.navamsa = (B, P, N, q, out, pr) => {
+  const ch = fullChart(B, B.lat, B.lon);
+  const ay = DC.ayanamsa(B.jd);
+  const sid = ch.list.map(p => ({ ...p, lon: DC.rev(p.lon - ay) }));
+  const navList = sid.map(p => ({ ...p, sign: DC.navamsaSign(p.lon) }));
+  const lagnaNav = DC.navamsaSign(DC.rev(ch.asc - ay));
+  out.push(card("九分盤", "Navāṃśa D9", southChartSigns(navList, lagnaNav) +
+    "<p>九分盤是靈魂的底片:行星在 D1 是外顯,在 D9 是本質。落在同一星座(Vargottama)的行星力量倍增。</p>" +
+    "<p>" + navList.map(p => p.zh + "→" + DC.ZODIAC[p.sign] + (DC.signOf(p.lon) === p.sign ? "(Vargottama!)" : "")).join("、") + "</p>"));
+  pr.push(...sidLines(ch, ay, "本命盤 D1(" + B.str + ")"));
+  pr.push("九分盤 D9 各星落座:" + navList.map(p => p.zh + "在" + DC.ZODIAC[p.sign] + (DC.signOf(p.lon) === p.sign ? "(Vargottama)" : "")).join("、") + ";D9 上升 " + DC.ZODIAC[lagnaNav], "");
+  pr.push("請解讀:1. D9 上升與 D9 一宮的靈魂質地。2. 金星與木星在 D9 的婚姻訊息。3. 哪些行星在 D9 得力/失力,對 D1 的承諾兌不兌現。4. Vargottama 行星(若有)的特殊使命。");
+};
+MODES.gochara = (B, P, N, q, out, pr) => {
+  const ayB = DC.ayanamsa(B.jd), ayN = DC.ayanamsa(N.jd);
+  const natMoonSign = DC.signOf(DC.rev(DC.moonLon(B.jd) - ayB));
+  const tr = DC.chart(N.jd).map(p => ({ ...p, lon: DC.rev(p.lon - ayN) }));
+  const satSign = DC.signOf(tr.find(p => p.id === "sat").lon);
+  const jupSign = DC.signOf(tr.find(p => p.id === "jup").lon);
+  const rahSign = DC.signOf(tr.find(p => p.id === "nod").lon);
+  const dSat = ((satSign - natMoonSign) % 12 + 12) % 12;
+  const sadeSati = dSat === 11 || dSat === 0 || dSat === 1;
+  const jupHouse = ((jupSign - natMoonSign) % 12 + 12) % 12 + 1;
+  const goodJup = [2, 5, 7, 9, 11].includes(jupHouse);
+  out.push(card("恆星制行運", "Gochara " + N.str,
+    '<p class="lead">本命月亮星座(Janma Rāśi):' + DC.ZODIAC[natMoonSign] + "</p>" +
+    "<p>" + (sadeSati ? '<span class="badge red">Sade Sati 進行中</span> 行運土星在' + DC.ZODIAC[satSign] + ",七年半土星試煉的" + (dSat === 11 ? "第一階段(醞釀)" : dSat === 0 ? "第二階段(最沉)" : "第三階段(出關)") : "目前不在 Sade Sati 期間,土星在" + DC.ZODIAC[satSign] + "(自月亮起第 " + (dSat + 1) + " 位)") + "。</p>" +
+    "<p>行運木星在" + DC.ZODIAC[jupSign] + "(自月亮起第 " + jupHouse + " 位)——" + (goodJup ? "吉位,木星祝福正灑向你" : "非傳統吉位,擴張須節制") + "。</p>" +
+    "<p>羅睺/計都軸:行運羅睺在" + DC.ZODIAC[rahSign] + ",計都在" + DC.ZODIAC[(rahSign + 6) % 12] + "——這兩宮正在經歷業力的攪動。</p>"));
+  pr.push("本命(" + B.str + ")月亮星座:" + DC.ZODIAC[natMoonSign]);
+  pr.push("此刻(" + N.str + ")恆星制行運:" + tr.map(p => p.zh + "在" + DC.ZODIAC[DC.signOf(p.lon)]).join("、"));
+  pr.push("Sade Sati:" + (sadeSati ? "進行中(自月亮第 " + (dSat + 1) + " 位)" : "不在期間") + ";木星自月亮起第 " + jupHouse + " 位", "");
+  pr.push("請解讀:1. 以月亮起宮的行運吉凶(土星、木星、羅計為主)。2. 若在 Sade Sati,如何安然度過。3. 未來一年的整體節奏建議。");
+};
+MODES.prashna = (B, P, N, q, out, pr) => {
+  const ch = fullChart(N, N.lat, N.lon);
+  const ay = DC.ayanamsa(N.jd);
+  const sid = ch.list.map(p => ({ ...p, lon: DC.rev(p.lon - ay) }));
+  const lagna = DC.rev(ch.asc - ay), lagnaSign = DC.signOf(lagna);
+  const moonSid = sid.find(p => p.id === "moo");
+  const nak = DC.nakOf(moonSid.lon);
+  out.push(card("問事盤", "Praśna " + N.str, southChart(sid, lagnaSign) +
+    '<p class="lead">問事上升 ' + DC.ZODIAC[lagnaSign] + " " + (lagna % 30).toFixed(0) + "°・此刻月亮在 " + nak.name + "(" + nak.key + ")</p>" +
+    "<p>Praśna 以此刻天空作答:上升是問事者,月亮是事情的心,第七宮是對方/結果。</p>"));
+  pr.push(...sidLines(ch, ay, "問事盤(提問此刻 " + N.str + " 起盤)"));
+  pr.push("此刻月宿:" + nak.name + "(" + nak.key + ")", "");
+  pr.push("請以印度問事占星(Praśna)解讀:1. 判定問題歸屬宮位與其主星狀態。2. 上升主星與月亮的力量——事成機率。3. 月宿性質對此問的暗示。4. 給出明確傾向與時間感,以及若要改變結果該做什麼。");
+};
+MODES.xnatal = (B, P, N, q, out, pr) => {
+  const ay = DC.ayanamsa(B.jd);
+  const nak = DC.nakOf(DC.rev(DC.moonLon(B.jd) - ay));
+  const xiu = DC.XIU27[nak.idx];
+  const yao = DC.yaoOfDate(B.y, B.mo, B.d);
+  out.push(card("本命宿", "宿曜經",
+    '<p class="lead" style="font-size:22px">' + xiu + "宿 <span style=\"font-size:14px;color:var(--muted)\">(" + nak.name + ")</span></p>" +
+    "<p>" + DC.XIU_NOTE[nak.idx] + "。</p>" +
+    "<p>生於" + yao + "曜日——" + { "日": "如日之人,光明磊落,自帶主角光環", "月": "如月之人,溫潤多感,以柔克剛", "火": "如火之人,烈性熱腸,勇往直前", "水": "如水之人,聰敏善變,隨物賦形", "木": "如木之人,正直向上,厚德載物", "金": "如金之人,重義重財,言出必行", "土": "如土之人,沉穩包容,大地之德" }[yao] + "。</p>"));
+  pr.push("宿曜占星・本命宿:" + xiu + "宿(" + nak.name + "),生於" + yao + "曜日。出生:" + B.str);
+  pr.push("宿性:" + DC.XIU_NOTE[nak.idx], "");
+  pr.push("請以宿曜經體系解讀:1. " + xiu + "宿之人的性情、天命與人生曲線。2. 七曜(" + yao + "曜日生)加乘出的氣質。3. 適合的職業方向與貴人型態。4. 此宿最須修的一門課。");
+};
+MODES.xtoday = (B, P, N, q, out, pr) => {
+  const ayB = DC.ayanamsa(B.jd), ayN = DC.ayanamsa(N.jd);
+  const my = DC.nakOf(DC.rev(DC.moonLon(B.jd) - ayB));
+  const td = DC.nakOf(DC.rev(DC.moonLon(N.jd) - ayN));
+  const rel = DC.xiuRelation(my.idx, td.idx);
+  out.push(card("今日宿運(三九秘法)", DC.fmtJD(N.jd, N.tz, false),
+    '<p class="lead">本命 ' + DC.XIU27[my.idx] + "宿 → 今日月在 " + DC.XIU27[td.idx] + "宿:<b style=\"font-size:20px;color:var(--gold-bright)\">" + rel.rel + "</b>(" + rel.ring + ",第 " + rel.dist + " 宿)</p>" +
+    "<p>" + SANKU_MEAN[rel.rel] + "。</p>" +
+    "<p>三九秘法:近距(1-9)應於身,中距(10-18)應於事,遠距(19-27)應於心。今日屬" + rel.ring + "。</p>"));
+  pr.push("宿曜・今日宿運:本命" + DC.XIU27[my.idx] + "宿,今日(" + DC.fmtJD(N.jd, N.tz, false) + ")月在" + DC.XIU27[td.idx] + "宿,相距第 " + rel.dist + " 宿,為「" + rel.rel + "」日(" + rel.ring + ")");
+  pr.push("義:" + SANKU_MEAN[rel.rel], "");
+  pr.push("請解讀:1. 今日「" + rel.rel + "」日對我的具體宜忌(工作/感情/財務/出行)。2. " + rel.ring + "的應驗層面。3. 若有要事,今日辦還是改期,替代吉日往哪個宿日找。");
+};
+MODES.xbond = (B, P, N, q, out, pr) => {
+  const ayA = DC.ayanamsa(B.jd), ayB2 = DC.ayanamsa(P.jd);
+  const a = DC.nakOf(DC.rev(DC.moonLon(B.jd) - ayA));
+  const b = DC.nakOf(DC.rev(DC.moonLon(P.jd) - ayB2));
+  const ab = DC.xiuRelation(a.idx, b.idx), ba = DC.xiuRelation(b.idx, a.idx);
+  const pairName = [ab.rel, ba.rel].sort().join("");
+  out.push(card("宿曜相性", "兩人宿緣",
+    '<p class="lead">我:' + DC.XIU27[a.idx] + "宿・對方:" + DC.XIU27[b.idx] + "宿</p>" +
+    "<p>由我看對方:第 " + ab.dist + " 宿,「<b>" + ab.rel + "</b>」(" + ab.ring + ")——" + SANKU_MEAN[ab.rel].split("——")[1] + "</p>" +
+    "<p>由對方看我:第 " + ba.dist + " 宿,「<b>" + ba.rel + "</b>」(" + ba.ring + ")——" + SANKU_MEAN[ba.rel].split("——")[1] + "</p>" +
+    "<p>此為「" + ab.rel + "・" + ba.rel + "」之緣。宿曜相性以榮親為上吉、安壞主糾纏、危成主張力、友衰主扶持與消耗、業胎命為宿命之絆。</p>"));
+  pr.push("宿曜相性:我本命" + DC.XIU27[a.idx] + "宿(" + B.str + "),對方本命" + DC.XIU27[b.idx] + "宿(" + P.str + ")");
+  pr.push("我→對方:第" + ab.dist + "宿「" + ab.rel + "」(" + ab.ring + ");對方→我:第" + ba.dist + "宿「" + ba.rel + "」(" + ba.ring + ")", "");
+  pr.push("請以宿曜相性法解讀:1. 「" + ab.rel + "・" + ba.rel + "」關係的本質與典型劇本。2. 誰主動、誰被牽動,距離遠近代表的應驗層面。3. 這段緣的甜與刺,長久相處之道。4. 若是安壞/危成等難緣,如何化解。");
+};
+
+/* 南印式方盤 */
+function southChart(sidList, lagnaSign) {
+  const cells = Array.from({ length: 12 }, () => []);
+  for (const p of sidList) cells[DC.signOf(p.lon)].push(p.gl);
+  return southGrid(cells, lagnaSign);
+}
+function southChartSigns(navList, lagnaSign) {
+  const cells = Array.from({ length: 12 }, () => []);
+  for (const p of navList) cells[p.sign].push(p.gl);
+  return southGrid(cells, lagnaSign);
+}
+function southGrid(cells, lagnaSign) {
+  const POS = { 11: [0, 0], 0: [0, 1], 1: [0, 2], 2: [0, 3], 3: [1, 3], 4: [2, 3], 5: [3, 3], 6: [3, 2], 7: [3, 1], 8: [3, 0], 9: [2, 0], 10: [1, 0] };
+  const grid = Array.from({ length: 4 }, () => Array(4).fill(null));
+  for (let sIdx = 0; sIdx < 12; sIdx++) {
+    const [r, c] = POS[sIdx];
+    grid[r][c] = { sIdx, glyphs: cells[sIdx] };
+  }
+  let h = '<div class="grid12">';
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+    if (r === 1 && c === 1) { h += '<div class="center">南印式方盤<br><span style="color:var(--muted);font-size:11.5px">Lagna 標記 ↑</span></div>'; continue; }
+    if ((r === 1 || r === 2) && (c === 1 || c === 2)) continue;
+    const cell = grid[r][c];
+    h += '<div class="cell' + (cell.sIdx === lagnaSign ? " hl" : "") + '"><span class="c-tag">' + DC.ZODIAC[cell.sIdx] + (cell.sIdx === lagnaSign ? " ↑" : "") + '</span><span style="font-size:16px">' + (cell.glyphs.join(" ") || "&nbsp;") + "</span></div>";
+  }
+  return h + "</div>";
+}
+
+$("btn-copy").onclick = async () => {
+  try { await navigator.clipboard.writeText($("prompt-box").value); }
+  catch (e) { $("prompt-box").select(); document.execCommand("copy"); }
+  $("copy-ok").hidden = false; setTimeout(() => $("copy-ok").hidden = true, 2500);
+};
+
+/* 開發測試:?test=modeId */
+(function () {
+  const t = new URLSearchParams(location.search).get("test");
+  if (!t) return;
+  const sys = SYS.find(s => s.modes.some(m => m[0] === t));
+  if (!sys) return;
+  sysId = sys.id; modeId = t; renderSys(); renderModes(); updateForm();
+  $("b-date").value = "1990-05-15"; $("b-time").value = "10:00";
+  $("p-date").value = "1992-08-20"; $("p-time").value = "14:30";
+  $("q-input").value = "測試提問:這件事會順利嗎?";
+  setTimeout(() => { try { run(); document.title = "ASTRO-TEST-OK"; } catch (e) { document.title = "ASTRO-TEST-FAIL " + e.message; } }, 60);
+})();
+</script>

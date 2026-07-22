@@ -1,0 +1,422 @@
+<title>燭光合參 · MIX</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="hall.css">
+<style>
+  .pool-group { margin: 18px auto 0; max-width: 820px; }
+  .pool-tag { font-size: 12px; letter-spacing: .3em; text-indent: .3em; color: var(--gold-dim); margin: 14px 0 8px; text-align: center; }
+  .pool { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .pick {
+    font-family: inherit; background: none; cursor: pointer;
+    border: 1px solid var(--felt-line); border-radius: 2px;
+    color: var(--ivory-shade); font-size: 13.5px; letter-spacing: .08em;
+    padding: 8px 14px; transition: border-color .2s, color .2s, background-color .2s;
+  }
+  .pick:hover { border-color: var(--gold-dim); }
+  .pick.on { border-color: var(--gold); color: var(--gold-bright); background: rgba(201,164,92,.1); }
+  .pick.on::before { content: "❧ "; font-size: 11px; }
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
+  #pick-count { text-align: center; color: var(--muted); font-size: 13px; margin-top: 14px; }
+  #pick-count b { color: var(--gold-bright); font-size: 16px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="plate">
+      <p class="eyebrow">Le Concile des Arts</p>
+      <h1>燭光合參</h1>
+      <p class="subtitle">一術可欺,二術可疑,三術合參——讓三套語言互相對質,說出同一個真相。</p>
+    </div>
+  </header>
+
+  <nav class="halls-nav">
+    <a href="index.html">牌桌館</a>
+    <a href="astro.html">占星館</a>
+    <a href="numbers.html">數字館</a>
+    <a href="bazi.html">八字館</a>
+    <a href="mix.html" class="here">MIX 三術合參</a>
+  </nav>
+
+  <p class="section-label">選三術(任意組合)</p>
+  <div class="pool-group" id="pool-group"></div>
+  <div class="presets" id="presets"></div>
+  <p id="pick-count">已選 <b>0</b> / 3</p>
+
+  <section class="panel" id="panel">
+    <h2>合參資料</h2>
+    <span class="hint">依你選的三術,填其所需——不需要的欄位會自動隱藏。</span>
+    <div id="form-birth" hidden>
+      <p class="fieldset-label">生辰資料</p>
+      <div class="form-grid">
+        <div class="field"><label>出生日期</label><input id="b-date" type="date"></div>
+        <div class="field"><label>出生時間</label><input id="b-time" type="time" value="12:00"></div>
+        <div class="field"><label>性別</label>
+          <select id="b-gender"><option value="m">男</option><option value="f">女</option></select></div>
+        <div class="field"><label>出生時區</label><input id="b-tz" type="number" step="0.5" value="8"></div>
+      </div>
+    </div>
+    <div id="form-loc" hidden>
+      <p class="fieldset-label">所在地(占星起盤用)</p>
+      <div class="form-grid">
+        <div class="field"><label>緯度</label><input id="n-lat" type="number" step="0.01" value="25.04"></div>
+        <div class="field"><label>經度</label><input id="n-lon" type="number" step="0.01" value="121.51"></div>
+        <div class="field"><label>時區</label><input id="n-tz" type="number" step="0.5" value="8"></div>
+      </div>
+    </div>
+    <div class="form-grid" style="margin-top:14px">
+      <div class="field full"><label>你的問題(三術共用)</label>
+        <input id="q-input" type="text" maxlength="200" placeholder="一個問題,三套語言來答——寫下它"></div>
+    </div>
+    <div class="btn-row">
+      <button class="gold-btn" id="btn-go" disabled>三 術 合 參</button>
+      <span class="hint" id="go-hint"></span>
+    </div>
+  </section>
+
+  <section id="out"></section>
+
+  <section class="prompt-sec" id="prompt-sec" hidden>
+    <p class="section-label">AI 合參提示詞</p>
+    <textarea class="prompt-box" id="prompt-box" readonly></textarea>
+    <div class="btn-row">
+      <button class="gold-btn" id="btn-copy">複製提示詞</button>
+      <span class="copy-ok" id="copy-ok" hidden>已複製,貼給任何 AI 即可。</span>
+    </div>
+  </section>
+
+  <p class="footnote">
+    牌卡快抽為 <b>crypto</b> 真隨機、僅取牌名(完整儀式請回各館);星曆與干支皆為真實計算。<br>
+    合參之義:三術同聲則信之,三術相左則深思——命運不怕被多問幾次。
+  </p>
+</div>
+
+<script src="divine-core.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const q3 = () => $("q-input").value.trim();
+
+/* ── 術數池 ── */
+const POOL = [
+  { g: "星學", items: [
+    ["a-natal", "西洋本命盤", "birth"], ["a-horary", "卜卦占星", "loc"], ["a-vedic", "印度本命盤", "birth"],
+    ["a-prashna", "印度問事", "loc"], ["a-xiu", "宿曜(本命+今日)", "birth"]
+  ]},
+  { g: "數術", items: [
+    ["n-life", "生命靈數", "birth"], ["n-meihua", "梅花易數(時間卦)", ""], ["n-taiyi", "太乙歲計", ""], ["n-heluo", "河洛理數", "birth"]
+  ]},
+  { g: "命術", items: [
+    ["b-bazi", "八字四柱", "birth"], ["b-ziwei", "紫微斗數", "birth"], ["b-shichu", "四柱推命(和流)", "birth"],
+    ["b-nine", "九星氣學", "birth"], ["b-qimen", "奇門遁甲", ""], ["b-liuren", "大六壬", ""]
+  ]},
+  { g: "牌卡快抽(三張)", items: [
+    ["c-len", "雷諾曼", ""], ["c-sib", "西碧拉", ""], ["c-bel", "貝林神諭", ""], ["c-kip", "奇卜", ""],
+    ["c-gra", "大雷諾曼", ""], ["c-run", "盧恩符文", ""], ["c-zw", "紫微星曜", ""], ["c-dt", "東方塔羅", ""],
+    ["c-yi", "易經(擲卦)", ""], ["c-qs", "靈籤(快取)", ""]
+  ]}
+];
+const PRESETS = [
+  ["問感情", ["n-life", "a-xiu", "b-liuren"]],
+  ["問事業", ["b-bazi", "b-qimen", "n-life"]],
+  ["問抉擇", ["n-meihua", "a-horary", "c-len"]],
+  ["今日運勢", ["a-xiu", "b-nine", "c-qs"]],
+  ["看大局", ["a-natal", "b-ziwei", "b-bazi"]]
+];
+let picked = [];
+const ALL = POOL.flatMap(g => g.items);
+
+function renderPool() {
+  const pg = $("pool-group"); pg.innerHTML = "";
+  POOL.forEach(g => {
+    const tag = document.createElement("p"); tag.className = "pool-tag"; tag.textContent = g.g; pg.appendChild(tag);
+    const row = document.createElement("div"); row.className = "pool";
+    g.items.forEach(([id, name]) => {
+      const b = document.createElement("button");
+      b.className = "pick" + (picked.includes(id) ? " on" : "");
+      b.textContent = name;
+      b.onclick = () => {
+        if (picked.includes(id)) picked = picked.filter(x => x !== id);
+        else { if (picked.length >= 3) picked.shift(); picked.push(id); }
+        renderPool(); syncForm();
+      };
+      row.appendChild(b);
+    });
+    pg.appendChild(row);
+  });
+  $("pick-count").innerHTML = "已選 <b>" + picked.length + "</b> / 3" + (picked.length ? ":" + picked.map(id => ALL.find(x => x[0] === id)[1]).join("・") : "");
+  $("btn-go").disabled = picked.length !== 3;
+}
+$("presets").append(...PRESETS.map(([name, ids]) => {
+  const b = document.createElement("button");
+  b.className = "ghost-btn"; b.textContent = "組合:" + name;
+  b.onclick = () => { picked = ids.slice(); renderPool(); syncForm(); };
+  return b;
+}));
+function syncForm() {
+  const needBirth = picked.some(id => ALL.find(x => x[0] === id)[2] === "birth");
+  const needLoc = picked.some(id => ALL.find(x => x[0] === id)[2] === "loc");
+  $("form-birth").hidden = !needBirth;
+  $("form-loc").hidden = !needLoc;
+}
+renderPool();
+
+const PK = "dc-mix-profile";
+try { const p = JSON.parse(localStorage.getItem(PK) || "{}"); if (p.bd) { $("b-date").value = p.bd; $("b-time").value = p.bt || "12:00"; $("b-gender").value = p.g || "m"; } } catch (e) {}
+
+/* ── 工具 ── */
+function card(t, body) { return '<div class="result-card"><h3>' + t + "</h3>" + body + "</div>"; }
+function fail(msg) { $("go-hint").textContent = msg; return new Error(msg); }
+function birth() {
+  const dv = $("b-date").value; if (!dv) throw fail("所選術數需要出生日期");
+  const tv = $("b-time").value || "12:00";
+  const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
+  const tz = parseFloat($("b-tz").value) || 8;
+  return { y, m, d, h, mi, tz, male: $("b-gender").value === "m", jd: DC.jd(y, m, d, h, mi, tz), str: dv + " " + tv };
+}
+function nowCtx() {
+  const n = new Date();
+  const y = n.getFullYear(), m = n.getMonth() + 1, d = n.getDate(), h = n.getHours(), mi = n.getMinutes();
+  const tz = parseFloat($("n-tz").value) || 8;
+  return { y, m, d, h, mi, tz, lat: parseFloat($("n-lat").value) || 25.04, lon: parseFloat($("n-lon").value) || 121.51,
+    jd: DC.jd(y, m, d, h, mi, tz), str: y + "-" + DC.pad2(m) + "-" + DC.pad2(d) + " " + DC.pad2(h) + ":" + DC.pad2(mi) };
+}
+function tropChart(jd, lat, lon) {
+  const list = DC.chart(jd), am = DC.ascMc(jd, lat, lon);
+  const ascSign = DC.signOf(am.asc);
+  for (const p of list) p.house = ((DC.signOf(p.lon) - ascSign) % 12 + 12) % 12 + 1;
+  return { list, asc: am.asc, mc: am.mc, ascSign };
+}
+
+/* ── 各術產生器:回傳 {title, html, lines[]} ── */
+const GEN = {};
+GEN["a-natal"] = () => {
+  const B = birth(), ch = tropChart(B.jd, 25.04, 121.51);
+  const asps = DC.aspects(ch.list).slice(0, 8);
+  return { title: "西洋本命盤",
+    html: "<p>太陽" + DC.ZODIAC[DC.signOf(ch.list[0].lon)] + "・月亮" + DC.ZODIAC[DC.signOf(ch.list[1].lon)] + "・上升" + DC.ZODIAC[ch.ascSign] + "</p>",
+    lines: ["西洋本命盤(" + B.str + "):", ...ch.list.map(p => "  " + p.zh + " " + DC.fmtLon(p.lon) + (p.retro ? "(逆)" : "") + " 第" + p.house + "宮"),
+      "  上升 " + DC.fmtLon(ch.asc) + ";主要相位:" + asps.map(a => a.a.zh + a.name + a.b.zh).join("、")] };
+};
+GEN["a-horary"] = () => {
+  const N = nowCtx(); if (!q3()) throw fail("卜卦占星需要問題");
+  const ch = tropChart(N.jd, N.lat, N.lon);
+  const ruler = DC.RULER[ch.ascSign], rp = ch.list.find(p => p.zh === ruler);
+  return { title: "卜卦占星",
+    html: "<p>上升" + DC.ZODIAC[ch.ascSign] + ",主星" + ruler + "落第" + rp.house + "宮" + (rp.retro ? "(逆行)" : "") + "</p>",
+    lines: ["卜卦占星(提問此刻 " + N.str + " 起盤):", ...ch.list.map(p => "  " + p.zh + " " + DC.fmtLon(p.lon) + (p.retro ? "(逆)" : "") + " 第" + p.house + "宮"),
+      "  上升 " + DC.fmtLon(ch.asc) + ",問卜者主星 " + ruler + " 落第" + rp.house + "宮"] };
+};
+GEN["a-vedic"] = () => {
+  const B = birth(), ay = DC.ayanamsa(B.jd);
+  const ch = tropChart(B.jd, 25.04, 121.51);
+  const sid = ch.list.map(p => ({ ...p, lon: DC.rev(p.lon - ay) }));
+  const nak = DC.nakOf(sid[1].lon);
+  const das = DC.vimshottari(sid[1].lon, B.jd);
+  const now = new Date(), nowJd = DC.jd(now.getFullYear(), now.getMonth() + 1, now.getDate(), 12, 0, 8);
+  const cur = das.find(x => nowJd >= x.from && nowJd < x.to);
+  return { title: "印度本命盤",
+    html: "<p>月宿 " + nak.name + "・現行大運 " + (cur ? cur.lord : "—") + "</p>",
+    lines: ["印度本命盤(恆星黃道 Lahiri," + B.str + "):", ...sid.map(p => "  " + p.zh + " " + DC.fmtLon(p.lon)),
+      "  月宿 " + nak.name + "(" + nak.key + "),Lagna " + DC.fmtLon(DC.rev(ch.asc - ay)),
+      "  Vimśottarī 現行大運 " + (cur ? cur.lord + "(至 " + DC.fmtJD(cur.to, 8, false) + ")" : "—")] };
+};
+GEN["a-prashna"] = () => {
+  const N = nowCtx(); if (!q3()) throw fail("印度問事需要問題");
+  const ay = DC.ayanamsa(N.jd), ch = tropChart(N.jd, N.lat, N.lon);
+  const sid = ch.list.map(p => ({ ...p, lon: DC.rev(p.lon - ay) }));
+  const nak = DC.nakOf(sid[1].lon);
+  return { title: "印度問事盤",
+    html: "<p>問事上升" + DC.ZODIAC[DC.signOf(DC.rev(ch.asc - ay))] + "・此刻月宿 " + nak.name + "</p>",
+    lines: ["印度問事盤 Praśna(此刻 " + N.str + ",恆星黃道):", ...sid.map(p => "  " + p.zh + " " + DC.fmtLon(p.lon)),
+      "  Lagna " + DC.fmtLon(DC.rev(ch.asc - ay)) + ",此刻月宿 " + nak.name + "(" + nak.key + ")"] };
+};
+GEN["a-xiu"] = () => {
+  const B = birth(), now = nowCtx();
+  const my = DC.nakOf(DC.rev(DC.moonLon(B.jd) - DC.ayanamsa(B.jd)));
+  const td = DC.nakOf(DC.rev(DC.moonLon(now.jd) - DC.ayanamsa(now.jd)));
+  const rel = DC.xiuRelation(my.idx, td.idx);
+  return { title: "宿曜占星",
+    html: "<p>本命" + DC.XIU27[my.idx] + "宿,今日月在" + DC.XIU27[td.idx] + "宿——「" + rel.rel + "」日(" + rel.ring + ")</p>",
+    lines: ["宿曜占星:本命" + DC.XIU27[my.idx] + "宿(" + DC.XIU_NOTE[my.idx] + ")",
+      "  今日(" + now.str + ")月在" + DC.XIU27[td.idx] + "宿,三九秘法為「" + rel.rel + "」日(" + rel.ring + ",第" + rel.dist + "宿)"] };
+};
+GEN["n-life"] = () => {
+  const B = birth(), now = new Date();
+  const L = DC.lifeNumbers(B.y, B.m, B.d, now.getFullYear(), now.getMonth() + 1, now.getDate());
+  return { title: "生命靈數",
+    html: "<p>生命靈數 " + L.lp + "(" + DC.NUM_CORE[L.lp].t + ")・流年 " + L.py + "</p>",
+    lines: ["生命靈數(生日 " + B.y + "-" + B.m + "-" + B.d + "):主數 " + L.lp + "(" + DC.NUM_CORE[L.lp].t + "," + DC.NUM_CORE[L.lp].key + ")",
+      "  天賦數 " + L.total + "、生日數 " + L.birthday + "、態度數 " + L.attitude + "、流年 " + L.py + "、流月 " + L.pm,
+      "  連線:" + (L.lines.map(l => l.name).join("、") || "無") + ";空缺:" + (L.missing.join("、") || "無") + ";挑戰數 " + L.challenges.join("、")] };
+};
+GEN["n-meihua"] = () => {
+  const n = new Date();
+  const y = n.getFullYear(), lun = DC.lunar(y, n.getMonth() + 1, n.getDate(), 8);
+  const jdN = DC.jd(y, n.getMonth() + 1, n.getDate(), n.getHours(), n.getMinutes(), 8);
+  const yr = jdN >= DC.solarTerm(y, 315) ? y : y - 1;
+  const yB = ((yr - 4) % 12 + 12) % 12, hb = Math.floor(((n.getHours() % 24) + 1) / 2) % 12;
+  const uN = (yB + 1) + lun.month + lun.day, lN = uN + hb + 1;
+  const mh = DC.meihua(uN, lN, lN);
+  return { title: "梅花易數",
+    html: "<p>本卦" + mh.name + " 動爻" + mh.mov + "・互卦" + mh.hu.name + "・變卦" + mh.bian.name + "</p>",
+    lines: ["梅花易數(時間起卦:" + DC.BRANCHES[yB] + "年農曆" + (lun.isLeap ? "閏" : "") + lun.month + "月" + lun.day + "日" + DC.BRANCHES[hb] + "時):",
+      "  本卦 " + mh.name + ",動爻第" + mh.mov + "爻;互卦 " + mh.hu.name + ";變卦 " + mh.bian.name,
+      "  體卦" + DC.TRIG[mh.ti] + "(" + DC.TRIG_WX[mh.ti] + ")、用卦" + DC.TRIG[mh.yong] + "(" + DC.TRIG_WX[mh.yong] + ");" + mh.rel] };
+};
+GEN["n-taiyi"] = () => {
+  const ty = DC.taiyi(new Date().getFullYear());
+  return { title: "太乙歲計",
+    html: "<p>" + ty.gz + "年,太乙在" + ty.gongName + "(第" + ty.yearIn + "年)</p>",
+    lines: ["太乙神數歲計(簡式):" + ty.gz + "年,積年 " + ty.jiNian + ",七十二局第" + ty.ju + "局,太乙在" + ty.gongName + "居第" + ty.yearIn + "年"] };
+};
+GEN["n-heluo"] = () => {
+  const B = birth();
+  const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
+  const hl = DC.heluo(bz, B.male);
+  return { title: "河洛理數",
+    html: "<p>先天卦" + hl.xiantian.name + "・後天卦" + hl.houtian.name + "・元堂第" + hl.yuantang + "爻</p>",
+    lines: ["河洛理數(簡式,四柱 " + bz.pillars.map(p => p.gz).join(" ") + "):天數" + hl.tian + " 地數" + hl.di,
+      "  先天卦 " + hl.xiantian.name + "(前半生),元堂第" + hl.yuantang + "爻,變後天卦 " + hl.houtian.name + "(後半生)"] };
+};
+GEN["b-bazi"] = () => {
+  const B = birth();
+  const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
+  const dy = DC.dayun(bz, B.male), dS = bz.pillars[2].s;
+  return { title: "八字四柱",
+    html: '<div class="pillars">' + bz.pillars.map(p => '<div class="pillar"><span class="p-tag">' + p.tag + '</span><span class="p-char">' + p.gz + "</span></div>").join("") + "</div>",
+    lines: ["八字(" + B.str + "," + (B.male ? "男" : "女") + "命):" + bz.pillars.map(p => p.tag + p.gz).join(" "),
+      "  日主" + DC.STEMS[dS] + DC.STEM_WX[dS] + ";十神:" + bz.pillars.map((p, i) => i === 2 ? "日主" : DC.tenGod(dS, p.s)).join("、") + ";空亡" + bz.kong.join(""),
+      "  大運(" + dy.startAge.toFixed(1) + "歲起" + (dy.fwd ? "順" : "逆") + "):" + dy.list.slice(0, 5).map(d => Math.round(d.fromAge) + "歲" + d.gz).join("、")] };
+};
+GEN["b-ziwei"] = () => {
+  const B = birth();
+  const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
+  const lun = DC.lunar(B.y, B.m, B.d, B.tz);
+  const zw = DC.ziwei(lun.month, lun.day, bz.hB, bz.pillars[0].s, bz.pillars[0].b, B.male);
+  const lines = ["紫微斗數(農曆" + (lun.isLeap ? "閏" : "") + lun.month + "月" + lun.day + "日" + DC.BRANCHES[bz.hB] + "時," + zw.juName + "):"];
+  for (let k = 0; k < 12; k++) {
+    const b2 = ((zw.ming - k) % 12 + 12) % 12, P = zw.P[b2];
+    lines.push("  " + P.palace + "(" + DC.BRANCHES[b2] + (P.isShen ? ",身" : "") + "):" + (P.stars.join(" ") || "無主星") + (P.good.length ? " 吉:" + P.good.join(" ") : "") + (P.bad.length ? " 煞:" + P.bad.join(" ") : "") + (P.hua.length ? " " + P.hua.join(" ") : ""));
+  }
+  return { title: "紫微斗數",
+    html: "<p>命宮" + DC.BRANCHES[zw.ming] + "(" + (zw.P[zw.ming].stars.join("、") || "無主星") + ")・" + zw.juName + "</p>", lines };
+};
+GEN["b-shichu"] = () => {
+  const B = birth();
+  const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
+  const dS = bz.pillars[2].s;
+  const STAGE = ["長生", "沐浴", "冠帶", "臨官", "帝旺", "衰", "病", "死", "墓", "絕", "胎", "養"], CS = [11, 6, 2, 9, 2, 9, 5, 0, 8, 3];
+  const un = b => STAGE[dS % 2 === 0 ? ((b - CS[dS]) % 12 + 12) % 12 : ((CS[dS] - b) % 12 + 12) % 12];
+  return { title: "四柱推命(和流)",
+    html: "<p>" + bz.pillars.map(p => p.gz).join(" ") + "・十二運:" + bz.pillars.map(p => un(p.b)).join("/") + "</p>",
+    lines: ["四柱推命(和流," + B.str + "):" + bz.pillars.map(p => p.tag + p.gz).join(" "),
+      "  通変星:" + bz.pillars.map((p, i) => i === 2 ? "日主" : DC.tenGod(dS, p.s).replace("七殺", "偏官").replace("正印", "印綬")).join("、") + ";十二運:" + bz.pillars.map(p => p.tag + un(p.b)).join("、") + ";天中殺 " + bz.kong.join("")] };
+};
+GEN["b-nine"] = () => {
+  const B = birth();
+  const effY = B.jd >= DC.solarTerm(B.y, 315) ? B.y : B.y - 1;
+  const star = B.male ? DC.nineStarYear(effY) : DC.nineStarFemale(effY);
+  const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
+  const mStar = DC.nineStarMonth(star, bz.mIdx);
+  return { title: "九星氣學",
+    html: "<p>本命星 " + DC.NSTAR[star] + "・月命星 " + DC.NSTAR[mStar] + "</p>",
+    lines: ["九星氣學:本命星 " + DC.NSTAR[star] + "(" + (B.male ? "男" : "女") + "命),月命星 " + DC.NSTAR[mStar]] };
+};
+GEN["b-qimen"] = () => {
+  const n = new Date();
+  const qm = DC.qimen(n.getFullYear(), n.getMonth() + 1, n.getDate(), n.getHours(), n.getMinutes(), 8);
+  const lines = ["奇門遁甲時盤(" + qm.juName + ",四柱 " + qm.bz.pillars.map(p => p.gz).join(" ") + ",旬首" + qm.xunName + ",直符" + qm.fuStar + " 直使" + qm.fuDoor + "):"];
+  for (const p of [1, 8, 3, 4, 9, 2, 7, 6]) {
+    const t = qm.tianpan[p];
+    lines.push("  " + DC.GONG_NAME[p] + ":" + (qm.gods[p] || "") + " " + (t ? t.star + " 天盤" + t.stem : "") + " " + (qm.doors[p] || "") + " 地盤" + qm.dipan[p] + (p === qm.tp ? "(時干)" : "") + (p === qm.dayGongTian ? "(日干)" : ""));
+  }
+  return { title: "奇門遁甲", html: "<p>" + qm.juName + "・直符" + qm.fuStar + "・直使" + qm.fuDoor + "</p>", lines };
+};
+GEN["b-liuren"] = () => {
+  const n = new Date();
+  const bz = DC.bazi(n.getFullYear(), n.getMonth() + 1, n.getDate(), n.getHours(), n.getMinutes(), 8);
+  const lr = DC.liuren(bz.dIdx, bz.hB, DC.sunLon(DC.jd(n.getFullYear(), n.getMonth() + 1, n.getDate(), n.getHours(), n.getMinutes(), 8)));
+  return { title: "大六壬",
+    html: "<p>" + bz.pillars[2].gz + "日" + DC.BRANCHES[bz.hB] + "時・" + lr.keti + "・三傳 " + lr.chuan.map(c => c.zh).join("→") + "</p>",
+    lines: ["大六壬(" + bz.pillars[2].gz + "日" + DC.BRANCHES[bz.hB] + "時,月將" + lr.jiangZh + "):課體 " + lr.keti,
+      "  四課:" + lr.lessons.map((l, i) => l.low + "→" + l.up + "/" + l.jiang).join(";"),
+      "  三傳:" + lr.chuan.map((c, i) => ["初", "中", "末"][i] + c.zh + "(" + c.dun + "," + c.jiang + "," + c.qin + ")").join("、")] };
+};
+/* 牌卡快抽 */
+function drawCards(deckId, deckName) {
+  const D = DC.DECKS_MINI[deckId];
+  const idx = new Set();
+  while (idx.size < 3) idx.add(DC.rand(D.cards.length));
+  const drawn = [...idx].map(i => ({ name: D.cards[i], rev: D.rev && DC.rand(2) === 1 }));
+  const POS = ["過去/起因", "現在/處境", "未來/走向"];
+  return { title: deckName + "・三張快抽",
+    html: "<p>" + drawn.map((c, i) => '<span class="badge">' + POS[i] + ":" + c.name + (c.rev ? "(逆)" : "") + "</span>").join(" ") + "</p>",
+    lines: [deckName + " 三張快抽(crypto 真隨機):" + drawn.map((c, i) => POS[i] + "「" + c.name + (c.rev ? "(逆位)" : "") + "」").join("、")] };
+}
+for (const [id, dk, nm] of [["c-len", "len", "雷諾曼"], ["c-sib", "sib", "西碧拉"], ["c-bel", "bel", "貝林神諭"], ["c-kip", "kip", "奇卜"],
+  ["c-gra", "gra", "大雷諾曼"], ["c-run", "run", "盧恩符文"], ["c-zw", "zw", "紫微星曜"], ["c-dt", "dt", "東方塔羅"]])
+  GEN[id] = () => drawCards(dk, nm);
+GEN["c-yi"] = () => {
+  const lines = [], mov = [];
+  for (let i = 0; i < 6; i++) {
+    const v = 3 + DC.rand(2) + DC.rand(2) + DC.rand(2); // 6-9
+    lines.push(v % 2); if (v === 6 || v === 9) mov.push(i + 1);
+  }
+  const trig = ls => DC.TRIG_LINES.findIndex(t => t[0] === ls[0] && t[1] === ls[1] && t[2] === ls[2]);
+  const l1 = trig(lines.slice(0, 3)), u1 = trig(lines.slice(3, 6));
+  const lines2 = lines.map((x, i) => mov.includes(i + 1) ? 1 - x : x);
+  const l2 = trig(lines2.slice(0, 3)), u2 = trig(lines2.slice(3, 6));
+  const name1 = DC.HEX_NAME[u1][l1], name2 = DC.HEX_NAME[u2][l2];
+  return { title: "易經・擲卦",
+    html: "<p>本卦" + name1 + (mov.length ? "・動爻" + mov.join(",") + "・之卦" + name2 : "・六爻安靜") + "</p>",
+    lines: ["易經三枚錢擲卦:本卦 " + name1 + (mov.length ? ",動爻第" + mov.join("、") + "爻,之卦 " + name2 : ",六爻安靜") ] };
+};
+GEN["c-qs"] = () => {
+  const i = DC.rand(100), [t, g, poem] = DC.QS_MINI[i];
+  return { title: "靈籤・第" + (i + 1) + "籤",
+    html: "<p>「" + t + "」(" + g + ")</p><p style='color:var(--muted)'>" + poem.split("/").join(",") + "</p>",
+    lines: ["靈籤快取(crypto 隨機,未經擲筊儀式):第" + (i + 1) + "籤「" + t + "」,等第" + g + ",籤詩:" + poem.split("/").join(";")] };
+};
+
+/* ── 主流程 ── */
+$("btn-go").onclick = () => {
+  $("go-hint").textContent = "";
+  try { localStorage.setItem(PK, JSON.stringify({ bd: $("b-date").value, bt: $("b-time").value, g: $("b-gender").value })); } catch (e) {}
+  const out = [], sections = [];
+  try {
+    for (const id of picked) {
+      const g = GEN[id]();
+      out.push(card(g.title, g.html));
+      sections.push(g);
+    }
+  } catch (e) { if (!$("go-hint").textContent) $("go-hint").textContent = "起盤失敗:" + e.message; return; }
+  $("out").innerHTML = out.join("");
+  const q = q3();
+  const pr = ["你是一位同時精通多種占卜體系的顧問。以下是同一個問題、同一時刻,以三套不同術數起出的完整盤面。", ""];
+  if (q) pr.push("我的問題:" + q, "");
+  sections.forEach((g, i) => { pr.push("【第" + "一二三"[i] + "術】"); pr.push(...g.lines); pr.push(""); });
+  pr.push("請進行三術合參:");
+  pr.push("1. 先各自獨立解讀三套盤面,每套給出明確傾向(吉/凶/條件吉),不要互相污染。");
+  pr.push("2. 找出三術的「共振」——它們不約而同指向的同一件事。");
+  pr.push("3. 誠實指出三術的「相左」之處,並判斷哪一術對此問最有發言權、為什麼。");
+  pr.push("4. 合議出最終結論:傾向、時機、條件與具體行動建議。");
+  pr.push("5. 最後用一句話總結——如果三位老師只能留一句話給我。");
+  $("prompt-box").value = pr.join("\n");
+  $("prompt-sec").hidden = false;
+};
+$("btn-copy").onclick = async () => {
+  try { await navigator.clipboard.writeText($("prompt-box").value); }
+  catch (e) { $("prompt-box").select(); document.execCommand("copy"); }
+  $("copy-ok").hidden = false; setTimeout(() => $("copy-ok").hidden = true, 2500);
+};
+
+/* 開發測試:?test=id1,id2,id3 */
+(function () {
+  const t = new URLSearchParams(location.search).get("test");
+  if (!t) return;
+  picked = t.split(",").filter(id => GEN[id] || ALL.some(x => x[0] === id)).slice(0, 3);
+  renderPool(); syncForm();
+  $("b-date").value = "1990-05-15"; $("b-time").value = "10:00";
+  $("q-input").value = "測試提問:這件事會順利嗎?";
+  setTimeout(() => { try { $("btn-go").onclick(); document.title = $("prompt-sec").hidden ? "MIX-TEST-FAIL(hidden):" + $("go-hint").textContent : "MIX-TEST-OK"; } catch (e) { document.title = "MIX-TEST-FAIL " + e.message; } }, 60);
+})();
+</script>
