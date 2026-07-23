@@ -117,9 +117,8 @@ function updateForm() {
   $("btn-browse").hidden = s.id !== "kieu";
   $("out").innerHTML = ""; $("prompt-sec").hidden = true;
 }
-document.getElementById("btn-browse").onclick = () => {
-  $("prompt-sec").hidden = true;
-  $("out").innerHTML = '<div class="result-card"><h3>《金雲翹傳》選句一覽<span class="en">Boi Kieu 卅五句</span></h3>' +
+function kieuAllHtml() {
+  return '<div class="result-card"><h3>《金雲翹傳》選句一覽<span class="en">Boi Kieu 卅五句</span></h3>' +
     "<p>開卷時由 crypto 真隨機取一句——以下為全部選句,平日可當詩讀,問事時請回到焚香開卷。</p></div>" +
     DC.KIEU.map((k, i) => {
       const polTxt = k[4] === "good" ? "吉" : k[4] === "bad" ? "慎" : "平";
@@ -128,6 +127,10 @@ document.getElementById("btn-browse").onclick = () => {
         '<p class="lead" style="font-style:italic;line-height:2">' + k[0].replace(/\n/g, "<br>") + "</p>" +
         '<p style="color:var(--ivory)">' + k[1] + "</p><p>" + k[3] + "</p></div>";
     }).join("");
+}
+document.getElementById("btn-browse").onclick = () => {
+  $("prompt-sec").hidden = true;
+  $("out").innerHTML = kieuAllHtml();
   $("out").scrollIntoView({ behavior: "smooth" });
 };
 renderSys(); updateForm();
@@ -291,7 +294,8 @@ function buildLearn() {
   h += DC.lcard("泰國七曜佛日", DC.ltable(["生日", "本命佛", "本命色", "性情"],
     DC.THAI7.map((t, i) => [i === 7 ? "週三夜" : ["週日", "週一", "週二", "週三(日)", "週四", "週五", "週六"][i], t[0], t[1], t[3]])) +
     "<p>泰國大殿旁常有一排七(八)尊小佛——那是給每個生日的人拜的。記住自己的佛、穿自己的色,是泰國人從小的護身常識。</p>");
-  h += DC.lcard("越南翹傳開卷(Bói Kiều)", '<p class="lead-para">《金雲翹傳》是越南的國民史詩:才女翠翹為救父賣身,十五年風塵輾轉,終與初戀金重重逢——3254 行六八體詩,寫盡人間的才、命、情、劫。越南人相信這部寫透命運的書能回答命運:焚香默唸「拜徐海王、拜覺緣師太、拜翠翹仙」,隨手翻開,指到哪句,命運答哪句。翹的一生什麼都經歷過了——你的處境,她總有一句對得上。本站取選句卅五,crypto 真隨機開卷,誠實註明非全本。</p>');
+  h += DC.lcard("越南翹傳開卷(Bói Kiều)", '<p class="lead-para">《金雲翹傳》是越南的國民史詩:才女翠翹為救父賣身,十五年風塵輾轉,終與初戀金重重逢——3254 行六八體詩,寫盡人間的才、命、情、劫。越南人相信這部寫透命運的書能回答命運:焚香默唸「拜徐海王、拜覺緣師太、拜翠翹仙」,隨手翻開,指到哪句,命運答哪句。翹的一生什麼都經歷過了——你的處境,她總有一句對得上。本站取選句卅五,crypto 真隨機開卷,誠實註明非全本。全部選句如下:</p>');
+  h += kieuAllHtml();
   return h;
 }
 DC.learnInit(buildLearn);
