@@ -54,6 +54,7 @@
     </div>
     <div class="btn-row">
       <button class="gold-btn" id="btn-go">起 算</button>
+      <button class="ghost-btn" id="btn-browse" hidden>瀏覽全部選句(35)</button>
       <span class="hint" id="go-hint"></span>
     </div>
   </section>
@@ -113,8 +114,22 @@ function updateForm() {
   $("p-title").textContent = s.name;
   $("p-hint").textContent = s.hint;
   $("btn-go").textContent = s.id === "kieu" ? "焚 香 開 卷" : "起 算";
+  $("btn-browse").hidden = s.id !== "kieu";
   $("out").innerHTML = ""; $("prompt-sec").hidden = true;
 }
+document.getElementById("btn-browse").onclick = () => {
+  $("prompt-sec").hidden = true;
+  $("out").innerHTML = '<div class="result-card"><h3>《金雲翹傳》選句一覽<span class="en">Boi Kieu 卅五句</span></h3>' +
+    "<p>開卷時由 crypto 真隨機取一句——以下為全部選句,平日可當詩讀,問事時請回到焚香開卷。</p></div>" +
+    DC.KIEU.map((k, i) => {
+      const polTxt = k[4] === "good" ? "吉" : k[4] === "bad" ? "慎" : "平";
+      return '<div class="result-card"><h3>第 ' + (i + 1) + " 句・" + k[2] +
+        '<span class="badge' + (k[4] === "bad" ? " red" : k[4] === "good" ? "" : " dim") + '" style="margin-left:10px">' + polTxt + "</span></h3>" +
+        '<p class="lead" style="font-style:italic;line-height:2">' + k[0].replace(/\n/g, "<br>") + "</p>" +
+        '<p style="color:var(--ivory)">' + k[1] + "</p><p>" + k[3] + "</p></div>";
+    }).join("");
+  $("out").scrollIntoView({ behavior: "smooth" });
+};
 renderSys(); updateForm();
 DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣:「[^」]*」/, "語氣:「" + DC.toneValue() + "」"); });
 DC.histBind();
@@ -169,15 +184,21 @@ function runWeton(out, pr) {
   const tw = DC.weton(T.y, T.m, T.d);
   const nw = DC.nextWeton(B.y, B.m, B.d, T.y, T.m, T.d);
   const [pcName, pcNote] = DC.PANCASUDA[w.panca];
+  const dina = DC.DINA[w.wd];
+  const special = DC.WETON_SPECIAL[w.wd + "," + w.pas];
   out.push(card("你的威頓", "Weton " + w.name,
     '<p class="lead" style="font-size:20px">' + DC.DAY_ID[w.wd] + " × " + pasName + '</p>' +
-    '<div class="kv"><span><b>靈數 Neptu</b>' + DC.NEPTU_DAY[w.wd] + " + " + DC.NEPTU_PAS[w.pas] + " = <b style='font-size:17px'>" + w.neptu + "</b></span><span><b>市集日方位</b>" + pasDir + "</span><span><b>本命色</b>" + pasColor + "</span></div>" +
+    (special ? '<p><span class="badge">' + special[0] + "</span> " + special[1] + "。</p>" : "") +
+    '<div class="kv"><span><b>靈數 Neptu</b>' + DC.NEPTU_DAY[w.wd] + " + " + DC.NEPTU_PAS[w.pas] + " = <b style='font-size:17px'>" + w.neptu + "</b></span><span><b>日象</b>" + dina[0] + "</span><span><b>市集日方位</b>" + pasDir + "</span><span><b>本命色</b>" + pasColor + "</span></div>" +
+    "<p>日象(watak dina):" + dina[1] + "。</p>" +
     "<p>市集日性情:" + pasTrait + "。</p>" +
+    "<p>neptu " + w.neptu + "(全域 7~18):" + (w.neptu >= 15 ? "偏高——氣場強硬,扛得住大事,防剛愎" : w.neptu <= 10 ? "偏低——敏感纖細,傳統視為近靈之質,直覺是天賦" : "中庸——剛柔可調,是最好相處的一群") + "。</p>" +
     "<p>五神數(Pancasuda 簡法):<b style='color:var(--gold-bright)'>" + pcName + "</b>——" + pcNote + "。</p>" +
     "<p>你的威頓每 35 天輪迴一次——爪哇人在自己的威頓日齋戒、靜思或辦 selamatan 感恩宴。自" + T.str + "起,最近的本命威頓日是 <b style='color:var(--gold-bright)'>" + (nw ? nw.getUTCFullYear() + "-" + DC.pad2(nw.getUTCMonth() + 1) + "-" + DC.pad2(nw.getUTCDate()) : "—") + "</b>,宜靜不宜躁,許願最靈。</p>" +
     (T.picked ? "<p>指定日 " + T.str + " 為 <b>" + tw.name + "</b>(neptu " + tw.neptu + ")" + (tw.wd === w.wd && tw.pas === w.pas ? "——正是你的本命威頓日!大事吉,靜心尤佳" : "——與你的 " + w.name + " 合參論該日行事") + "。</p>" : "")));
   pr.push("爪哇威頓 Weton/Primbon(生於 " + B.str + "):");
-  pr.push("  威頓:" + w.name + "(" + DC.DAY_ID[w.wd] + " × " + pasName + "),neptu = " + DC.NEPTU_DAY[w.wd] + "+" + DC.NEPTU_PAS[w.pas] + " = " + w.neptu);
+  pr.push("  威頓:" + w.name + "(" + DC.DAY_ID[w.wd] + " × " + pasName + "),neptu = " + DC.NEPTU_DAY[w.wd] + "+" + DC.NEPTU_PAS[w.pas] + " = " + w.neptu + (special ? ";特殊威頓:" + special[0] + "——" + special[1] : ""));
+  pr.push("  日象(watak dina):" + dina[0] + "——" + dina[1]);
   pr.push("  市集日方位" + pasDir + "、色" + pasColor + ";性情:" + pasTrait);
   pr.push("  五神數(簡法):" + pcName + "——" + pcNote);
   pr.push("  自" + T.str + "起最近的本命威頓日:" + (nw ? nw.getUTCFullYear() + "-" + DC.pad2(nw.getUTCMonth() + 1) + "-" + DC.pad2(nw.getUTCDate()) : "—"));
@@ -258,9 +279,15 @@ function buildLearn() {
   h += DC.lcard("緬甸八曜・八獸八方", DC.ltable(["曜日", "獸", "佛塔方位", "性情"],
     DC.BUR8.map(b => [b[0] + "(" + b[3] + ")", b[1], b[2], b[4]])) +
     "<p>緬甸把一週切成八天——週三下午獨立為「羅睺」。到緬甸佛塔,先找自己生曜的角落:澆水一歲一杯,再加一杯敬未來。Mahabote 命盤則以生曜+緬曆年餘數排七宮,是緬甸版的命盤。</p>");
-  h += DC.lcard("爪哇威頓・35 天的宇宙", DC.ltable(["市集日", "方位", "色", "性情"],
-    DC.PASARAN.map(p => [p[0], p[1], p[2], p[3]])) +
-    '<p class="lead-para">爪哇曆把 7 日星期與 5 日市集週(pasaran)疊在一起,35 天一輪——你出生那天的組合就是<b>威頓</b>。每個日子有靈數(neptu):星期日5一4二3三7四8五6六9;Legi5 Pahing9 Pon7 Wage4 Kliwon8,相加論命、擇日、合婚。每 35 天輪回你的威頓日:爪哇人這天齋戒靜思,是自己的小新年。</p>');
+  h += DC.lcard("爪哇威頓・35 天的宇宙", '<p class="lead-para">爪哇曆把 7 日星期與 5 日市集週(pasaran)疊在一起,35 天一輪——你出生那天的組合就是<b>威頓(weton)</b>,爪哇人一生的座標。它同時給你三樣東西:<b>日象</b>(星期的自然之象)、<b>市集日性情</b>(五日週的方位與色)、<b>靈數 neptu</b>(兩者數值之和,7~18)。</p>' +
+    DC.ltable(["星期", "日象", "如其人"], DC.DAY_ID.map((d, i) => [d + "(" + DC.NEPTU_DAY[i] + ")", DC.DINA[i][0], DC.DINA[i][1]])) +
+    DC.ltable(["市集日", "方位", "色", "性情"], DC.PASARAN.map((p, i) => [p[0] + "(" + DC.NEPTU_PAS[i] + ")", p[1], p[2], p[3]])));
+  h += DC.lcard("威頓・neptu 與特殊之日", '<p class="lead-para">neptu = 星期值+市集日值。<b>高 neptu(15~18)</b>氣場強硬、能扛能撐;<b>低 neptu(7~10)</b>敏感纖細,傳統認為近靈、直覺強;中段剛柔並濟。幾個名字響亮的特殊威頓:</p>' +
+    DC.ltable(["特殊威頓", "意義"], Object.keys(DC.WETON_SPECIAL).map(k => DC.WETON_SPECIAL[k])) +
+    '<p class="lead-para">每 35 天輪回你的威頓日——爪哇人這天行<b>puasa weton</b>(威頓齋)或辦 selamatan 感恩宴:是自己的小新年,宜靜思、還願、立願。</p>');
+  h += DC.lcard("威頓合婚(jodoh)", '<p class="lead-para">爪哇婚配的著名算法:兩人 neptu 相加,除以 7 取餘——</p>' +
+    DC.ltable(["餘數", "類型", "意義"], DC.JODOH7.map((j, i) => [(i + 1) + (i === 6 ? "(整除作 7)" : ""), j[0], j[1]])) +
+    '<p class="lead-para">例:neptu 13 + 16 = 29,除 7 餘 1 → Pegat 離;neptu 12 + 16 = 28 整除 → Sujanan 疑。長輩若搖頭,常是這裡卡住——但爪哇智者也說:知其數而後補其缺,凶配亦可經營。想合算兩人,把彼此生日各起一次威頓,neptu 相加即可。</p>');
   h += DC.lcard("泰國七曜佛日", DC.ltable(["生日", "本命佛", "本命色", "性情"],
     DC.THAI7.map((t, i) => [i === 7 ? "週三夜" : ["週日", "週一", "週二", "週三(日)", "週四", "週五", "週六"][i], t[0], t[1], t[3]])) +
     "<p>泰國大殿旁常有一排七(八)尊小佛——那是給每個生日的人拜的。記住自己的佛、穿自己的色,是泰國人從小的護身常識。</p>");

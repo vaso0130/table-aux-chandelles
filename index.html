@@ -2039,12 +2039,14 @@ const ESP_CARDS = [];
 ESP_SUITS.forEach((s, si) => {
   ESP_RANKS.forEach((r, ri) => {
     const m = ESP_MEAN[si][ri];
+    const n = si * 10 + ri + 1;
     ESP_CARDS.push({
-      n: si * 10 + ri + 1,
+      n,
       zh: s[0] + r[0], latin: r[1] + " de " + s[1],
       glyph: s[2], pol: m[0], keys: m[1], text: m[2],
       pks: s[3] + (ri < 7 ? String(ri + 1) : r[0][0]),
-      pk: s[0] + "・" + s[4]
+      pk: s[0] + "・" + s[4],
+      img: "cards-esp/" + String(n).padStart(2, "0") + "-" + ["oros", "copas", "espadas", "bastos"][si] + "-" + ["1", "2", "3", "4", "5", "6", "7", "sota", "caballo", "rey"][ri] + ".jpg"
     });
   });
 });
@@ -2790,7 +2792,8 @@ const DECKS = [
   { id:"esp", hall:"west", name:"西班牙牌", short:"Baraja Española · 40 張",
     title:"西班牙牌占卜",
     sub:"塞維亞的吉普賽人與馬尼拉的老太太，翻的是同一副牌。",
-    cards: ESP_CARDS, spreads: ESP_SPREADS, reversible:false, preload:false },
+    cards: ESP_CARDS, spreads: ESP_SPREADS, reversible:false, preload:true,
+    back:"cards-esp/back.jpg" },
   { id:"yi", hall:"east", name:"易經", short:"周易 · 六十四卦",
     title:"易經占卜",
     sub:"一陰一陽之謂道——六十四卦裡，有你此刻的位置。",
