@@ -82,6 +82,33 @@ h1 {
 .halls-nav a:hover, .halls-nav a:focus-visible { color: var(--ivory); background: rgba(201,164,92,.06); }
 .halls-nav a.here { color: var(--gold-bright); background: rgba(201,164,92,.08); }
 
+/* ── 起盤/教學 分頁切換 ── */
+.views {
+  display: flex; justify-content: center;
+  width: max-content; margin: 26px auto 0;
+  border: 1px solid var(--felt-line); border-radius: 2px;
+}
+.view-btn {
+  font-family: inherit;
+  background: none; border: none;
+  color: var(--muted);
+  font-size: 14px; letter-spacing: .22em; text-indent: .22em;
+  padding: 11px 30px; cursor: pointer;
+  transition: color .2s, background-color .2s;
+}
+.view-btn + .view-btn { border-left: 1px solid var(--felt-line); }
+.view-btn:hover, .view-btn:focus-visible { color: var(--ivory); }
+.view-btn.active { color: var(--gold-bright); background: rgba(201,164,92,.08); }
+
+#view-learn { display: none; max-width: 860px; margin: 0 auto; }
+body.learning #view-learn { display: block; }
+body.learning .sys-row, body.learning .modes, body.learning .panel, body.learning #out,
+body.learning .prompt-sec, body.learning #hist-sec, body.learning .divine-only,
+body.learning #pool-group, body.learning #presets, body.learning #pick-count { display: none; }
+#view-learn .lead-para { color: var(--ivory-shade); font-size: 15px; line-height: 1.9; }
+table.data.wrap th, table.data.wrap td { white-space: normal; text-align: left; }
+table.data.wrap td:first-child { white-space: nowrap; }
+
 .section-label {
   color: var(--gold);
   font-size: 12px; letter-spacing: .45em; text-indent: .45em;

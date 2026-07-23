@@ -22,10 +22,17 @@
     <a href="mix.html">MIX 三術合參</a>
   </nav>
 
-  <p class="section-label">選擇星學</p>
+  <nav class="views" id="views" aria-label="頁面切換">
+    <button class="view-btn active" data-view="divine">起盤問事</button>
+    <button class="view-btn" data-view="learn">入門教學</button>
+  </nav>
+
+  <section id="view-learn"></section>
+
+  <p class="section-label divine-only">選擇星學</p>
   <div class="sys-row" id="sys"></div>
 
-  <p class="section-label" id="modes-label">選擇盤式</p>
+  <p class="section-label divine-only" id="modes-label">選擇盤式</p>
   <div class="modes" id="modes"></div>
 
   <section class="panel" id="panel">
@@ -665,6 +672,35 @@ $("btn-copy").onclick = async () => {
   catch (e) { $("prompt-box").select(); document.execCommand("copy"); }
   $("copy-ok").hidden = false; setTimeout(() => $("copy-ok").hidden = true, 2500);
 };
+
+/* ── 入門教學 ── */
+function buildLearn() {
+  const ELEM4 = ["火", "土", "風", "水"], QUAL3 = ["基本", "固定", "變動"];
+  const ASP_MEAN = { "合相": "能量疊加,融為一體——強烈,吉凶看行星本性", "六合": "順風助力,留給願意伸手的人的機會之門",
+    "四分": "摩擦與試煉——最痛的相位,也是推你成長的相位", "三合": "天賦般的流暢,不勞而得——好用到容易被忽略", "對分": "拉扯與投射——常化身成「某個人」站在你對面" };
+  const HORARY_HOUSE = ["問自己、外貌、大方向", "問錢財、動產、收入", "問手足、短程、文書消息", "問家宅、房產、父親、事情結局",
+    "問子女、戀愛、娛樂、懷孕", "問疾病、部屬、寵物、日常工作", "問婚姻、合夥、對手、小偷", "問他人之財、遺產、恐懼、生死",
+    "問遠行、留學、信仰、夢", "問事業、名聲、上司、母親", "問朋友、願望、貴人", "問小人、隱情、自傷、幽禁"];
+  let h = "";
+  h += DC.lcard("占星是什麼", '<p class="lead-para">占星不是「星星決定你」,而是「天上的鐘面」:行星在你出生那一刻的位置,像一張拍下的天空快照,古人相信這張快照與人間之事同步共振。讀盤,就是讀這張快照的語法——行星是「什麼」,星座是「怎麼樣」,宮位是「在哪裡」,相位是「彼此如何對話」。</p>');
+  h += DC.lcard("第一課・行星:句子的主詞", DC.ltable(["行星", "掌管"], DC.PLANETS.map(p => [p.gl + " " + p.zh, PLANET_MEAN[p.id]])));
+  h += DC.lcard("第二課・星座:主詞的形容詞", DC.ltable(["星座", "元素/性質", "氣質"],
+    DC.ZODIAC.map((z, i) => [DC.ZOD_GL[i] + " " + z, ELEM4[i % 4] + "象・" + QUAL3[i % 3], SIGN_TRAIT[i]])) +
+    "<p>火象重行動、土象重實際、風象重思考、水象重感受;基本宮開局、固定宮堅持、變動宮應變。</p>");
+  h += DC.lcard("第三課・宮位:事情發生的舞台", DC.ltable(["宮位", "人生領域", "卜卦時問什麼"],
+    HOUSE_MEAN.map((m, i) => ["第 " + (i + 1) + " 宮", m, HORARY_HOUSE[i]])) +
+    "<p>本站採<b>整宮制</b>:上升星座整個星座為第一宮,依序往後。</p>");
+  h += DC.lcard("第四課・相位:行星之間的對話", DC.ltable(["相位", "角度", "意義"],
+    DC.ASPECTS.map(([ang, name, gl]) => [gl + " " + name, ang + "°", ASP_MEAN[name]])));
+  h += DC.lcard("讀盤三步(西洋本命)", '<p class="lead-para">① 先看<b>太陽(自我)、月亮(情緒)、上升(門面)</b>——三位一體就是人格的骨架。② 再看每顆行星落在第幾宮:那是它工作的房間。③ 最後看緊密相位(容許度越小越強):哪裡打架、哪裡開路。三步走完,一張盤就有了故事。</p>');
+  h += DC.lcard("卜卦占星:問事的規矩", '<p class="lead-para">卜卦不用生辰——<b>問題誕生的那一刻</b>就是盤。上升是問卜者,問題歸哪一宮就找那宮的宮主星,看兩顆星有無「入相位」:有,事成;無,事散。月亮代表事情的走向,<b>月亮空亡</b>(離開星座前無相位)多主不了了之。起盤前有三個「根性」檢查:上升太早(事未成形)、太遲(大局已定)、土星在七宮(占者易誤)——盤面會自動幫你檢查。</p>');
+  h += DC.lcard("印度占星:同一片天,另一套曆", '<p class="lead-para">印度用<b>恆星黃道</b>,與西洋的回歸黃道目前差約 24°(Lahiri),所以你的「印度太陽星座」多半會退一個星座——不是算錯,是座標系不同。它的獨門武器:<b>月宿</b>(27 nakṣatra,月亮的心性)、<b>Vimśottarī 大運</b>(120 年的人生時刻表)、<b>九分盤 D9</b>(婚姻與靈魂的底片)。</p>');
+  h += DC.lcard("宿曜:二十七宿與三九秘法", DC.ltable(["關係", "意義"],
+    Object.keys(SANKU_MEAN).map(k => [k, SANKU_MEAN[k]])) +
+    "<p>你的本命宿是出生時月亮所在之宿;任何一天的月亮走到哪一宿,與本命宿的距離就給出當日關係——這就是日本平安時代風靡的「宿曜道」擇日法。</p>");
+  return h;
+}
+DC.learnInit(buildLearn);
 
 /* 開發測試:?test=modeId */
 (function () {

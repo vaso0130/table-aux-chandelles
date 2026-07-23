@@ -39,7 +39,14 @@
     <a href="mix.html" class="here">MIX 三術合參</a>
   </nav>
 
-  <p class="section-label">選三術(任意組合)</p>
+  <nav class="views" id="views" aria-label="頁面切換">
+    <button class="view-btn active" data-view="divine">三術合參</button>
+    <button class="view-btn" data-view="learn">合參心法</button>
+  </nav>
+
+  <section id="view-learn"></section>
+
+  <p class="section-label divine-only">選三術(任意組合)</p>
   <div class="pool-group" id="pool-group"></div>
   <div class="presets" id="presets"></div>
   <p id="pick-count">已選 <b>0</b> / 3</p>
@@ -518,6 +525,23 @@ $("btn-copy").onclick = async () => {
   catch (e) { $("prompt-box").select(); document.execCommand("copy"); }
   $("copy-ok").hidden = false; setTimeout(() => $("copy-ok").hidden = true, 2500);
 };
+
+/* ── 合參心法 ── */
+function buildLearn() {
+  let h = "";
+  h += DC.lcard("為什麼是三術", '<p class="lead-para">一術可欺——任何單一系統都可能被你的期待帶著走;二術可疑——兩個答案相左時無從裁決;<b>三術合參,才有多數決,也才有「相左本身就是訊息」的空間</b>。這是古人「卜筮不過三」的智慧反面:不是同一術問三次,而是三種語言問同一次。</p>');
+  h += DC.lcard("怎麼挑三術:讓題目選工具", DC.ltable(["你想問的", "適合的類型", "本站選項"], [
+    ["我是什麼樣的人/天賦何在", "命理類(看出生)", "八字、紫微、西洋/印度本命、生命靈數、威頓、八曜"],
+    ["這件事會不會成", "卦占/式占類(看此刻)", "奇門、六壬、卜卦占星、印度問事、梅花、易經、翹傳、各牌卡"],
+    ["什麼時候做最好", "時運類", "行運/返照、流年靈數、太乙命法、擇日(指定日期)"],
+    ["某一天吉不吉", "擇日類", "宿曜今日、佛日、值曜、威頓日、九星年盤"],
+    ["我和某人合不合", "關係類(回各館)", "關係星盤、組合盤、宿曜相性"]]) +
+    '<p class="lead-para">最強的組合是<b>三類各取一</b>:一個命理(底盤)+一個式占(此問)+一個時運(時機)——例如「看大局」預設的西洋本命+紫微+八字是三面鏡子照底盤,「問抉擇」的梅花+卜卦+雷諾曼是三口鐘問同一事。</p>');
+  h += DC.lcard("怎麼讀合參結果", '<p class="lead-para">① <b>先分開讀</b>:三術各自說什麼,別急著混。② <b>找共振</b>:三術不約而同指到的字眼(等待/貴人/守成),那就是答案的骨頭。③ <b>面對相左</b>:誰的管轄權大聽誰的——問成敗聽式占、問性格聽命理、問時機聽時運;相左本身常代表「事情條件未齊」。④ 提示詞已把這套流程寫給 AI,它會照此合議。</p>');
+  h += DC.lcard("合參的分寸", '<p class="lead-para">同一個問題,合參一次就好——三術已是三個意見,再抽第四、第五術,是在人海裡找一個肯附和你的人。答案不合意時,正確的下一步不是換術,是把問題問得更誠實。此桌無神,司盤者機緣也;機緣說的話,聽三遍就夠了。</p>');
+  return h;
+}
+DC.learnInit(buildLearn);
 
 /* 開發測試:?test=id1,id2,id3 */
 (function () {

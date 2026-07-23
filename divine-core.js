@@ -1041,6 +1041,26 @@ DC.histBind = function () { // 跨館共用歷史(需 #hist-list/#hist-clear/#ou
 };
 DC.histSave = function () {}; // histBind 前的安全預設
 
+/* ── 入門教學分頁(需 #views 兩顆 .view-btn 與 #view-learn 容器)── */
+DC.learnInit = function (build) {
+  var views = document.getElementById("views"), learn = document.getElementById("view-learn");
+  if (!views || !learn) return;
+  var show = function (isLearn) {
+    views.querySelectorAll(".view-btn").forEach(function (x) { x.classList.toggle("active", (x.dataset.view === "learn") === isLearn); });
+    document.body.classList.toggle("learning", isLearn);
+    if (isLearn && !learn.dataset.built) { learn.innerHTML = build(); learn.dataset.built = "1"; }
+  };
+  views.querySelectorAll(".view-btn").forEach(function (b) {
+    b.addEventListener("click", function () { show(b.dataset.view === "learn"); });
+  });
+  if (/[?&]learn=1/.test(location.search)) show(true);
+};
+DC.lcard = function (t, body) { return '<div class="result-card"><h3>' + t + "</h3>" + body + "</div>"; };
+DC.ltable = function (headers, rows) {
+  return '<div class="tbl-scroll"><table class="data wrap"><tr>' + headers.map(function (h) { return "<th>" + h + "</th>"; }).join("") + "</tr>" +
+    rows.map(function (r) { return "<tr>" + r.map(function (c, i) { return "<td" + (i === 0 ? ' class="hl"' : "") + ">" + c + "</td>"; }).join("") + "</tr>"; }).join("") + "</table></div>";
+};
+
 /* ═══ 南洋館:緬甸八曜/爪哇威頓/泰國七曜/越南翹傳 ═══ */
 DC.BUR8 = [ // 週日起;7=羅睺(週三午後)
   ["日曜", "迦樓羅(金翅鳥)", "東北", "太陽", "如金翅鳥凌空:志高自尊,獨立慷慨於志、儉嗇於財(緬諺:日曜生人惜財)"],

@@ -22,10 +22,17 @@
     <a href="mix.html">MIX 三術合參</a>
   </nav>
 
-  <p class="section-label">選擇數術</p>
+  <nav class="views" id="views" aria-label="頁面切換">
+    <button class="view-btn active" data-view="divine">起算問事</button>
+    <button class="view-btn" data-view="learn">入門教學</button>
+  </nav>
+
+  <section id="view-learn"></section>
+
+  <p class="section-label divine-only">選擇數術</p>
   <div class="sys-row" id="sys"></div>
 
-  <p class="section-label" id="modes-label">選擇題目</p>
+  <p class="section-label divine-only" id="modes-label">選擇題目</p>
   <div class="modes" id="modes"></div>
 
   <section class="panel" id="panel">
@@ -326,6 +333,30 @@ $("btn-copy").onclick = async () => {
   catch (e) { $("prompt-box").select(); document.execCommand("copy"); }
   $("copy-ok").hidden = false; setTimeout(() => $("copy-ok").hidden = true, 2500);
 };
+
+/* ── 入門教學 ── */
+function buildLearn() {
+  const LINES8 = [["123", "藝術線", "美感、表達與品味"], ["456", "組織線", "秩序、執行與管理"], ["789", "權力線", "影響力、企圖與擔當"],
+    ["147", "務實線", "腳踏實地、積累成業"], ["258", "情感線", "同理、連結與人和"], ["369", "智慧線", "思辨、公益與遠見"],
+    ["159", "事業線", "意志貫徹、勇往直前"], ["357", "人緣線", "表達魅力、廣結善緣"]];
+  const GUA8 = [["乾 ☰", "天", "首領、剛健、父、圓物"], ["兌 ☱", "澤", "口舌、喜悅、少女、毀折"], ["離 ☲", "火", "文明、眼目、中女、文書"],
+    ["震 ☳", "雷", "奮動、驚起、長男、行動"], ["巽 ☴", "風", "進退、傳播、長女、繩直"], ["坎 ☵", "水", "險陷、智慧、中男、暗流"],
+    ["艮 ☶", "山", "止靜、阻隔、少男、門徑"], ["坤 ☷", "地", "柔順、承載、母、方物"]];
+  let h = "";
+  h += DC.lcard("數,是最古老的占卜語言", '<p class="lead-para">畢達哥拉斯說「萬物皆數」,邵雍說「數生象,象生器」。東西方不約而同相信:把一件事化成數,就能窺見它的骨架。數字館的三門功課——生命靈數把「生日」化成數,梅花易數把「時刻」化成卦,河洛理數把「八字」化成卦。</p>');
+  h += DC.lcard("生命靈數・怎麼算", '<p class="lead-para">把生日所有數字加總,反覆相加到一位數(11、22、33 為卓越數,保留不再加)。例:1990-05-15 → 1+9+9+0+0+5+1+5 = 30 → 3+0 = <b>3</b>,生命靈數 3。天賦數是加總的原始值(30),生日數是日期(15→6),態度數是月+日再化簡。</p>');
+  h += DC.lcard("十二個數字的臉", DC.ltable(["數", "原型", "關鍵詞", "光面", "影面"],
+    Object.keys(DC.NUM_CORE).map(n => { const c = DC.NUM_CORE[n]; return [n, c.t, c.key, c.light, c.shadow]; })));
+  h += DC.lcard("生日九宮與連線", DC.ltable(["連線", "名稱", "意義"], LINES8) +
+    "<p>把生日所有數字填進 1-9 九宮格,湊滿一整排就成「連線」——是你自帶的套裝技能;空缺的數字則是這輩子要練的新招,不是缺陷。</p>");
+  h += DC.lcard("流年九年一輪", DC.ltable(["流年", "主題"], [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => [n, YEAR_MEAN[n]])) +
+    "<p>流年=(你的月+日+當年年份)化簡。九年一循環:1 播種、9 清倉,知道自己走到第幾步,就不會在該蹲的年份硬跳。</p>");
+  h += DC.lcard("梅花易數・八卦速記", DC.ltable(["卦", "象", "象意"], GUA8) +
+    '<p class="lead-para">起卦:年支數+農曆月+日=上卦(除 8 取餘),再加時辰數=下卦,總數除 6 取餘為動爻。<b>體卦</b>是自己(不含動爻那半),<b>用卦</b>是事情(含動爻那半)。斷法一句訣:<b>用生體吉、體剋用可成、體用比和順、體生用洩耗、用剋體凶</b>。互卦看過程,變卦看結局。</p>');
+  h += DC.lcard("河洛理數・生辰化卦", '<p class="lead-para">八字每個字依河圖配數(甲己子午九、乙庚丑未八、丙辛寅申七、丁壬卯酉六、戊癸辰戌五、巳亥常加四),奇數之和為<b>天數</b>、偶數之和為<b>地數</b>,各取卦而成先天卦(前半生);再以時辰定<b>元堂爻</b>,一爻變而得後天卦(後半生)。你的命,是一枚會翻面的卦。</p>');
+  return h;
+}
+DC.learnInit(buildLearn);
 
 /* 開發測試:?test=modeId */
 (function () {
