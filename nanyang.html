@@ -54,7 +54,6 @@
     </div>
     <div class="btn-row">
       <button class="gold-btn" id="btn-go">起 算</button>
-      <button class="ghost-btn" id="btn-browse" hidden>瀏覽全部選句(35)</button>
       <span class="hint" id="go-hint"></span>
     </div>
   </section>
@@ -114,7 +113,6 @@ function updateForm() {
   $("p-title").textContent = s.name;
   $("p-hint").textContent = s.hint;
   $("btn-go").textContent = s.id === "kieu" ? "焚 香 開 卷" : "起 算";
-  $("btn-browse").hidden = s.id !== "kieu";
   $("out").innerHTML = ""; $("prompt-sec").hidden = true;
 }
 function kieuAllHtml() {
@@ -128,11 +126,6 @@ function kieuAllHtml() {
         '<p style="color:var(--ivory)">' + k[1] + "</p><p>" + k[3] + "</p></div>";
     }).join("");
 }
-document.getElementById("btn-browse").onclick = () => {
-  $("prompt-sec").hidden = true;
-  $("out").innerHTML = kieuAllHtml();
-  $("out").scrollIntoView({ behavior: "smooth" });
-};
 renderSys(); updateForm();
 DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣:「[^」]*」/, "語氣:「" + DC.toneValue() + "」"); });
 DC.histBind();
