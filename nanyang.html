@@ -8,7 +8,7 @@
     <div class="plate">
       <p class="eyebrow">Le Jardin des Mers du Sud</p>
       <h1>燭光南苑</h1>
-      <p class="subtitle">佛塔的八個角、爪哇的三十五天、湄公河畔翻開的詩集——南洋的命運,寫在日子本身。</p>
+      <p class="subtitle">佛塔的八個角、爪哇的三十五天、七尊生日佛——南洋的命運,寫在日子本身。</p>
     </div>
   </header>
 
@@ -19,6 +19,7 @@
     <a href="bazi.html">八字館</a>
     <a href="shi.html">式占館</a>
     <a href="nanyang.html" class="here">南洋館</a>
+    <a href="kaijuan.html">開卷館</a>
     <a href="mix.html">MIX 三術合參</a>
   </nav>
 
@@ -47,7 +48,7 @@
     </div>
     <div class="form-grid" style="margin-top:14px">
       <div class="field full"><label>你的問題</label>
-        <input id="q-input" type="text" maxlength="200" placeholder="默想並寫下你想問的事(翹傳開卷建議必填)"></div>
+        <input id="q-input" type="text" maxlength="200" placeholder="默想並寫下你想問的事(選填,會寫進提示詞)"></div>
       <div class="field"><label>AI 解讀語氣</label>
         <select id="tone-select"></select>
         <input id="tone-custom" type="text" maxlength="40" placeholder="寫下你想要的語氣" hidden style="margin-top:6px"></div>
@@ -76,8 +77,8 @@
   </section>
 
   <p class="footnote">
-    緬曆換歲以潑水節(約 4/17)、泰曆生肖以宋干節(4/13)為<b>民俗簡式</b>;爪哇威頓以 1945-08-17(Jumat Legi)錨定;<br>
-    翹傳開卷為《金雲翹傳》選句卅五,以 <b>crypto</b> 真隨機翻卷——傳統求整部,此為選本,誠實註明。
+    緬曆換歲以潑水節(約 4/17)、泰曆生肖以宋干節(4/13)為<b>民俗簡式</b>;爪哇威頓以 1945-08-17(Jumat Legi)錨定。<br>
+    越南翹傳開卷已遷居<b>開卷館</b>,與燭光一句、靈籤同樓。
   </p>
 </div>
 
@@ -91,9 +92,7 @@ const SYS = [
   { id: "weton", name: "爪哇威頓", sub: "Weton・Primbon", birth: true,
     hint: "七日星期與五日市集週疊成三十五天一輪——你的威頓、靈數(neptu)與下一個本命日。" },
   { id: "thai", name: "泰國七曜佛日", sub: "วันเกิด・Wan Kerd", birth: true,
-    hint: "生於星期幾,決定你的本命佛姿、本命色與忌色——泰國人一生隨身的護身知識。" },
-  { id: "kieu", name: "翹傳開卷", sub: "Bói Kiều・越南", birth: false,
-    hint: "默想問題,拜過徐海王、覺緣師太、翠翹仙,翻開《金雲翹傳》——指到哪句,命運答哪句。" }
+    hint: "生於星期幾,決定你的本命佛姿、本命色與忌色——泰國人一生隨身的護身知識。" }
 ];
 let sysId = "maha";
 
@@ -112,19 +111,7 @@ function updateForm() {
   $("form-birth").hidden = !s.birth;
   $("p-title").textContent = s.name;
   $("p-hint").textContent = s.hint;
-  $("btn-go").textContent = s.id === "kieu" ? "焚 香 開 卷" : "起 算";
   $("out").innerHTML = ""; $("prompt-sec").hidden = true;
-}
-function kieuAllHtml() {
-  return '<div class="result-card"><h3>《金雲翹傳》選句一覽<span class="en">Boi Kieu 卅五句</span></h3>' +
-    "<p>開卷時由 crypto 真隨機取一句——以下為全部選句,平日可當詩讀,問事時請回到焚香開卷。</p></div>" +
-    DC.KIEU.map((k, i) => {
-      const polTxt = k[4] === "good" ? "吉" : k[4] === "bad" ? "慎" : "平";
-      return '<div class="result-card"><h3>第 ' + (i + 1) + " 句・" + k[2] +
-        '<span class="badge' + (k[4] === "bad" ? " red" : k[4] === "good" ? "" : " dim") + '" style="margin-left:10px">' + polTxt + "</span></h3>" +
-        '<p class="lead" style="font-style:italic;line-height:2">' + k[0].replace(/\n/g, "<br>") + "</p>" +
-        '<p style="color:var(--ivory)">' + k[1] + "</p><p>" + k[3] + "</p></div>";
-    }).join("");
 }
 renderSys(); updateForm();
 DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣:「[^」]*」/, "語氣:「" + DC.toneValue() + "」"); });
@@ -226,26 +213,6 @@ function runThai(out, pr) {
   pr.push("請以泰國生日佛傳統解讀:1. " + dayName + "生人的性情、緣分與適合的行業(泰國民間怎麼說)。2. 本命佛「" + buddha + "」的典故與它給此生的功課。3. 顏色開運的具體用法(哪天穿什麼)。4. " + (T.picked ? "指定日 " + T.str + " 值該佛日——以本命佛日對該日論吉凶宜忌。5. " : "") + "佈施供養的合宜方式(供哪種、供幾支)。" + (T.picked ? "6" : "5") + ". 若我有提問,以佛日性情直答之。");
 }
 
-/* ── 越南翹傳開卷 ── */
-function runKieu(out, pr) {
-  const q = $("q-input").value.trim();
-  if (!q) throw fail("開卷前,先寫下你的問題");
-  const i = DC.rand(DC.KIEU.length);
-  const [viet, hant, title, gloss, pol] = DC.KIEU[i];
-  const polTxt = pol === "good" ? "吉" : pol === "bad" ? "慎" : "平";
-  out.push(card("焚香拜請", "Bói Kiều",
-    '<p style="color:var(--muted);font-style:italic">「Lạy vua Từ Hải, lạy vãi Giác Duyên, lạy tiên Thúy Kiều…」<br>拜徐海王、拜覺緣師太、拜翠翹仙——默唸問題,書頁自開。</p>'));
-  out.push(card("第 " + (i + 1) + " 句・" + title, '<span class="badge' + (pol === "bad" ? " red" : pol === "good" ? "" : " dim") + '">' + polTxt + "</span>",
-    '<p class="lead" style="font-style:italic;line-height:2">' + viet.replace(/\n/g, "<br>") + "</p>" +
-    '<p style="color:var(--ivory)">' + hant + "</p>" +
-    "<p>" + gloss + "</p>"));
-  pr.push("越南翹傳開卷(Bói Kiều,《金雲翹傳》選句卅五之第 " + (i + 1) + " 句,crypto 真隨機開卷):");
-  pr.push("  詩句:" + viet.replace(/\n/g, " / "));
-  pr.push("  中譯:" + hant);
-  pr.push("  題:" + title + "(" + polTxt + ");籤面初解:" + gloss, "");
-  pr.push("請以越南 Bói Kiều 傳統解讀:1. 這句在《翹傳》原文中的情節脈絡(誰、在何處、何種處境)——以情節喻我之處境。2. 逐字逐意細解詩句意象如何對應我的問題。3. 給出明確傾向(吉/平/慎)與行動建議。4. 若懂喃字傳統可補充該句的音韻與雙關之美。");
-}
-
 /* ── 主流程 ── */
 $("btn-go").onclick = () => {
   $("go-hint").textContent = "";
@@ -255,7 +222,7 @@ $("btn-go").onclick = () => {
   const head = ["你是一位熟悉東南亞民俗命理的老師。以下是完整的起算資料。" + DC.toneHead(), ""];
   if (q) head.push("我的問題:" + q, "");
   try {
-    ({ maha: runMaha, weton: runWeton, thai: runThai, kieu: runKieu })[sysId](out, pr);
+    ({ maha: runMaha, weton: runWeton, thai: runThai })[sysId](out, pr);
   } catch (e) { if (!$("go-hint").textContent) $("go-hint").textContent = "起算失敗:" + e.message; return; }
   $("out").innerHTML = out.join("");
   $("prompt-box").value = head.concat(pr).join("\n");
@@ -287,8 +254,6 @@ function buildLearn() {
   h += DC.lcard("泰國七曜佛日", DC.ltable(["生日", "本命佛", "本命色", "性情"],
     DC.THAI7.map((t, i) => [i === 7 ? "週三夜" : ["週日", "週一", "週二", "週三(日)", "週四", "週五", "週六"][i], t[0], t[1], t[3]])) +
     "<p>泰國大殿旁常有一排七(八)尊小佛——那是給每個生日的人拜的。記住自己的佛、穿自己的色,是泰國人從小的護身常識。</p>");
-  h += DC.lcard("越南翹傳開卷(Bói Kiều)", '<p class="lead-para">《金雲翹傳》是越南的國民史詩:才女翠翹為救父賣身,十五年風塵輾轉,終與初戀金重重逢——3254 行六八體詩,寫盡人間的才、命、情、劫。越南人相信這部寫透命運的書能回答命運:焚香默唸「拜徐海王、拜覺緣師太、拜翠翹仙」,隨手翻開,指到哪句,命運答哪句。翹的一生什麼都經歷過了——你的處境,她總有一句對得上。本站取選句卅五,crypto 真隨機開卷,誠實註明非全本。全部選句如下:</p>');
-  h += kieuAllHtml();
   return h;
 }
 DC.learnInit(buildLearn);

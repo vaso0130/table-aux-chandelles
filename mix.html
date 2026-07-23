@@ -36,6 +36,7 @@
     <a href="bazi.html">八字館</a>
     <a href="shi.html">式占館</a>
     <a href="nanyang.html">南洋館</a>
+    <a href="kaijuan.html">開卷館</a>
     <a href="mix.html" class="here">MIX 三術合參</a>
   </nav>
 
@@ -140,12 +141,15 @@ const POOL = [
     ["n-taiyiming", "太乙命法", "birth"], ["b-qimen", "奇門遁甲", ""], ["b-liuren", "大六壬", ""]
   ]},
   { g: "南洋", items: [
-    ["y-maha", "緬甸八曜", "birth"], ["y-weton", "爪哇威頓", "birth"], ["y-thai", "泰國七曜佛日", "birth"], ["c-kieu", "翹傳開卷(越南)", ""]
+    ["y-maha", "緬甸八曜", "birth"], ["y-weton", "爪哇威頓", "birth"], ["y-thai", "泰國七曜佛日", "birth"]
+  ]},
+  { g: "開卷", items: [
+    ["c-yiju", "燭光一句", ""], ["c-kieu", "翹傳開卷(越南)", ""], ["c-qs", "靈籤(快取)", ""]
   ]},
   { g: "牌卡快抽(三張)", items: [
     ["c-len", "雷諾曼", ""], ["c-sib", "西碧拉", ""], ["c-bel", "貝林神諭", ""], ["c-kip", "奇卜", ""],
     ["c-gra", "大雷諾曼", ""], ["c-run", "盧恩符文", ""], ["c-zw", "紫微星曜", ""], ["c-dt", "東方塔羅", ""],
-    ["c-esp", "西班牙牌", ""], ["c-yi", "易經(擲卦)", ""], ["c-qs", "靈籤(快取)", ""]
+    ["c-esp", "西班牙牌", ""], ["c-yi", "易經(擲卦)", ""]
   ]}
 ];
 const PRESETS = [
@@ -485,6 +489,12 @@ GEN["c-yi"] = () => {
   return { title: "易經・擲卦",
     html: "<p>本卦" + name1 + (mov.length ? "・動爻" + mov.join(",") + "・之卦" + name2 : "・六爻安靜") + "</p>",
     lines: ["易經三枚錢擲卦:本卦 " + name1 + (mov.length ? ",動爻第" + mov.join("、") + "爻,之卦 " + name2 : ",六爻安靜") ] };
+};
+GEN["c-yiju"] = () => {
+  const i = DC.rand(DC.YIJU.length);
+  return { title: "燭光一句・第" + (i + 1) + "句",
+    html: "<p style='font-size:17px;color:var(--gold-bright)'>「" + DC.YIJU[i] + "」</p>",
+    lines: ["燭光一句(本站原創答案之書,crypto 百句取一):第" + (i + 1) + "句「" + DC.YIJU[i] + "」"] };
 };
 GEN["c-qs"] = () => {
   const i = DC.rand(100), [t, g, poem] = DC.QS_MINI[i];
