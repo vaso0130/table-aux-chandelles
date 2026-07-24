@@ -58,6 +58,14 @@
         <div class="field"><label>第二個數(下卦)</label><input id="num-b" type="number" min="1" placeholder="再報一個數"></div>
       </div>
     </div>
+    <div id="form-mtime" hidden>
+      <p class="fieldset-label">起卦時刻(選填)</p>
+      <div class="form-grid">
+        <div class="field"><label>日期</label><input id="mt-date" type="date"></div>
+        <div class="field"><label>時間</label><input id="mt-time" type="time"></div>
+        <div class="field full"><div class="note">留空即以此刻起卦;古法亦可<b>以事發之時起卦</b>——問過去或未來之事,填該事的時刻</div></div>
+      </div>
+    </div>
     <div class="form-grid" style="margin-top:14px">
       <div class="field full"><label>你的問題</label>
         <input id="q-input" type="text" maxlength="200" placeholder="默想並寫下你想問的事(梅花易數建議必填)"></div>
@@ -150,6 +158,7 @@ function updateForm() {
   $("f-gender").hidden = sysId !== "heluo";
   $("f-target").hidden = sysId !== "lifenum";
   $("form-nums").hidden = modeId !== "mh-num";
+  $("form-mtime").hidden = sysId !== "meihua";
   const s = SYS.find(x => x.id === sysId), m = s.modes.find(x => x[0] === modeId);
   $("p-title").textContent = s.name + "・" + m[1];
   $("p-hint").textContent = m[2];
@@ -265,25 +274,34 @@ function meihuaCard(mh, srcDesc, out, pr, q) {
   pr.push("請依梅花易數體用生剋法解讀:1. 體用關係直斷吉凶。2. 互卦看事情過程、變卦看最終走向。3. 卦氣旺衰(以節氣月令參酌)。4. 外應與應期推估。5. 給出明確結論與建議。");
 }
 function runMeihua(out, pr, q) {
-  const now = new Date();
-  const y = now.getFullYear(), mo = now.getMonth() + 1, d = now.getDate(), h = now.getHours();
+  const mtv = $("mt-date").value;
+  let y, mo, d, h, mi, srcTag;
+  if (mtv) {
+    [y, mo, d] = mtv.split("-").map(Number);
+    [h, mi] = ($("mt-time").value || "12:00").split(":").map(Number);
+    srcTag = "指定時刻 " + mtv + " " + ($("mt-time").value || "12:00") + "・";
+  } else {
+    const now = new Date();
+    y = now.getFullYear(); mo = now.getMonth() + 1; d = now.getDate(); h = now.getHours(); mi = now.getMinutes();
+    srcTag = "";
+  }
   if (modeId === "mh-time") {
     const lun = DC.lunar(y, mo, d, 8);
     const lichun = DC.solarTerm(y, 315);
-    const jdNow = DC.jd(y, mo, d, h, now.getMinutes(), 8);
+    const jdNow = DC.jd(y, mo, d, h, mi, 8);
     const yr = jdNow >= lichun ? y : y - 1;
     const yB = ((yr - 4) % 12 + 12) % 12;
     const hb = Math.floor(((h % 24) + 1) / 2) % 12;
     const uN = (yB + 1) + lun.month + lun.day;
     const lN = uN + (hb + 1);
     const mh = DC.meihua(uN, lN, lN);
-    meihuaCard(mh, "時間起卦:" + DC.BRANCHES[yB] + "年" + (lun.isLeap ? "閏" : "") + DC.CN_MONTH[lun.month - 1] + "月" + DC.CN_DAY[lun.day - 1] + DC.BRANCHES[hb] + "時(年" + (yB + 1) + "+月" + lun.month + "+日" + lun.day + "=" + uN + ",加時" + (hb + 1) + "=" + lN + ")", out, pr, q);
+    meihuaCard(mh, srcTag + "時間起卦:" + DC.BRANCHES[yB] + "年" + (lun.isLeap ? "閏" : "") + DC.CN_MONTH[lun.month - 1] + "月" + DC.CN_DAY[lun.day - 1] + DC.BRANCHES[hb] + "時(年" + (yB + 1) + "+月" + lun.month + "+日" + lun.day + "=" + uN + ",加時" + (hb + 1) + "=" + lN + ")", out, pr, q);
   } else {
     const a = parseInt($("num-a").value), b = parseInt($("num-b").value);
     if (!a || !b) throw fail("請報兩個數");
     const hb = Math.floor(((h % 24) + 1) / 2) % 12;
     const mh = DC.meihua(a, b, a + b + hb + 1);
-    meihuaCard(mh, "報數起卦:" + a + "・" + b + "(加" + DC.BRANCHES[hb] + "時" + (hb + 1) + "取動爻)", out, pr, q);
+    meihuaCard(mh, srcTag + "報數起卦:" + a + "・" + b + "(加" + DC.BRANCHES[hb] + "時" + (hb + 1) + "取動爻)", out, pr, q);
   }
 }
 

@@ -42,7 +42,9 @@
         <div class="field"><label>日期</label><input id="n-date" type="date"></div>
         <div class="field"><label>時間</label><input id="n-time" type="time"></div>
         <div class="field"><label>時區</label><input id="n-tz" type="number" step="0.5" value="8"></div>
-        <div class="field full"><div class="note">想為未來某日擇時起局(奇門擇日/六壬占期):取消「跟隨此刻」,直接指定那一天的日期時間即可。</div></div>
+        <div class="field" id="f-target"><label>所問之日(選填)</label><input id="t-date" type="date">
+          <div class="note">古法「時間用神」:以此刻起局,把該日干支放進局中論其吉凶——問「某日行事如何」填這裡</div></div>
+        <div class="field full"><div class="note">另一用法:取消「跟隨此刻」直接指定未來時刻,即為該時刻起局(奇門擇時/六壬占期)。</div></div>
       </div>
     </div>
     <div id="form-birth">
@@ -160,6 +162,13 @@ function readNow() {
   const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
   return { y, m, d, h, mi, tz: parseFloat($("n-tz").value) || 8, str: dv + " " + tv };
 }
+function readTargetDay() { // 所問之日(時間用神);未填=null
+  const tv = $("t-date").value;
+  if (!tv) return null;
+  const [y, m, d] = tv.split("-").map(Number);
+  const bz = DC.bazi(y, m, d, 12, 0, 8);
+  return { y, m, d, str: tv, dIdx: bz.dIdx, gz: bz.pillars[2].gz, s: bz.pillars[2].s, b: bz.pillars[2].b };
+}
 function readBirthOpt(nowBz) { // 勾選並填了生辰 → 本命/行年/年命(虛歲以立春換歲)
   if (!$("b-enable").checked || !$("b-date").value) return null;
   const dv = $("b-date").value, tv = $("b-time").value || "12:00";
@@ -203,13 +212,26 @@ function runQimen(out, pr) {
     const t = qm.tianpan[p];
     pr.push("  " + DC.GONG_NAME[p] + ":" + (qm.gods[p] || "") + "・" + (t ? t.star + "・天盤" + t.stem : "") + "・" + (qm.doors[p] || "") + "・地盤" + qm.dipan[p] + (p === qm.tp ? "(時干落宮)" : "") + (p === qm.dayGongTian ? "(日干所在)" : ""));
   }
+  const td = readTargetDay();
+  if (td) { // 時間用神:所問之日干支入局
+    const yiX = ["戊", "己", "庚", "辛", "壬", "癸"][Math.floor(td.dIdx / 10)];
+    const ch = td.s === 0 ? yiX : DC.STEMS[td.s];
+    let tG = 0; for (const p of [1, 8, 3, 4, 9, 2, 7, 6]) if (qm.tianpan[p] && qm.tianpan[p].stem.includes(ch)) { tG = p; break; }
+    let dG = 0; for (let p = 1; p <= 9; p++) if (qm.dipan[p] === ch) { dG = p; break; } if (dG === 5) dG = 2;
+    const bG = DC.BR_PALACE[td.b];
+    const tt = qm.tianpan[tG];
+    out.push(card("時間用神・所問之日", td.str + "(" + td.gz + "日)",
+      "<p>該日日干" + DC.STEMS[td.s] + (td.s === 0 ? "(甲遁,以其旬儀" + yiX + "代)" : "") + "落於天盤<b style='color:var(--gold-bright)'>" + DC.GONG_NAME[tG] + "</b>——" + (qm.gods[tG] || "") + "・" + (tt ? tt.star : "") + "・" + (qm.doors[tG] || "") + ";地盤在" + DC.GONG_NAME[dG] + "。</p>" +
+      "<p>該日日支" + DC.BRANCHES[td.b] + "寄" + DC.GONG_NAME[bG] + "——" + (qm.gods[bG] || "") + "・" + (qm.tianpan[bG] ? qm.tianpan[bG].star : "") + "・" + (qm.doors[bG] || "") + "。以此二宮之星門神組合與旺衰,論該日行事吉凶——此即古法「以問時之局,斷所問之日」。</p>"));
+    pr.push("  時間用神(所問之日 " + td.str + "," + td.gz + "日):日干" + DC.STEMS[td.s] + (td.s === 0 ? "(以旬儀" + yiX + "代)" : "") + "落天盤" + DC.GONG_NAME[tG] + "(" + (qm.gods[tG] || "") + "・" + (tt ? tt.star : "") + "・" + (qm.doors[tG] || "") + "),地盤" + DC.GONG_NAME[dG] + ";日支" + DC.BRANCHES[td.b] + "寄" + DC.GONG_NAME[bG]);
+  }
   pr.push("  中五宮地盤 " + qm.dipan[5] + "(寄坤二)");
   if (ob) {
     const np2 = DC.BR_PALACE[ob.mingB], t2 = qm.tianpan[np2];
     pr.push("  問測人年命:" + ob.mingGz + "年生(虛歲" + ob.xusui + "),年命" + DC.BRANCHES[ob.mingB] + "寄" + DC.GONG_NAME[np2] + "——" + (qm.gods[np2] || "") + "・" + (t2 ? t2.star + "・天盤" + t2.stem : "") + "・" + (qm.doors[np2] || "") + "・地盤" + qm.dipan[np2]);
   }
   pr.push("");
-  pr.push("請以奇門遁甲解讀" + (q ? "我的問題" : "此刻運勢") + ":1. 取用神(日干為我、時干為事" + (ob ? "、年命宮應問測人本身" : "") + (q ? ",並依問題類別取相應用神" : "") + ")。2. 用神落宮的星門神組合、旺相休囚。3. 有無吉格凶格(青龍返首、白虎猖狂之類請自行判斷)。4. 成敗傾向與應期。5. 趨吉方位與行動建議(吉門方位)。");
+  pr.push("請以奇門遁甲解讀" + (q ? "我的問題" : "此刻運勢") + ":1. 取用神(日干為我、時干為事" + (ob ? "、年命宮應問測人本身" : "") + (td ? "、所問之日以其日干支落宮為時間用神" : "") + (q ? ",並依問題類別取相應用神" : "") + ")。2. 用神落宮的星門神組合、旺相休囚。3. 有無吉格凶格(青龍返首、白虎猖狂之類請自行判斷)。4. 成敗傾向與應期。" + (td ? "5. 專論所問之日的行事吉凶與宜忌。6" : "5") + ". 趨吉方位與行動建議(吉門方位)。");
 }
 
 /* ── 大六壬 ── */
@@ -235,18 +257,25 @@ function runLiuren(out, pr) {
       "<p>本命" + DC.BRANCHES[ob.mingB] + ",上神" + DC.BRANCHES[mUp] + "(" + lr.jiangOf(mUp) + ")——本命上神看此人一生底氣與此問中的自身狀態。</p>" +
       "<p>行年" + ob.xn.gz + "(" + (ob.male ? "男起丙寅順行" : "女起壬申逆行") + "),上神" + DC.BRANCHES[xUp] + "(" + lr.jiangOf(xUp) + ")——行年上神看今年的際遇方向。</p>"));
   }
+  const td = readTargetDay();
+  if (td) { // 視日辰上神:所問之日的日支在天盤的上神
+    const dUp = lr.up(td.b);
+    out.push(card("所問之日・日辰上神", td.str + "(" + td.gz + "日)",
+      "<p>該日日支<b>" + DC.BRANCHES[td.b] + "</b>,今課天盤上神為<b style='color:var(--gold-bright)'>" + DC.BRANCHES[dUp] + "</b>,乘<b>" + lr.jiangOf(dUp) + "</b>——古法「視其日之上神」:上神生扶日辰、天將吉者,其日吉;剋戰刑害、凶將乘之者,其日不利。</p>"));
+  }
   pr.push("大六壬課式(" + N.str + ",UTC+" + N.tz + "):");
   pr.push("  " + bz.pillars[2].gz + "日" + DC.BRANCHES[bz.hB] + "時,月將" + lr.jiangZh + "(太陽過宮),晝夜:" + (lr.isDay ? "晝" : "夜") + "貴" + lr.gui + (lr.shun ? "順" : "逆") + "佈");
   pr.push("  天盤(地盤子丑寅卯辰巳午未申酉戌亥之上):" + lr.tianpan.join("、"));
   pr.push("  四課(下→上/天將):" + lr.lessons.map((l, i) => "第" + "一二三四"[i] + "課 " + l.low + "→" + l.up + "/" + l.jiang).join(";"));
   pr.push("  三傳:" + lr.chuan.map((c, i) => ["初", "中", "末"][i] + "傳 " + c.zh + "(遁干" + c.dun + ",天將" + c.jiang + ",六親" + c.qin + ")").join(";"));
   pr.push("  課體:" + lr.keti + (lr.fuyin ? "(伏吟)" : "") + (lr.fanyin ? "(返吟)" : ""));
+  if (td) pr.push("  所問之日:" + td.str + "(" + td.gz + "日)——其日支" + DC.BRANCHES[td.b] + "之上神為" + DC.BRANCHES[lr.up(td.b)] + ",乘" + lr.jiangOf(lr.up(td.b)) + "(視日辰上神論該日)");
   if (ob) {
     const mUp2 = lr.up(ob.mingB), xUp2 = lr.up(ob.xn.b);
     pr.push("  問測人:本命" + DC.BRANCHES[ob.mingB] + "(" + ob.mingGz + "年生,虛歲" + ob.xusui + "),本命上神" + DC.BRANCHES[mUp2] + "乘" + lr.jiangOf(mUp2) + ";行年" + ob.xn.gz + ",行年上神" + DC.BRANCHES[xUp2] + "乘" + lr.jiangOf(xUp2));
   }
   pr.push("");
-  pr.push("請以大六壬解讀" + (q ? "我的問題" : "此刻氣運") + ":1. 課體「" + lr.keti + "」的基調。2. 四課看人我雙方,三傳看事情發展(初傳因、中傳過程、末傳果)。3. 天將與六親配合細斷。" + (ob ? "4. 本命、行年上神與課傳的生剋呼應——此問對「這個人、這一年」的特別意義。5" : "4") + ". 明確的成敗傾向與應期(以三傳支神推)。" + (ob ? "6" : "5") + ". 若涉害別責等取法與貴派有異,請以傳統定法覆核並註明。");
+  pr.push("請以大六壬解讀" + (q ? "我的問題" : "此刻氣運") + ":1. 課體「" + lr.keti + "」的基調。2. 四課看人我雙方,三傳看事情發展(初傳因、中傳過程、末傳果)。3. 天將與六親配合細斷。" + (ob ? "4. 本命、行年上神與課傳的生剋呼應——此問對「這個人、這一年」的特別意義。5" : "4") + ". 明確的成敗傾向與應期(以三傳支神推)。" + (td ? "另請專論所問之日 " + td.str + ":以其日支上神與所乘天將斷該日吉凶宜忌。" : "") + (ob ? "6" : "5") + ". 若涉害別責等取法與貴派有異,請以傳統定法覆核並註明。");
 }
 
 /* ── 太乙神數 ── */
@@ -350,6 +379,7 @@ DC.learnInit(buildLearn);
   sysId = t; renderSys(); updateForm();
   $("b-enable").checked = true; $("birth-fields").hidden = false;
   $("b-date").value = "1990-05-15"; $("b-time").value = "10:00";
+  $("t-date").value = "2026-08-15";
   $("q-input").value = "測試提問:這件事會順利嗎?";
   setTimeout(() => { try { $("btn-go").onclick(); document.title = $("prompt-sec").hidden ? "SHI-TEST-FAIL(hidden):" + $("go-hint").textContent : "SHI-TEST-OK"; } catch (e) { document.title = "SHI-TEST-FAIL " + e.message; } }, 60);
 })();
