@@ -375,6 +375,27 @@ table.data td.red { color: #E8A08F; }
 }
 .copy-ok { color: #9FC49F; font-size: 13px; margin-left: 10px; }
 
+/* ── 一覽/逐張瀏覽(仿牌桌館字典) ── */
+.dict-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px; margin: 14px 0 6px;
+}
+.dict-tile {
+  font-family: inherit;
+  background: var(--felt-950);
+  border: 1px solid var(--felt-line); border-radius: 2px;
+  padding: 10px 8px 9px; cursor: pointer; text-align: center;
+  transition: border-color .2s, background-color .2s;
+}
+.dict-tile:hover, .dict-tile:focus-visible { border-color: var(--gold-dim); background: rgba(201,164,92,.07); }
+.dt-no { display: block; color: var(--gold-dim); font-size: 10.5px; letter-spacing: .18em; }
+.dt-t { display: block; color: var(--ivory); font-size: 14px; margin-top: 3px; line-height: 1.5; }
+.dt-s { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+.dict-nav { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; margin: 14px 0 6px; }
+.dict-nav .ghost-btn { padding: 7px 14px; font-size: 12.5px; }
+.dn-pos { color: var(--muted); font-size: 13px; letter-spacing: .1em; }
+.dict-detail-scroll { overflow-x: auto; text-align: center; }
+
 /* ── 占卜歷史 ── */
 #hist-sec { max-width: 760px; margin: 44px auto 0; }
 .hist-item {

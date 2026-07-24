@@ -576,16 +576,13 @@ function runYiju() {
 }
 
 /* ═══ 翹傳開卷(自南洋館遷入) ═══ */
-function kieuAllHtml() {
-  return '<div class="result-card"><h3>《金雲翹傳》選句一覽<span class="en">Boi Kieu 卅五句</span></h3>' +
-    "<p>開卷時由 crypto 真隨機取一句——以下為全部選句,平日可當詩讀。</p></div>" +
-    DC.KIEU.map((k, i) => {
-      const polTxt = k[4] === "good" ? "吉" : k[4] === "bad" ? "慎" : "平";
-      return '<div class="result-card"><h3>第 ' + (i + 1) + " 句・" + k[2] +
-        '<span class="badge' + (k[4] === "bad" ? " red" : k[4] === "good" ? "" : " dim") + '" style="margin-left:10px">' + polTxt + "</span></h3>" +
-        '<p class="lead" style="font-style:italic;line-height:2">' + k[0].replace(/\n/g, "<br>") + "</p>" +
-        '<p style="color:var(--ivory)">' + k[1] + "</p><p>" + k[3] + "</p></div>";
-    }).join("");
+function kieuDetail(i) {
+  const [viet, hant, title, gloss, pol] = DC.KIEU[i];
+  const polTxt = pol === "good" ? "吉" : pol === "bad" ? "慎" : "平";
+  return '<div class="result-card"><h3>第 ' + (i + 1) + " 句・" + title +
+    '<span class="badge' + (pol === "bad" ? " red" : pol === "good" ? "" : " dim") + '" style="margin-left:10px">' + polTxt + "</span></h3>" +
+    '<p class="lead" style="font-style:italic;line-height:2">' + viet.replace(/\n/g, "<br>") + "</p>" +
+    '<p style="color:var(--ivory)">' + hant + "</p><p>" + gloss + "</p></div>";
 }
 function runKieu() {
   const q = $("q-input").value.trim();
@@ -812,15 +809,28 @@ DC.histBind();
 function buildLearn() {
   let h = "";
   h += DC.lcard("開卷占:最古老的隨機數", '<p class="lead-para">翻開一本書,以指到的句子為神諭——這叫<b>開卷占(bibliomancy)</b>,是人類最古老的占卜形式之一:羅馬人翻《埃涅阿斯紀》(維吉爾籤),中世紀人翻聖經(Sortes Sanctorum),越南人翻《翹傳》,華人到廟裡搖籤筒。它們共同的信念很簡單:<b>你翻開的那一刻,不是偶然</b>。本樓無神——司卷者,機緣也;一切隨機皆出自 crypto 真亂數,誠實不欺。</p>');
-  h += DC.lcard("燭光一句・百句原創", '<p class="lead-para">一本只有一句話的書:默想問題、翻開、得一句。句子是本站原創(市售《解答之書》有版權,我們自己寫了一百句,腔調誠實、偶爾毒舌)。用法只有一條規矩:<b>一事一翻</b>——翻到不合意就再翻,是跟自己討價還價。全部一百句如下:</p>' +
-    '<div class="tbl-scroll"><table class="data wrap"><tr><th>句</th><th>內容</th></tr>' +
-    DC.YIJU.map((s, i) => "<tr><td>" + (i + 1) + "</td><td>" + s + "</td></tr>").join("") + "</table></div>");
-  h += DC.lcard("翹傳開卷(Bói Kiều)", '<p class="lead-para">《金雲翹傳》是越南的國民史詩:才女翠翹為救父賣身,十五年風塵輾轉,終與初戀金重重逢——3254 行六八體詩,寫盡人間的才、命、情、劫。越南人相信這部寫透命運的書能回答命運:焚香默唸「拜徐海王、拜覺緣師太、拜翠翹仙」,隨手翻開,指到哪句,命運答哪句。本站取選句卅五,誠實註明非全本。全部選句如下:</p>');
-  h += kieuAllHtml();
-  h += DC.lcard("靈籤求籤・儀式與規矩", '<p class="lead-para">百首靈籤皆為本站原創:七言四句+等第+解曰+白話+六項分斷+典故,各籤附干支五行與配卦供 AI 輔斷。求籤依古禮:<b>上香默稟 → 擲筊請籤(聖筊方開筒)→ 搖籤 → 擲筊問籤</b>。規矩三條:連得<b>三聖筊</b>方為此籤;<b>笑筊</b>退籤重搖;<b>陰筊累計三次</b>,機緣未到、今日不取。筊以 crypto 真隨機為斷——「允與不允」交給機緣本身。百首籤文請至籤紙上細讀,或求得後展於案上。</p>');
+  h += DC.lcard("燭光一句・百句原創", '<p class="lead-para">一本只有一句話的書:默想問題、翻開、得一句。句子是本站原創(市售《解答之書》有版權,我們自己寫了一百句,腔調誠實、偶爾毒舌)。用法只有一條規矩:<b>一事一翻</b>——翻到不合意就再翻,是跟自己討價還價。點下面任一句,逐句細讀:</p>' +
+    '<div id="lb-yiju"></div>');
+  h += DC.lcard("翹傳開卷(Bói Kiều)", '<p class="lead-para">《金雲翹傳》是越南的國民史詩:才女翠翹為救父賣身,十五年風塵輾轉,終與初戀金重重逢——3254 行六八體詩,寫盡人間的才、命、情、劫。越南人相信這部寫透命運的書能回答命運:焚香默唸「拜徐海王、拜覺緣師太、拜翠翹仙」,隨手翻開,指到哪句,命運答哪句。本站取選句卅五,誠實註明非全本。點題名逐句細讀:</p>' +
+    '<div id="lb-kieu"></div>');
+  h += DC.lcard("靈籤求籤・儀式與規矩", '<p class="lead-para">百首靈籤皆為本站原創:七言四句+等第+解曰+白話+六項分斷+典故,各籤附干支五行與配卦供 AI 輔斷。求籤依古禮:<b>上香默稟 → 擲筊請籤(聖筊方開筒)→ 搖籤 → 擲筊問籤</b>。規矩三條:連得<b>三聖筊</b>方為此籤;<b>笑筊</b>退籤重搖;<b>陰筊累計三次</b>,機緣未到、今日不取。筊以 crypto 真隨機為斷——「允與不允」交給機緣本身。</p>' +
+    '<p class="lead-para">百首籤文一覽——點一支,展一張籤紙:</p><div id="lb-qs"></div>');
   return h;
 }
-DC.learnInit(buildLearn);
+function bindLearn() {
+  const brY = DC.browser($("lb-yiju"),
+    DC.YIJU.map(s => ({ t: s.length > 9 ? s.slice(0, 8) + "…" : s })),
+    i => '<div class="yiju-card"><div class="yiju-no">燭光一句・第 ' + (i + 1) + ' 句</div><div class="yiju-text">' + DC.YIJU[i] + '</div><div class="yiju-tail">此樓無神・司卷者機緣</div></div>');
+  const brK = DC.browser($("lb-kieu"),
+    DC.KIEU.map(k => ({ t: k[2], s: k[4] === "good" ? "吉" : k[4] === "bad" ? "慎" : "平" })),
+    kieuDetail);
+  const brQ = DC.browser($("lb-qs"),
+    QS_CARDS.map(c => ({ no: "第" + cnNum(c.n) + "籤", t: c.zh, s: c.grade })),
+    i => '<div class="dict-detail-scroll">' + buildSlip(QS_CARDS[i]).outerHTML + "</div>");
+  const m = location.search.match(/peek=(yiju|kieu|qs)-(\d+)/);
+  if (m) ({ yiju: brY, kieu: brK, qs: brQ })[m[1]].open(+m[2] - 1);
+}
+DC.learnInit(buildLearn, bindLearn);
 
 /* 開發測試:?test=yiju|kieu|qs(qs 直接定籤) */
 (function () {

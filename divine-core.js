@@ -1042,18 +1042,49 @@ DC.histBind = function () { // 跨館共用歷史(需 #hist-list/#hist-clear/#ou
 DC.histSave = function () {}; // histBind 前的安全預設
 
 /* ── 入門教學分頁(需 #views 兩顆 .view-btn 與 #view-learn 容器)── */
-DC.learnInit = function (build) {
+DC.learnInit = function (build, after) {
   var views = document.getElementById("views"), learn = document.getElementById("view-learn");
   if (!views || !learn) return;
   var show = function (isLearn) {
     views.querySelectorAll(".view-btn").forEach(function (x) { x.classList.toggle("active", (x.dataset.view === "learn") === isLearn); });
     document.body.classList.toggle("learning", isLearn);
-    if (isLearn && !learn.dataset.built) { learn.innerHTML = build(); learn.dataset.built = "1"; }
+    if (isLearn && !learn.dataset.built) { learn.innerHTML = build(); learn.dataset.built = "1"; if (after) after(learn); }
   };
   views.querySelectorAll(".view-btn").forEach(function (b) {
     b.addEventListener("click", function () { show(b.dataset.view === "learn"); });
   });
   if (/[?&]learn=1/.test(location.search)) show(true);
+};
+
+/* 一覽/逐張瀏覽元件(仿牌桌館字典 UX):磚牆一覽 → 點一張看一張,可前後翻頁 */
+DC.browser = function (mount, items, renderDetail) {
+  var view = -1;
+  var draw = function (scroll) {
+    if (view < 0) {
+      mount.innerHTML = '<div class="dict-grid">' + items.map(function (it, i) {
+        return '<button class="dict-tile" type="button"><span class="dt-no">' + (it.no != null ? it.no : (i + 1)) + "</span>" +
+          '<span class="dt-t">' + it.t + "</span>" + (it.s ? '<span class="dt-s">' + it.s + "</span>" : "") + "</button>";
+      }).join("") + "</div>";
+      mount.querySelectorAll(".dict-tile").forEach(function (b, i) {
+        b.onclick = function () { view = i; draw(true); };
+      });
+    } else {
+      mount.innerHTML = '<div class="dict-nav">' +
+        '<button class="ghost-btn dn-back" type="button">返回一覽</button>' +
+        '<button class="ghost-btn dn-prev" type="button">← 上一</button>' +
+        '<span class="dn-pos">' + (view + 1) + " / " + items.length + "</span>" +
+        '<button class="ghost-btn dn-next" type="button">下一 →</button></div>' +
+        '<div class="dict-detail-body">' + renderDetail(view) + "</div>";
+      mount.querySelector(".dn-back").onclick = function () { view = -1; draw(true); };
+      mount.querySelector(".dn-prev").onclick = function () { view = (view + items.length - 1) % items.length; draw(false); };
+      mount.querySelector(".dn-next").onclick = function () { view = (view + 1) % items.length; draw(false); };
+      var sc = mount.querySelector(".dict-detail-scroll");
+      if (sc) sc.scrollLeft = sc.scrollWidth;
+    }
+    if (scroll) mount.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  draw(false);
+  return { open: function (i) { view = i; draw(false); } };
 };
 DC.lcard = function (t, body) { return '<div class="result-card"><h3>' + t + "</h3>" + body + "</div>"; };
 DC.ltable = function (headers, rows) {
