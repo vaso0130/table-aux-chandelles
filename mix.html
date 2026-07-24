@@ -83,6 +83,15 @@
           </div></div>
       </div>
     </div>
+    <div id="form-time">
+      <p class="fieldset-label">起局時刻<label class="follow-now"><input type="checkbox" id="n-follow" checked><span class="live-dot"></span>跟隨此刻</label></p>
+      <div class="form-grid">
+        <div class="field"><label>日期</label><input id="w-date" type="date"></div>
+        <div class="field"><label>時間</label><input id="w-time" type="time"></div>
+        <div class="field"><label>所問之日(選填)</label><input id="t-date" type="date">
+          <div class="note">奇門/六壬以該日干支入局為用神;靈數流年流日、南洋值曜/威頓以該日論</div></div>
+      </div>
+    </div>
     <div class="form-grid" style="margin-top:14px">
       <div class="field full"><label>你的問題(三術共用)</label>
         <input id="q-input" type="text" maxlength="200" placeholder="一個問題,三套語言來答——寫下它"></div>
@@ -215,9 +224,33 @@ function birth() {
   return { y, m, d, h, mi, tz, male: $("b-gender").value === "m", jd: DC.jd(y, m, d, h, mi, tz), str: dv + " " + tv,
     lat: parseFloat($("b-lat").value) || 25.04, lon: parseFloat($("b-lon").value) || 121.51 };
 }
-function nowCtx() {
+function nowT() { // 起局時刻(可微調;跟隨此刻時每秒對時)
+  const dv = $("w-date").value, tv = $("w-time").value;
+  if (dv && tv) {
+    const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
+    return { y, m, d, h, mi };
+  }
   const n = new Date();
-  const y = n.getFullYear(), m = n.getMonth() + 1, d = n.getDate(), h = n.getHours(), mi = n.getMinutes();
+  return { y: n.getFullYear(), m: n.getMonth() + 1, d: n.getDate(), h: n.getHours(), mi: n.getMinutes() };
+}
+function targetDay() { // 所問之日(選填)
+  const tv = $("t-date").value;
+  if (!tv) return null;
+  const [y, m, d] = tv.split("-").map(Number);
+  return { y, m, d, str: tv };
+}
+function setNowFields() {
+  const n = new Date();
+  $("w-date").value = n.getFullYear() + "-" + DC.pad2(n.getMonth() + 1) + "-" + DC.pad2(n.getDate());
+  $("w-time").value = DC.pad2(n.getHours()) + ":" + DC.pad2(n.getMinutes());
+}
+setNowFields();
+setInterval(() => { if ($("n-follow").checked) setNowFields(); }, 1000);
+["w-date", "w-time"].forEach(id => $(id).addEventListener("input", () => { $("n-follow").checked = false; }));
+$("n-follow").addEventListener("change", () => { if ($("n-follow").checked) setNowFields(); });
+function nowCtx() {
+  const t = nowT();
+  const { y, m, d, h, mi } = t;
   const tz = parseFloat($("n-tz").value) || 8;
   return { y, m, d, h, mi, tz, lat: parseFloat($("n-lat").value) || 25.04, lon: parseFloat($("n-lon").value) || 121.51,
     jd: DC.jd(y, m, d, h, mi, tz), str: y + "-" + DC.pad2(m) + "-" + DC.pad2(d) + " " + DC.pad2(h) + ":" + DC.pad2(mi) };
@@ -254,7 +287,7 @@ GEN["a-vedic"] = () => {
   const sid = ch.list.map(p => ({ ...p, lon: DC.rev(p.lon - ay) }));
   const nak = DC.nakOf(sid[1].lon);
   const das = DC.vimshottari(sid[1].lon, B.jd);
-  const now = new Date(), nowJd = DC.jd(now.getFullYear(), now.getMonth() + 1, now.getDate(), 12, 0, 8);
+  const t0 = nowT(), nowJd = DC.jd(t0.y, t0.m, t0.d, 12, 0, 8);
   const cur = das.find(x => nowJd >= x.from && nowJd < x.to);
   return { title: "印度本命盤",
     html: "<p>月宿 " + nak.name + "・現行大運 " + (cur ? cur.lord : "—") + "</p>",
@@ -283,20 +316,20 @@ GEN["a-xiu"] = () => {
       "  今日(" + now.str + ")月在" + DC.XIU27[td.idx] + "宿,三九秘法為「" + rel.rel + "」日(" + rel.ring + ",第" + rel.dist + "宿)"] };
 };
 GEN["n-life"] = () => {
-  const B = birth(), now = new Date();
-  const L = DC.lifeNumbers(B.y, B.m, B.d, now.getFullYear(), now.getMonth() + 1, now.getDate());
+  const B = birth(), td = targetDay(), t0 = td || nowT();
+  const L = DC.lifeNumbers(B.y, B.m, B.d, t0.y, t0.m, t0.d);
   return { title: "生命靈數",
     html: "<p>生命靈數 " + L.lp + "(" + DC.NUM_CORE[L.lp].t + ")・流年 " + L.py + "</p>",
     lines: ["生命靈數(生日 " + B.y + "-" + B.m + "-" + B.d + "):主數 " + L.lp + "(" + DC.NUM_CORE[L.lp].t + "," + DC.NUM_CORE[L.lp].key + ")",
-      "  天賦數 " + L.total + "、生日數 " + L.birthday + "、態度數 " + L.attitude + "、流年 " + L.py + "、流月 " + L.pm,
+      "  天賦數 " + L.total + "、生日數 " + L.birthday + "、態度數 " + L.attitude + "、流年 " + L.py + "、流月 " + L.pm + (td ? "(以所問之日 " + td.str + " 計)" : ""),
       "  連線:" + (L.lines.map(l => l.name).join("、") || "無") + ";空缺:" + (L.missing.join("、") || "無") + ";挑戰數 " + L.challenges.join("、")] };
 };
 GEN["n-meihua"] = () => {
-  const n = new Date();
-  const y = n.getFullYear(), lun = DC.lunar(y, n.getMonth() + 1, n.getDate(), 8);
-  const jdN = DC.jd(y, n.getMonth() + 1, n.getDate(), n.getHours(), n.getMinutes(), 8);
+  const n = nowT();
+  const y = n.y, lun = DC.lunar(y, n.m, n.d, 8);
+  const jdN = DC.jd(y, n.m, n.d, n.h, n.mi, 8);
   const yr = jdN >= DC.solarTerm(y, 315) ? y : y - 1;
-  const yB = ((yr - 4) % 12 + 12) % 12, hb = Math.floor(((n.getHours() % 24) + 1) / 2) % 12;
+  const yB = ((yr - 4) % 12 + 12) % 12, hb = Math.floor(((n.h % 24) + 1) / 2) % 12;
   const uN = (yB + 1) + lun.month + lun.day, lN = uN + hb + 1;
   const mh = DC.meihua(uN, lN, lN);
   return { title: "梅花易數",
@@ -314,7 +347,7 @@ GEN["n-taiyi"] = () => {
 GEN["n-taiyiming"] = () => {
   const B = birth();
   const bb = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
-  const tyB = DC.taiyi(bb.year), tyN = DC.taiyi(new Date().getFullYear());
+  const tyB = DC.taiyi(bb.year), tyN = DC.taiyi(nowT().y);
   const same = tyB.gong === tyN.gong;
   return { title: "太乙命法",
     html: "<p>本命太乙在" + tyB.gongName + "・今歲在" + tyN.gongName + (same ? "(回臨!)" : "") + "</p>",
@@ -397,8 +430,8 @@ function birthOpt(nowBz) { // 生辰欄有填就入本命/行年(虛歲以立春
   } catch (e) { return null; }
 }
 GEN["b-qimen"] = () => {
-  const n = new Date();
-  const qm = DC.qimen(n.getFullYear(), n.getMonth() + 1, n.getDate(), n.getHours(), n.getMinutes(), 8);
+  const n = nowT();
+  const qm = DC.qimen(n.y, n.m, n.d, n.h, n.mi, 8);
   const lines = ["奇門遁甲時盤(" + qm.juName + ",四柱 " + qm.bz.pillars.map(p => p.gz).join(" ") + ",旬首" + qm.xunName + ",直符" + qm.fuStar + " 直使" + qm.fuDoor + "):"];
   for (const p of [1, 8, 3, 4, 9, 2, 7, 6]) {
     const t = qm.tianpan[p];
@@ -409,12 +442,21 @@ GEN["b-qimen"] = () => {
     const np = DC.BR_PALACE[ob.mingB], t = qm.tianpan[np];
     lines.push("  問測人年命:" + ob.mingGz + "年生(虛歲" + ob.xusui + "),年命" + DC.BRANCHES[ob.mingB] + "寄" + DC.GONG_NAME[np] + "——" + (qm.gods[np] || "") + " " + (t ? t.star + " 天盤" + t.stem : "") + " " + (qm.doors[np] || ""));
   }
+  const td = targetDay();
+  if (td) { // 時間用神:所問之日干支入局
+    const bzT = DC.bazi(td.y, td.m, td.d, 12, 0, 8);
+    const yiX = ["戊", "己", "庚", "辛", "壬", "癸"][Math.floor(bzT.dIdx / 10)];
+    const ch = bzT.pillars[2].s === 0 ? yiX : DC.STEMS[bzT.pillars[2].s];
+    let tG = 0; for (const p of [1, 8, 3, 4, 9, 2, 7, 6]) if (qm.tianpan[p] && qm.tianpan[p].stem.includes(ch)) { tG = p; break; }
+    const bG = DC.BR_PALACE[bzT.pillars[2].b];
+    lines.push("  時間用神(所問之日 " + td.str + "," + bzT.pillars[2].gz + "日):日干落天盤" + DC.GONG_NAME[tG] + "(" + (qm.gods[tG] || "") + "・" + (qm.tianpan[tG] ? qm.tianpan[tG].star : "") + "・" + (qm.doors[tG] || "") + ");日支寄" + DC.GONG_NAME[bG] + "——請以此二宮論該日行事吉凶");
+  }
   return { title: "奇門遁甲", html: "<p>" + qm.juName + "・直符" + qm.fuStar + "・直使" + qm.fuDoor + "</p>", lines };
 };
 GEN["b-liuren"] = () => {
-  const n = new Date();
-  const bz = DC.bazi(n.getFullYear(), n.getMonth() + 1, n.getDate(), n.getHours(), n.getMinutes(), 8);
-  const lr = DC.liuren(bz.dIdx, bz.hB, DC.sunLon(DC.jd(n.getFullYear(), n.getMonth() + 1, n.getDate(), n.getHours(), n.getMinutes(), 8)));
+  const n = nowT();
+  const bz = DC.bazi(n.y, n.m, n.d, n.h, n.mi, 8);
+  const lr = DC.liuren(bz.dIdx, bz.hB, DC.sunLon(DC.jd(n.y, n.m, n.d, n.h, n.mi, 8)));
   const lines = ["大六壬(" + bz.pillars[2].gz + "日" + DC.BRANCHES[bz.hB] + "時,月將" + lr.jiangZh + "):課體 " + lr.keti,
     "  四課:" + lr.lessons.map((l, i) => l.low + "→" + l.up + "/" + l.jiang).join(";"),
     "  三傳:" + lr.chuan.map((c, i) => ["初", "中", "末"][i] + c.zh + "(" + c.dun + "," + c.jiang + "," + c.qin + ")").join("、")];
@@ -422,6 +464,12 @@ GEN["b-liuren"] = () => {
   if (ob) {
     const mUp = lr.up(ob.mingB), xUp = lr.up(ob.xn.b);
     lines.push("  問測人:本命" + DC.BRANCHES[ob.mingB] + "(" + ob.mingGz + "年生,虛歲" + ob.xusui + "),本命上神" + DC.BRANCHES[mUp] + "乘" + lr.jiangOf(mUp) + ";行年" + ob.xn.gz + ",行年上神" + DC.BRANCHES[xUp] + "乘" + lr.jiangOf(xUp));
+  }
+  const td = targetDay();
+  if (td) {
+    const bzT = DC.bazi(td.y, td.m, td.d, 12, 0, 8);
+    const dUp = lr.up(bzT.pillars[2].b);
+    lines.push("  所問之日:" + td.str + "(" + bzT.pillars[2].gz + "日)——其日支" + DC.BRANCHES[bzT.pillars[2].b] + "之上神為" + DC.BRANCHES[dUp] + ",乘" + lr.jiangOf(dUp) + "(視日辰上神論該日吉凶)");
   }
   return { title: "大六壬",
     html: "<p>" + bz.pillars[2].gz + "日" + DC.BRANCHES[bz.hB] + "時・" + lr.keti + "・三傳 " + lr.chuan.map(c => c.zh).join("→") + "</p>",
@@ -446,26 +494,41 @@ GEN["y-maha"] = () => {
   const idx = DC.bur8Index(B.y, B.m, B.d, B.h);
   const [yao, animal, dir, planet, trait] = DC.BUR8[idx];
   const me = DC.mahaboteME(B.y, B.m, B.d);
+  const lines = ["緬甸八曜(Mahabote):生於" + yao + "日(獸:" + animal + ",守護星" + planet + ",佛塔方位" + dir + ")——" + trait,
+    "  緬曆年 " + me.ME + " ME(潑水節換歲簡式),年餘數 " + me.r + "(供排 Mahabote 七宮盤)"];
+  const td = targetDay();
+  if (td) {
+    const ti = DC.bur8Index(td.y, td.m, td.d, 12);
+    lines.push("  所問之日 " + td.str + " 值" + DC.BUR8[ti][0] + "日(" + DC.BUR8[ti][1] + ")" + (ti === idx ? "——本命曜日,宜行大事" : "——以生曜對該日曜論宜忌"));
+  }
   return { title: "緬甸八曜",
-    html: "<p>" + yao + "日生・" + animal + "・佛塔" + dir + "角</p>",
-    lines: ["緬甸八曜(Mahabote):生於" + yao + "日(獸:" + animal + ",守護星" + planet + ",佛塔方位" + dir + ")——" + trait,
-      "  緬曆年 " + me.ME + " ME(潑水節換歲簡式),年餘數 " + me.r + "(供排 Mahabote 七宮盤)"] };
+    html: "<p>" + yao + "日生・" + animal + "・佛塔" + dir + "角</p>", lines };
 };
 GEN["y-weton"] = () => {
   const B = birth();
   const w = DC.weton(B.y, B.m, B.d);
+  const lines = ["爪哇威頓 Weton:" + w.name + "(" + DC.DAY_ID[w.wd] + " × " + DC.PASARAN[w.pas][0] + "),neptu " + w.neptu,
+    "  市集日性情:" + DC.PASARAN[w.pas][3] + ";五神數(簡法):" + DC.PANCASUDA[w.panca][0] + "——" + DC.PANCASUDA[w.panca][1]];
+  const td = targetDay();
+  if (td) {
+    const tw = DC.weton(td.y, td.m, td.d);
+    lines.push("  所問之日 " + td.str + " 為 " + tw.name + "(neptu " + tw.neptu + ")" + (tw.wd === w.wd && tw.pas === w.pas ? "——本命威頓日,大事吉" : "——與本命威頓合參論該日"));
+  }
   return { title: "爪哇威頓",
-    html: "<p>" + w.name + "・neptu " + w.neptu + "</p>",
-    lines: ["爪哇威頓 Weton:" + w.name + "(" + DC.DAY_ID[w.wd] + " × " + DC.PASARAN[w.pas][0] + "),neptu " + w.neptu,
-      "  市集日性情:" + DC.PASARAN[w.pas][3] + ";五神數(簡法):" + DC.PANCASUDA[w.panca][0] + "——" + DC.PANCASUDA[w.panca][1]] };
+    html: "<p>" + w.name + "・neptu " + w.neptu + "</p>", lines };
 };
 GEN["y-thai"] = () => {
   const B = birth();
   const idx = DC.thai7Index(B.y, B.m, B.d, B.h);
   const [buddha, color, badColor, trait] = DC.THAI7[idx];
+  const lines = ["泰國七曜佛日:本命佛「" + buddha + "」,本命色" + color + ",忌色" + badColor + "(民俗簡表)——" + trait];
+  const td = targetDay();
+  if (td) {
+    const ti = DC.thai7Index(td.y, td.m, td.d, 12);
+    lines.push("  所問之日 " + td.str + " 值" + (ti === 7 ? "週三夜佛" : DC.THAI7[ti][0]) + (ti === idx ? "——本命佛日,宜佈施求願" : "——與本命佛日相參論該日"));
+  }
   return { title: "泰國七曜佛日",
-    html: "<p>" + buddha + "・本命色" + color + "</p>",
-    lines: ["泰國七曜佛日:本命佛「" + buddha + "」,本命色" + color + ",忌色" + badColor + "(民俗簡表)——" + trait] };
+    html: "<p>" + buddha + "・本命色" + color + "</p>", lines };
 };
 GEN["c-kieu"] = () => {
   const i = DC.rand(DC.KIEU.length);
@@ -560,7 +623,17 @@ DC.learnInit(buildLearn);
   picked = t.split(",").filter(id => GEN[id] || ALL.some(x => x[0] === id)).slice(0, 3);
   renderPool(); syncForm();
   $("b-date").value = "1990-05-15"; $("b-time").value = "10:00";
+  $("t-date").value = "2026-08-15";
   $("q-input").value = "測試提問:這件事會順利嗎?";
-  setTimeout(() => { try { $("btn-go").onclick(); document.title = $("prompt-sec").hidden ? "MIX-TEST-FAIL(hidden):" + $("go-hint").textContent : "MIX-TEST-OK"; } catch (e) { document.title = "MIX-TEST-FAIL " + e.message; } }, 60);
+  setTimeout(() => {
+    try {
+      $("btn-go").onclick();
+      document.title = $("prompt-sec").hidden ? "MIX-TEST-FAIL(hidden):" + $("go-hint").textContent : "MIX-TEST-OK";
+      const d = document.createElement("div");
+      d.id = "pr-dump"; d.hidden = true;
+      d.textContent = $("prompt-box").value;
+      document.body.appendChild(d);
+    } catch (e) { document.title = "MIX-TEST-FAIL " + e.message; }
+  }, 60);
 })();
 </script>
