@@ -2812,6 +2812,17 @@ const DECKS = [
     back:"cards-dongtarot/back.jpg" },
   /* 靈籤已遷居開卷館(kaijuan.html);資料保留於此以支援舊占卜歷史重看 */
 ];
+/* ── 六牌陣・全景:各牌組通用盤面(易經以擲卦為本體,不加) ── */
+DECKS.forEach((d) => {
+  if (d.id === "yi") return;
+  d.spreads.push({
+    id: "six-" + d.id, name: "六牌陣・全景", count: 6, cols: 3,
+    desc: "過去、現在、未來，加上助力、阻礙與結果——一事六面，一次看完。",
+    positions: ["過去・起因", "現在・處境", "未來・走向", "眼下助力", "眼下阻礙", "結果・指引"],
+    combos: () => [],
+  });
+});
+
 const HALLS = [["west","西方館"], ["east","東方館"]];
 let deckDef = DECKS[0];
 let CARDS = deckDef.cards;      /* 目前牌組的牌（其餘程式一律讀這兩個） */
