@@ -155,7 +155,7 @@ const POOL = [
   { g: "開卷", items: [
     ["c-yiju", "燭光一句", ""], ["c-kieu", "翹傳開卷(越南)", ""], ["c-qs", "靈籤(快取)", ""]
   ]},
-  { g: "牌卡快抽(三張)", items: [
+  { g: "牌卡快抽(六張)", items: [
     ["c-len", "雷諾曼", ""], ["c-sib", "西碧拉", ""], ["c-bel", "貝林神諭", ""], ["c-kip", "奇卜", ""],
     ["c-gra", "大雷諾曼", ""], ["c-run", "盧恩符文", ""], ["c-zw", "紫微星曜", ""], ["c-dt", "東方塔羅", ""],
     ["c-esp", "西班牙牌", ""], ["c-yi", "易經(擲卦)", ""]
@@ -479,12 +479,12 @@ GEN["b-liuren"] = () => {
 function drawCards(deckId, deckName) {
   const D = DC.DECKS_MINI[deckId];
   const idx = new Set();
-  while (idx.size < 3) idx.add(DC.rand(D.cards.length));
+  while (idx.size < 6) idx.add(DC.rand(D.cards.length));
   const drawn = [...idx].map(i => ({ name: D.cards[i], rev: D.rev && DC.rand(2) === 1 }));
-  const POS = ["過去/起因", "現在/處境", "未來/走向"];
-  return { title: deckName + "・三張快抽",
+  const POS = ["過去/起因", "現在/處境", "未來/走向", "助力", "阻礙", "結果/指引"];
+  return { title: deckName + "・六張快抽",
     html: "<p>" + drawn.map((c, i) => '<span class="badge">' + POS[i] + ":" + c.name + (c.rev ? "(逆)" : "") + "</span>").join(" ") + "</p>",
-    lines: [deckName + " 三張快抽(crypto 真隨機):" + drawn.map((c, i) => POS[i] + "「" + c.name + (c.rev ? "(逆位)" : "") + "」").join("、")] };
+    lines: [deckName + " 六張快抽(crypto 真隨機):" + drawn.map((c, i) => POS[i] + "「" + c.name + (c.rev ? "(逆位)" : "") + "」").join("、")] };
 }
 for (const [id, dk, nm] of [["c-len", "len", "雷諾曼"], ["c-sib", "sib", "西碧拉"], ["c-bel", "bel", "貝林神諭"], ["c-kip", "kip", "奇卜"],
   ["c-gra", "gra", "大雷諾曼"], ["c-run", "run", "盧恩符文"], ["c-zw", "zw", "紫微星曜"], ["c-dt", "dt", "東方塔羅"], ["c-esp", "esp", "西班牙牌"]])

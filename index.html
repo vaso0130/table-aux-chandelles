@@ -1649,9 +1649,9 @@ const KIP_SPREADS = [
       "過去 × 現實","核心","未來 × 現實",
       "過去 × 潛藏","現在 × 潛藏","未來 × 潛藏",
     ], combos: () => [] },
-  { id:"kip-gt", name:"大盤・6 × 6", count:36, cols:6,
-    desc:"三十六張全數入陣。找出主人翁，他面朝的方向是未來，背後是過去，身旁的牌是眼下的處境。",
-    positions: Array.from({ length: 36 }, (_, i) => `第 ${i + 1} 席`),
+  { id:"kip-gt", name:"大盤・6 × 6", count:36, cols:6, gt:true,
+    desc:"三十六張全數入陣，含宮位對照。找出主要人物：依大盤慣例（與畫像視線無關），其右側是尚未走到的未來，左側是已經走過的過去。",
+    positions:null,
     combos: () => [] },
 ];
 
@@ -3637,6 +3637,40 @@ function gtHouseNote(card, slotIdx) {
   return `<br><em>落於${house.zh}宮（${house.keys.split("・")[0]}之所）——這張牌的訊息，正發生在「${house.zh}」掌管的領域。</em>`;
 }
 
+/* 轉宮環鏈:牌落誰家,便追到那家主人的牌——落自宮定錨、回訪成環而止 */
+function gtChainText(startN) {
+  const seen = new Set([startN]);
+  const steps = [];
+  let curN = startN;
+  for (let guard = 0; guard <= drawn.length; guard++) {
+    const at = drawn.findIndex((c) => c.n === curN);
+    if (at < 0) break;
+    const houseN = at + 1;
+    steps.push(`${drawn[at].zh}(№${curN})落〔${CARDS[at].zh}〕宮`);
+    if (houseN === curN) { steps[steps.length - 1] += "——落於自宮，環鏈定錨於此"; break; }
+    if (seen.has(houseN)) { steps.push(`回到已訪的「${CARDS[houseN - 1].zh}」——環鏈閉合`); break; }
+    seen.add(houseN);
+    curN = houseN;
+  }
+  return steps.join(" → ");
+}
+
+/* 指示牌八方鄰宮(組合用) */
+function gtNeighbors(at) {
+  const cols = spread.cols;
+  const r = Math.floor(at / cols), c = at % cols;
+  const DIRS = [[-1, -1, "左上"], [-1, 0, "上"], [-1, 1, "右上"], [0, -1, "左"], [0, 1, "右"], [1, -1, "左下"], [1, 0, "下"], [1, 1, "右下"]];
+  const out = [];
+  for (const [dr, dc, name] of DIRS) {
+    const rr = r + dr, cc = c + dc;
+    if (rr < 0 || cc < 0 || cc >= cols) continue;
+    const j = rr * cols + cc;
+    if (j >= spread.count || j >= drawn.length) continue;
+    out.push(`${name}＝${drawn[j].zh}〔${CARDS[j].zh}宮〕`);
+  }
+  return out.join("、");
+}
+
 function finishReading() {
   /* 補牌完成時不重複產生組合解讀 */
   if (drawn.length > spread.count) {
@@ -3661,14 +3695,14 @@ function finishReading() {
   }
 
   if (spread.gt) {
-    /* 指示牌：雷諾曼為男人 28／女人 29，大雷諾曼為問卜者 1／問卜者(女) 2 */
-    const sigs = deckDef.id === "gra" ? [[1, "他"], [2, "她"]] : [[28, "他"], [29, "她"]];
+    /* 指示牌：雷諾曼男人28／女人29，大雷諾曼問卜者1／2，奇卜主要人物1／2 */
+    const sigs = deckDef.id === "len" ? [[28, "他"], [29, "她"]] : [[1, "他"], [2, "她"]];
     const rows = sigs.map(([n, pron]) => {
       const at = drawn.findIndex((c) => c.n === n);
       const sig = CARDS.find((c) => c.n === n);
       let s = `<p class="combo">「${sig.zh}」落在第 ${at + 1} 宮（${CARDS[at].zh}宮）——${pron}的處境圍繞著「${CARDS[at].keys.split("・")[0]}」。`;
       /* 空間慣例（與牌面畫像的視線無關）：同列右側＝尚未走到的未來，左側＝已經走過的過去 */
-      if (deckDef.id === "gra") {
+      if (deckDef.id === "gra" || deckDef.id === "kip") {
         const row = Math.floor(at / spread.cols), col = at % spread.cols;
         const past = [], ahead = [];
         for (let k = 0; k < spread.cols; k++) {
@@ -3744,9 +3778,27 @@ function buildAiPrompt() {
   L.push("");
   L.push(`【盤面】${spread.name}（共 ${drawn.length} 張）`);
   if (spread.gt) {
-    L.push(spread.id === "gt"
-      ? "排列方式：Grand Tableau 大盤，8×4 加底部置中 4 張（第 33–36 張）。第 n 張牌落在第 n 宮，宮位以傳統 36 張牌的順序命名。"
-      : "排列方式：Grand Tableau 大版圖，9×6 共五十四席。第 n 張牌落在第 n 宮，宮位以大雷諾曼五十四張牌的順序命名。方向依大盤慣例（與牌面畫像的視線無關）：指示牌同列右側的牌是尚未走到的未來，左側的牌是已經走過的過去。");
+    L.push({
+      len: "排列方式：Grand Tableau 大盤，8×4 加底部置中 4 張（第 33–36 張）。第 n 張牌落在第 n 宮，宮位以傳統 36 張牌的順序命名。",
+      kip: "排列方式：奇卜大盤 6×6 共三十六席。第 n 張牌落在第 n 宮，宮位以奇卜 36 張牌的順序命名。方向依大盤慣例（與牌面畫像的視線無關）：主要人物同列右側的牌是尚未走到的未來，左側是已經走過的過去。",
+      gra: "排列方式：Grand Tableau 大版圖，9×6 共五十四席。第 n 張牌落在第 n 宮，宮位以大雷諾曼五十四張牌的順序命名。方向依大盤慣例（與牌面畫像的視線無關）：指示牌同列右側的牌是尚未走到的未來，左側的牌是已經走過的過去。",
+    }[deckDef.id] || "排列方式：Grand Tableau 大盤。第 n 張牌落在第 n 宮，宮位以本牌組牌序命名。");
+    /* 指示牌八鄰組合與轉宮環鏈 */
+    const sigDefs = deckDef.id === "len" ? [[28, "男人"], [29, "女人"]]
+      : deckDef.id === "kip" ? [[1, "主要人物(男)"], [2, "主要人物(女)"]]
+      : [[1, "問卜者"], [2, "問卜者(女)"]];
+    L.push("");
+    L.push("【指示牌八方鄰宮】（組合互讀用）");
+    sigDefs.forEach(([n, label]) => {
+      const at = drawn.findIndex((c) => c.n === n);
+      if (at >= 0) L.push(`${label}居第 ${at + 1} 宮〔${CARDS[at].zh}〕，八鄰：${gtNeighbors(at)}`);
+    });
+    L.push("");
+    L.push("【轉宮環鏈】（轉宮法：牌落誰家，便追到那家主人的牌——直到落自宮定錨，或回訪成環而止）");
+    sigDefs.forEach(([n, label]) => {
+      const t = gtChainText(n);
+      if (t) L.push(`${label}之鏈：${t}`);
+    });
   } else if (spread.id === "houses") {
     L.push("排列方式：占星十二宮位，每宮一張牌。宮位對應如下：");
     HOUSES.forEach((h) => L.push(`- ${h.label}（${h.sign}）｜${h.title}：${h.hint}`));
@@ -3774,10 +3826,12 @@ function buildAiPrompt() {
   L.push("2. 逐一位置的解讀（牌義結合位置意義）");
   L.push("3. 相鄰或相關牌之間的組合意義");
   if (spread.gt) {
-    L.push(deckDef.id === "gra"
-      ? "4. 以指示牌（問卜者／問卜者(女)，視我的身分）為中心，解讀其落宮與周圍八張牌，並依大盤慣例讀方向（右側＝尚未走到的未來、左側＝已經走過的過去）"
-      : "4. 以指示牌（男人／女人，視我的身分）為中心，解讀其周圍八張牌，並依大盤慣例讀方向（右側＝未來、左側＝過去）");
-    L.push(`5. 給問卜者的具體建議（${currentTone()}）`);
+    const who = deckDef.id === "gra" ? "指示牌（問卜者／問卜者(女)，視我的身分）"
+      : deckDef.id === "kip" ? "主要人物（男／女，視我的身分）"
+      : "指示牌（男人／女人，視我的身分）";
+    L.push(`4. 以${who}為中心，解讀上列八方鄰宮的兩兩組合（鄰牌互讀、宮位為場景），並依大盤慣例讀方向（右側＝尚未走到的未來、左側＝已經走過的過去）`);
+    L.push("5. 解讀上列【轉宮環鏈】：鏈上每一步「某牌落某家」都是一段劇情，請把整條鏈串成一個連貫的故事；若我的問題另有關鍵主題牌，請依同一轉宮法自行追鏈");
+    L.push(`6. 給問卜者的具體建議（${currentTone()}）`);
   } else {
     L.push(`4. 給問卜者的具體建議（${currentTone()}）`);
   }
@@ -4235,6 +4289,14 @@ if (location.search.includes("rwdtest")) {
         el.classList.add("gone");
         placeCard(deck[i]);
       });
+    }
+    if (location.search.includes("promptdump")) {   /* 無頭驗證:textarea value 不入 DOM 傾印 */
+      setTimeout(() => {
+        const d = document.createElement("div");
+        d.id = "pr-dump"; d.hidden = true;
+        try { d.textContent = buildAiPrompt(); } catch (e) { d.textContent = "PR-ERR " + e.message; }
+        document.body.appendChild(d);
+      }, 2500);
     }
   }
 }
