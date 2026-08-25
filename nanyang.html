@@ -142,20 +142,23 @@ function runMaha(out, pr) {
   const [yao, animal, dir, planet, trait] = DC.BUR8[idx];
   const me = DC.mahaboteME(B.y, B.m, B.d);
   const T = readTarget();
-  const todayIdx = DC.bur8Index(T.y, T.m, T.d, 12);
+  const tAM = DC.bur8Index(T.y, T.m, T.d, 9), tPM = DC.bur8Index(T.y, T.m, T.d, 13); // 週三上午水曜、正午起羅睺,分開取樣
+  const todayIdx = tAM;
+  const dayYaoStr = tAM === tPM ? DC.BUR8[tAM][0] : DC.BUR8[tAM][0] + "(上午)/" + DC.BUR8[tPM][0] + "(正午後)";
+  const hitMine = tAM === idx || tPM === idx;
   out.push(card("八曜生辰", "生於" + yao + "日",
     '<p class="lead" style="font-size:20px">' + yao + "・" + animal + '<span style="font-size:13px;color:var(--muted)">(守護星:' + planet + ")</span></p>" +
     "<p>" + trait + "。</p>" +
     "<p>你的佛塔方位角在<b style='color:var(--gold-bright)'>" + dir + "</b>——緬甸人到佛塔,會去自己生曜的角落澆水獻花,一歲澆一杯,再加一杯敬未來。行運低迷時,朝" + dir + "方禮敬最能補氣。</p>" +
-    "<p>" + T.str + "值" + DC.BUR8[todayIdx][0] + "(" + DC.BUR8[todayIdx][1] + ")——" + (todayIdx === idx ? "正是你的本命曜日,宜行大事、宜還願" : "與你的" + yao + "相參看該日行事") + "。</p>"));
+    "<p>" + T.str + "值" + dayYaoStr + "——" + (hitMine ? "正是你的本命曜日,宜行大事、宜還願" : "與你的" + yao + "相參看該日行事") + "。</p>"));
   out.push(card("摩訶菩提命盤(起盤參數)", "Mahabote",
     '<div class="kv"><span><b>緬曆年</b>' + me.ME + " ME</span><span><b>年餘數</b>" + me.r + "(緬曆年 ÷ 7 之餘)</span><span><b>生曜</b>" + yao + "</span></div>" +
     "<p>Mahabote 以生曜與緬曆年餘數,把七曜佈入賓伽(Binga)、阿通(Ahtaung)、亞扎(Yaza)、阿提帕蒂(Adhipati)、馬拉納(Marana)、泰克(Thike)、普提(Puti)七宮論命。此處提供正確起盤參數,七宮詳排交由 AI 完成。</p>"));
   pr.push("緬甸八曜與 Mahabote(生於 " + B.str + "):");
   pr.push("  生曜:" + yao + "(獸:" + animal + ",守護星:" + planet + ",佛塔方位:" + dir + ")——" + trait);
   pr.push("  緬曆年 " + me.ME + " ME(潑水節換歲簡式),年餘數 " + me.r);
-  pr.push("  " + T.str + "(" + T.y + "-" + T.m + "-" + T.d + ")值" + DC.BUR8[todayIdx][0] + "日" + (todayIdx === idx ? "(本命曜日)" : ""), "");
-  pr.push("請以緬甸占星(Mahabote 摩訶菩提)解讀:1. 以生曜與緬曆年餘數 " + me.r + " 排出七宮命盤(Binga/Ahtaung/Yaza/Adhipati/Marana/Thike/Puti),說明生曜落宮之義。2. " + yao + "日生人的性情、天命與適合的行業。3. 與哪些曜日的人相生相剋(緬甸傳統合婚忌諱)。4. " + (T.picked ? "指定日 " + T.str + " 值" + DC.BUR8[todayIdx][0] + "——以生曜對該日曜論該日吉凶宜忌。5. " : "") + "給出以佛塔" + dir + "角為中心的開運建議。" + (T.picked ? "6" : "5") + ". 換歲以潑水節為簡式,若逢四月中請註明歲首存疑。");
+  pr.push("  " + T.str + "(" + T.y + "-" + T.m + "-" + T.d + ")值" + dayYaoStr + "日" + (hitMine ? "(本命曜日)" : "") + ";凌晨出生依緬俗屬前一日之夜(本盤以午夜換日簡化)", "");
+  pr.push("請以緬甸占星(Mahabote 摩訶菩提)解讀:1. 以生曜與緬曆年餘數 " + me.r + " 排出七宮命盤(Binga/Ahtaung/Yaza/Adhipati/Marana/Thike/Puti),說明生曜落宮之義。2. " + yao + "日生人的性情、天命與適合的行業。3. 與哪些曜日的人相生相剋(緬甸傳統合婚忌諱)。4. " + (T.picked ? "指定日 " + T.str + " 值" + dayYaoStr + "——以生曜對該日曜論該日吉凶宜忌。5. " : "") + "給出以佛塔" + dir + "角為中心的開運建議。" + (T.picked ? "6" : "5") + ". 換歲以潑水節為簡式,若逢四月中請註明歲首存疑。");
 }
 
 /* ── 爪哇威頓 ── */
@@ -209,7 +212,7 @@ function runThai(out, pr) {
   pr.push("泰國七曜佛日(生於 " + B.str + "," + dayName + "):");
   pr.push("  本命佛:" + buddha + ";本命色 " + color + ",忌色 " + badColor + "(民俗簡表);泰式生肖 " + animal + "年(宋干節 4/13 換歲簡式)");
   pr.push("  性情:" + trait);
-  pr.push("  " + T.str + "(" + T.y + "-" + T.m + "-" + T.d + ")值" + (todayIdx === 7 ? "週三夜佛" : DC.THAI7[todayIdx][0]) + (todayIdx === idx ? "(本命佛日)" : ""), "");
+  pr.push("  " + T.str + "(" + T.y + "-" + T.m + "-" + T.d + ")值" + (todayIdx === 7 ? "週三夜佛" : DC.THAI7[todayIdx][0]) + (todayIdx === idx ? "(本命佛日)" : "") + ";凌晨出生依泰俗屬前一日之夜(本盤以午夜換日簡化)", "");
   pr.push("請以泰國生日佛傳統解讀:1. " + dayName + "生人的性情、緣分與適合的行業(泰國民間怎麼說)。2. 本命佛「" + buddha + "」的典故與它給此生的功課。3. 顏色開運的具體用法(哪天穿什麼)。4. " + (T.picked ? "指定日 " + T.str + " 值該佛日——以本命佛日對該日論吉凶宜忌。5. " : "") + "佈施供養的合宜方式(供哪種、供幾支)。" + (T.picked ? "6" : "5") + ". 若我有提問,以佛日性情直答之。");
 }
 

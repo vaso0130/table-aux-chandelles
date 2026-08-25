@@ -102,8 +102,8 @@ const SYS = [
     hint: "以「此刻」起局:九宮八門九星八神,問事的天時地利全在盤上。" },
   { id: "liuren", name: "大六壬", sub: "三式・課傳", now: true,
     hint: "月將加時,四課三傳——古人問事第一式,以此刻起課直斷。" },
-  { id: "taiyiming", name: "太乙命法", sub: "人道命法・以年入式", now: false, birthReq: true,
-    hint: "太乙的論命之法:以本生年起本命太乙局,再與今歲太乙相參——天地大數之中,你站在哪一宮。問個人,用這個。" },
+  { id: "taiyiming", name: "太乙命法", sub: "人道命法・日計論命", now: false, birthReq: true,
+    hint: "太乙的論命之法:古法日計入式——祖數歲實推積日,冬至定元,求天地人三數起本命局,觀太乙文昌計神向背;再與今歲太乙相參。問個人,用這個。" },
   { id: "taiyi", name: "太乙歲計", sub: "三式之首・觀天下", now: false,
     hint: "太乙積年推演本年太乙所在之宮——這是觀天下大勢、年景氣運之術,古為帝王兵家所用,不論個人休咎。" }
 ];
@@ -160,7 +160,7 @@ function readNow() {
   const dv = $("n-date").value, tv = $("n-time").value;
   if (!dv || !tv) throw fail("請填起局時刻");
   const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
-  return { y, m, d, h, mi, tz: parseFloat($("n-tz").value) || 8, str: dv + " " + tv };
+  return { y, m, d, h, mi, tz: DC.numOr($("n-tz").value, 8), str: dv + " " + tv };
 }
 function readTargetDay() { // 所問之日(時間用神);未填=null
   const tv = $("t-date").value;
@@ -174,7 +174,7 @@ function readBirthOpt(nowBz) { // 勾選並填了生辰 → 本命/行年/年命
   const dv = $("b-date").value, tv = $("b-time").value || "12:00";
   const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
   const male = $("b-gender").value === "m";
-  const bb = DC.bazi(y, m, d, h, mi, parseFloat($("b-tz").value) || 8);
+  const bb = DC.bazi(y, m, d, h, mi, DC.numOr($("b-tz").value, 8));
   const xusui = nowBz.year - bb.year + 1;
   if (xusui < 1) return null;
   return { male, bb, xusui, xn: DC.xingnian(male, xusui), mingB: bb.pillars[0].b, mingGz: bb.pillars[0].gz };
@@ -200,10 +200,18 @@ function runQimen(out, pr) {
     '<div class="grid9">' + [4, 9, 2, 3, 5, 7, 8, 1, 6].map(cellHtml).join("") + "</div>" +
     "<p>吉門(開休生)所在:" + [1, 2, 3, 4, 6, 7, 8, 9].filter(p => ["開門", "休門", "生門"].includes(qm.doors[p])).map(p => qm.doors[p] + "在" + DC.GONG_NAME[p]).join("、") + "。</p>"));
   const ob = readBirthOpt(qm.bz);
+  const yGongOf = () => { // 主流年命法:年干在天盤之落宮(甲年以其旬遁儀代)
+    const yIdx = ((ob.bb.year - 4) % 60 + 60) % 60, yS = yIdx % 10;
+    const ch = yS === 0 ? ["戊", "己", "庚", "辛", "壬", "癸"][Math.floor(yIdx / 10)] : DC.STEMS[yS];
+    for (const p of [1, 8, 3, 4, 9, 2, 7, 6]) if (qm.tianpan[p] && qm.tianpan[p].stem.includes(ch)) return { g: p, ch };
+    return { g: 0, ch };
+  };
   if (ob) {
     const np = DC.BR_PALACE[ob.mingB], t = qm.tianpan[np];
+    const yg = yGongOf(), ty2 = qm.tianpan[yg.g];
     out.push(card("問測人年命", ob.mingGz + "年生・虛歲 " + ob.xusui,
-      "<p>年命" + DC.BRANCHES[ob.mingB] + "寄" + DC.GONG_NAME[np] + "——該宮:" + (qm.gods[np] || "") + "・" + (t ? t.star + "・天盤" + t.stem : "") + "・" + (qm.doors[np] || "") + "・地盤" + qm.dipan[np] + "。年命宮之吉凶,直接應在問測人本身。</p>"));
+      "<p>年干" + yg.ch + "落天盤<b style='color:var(--gold-bright)'>" + DC.GONG_NAME[yg.g] + "</b>(主流年干落宮法)——" + (qm.gods[yg.g] || "") + "・" + (ty2 ? ty2.star : "") + "・" + (qm.doors[yg.g] || "") + "。</p>" +
+      "<p>另年支" + DC.BRANCHES[ob.mingB] + "寄" + DC.GONG_NAME[np] + "(支寄宮法)——該宮:" + (qm.gods[np] || "") + "・" + (t ? t.star + "・天盤" + t.stem : "") + "・" + (qm.doors[np] || "") + "・地盤" + qm.dipan[np] + "。年命宮之吉凶,直接應在問測人本身;兩法可相參。</p>"));
   }
   pr.push("奇門遁甲時家轉盤(" + N.str + ",UTC+" + N.tz + "):");
   pr.push("  " + qm.juName + ",節氣 " + qm.term + ",四柱 " + qm.bz.pillars.map(p => p.gz).join(" ") + ",旬首 " + qm.xunName);
@@ -228,7 +236,8 @@ function runQimen(out, pr) {
   pr.push("  中五宮地盤 " + qm.dipan[5] + "(寄坤二)");
   if (ob) {
     const np2 = DC.BR_PALACE[ob.mingB], t2 = qm.tianpan[np2];
-    pr.push("  問測人年命:" + ob.mingGz + "年生(虛歲" + ob.xusui + "),年命" + DC.BRANCHES[ob.mingB] + "寄" + DC.GONG_NAME[np2] + "——" + (qm.gods[np2] || "") + "・" + (t2 ? t2.star + "・天盤" + t2.stem : "") + "・" + (qm.doors[np2] || "") + "・地盤" + qm.dipan[np2]);
+    const yg2 = yGongOf(), ty3 = qm.tianpan[yg2.g];
+    pr.push("  問測人年命:" + ob.mingGz + "年生(虛歲" + ob.xusui + ");主流年干落宮法:年干" + yg2.ch + "落天盤" + DC.GONG_NAME[yg2.g] + "(" + (qm.gods[yg2.g] || "") + "・" + (ty3 ? ty3.star : "") + "・" + (qm.doors[yg2.g] || "") + ");支寄宮法:年支" + DC.BRANCHES[ob.mingB] + "寄" + DC.GONG_NAME[np2] + "(" + (qm.gods[np2] || "") + "・" + (t2 ? t2.star + "・天盤" + t2.stem : "") + "・" + (qm.doors[np2] || "") + "・地盤" + qm.dipan[np2] + ")——以年干落宮為主、支寄宮相參");
   }
   pr.push("");
   pr.push("請以奇門遁甲解讀" + (q ? "我的問題" : "此刻運勢") + ":1. 取用神(日干為我、時干為事" + (ob ? "、年命宮應問測人本身" : "") + (td ? "、所問之日以其日干支落宮為時間用神" : "") + (q ? ",並依問題類別取相應用神" : "") + ")。2. 用神落宮的星門神組合、旺相休囚。3. 有無吉格凶格(青龍返首、白虎猖狂之類請自行判斷)。4. 成敗傾向與應期。" + (td ? "5. 專論所問之日的行事吉凶與宜忌。6" : "5") + ". 趨吉方位與行動建議(吉門方位)。");
@@ -279,47 +288,57 @@ function runLiuren(out, pr) {
 }
 
 /* ── 太乙神數 ── */
+function taiyiNowYear() { // 今歲以立春換歲(與命法生年同制;古法另有冬至歲首之說,於提示詞註明)
+  const t = new Date(), y = t.getFullYear(), tz = -t.getTimezoneOffset() / 60;
+  const jdN = DC.jd(y, t.getMonth() + 1, t.getDate(), t.getHours(), t.getMinutes(), tz);
+  return jdN >= DC.solarTerm(y, 315) ? y : y - 1;
+}
 function runTaiyi(out, pr) {
-  const ty = DC.taiyi(new Date().getFullYear());
+  const ty = DC.taiyi(taiyiNowYear());
   out.push(card("歲計太乙(簡式)", "太乙統宗・積年",
     '<div class="kv"><span><b>本年</b>' + ty.gz + "年</span><span><b>太乙積年</b>" + ty.jiNian.toLocaleString() + "</span><span><b>七十二局</b>第 " + ty.ju + " 局</span></div>" +
     '<p class="lead">太乙今在' + ty.gongName + ",居宮第 " + ty.yearIn + " 年(三年一徙)</p>" +
-    '<div class="grid9">' + [4, 9, 2, 3, 5, 7, 8, 1, 6].map(g =>
-      '<div class="cell' + (g === ty.gong ? " hl" : "") + '"><span class="g-name">' + DC.GONG_NAME[g] + '</span><span class="g-main">' + (g === ty.gong ? "太乙" : "&nbsp;") + "</span></div>").join("") + "</div>" +
+    '<div class="grid9">' + DC.TAIYI_GRID.map(g =>
+      '<div class="cell' + (g === ty.gong ? " hl" : "") + '"><span class="g-name">' + DC.TAIYI_GONG[g] + '</span><span class="g-main">' + (g === ty.gong ? "太乙" : "&nbsp;") + "</span></div>").join("") + "</div>" +
     "<p>太乙為天帝之神,所在之宮主當年氣運焦點;所理之分野、所會之星門定主客勝負。此為歲計簡式起例,主客算與天目文昌之詳排,交由 AI 依《太乙統宗》推演。</p>" +
     "<p style='color:var(--muted)'>※ 歲計論的是<b>天下大勢與年景</b>(古為帝王兵家之學),不論個人吉凶——想問自己,請改用「太乙命法」。</p>"));
   pr.push("太乙神數・歲計(簡式起例):");
-  pr.push("  本年 " + ty.gz + " 年,太乙積年 " + ty.jiNian + "(太乙統宗法)");
-  pr.push("  七十二局:第 " + ty.ju + " 局;太乙所在:" + ty.gongName + "(居宮第 " + ty.yearIn + " 年,三年一徙,行宮次序一二三四六七八九)", "");
+  pr.push("  本年 " + ty.gz + " 年(立春換歲;古法另有冬至歲首之說),太乙積年 " + ty.jiNian + "(太乙統宗法)");
+  pr.push("  七十二局:第 " + ty.ju + " 局;太乙所在:" + ty.gongName + "(居宮第 " + ty.yearIn + " 年,三年一徙,行宮次序一二三四六七八九——太乙九宮配卦乾一離二艮三震四兌六坤七坎八巽九,與洛書不同)", "");
   pr.push("請依太乙神數體系推演:1. 以積年與局數推本年太乙格局(可自行完成天目、文昌、計神、主客算之推排)。2. 太乙在" + ty.gongName + "對天下大勢與此方位的意涵。3. 結合我的問題論主客勝負與趨避。4. 言明何處為簡式推估、何處為典籍定法。");
 }
 
-/* ── 太乙命法(人道命法簡式)── */
+/* ── 太乙命法(人道命法・日計論命)── */
 function runTaiyiMing(out, pr) {
   const dv = $("b-date").value; if (!dv) throw fail("太乙命法需要出生日期");
   const tv = $("b-time").value || "12:00";
   const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
-  const bb = DC.bazi(y, m, d, h, mi, parseFloat($("b-tz").value) || 8); // 立春換歲取年柱
-  const by = bb.year;
-  const yIdx = ((by - 4) % 60 + 60) % 60;
-  const tyB = DC.taiyi(by);
-  const nowY = new Date().getFullYear();
+  const male = $("b-gender").value === "m";
+  const tm = DC.taiyiMing(y, m, d, h, mi, DC.numOr($("b-tz").value, 8), male); // 日計:祖數×歲實積日,冬至定元
+  const bb = tm.bb;
+  const yIdx = ((bb.year - 4) % 60 + 60) % 60;
+  const nowY = taiyiNowYear();
   const tyN = DC.taiyi(nowY);
-  const xusui = nowY - by + 1;
-  const same = tyB.gong === tyN.gong;
-  out.push(card("本命太乙局", "以本生年 " + by + "(" + tyB.gz + "年)入式",
-    '<div class="kv"><span><b>本命年柱</b>' + bb.pillars[0].gz + "(" + DC.nayin(yIdx) + ")</span><span><b>生年積年</b>" + tyB.jiNian.toLocaleString() + "</span><span><b>本命局</b>七十二局第 " + tyB.ju + " 局</span></div>" +
-    '<p class="lead">生年太乙在' + tyB.gongName + "(居宮第 " + tyB.yearIn + " 年)——此即你的<b>本命太乙宮</b></p>" +
-    '<div class="grid9">' + [4, 9, 2, 3, 5, 7, 8, 1, 6].map(g =>
-      '<div class="cell' + (g === tyB.gong || g === tyN.gong ? " hl" : "") + '"><span class="g-name">' + DC.GONG_NAME[g] + '</span><span class="g-main">' +
-      [g === tyB.gong ? "本命" : "", g === tyN.gong ? "今歲" : ""].filter(Boolean).join("・") + "</span></div>").join("") + "</div>" +
-    "<p>今歲(" + tyN.gz + "年)太乙在" + tyN.gongName + (same ? "——<b>今歲太乙回臨本命宮</b>,大數交會之年,吉凶皆重,尤須留意" : ",與本命宮相參看今歲對你的著力點") + "。你今虛歲 " + xusui + "。</p>" +
-    "<p>太乙命法為太乙式之論命旁枝(人道命法):以本生年入式,觀太乙、文昌、計神與十六神之向背定人一生格局。此處為簡式起例,詳排交由 AI 依《太乙統宗》《太乙金鏡式經》推演。</p>"));
-  pr.push("太乙命法(人道命法,簡式起例):");
-  pr.push("  命主生於 " + dv + ",年柱 " + bb.pillars[0].gz + "(納音" + DC.nayin(yIdx) + "),今虛歲 " + xusui);
-  pr.push("  本命太乙:生年積年 " + tyB.jiNian + ",七十二局第 " + tyB.ju + " 局,太乙在" + tyB.gongName + "(居宮第 " + tyB.yearIn + " 年)");
-  pr.push("  今歲太乙:" + tyN.gz + "年,積年 " + tyN.jiNian + ",第 " + tyN.ju + " 局,太乙在" + tyN.gongName + (same ? "(回臨本命宮)" : ""), "");
-  pr.push("請依太乙命法(人道命法)推演:1. 以生年積年與局數自行完成本命式盤之詳排(太乙、天目/文昌、計神、始擊、主客大小將算,並落十六神)。2. 論本命太乙宮" + tyB.gongName + "所稟之氣與一生格局、才性向背。3. 文昌計神與太乙之向背論功名事業。4. 今歲太乙在" + tyN.gongName + "與本命宮相參,論今年對命主的吉凶著力點" + (same ? "(今歲回臨本命宮,請特別細論)" : "") + "。5. 言明何處為簡式推估、何處為典籍定法。");
+  const xusui = nowY - bb.year + 1;
+  const same = tm.gong === tyN.gong;
+  const jStr = j => j ? "大將在" + j.daPos + "(" + j.da + "宮)、參將在" + j.canPos : "臨太乙宮,算不得行";
+  out.push(card("人道命法・日計三數", "以生日入式(楊景磐《太乙通解》系)",
+    '<div class="kv"><span><b>本命年柱</b>' + bb.pillars[0].gz + "(" + DC.nayin(yIdx) + ")</span><span><b>天數</b>" + tm.tian + "</span><span><b>地數(入局)</b>" + tm.di + "</span><span><b>人數</b>" + tm.ren + "</span><span><b>受氣</b>" + tm.shouqi + "</span></div>" +
+    '<p class="lead">日計陽遁第 ' + tm.ju + " 局——太乙在<b>" + tm.gongName + "</b>,文昌(天目)臨" + tm.wenchang.name + "(" + tm.wenchang.pos + "),計神在" + tm.jishen.zh + ",始擊(客目)臨" + tm.shiji.name + "(" + tm.shiji.pos + ")</p>" +
+    '<div class="grid9">' + DC.TAIYI_GRID.map(g =>
+      '<div class="cell' + (g === tm.gong || g === tyN.gong ? " hl" : "") + '"><span class="g-name">' + DC.TAIYI_GONG[g] + '</span><span class="g-main">' +
+      [g === tm.gong ? "本命太乙" : "", g === tyN.gong ? "今歲" : ""].filter(Boolean).join("・") + "</span></div>").join("") + "</div>" +
+    "<p>主算 " + tm.zhuSuan + "——" + jStr(tm.zhuJiang) + ";客算 " + tm.keSuan + "——" + jStr(tm.keJiang) + "。命宮在<b>" + tm.mingZh + "</b>(" + (tm.fwd ? "陽男陰女順" : "陰男陽女逆") + "布,月支加年支數至時支),自命宮" + (tm.fwd ? "順" : "逆") + "排兄弟、妻妾、子孫、財帛、田宅、官祿、奴僕、疾厄、福德、相貌、父母十一宮。</p>" +
+    "<p>今歲(" + tyN.gz + "年)歲計太乙在" + tyN.gongName + (same ? "——<b>回臨本命太乙宮</b>,大數交會之年,吉凶皆重" : ",與本命宮相參看今歲著力點") + "。你今虛歲 " + xusui + "。</p>"));
+  pr.push("太乙人道命法(日計論命,楊景磐《太乙通解》系起例):");
+  pr.push("  命主生於 " + dv + " " + tv + "(" + (male ? "男" : "女") + "),年柱 " + bb.pillars[0].gz + "(納音" + DC.nayin(yIdx) + "),今虛歲 " + xusui);
+  pr.push("  日計積日以太乙祖數×歲實365.2425、冬至定元推得(冬至日干支已錨定校正):天數 " + tm.tian + "、地數 " + tm.di + "(即入局數)、人數 " + tm.ren + ";受氣干支 " + tm.shouqi);
+  pr.push("  日計陽遁第 " + tm.ju + " 局:太乙在" + tm.gongName + "(太乙九宮:乾一離二艮三震四兌六坤七坎八巽九,三日一徙不入中五)");
+  pr.push("  文昌(天目)臨十六神之" + tm.wenchang.name + "(" + tm.wenchang.pos + "位);計神在" + tm.jishen.zh + "(自寅逆數至人數);始擊(客目)臨" + tm.shiji.name + "(" + tm.shiji.pos + "位)");
+  pr.push("  主算 " + tm.zhuSuan + "(" + jStr(tm.zhuJiang) + ");客算 " + tm.keSuan + "(" + jStr(tm.keJiang) + ")");
+  pr.push("  命宮" + tm.mingZh + "(" + (tm.fwd ? "陽男陰女順布" : "陰男陽女逆布") + "),十一宮自命宮" + (tm.fwd ? "順" : "逆") + "排");
+  pr.push("  今歲(" + tyN.gz + "年)歲計:第 " + tyN.ju + " 局,太乙在" + tyN.gongName + (same ? "(回臨本命宮)" : ""), "");
+  pr.push("請依太乙人道命法推演:1. 天地人三數之稟(數中無十為無天、無五為無地、無一為無人之類格局)與受氣干支" + tm.shouqi + "之氣稟。2. 本命太乙宮" + tm.gongName + "與文昌、始擊、計神向背論一生格局、才性與功名。3. 主客算" + tm.zhuSuan + "/" + tm.keSuan + "之數理(得三才數與否、陰陽數)與大小將落宮吉凶。4. 命宮" + tm.mingZh + "起十二宮,論各宮臨十六神之向背。5. 今歲太乙在" + tyN.gongName + "與本命相參論今年吉凶著力點" + (same ? "(回臨本命宮,請特別細論)" : "") + "。6. 身宮與君基臣基民基三基、五福諸神本盤未列,請依《太乙統宗》自行補排並言明;若貴派命例天數與本盤差±360,以局數為準。");
 }
 
 /* ── 主流程 ── */

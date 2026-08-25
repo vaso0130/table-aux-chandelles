@@ -46,6 +46,9 @@
           <select id="b-gender"><option value="m">男</option><option value="f">女</option></select></div>
         <div class="field"><label>時區</label><input id="b-tz" type="number" step="0.5" value="8">
           <div class="note">台灣/中國 +8,日本 +9</div></div>
+        <div class="field"><label>紫微年界</label>
+          <select id="b-zwyear"><option value="cny">正月初一(主流)</option><option value="lichun">立春</option></select>
+          <div class="note">僅影響紫微盤;生於立春~正月初一之間者兩法年柱不同(八字恆以立春換年)</div></div>
       </div>
     </div>
     <div class="form-grid" style="margin-top:14px">
@@ -79,7 +82,7 @@
   </section>
 
   <p class="footnote">
-    節氣與朔望以真實天文計算(太陽黃經定節氣、定朔定農曆);紫微採中州派安星法,庚干四化取陽武陰同;<br>
+    節氣與朔望以真實天文計算(太陽黃經定節氣、定朔定農曆);紫微採中州派安星法(閏月折半:十六起作下月),庚干四化取通行「陽武陰同」(中州派原作陽武府同),年界可選正月初一(主流)或立春(生於兩界之間者年柱不同);23:00 後八字日柱進翌日,紫微/唐四柱農曆日不進(各派有異);<br>
     九星命卦男女異算。皆為起盤,論斷交給 AI 或你信任的老師。太乙、奇門、六壬三式請移駕<b>式占館</b>。
   </p>
 </div>
@@ -123,7 +126,7 @@ DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prom
 DC.histBind();
 
 const PK = "dc-bazi-profile";
-try { const p = JSON.parse(localStorage.getItem(PK) || "{}"); if (p.bd) { $("b-date").value = p.bd; $("b-time").value = p.bt || "12:00"; $("b-gender").value = p.g || "m"; $("b-tz").value = p.tz || 8; } } catch (e) {}
+try { const p = JSON.parse(localStorage.getItem(PK) || "{}"); if (p.bd) { $("b-date").value = p.bd; $("b-time").value = p.bt || "12:00"; $("b-gender").value = p.g || "m"; $("b-tz").value = p.tz || 8; $("b-zwyear").value = p.zw || "cny"; } } catch (e) {}
 
 function card(t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
 function fail(msg) { $("go-hint").textContent = msg; return new Error(msg); }
@@ -131,11 +134,11 @@ function readBirth() {
   const dv = $("b-date").value; if (!dv) throw fail("請填出生日期");
   const tv = $("b-time").value || "12:00";
   const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
-  return { y, m, d, h, mi, tz: parseFloat($("b-tz").value) || 8, male: $("b-gender").value === "m", str: dv + " " + tv };
+  return { y, m, d, h, mi, tz: DC.numOr($("b-tz").value, 8), male: $("b-gender").value === "m", str: dv + " " + tv };
 }
 
 /* ── 八字 ── */
-const STAGE12 = ["長生", "沐浴", "冠帶", "臨官", "帝旺", "衰", "病", "死", "墓", "絕", "胎", "養"];
+const STAGE12 = ["長生", "沐浴", "冠帶", "建禄", "帝旺", "衰", "病", "死", "墓", "絕", "胎", "養"]; // 和流稱建禄(子平作臨官);僅四柱推命使用
 const CHANGSHENG = [11, 6, 2, 9, 2, 9, 5, 0, 8, 3]; // 各干長生之支
 function twelveUn(dayStem, branch) {
   const st = CHANGSHENG[dayStem];
@@ -190,14 +193,20 @@ function runZiwei(out, pr) {
   const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
   const lun = DC.lunar(B.y, B.m, B.d, B.tz);
   if (!lun) throw fail("農曆換算失敗");
-  const zw = DC.ziwei(lun.month, lun.day, bz.hB, bz.pillars[0].s, bz.pillars[0].b, B.male);
+  const useLichun = $("b-zwyear").value === "lichun";
+  const ly = DC.lunarYearGZ(B.y, B.m, lun);
+  const yS = useLichun ? bz.pillars[0].s : ly.s, yB = useLichun ? bz.pillars[0].b : ly.b;
+  const yGZ = useLichun ? bz.pillars[0].gz : ly.gz;
+  let zwMonth = lun.month;
+  if (lun.isLeap && lun.day >= 16) zwMonth = lun.month % 12 + 1; // 中州派閏月折半:初一~十五作本月,十六起作下月
+  const zw = DC.ziwei(zwMonth, lun.day, bz.hB, yS, yB, B.male);
   const lunStr = (lun.isLeap ? "閏" : "") + DC.CN_MONTH[lun.month - 1] + "月" + DC.CN_DAY[lun.day - 1] + DC.BRANCHES[bz.hB] + "時";
   let grid = '<div class="grid12">';
   const cellMap = {};
   for (const [br, r, c] of ZW_LAYOUT) cellMap[r + "," + c] = br;
   for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
     if (r === 1 && c === 1) {
-      grid += '<div class="center"><b style="color:var(--gold-bright)">' + bz.pillars[0].gz + "年 " + lunStr + "</b>" +
+      grid += '<div class="center"><b style="color:var(--gold-bright)">' + yGZ + "年 " + lunStr + "</b>" +
         zw.juName + "・" + (B.male ? "男" : "女") + "命<br>命宮在" + DC.BRANCHES[zw.ming] + "・身宮在" + DC.BRANCHES[zw.shen] + "</div>";
       continue;
     }
@@ -213,16 +222,19 @@ function runZiwei(out, pr) {
       '<span class="c-tag">大限 ' + P.daxian + "</span></div>";
   }
   grid += "</div>";
-  out.push(card("紫微命盤", "中州派安星", grid));
+  out.push(card("紫微命盤", "中州派安星・年界" + (useLichun ? "立春" : "正月初一"), grid));
   const mingP = zw.P[zw.ming];
   out.push(card("命宮概要", "", '<p class="lead">命宮' + DC.BRANCHES[zw.ming] + "宮,主星:" + (mingP.stars.join("、") || "無主星(借對宮)") + "</p>" +
     "<p>" + zw.juName + ",第一大限自 " + zw.ju + " 歲起。四化:" + zw.P.flatMap(p => p.hua).join("、") + "。</p>"));
-  pr.push("紫微斗數命盤(" + B.str + " → 農曆 " + bz.pillars[0].gz + "年" + lunStr + "," + (B.male ? "男" : "女") + "命," + zw.juName + "):");
+  pr.push("紫微斗數命盤(" + B.str + " → 農曆 " + yGZ + "年" + lunStr + "," + (B.male ? "男" : "女") + "命," + zw.juName + "):");
+  pr.push("  年界取法:" + (useLichun ? "以立春換歲(部分門派取法)——生於立春至正月初一之間者,年柱與主流盤不同" : "以農曆正月初一換歲(主流取法)") + ";年干支 " + yGZ + ",宮干五虎遁、生年四化、祿存羊陀、魁鉞火鈴皆依此年干支起,請依此取法解讀。");
   for (let k = 0; k < 12; k++) {
     const b2 = ((zw.ming - k) % 12 + 12) % 12, P = zw.P[b2];
     pr.push("  " + P.palace + "(" + DC.STEMS[P.stem] + DC.BRANCHES[b2] + (P.isShen ? ",身宮" : "") + "):主星[" + (P.stars.join(" ") || "無") + "] 吉[" + (P.good.join(" ") || "—") + "] 煞[" + (P.bad.join(" ") || "—") + "]" + (P.hua.length ? " 四化[" + P.hua.join(" ") + "]" : "") + " 大限" + P.daxian);
   }
-  pr.push("", "請解讀:1. 命宮主星組合與命格總論。2. 身宮所在的人生重心。3. 四化祿權科忌落宮的吉凶樞紐。4. 財帛/官祿/夫妻三宮詳論。5. 現行大限與未來十年。6. 若閏月安星與貴派有異請註明(本盤閏月視同本月)。");
+  if (lun.isLeap) pr.push("  閏月安星:本盤依中州派折半法——閏月初一至十五作本月、十六起作下月" + (lun.day >= 16 ? "(本命已折入下月安星)" : "(本命仍作本月)") + "。");
+  if (B.h >= 23) pr.push("  晚子時:本盤八字日柱依子平慣例進翌日,紫微安星之農曆日仍用出生當日(各派有異,請依此規則解讀)。");
+  pr.push("", "請解讀:1. 命宮主星組合與命格總論。2. 身宮所在的人生重心。3. 四化祿權科忌落宮的吉凶樞紐。4. 財帛/官祿/夫妻三宮詳論。5. 現行大限與未來十年。");
 }
 
 /* ── 四柱推命(和流)── */
@@ -268,13 +280,14 @@ function runNinestar(out, pr) {
   out.push(card("本年年盤(" + effNow + " 立春起)", "五黃殺與吉方",
     '<div class="grid9">' + [4, 9, 2, 3, 5, 7, 8, 1, 6].map(p2 =>
       '<div class="cell' + (p2 === myPalace ? " hl" : "") + '"><span class="g-name">' + DC.GONG_NAME[p2] + '</span><span class="g-main">' + DC.NSTAR[palaceStar(p2)].slice(0, 2) + "</span>" +
-      (palaceStar(p2) === 5 ? '<br><span class="g-mut" style="color:#E8A08F">五黃殺</span>' : "") +
-      (p2 === OPP[wuhuang] && p2 !== 5 ? '<br><span class="g-mut" style="color:#E8A08F">暗劍殺</span>' : "") +
+      (palaceStar(p2) === 5 && p2 !== 5 ? '<br><span class="g-mut" style="color:#E8A08F">五黃殺</span>' : "") +
+      (p2 === OPP[wuhuang] && p2 !== 5 && wuhuang !== 5 ? '<br><span class="g-mut" style="color:#E8A08F">暗劍殺</span>' : "") +
       (p2 === myPalace ? '<br><span class="g-sub">你在此</span>' : "") + "</div>").join("") + "</div>" +
-    "<p>你的本命星今年飛到" + DC.GONG_NAME[myPalace] + "。五黃所在與其對沖(暗劍殺)為大凶方,今年動土、搬遷、遠行宜避。</p>"));
+    "<p>你的本命星今年飛到" + DC.GONG_NAME[myPalace] + "。" + (wuhuang === 5 ? "本年五黃入中宮,諸方無五黃殺與暗劍殺(中宮非方位)。" : "五黃所在與其對沖(暗劍殺)為大凶方,今年動土、搬遷、遠行宜避。") + "</p>"));
   pr.push("九星氣學(生日 " + B.str + "," + (B.male ? "男" : "女") + "命):");
   pr.push("  本命星 " + DC.NSTAR[star] + ",月命星 " + DC.NSTAR[mStar]);
-  pr.push("  " + effNow + " 年盤:中宮 " + DC.NSTAR[yearStar] + ",本命星飛臨 " + DC.GONG_NAME[myPalace] + ";五黃在" + DC.GONG_NAME[wuhuang] + ",暗劍殺在" + DC.GONG_NAME[OPP[wuhuang]], "");
+  pr.push("  " + effNow + " 年盤:中宮 " + DC.NSTAR[yearStar] + ",本命星飛臨 " + DC.GONG_NAME[myPalace] + ";" + (wuhuang === 5 ? "本年五黃入中,諸方無五黃殺/暗劍殺" : "五黃在" + DC.GONG_NAME[wuhuang] + ",暗劍殺在" + DC.GONG_NAME[OPP[wuhuang]]));
+  pr.push("  ※ 本站女命本命星採「年數字根+4」異算法,月命星亦隨此星取組;與男女同算之通書結果不同,解讀時請依本盤所列為準。", "");
   pr.push("請以九星氣學解讀:1. 本命星×月命星的性格與天職。2. 今年本命星所在宮位的運勢主題(回座/被剋/受生)。3. 今年的吉方位與凶方位(祐氣取り建議)。4. 與哪些九星的人相生相剋。5. 未來三年的運勢曲線。");
 }
 
@@ -317,14 +330,16 @@ function runDangsaju(out, pr) {
     "<p>唐四柱為朝鮮時代流行的民間看圖命書(당사주책):不論格局用神,只以十二天星說四段人生,直白如畫。" + (lun.isLeap ? "閏月依本月起數。" : "") + "</p>"));
   pr.push("唐四柱(당사주,韓國民俗四柱):");
   pr.push("  陰曆生辰:" + DC.BRANCHES[yB] + "年" + (lun.isLeap ? "閏" : "") + lun.month + "月" + lun.day + "日" + DC.BRANCHES[hb] + "時(" + B.str + ")");
-  pr.push("  " + stages.map(([tag, p, how]) => tag + " " + DS_STARS[p][0] + "(" + DS_STARS[p][1] + "," + how + ")").join(";"), "");
+  pr.push("  " + stages.map(([tag, p, how]) => tag + " " + DS_STARS[p][0] + "(" + DS_STARS[p][1] + "," + how + ")").join(";"));
+  if (B.h >= 23) pr.push("  ※ 晚子時:唐四柱之陰曆日用出生當日(不隨子平進翌日),各派有異,依此規則解讀。");
+  pr.push("");
   pr.push("請以唐四柱(당사주)的民俗風格解讀:1. 四段人生各星的圖像與故事——請像朝鮮命書一樣「看圖說話」,直白生動。2. 四星連起來的人生曲線(何時起、何時伏)。3. 若同星重出或吉凶星相鄰,其加乘之義。4. 給命主一句民間老先生式的忠告。");
 }
 
 /* ── 主流程 ── */
 $("btn-go").onclick = () => {
   $("go-hint").textContent = "";
-  try { localStorage.setItem(PK, JSON.stringify({ bd: $("b-date").value, bt: $("b-time").value, g: $("b-gender").value, tz: $("b-tz").value })); } catch (e) {}
+  try { localStorage.setItem(PK, JSON.stringify({ bd: $("b-date").value, bt: $("b-time").value, g: $("b-gender").value, tz: $("b-tz").value, zw: $("b-zwyear").value })); } catch (e) {}
   const q = $("q-input").value.trim();
   const out = [], pr = [];
   const head = ["你是一位深研東亞命理的老師。以下是完整的起盤資料。" + DC.toneHead(), ""];

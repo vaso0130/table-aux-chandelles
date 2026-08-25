@@ -263,7 +263,7 @@ function readWhen(dId, tId, tzId) {
   const dv = $(dId).value, tv = $(tId).value || "12:00";
   if (!dv) return null;
   const [y, mo, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
-  const tz = parseFloat($(tzId).value) || 8;
+  const tz = DC.numOr($(tzId).value, 8);
   return { y, mo, d, h, mi, tz, jd: DC.jd(y, mo, d, h, mi, tz), str: dv + " " + tv + "(UTC" + (tz >= 0 ? "+" : "") + tz + ")" };
 }
 function fullChart(when, lat, lon) {
@@ -273,20 +273,20 @@ function fullChart(when, lat, lon) {
   for (const p of list) p.house = ((DC.signOf(p.lon) - ascSign) % 12 + 12) % 12 + 1;
   return { list, asc: am.asc, mc: am.mc, ascSign, when, lat, lon };
 }
-function chartTable(ch, withHouse) {
+function chartTable(ch, withHouse, ascNote) { // ascNote:行運/合盤等場合的上升列註記(避免與本命宮位混淆)
   let h = '<div class="tbl-scroll"><table class="data"><tr><th>星體</th><th>位置</th>' + (withHouse ? "<th>宮位</th>" : "") + '<th>狀態</th></tr>';
   for (const p of ch.list)
     h += "<tr><td>" + p.gl + " " + p.zh + '</td><td class="hl">' + DC.fmtLon(p.lon) + "</td>" +
       (withHouse ? "<td>第 " + p.house + " 宮</td>" : "") +
       "<td>" + (p.retro ? '<span class="red">℞ 逆行</span>' : "順行") + "</td></tr>";
-  h += "<tr><td>↑ 上升</td><td class=\"hl\">" + DC.fmtLon(ch.asc) + "</td>" + (withHouse ? "<td>第 1 宮</td>" : "") + "<td>—</td></tr>";
+  h += "<tr><td>↑ 上升</td><td class=\"hl\">" + DC.fmtLon(ch.asc) + "</td>" + (withHouse ? "<td>" + (ascNote || "第 1 宮") + "</td>" : "") + "<td>—</td></tr>";
   h += "<tr><td>MC 天頂</td><td class=\"hl\">" + DC.fmtLon(ch.mc) + "</td>" + (withHouse ? "<td>—</td>" : "") + "<td>—</td></tr>";
   return h + "</table></div>";
 }
 function aspectRows(asps, n, tagA, tagB) {
   let h = '<div class="tbl-scroll"><table class="data"><tr><th>' + (tagA || "星") + '</th><th>相位</th><th>' + (tagB || "星") + '</th><th>容許度</th></tr>';
   for (const a of asps.slice(0, n || 12))
-    h += "<tr><td>" + a.a.zh + '</td><td class="hl">' + a.gl + " " + a.name + "</td><td>" + a.b.zh + "</td><td>" + a.orb.toFixed(1) + "°</td></tr>";
+    h += "<tr><td>" + a.a.zh + '</td><td class="hl">' + a.gl + " " + a.name + "</td><td>" + a.b.zh + "</td><td>" + a.orb.toFixed(1) + "°" + (a.applying == null ? "" : a.applying ? "・入相" : "・離相") + "</td></tr>";
   return h + "</table></div>";
 }
 function svgWheel(ch) {
@@ -334,17 +334,24 @@ function sidLines(ch, ay, tag) {
   L.push("  上升 " + DC.fmtLon(DC.rev(ch.asc - ay)));
   return L;
 }
-function moonVoC(jd) { // 月亮離開本星座前是否還有入相位(他星視為近似不動)
+function moonVoC(jd) { // 月亮離開本星座前是否還有入相位(古典七政;他星逐步重算,跨零偵測不漏格)
   const sign = DC.signOf(DC.moonLon(jd));
-  const others = DC.chart(jd).filter(p => p.id !== "moo" && p.id !== "nod");
+  const SEVEN = ["sun", "mer", "ven", "mar", "jup", "sat"]; // 古典空亡只論七政(月亮為主體)
+  let prev = null;
   for (let t = jd; t < jd + 3; t += 0.02) {
     const ml = DC.moonLon(t);
     if (DC.signOf(ml) !== sign) return { voc: true, exit: t };
-    for (const p of others)
+    const ch = DC.chart(t).filter(p => SEVEN.includes(p.id));
+    const cur = {};
+    for (const p of ch)
       for (const [ang, name] of DC.ASPECTS) {
         const d = Math.abs((((ml - p.lon) % 360) + 540) % 360 - 180);
-        if (Math.abs(d - ang) < 0.14) return { voc: false, hit: p.zh, asp: name, at: t };
+        const key = p.id + ang;
+        cur[key] = d - ang;
+        if (Math.abs(d - ang) < 0.14 || (prev && prev[key] != null && (prev[key] < 0) !== (cur[key] < 0)))
+          return { voc: false, hit: p.zh, asp: name, at: t };
       }
+    prev = cur;
   }
   return { voc: true };
 }
@@ -394,7 +401,7 @@ MODES.transit = (B, P, N, q, out, pr) => {
     nat.list.concat([{ id: "asc", zh: "上升", lon: nat.asc }, { id: "mc", zh: "天頂", lon: nat.mc }]));
   let slow = tr.list.filter(p => ["jup", "sat", "ura", "nep", "plu"].includes(p.id))
     .map(p => "行運" + p.zh + "在" + DC.ZODIAC[DC.signOf(p.lon)] + "(你的第 " + p.house + " 宮:" + HOUSE_MEAN[p.house - 1] + ")").join("<br>");
-  out.push(card("行運概況", "Transits " + N.str, "<p>" + slow + "</p>" + chartTable(tr, true)));
+  out.push(card("行運概況", "Transits " + N.str, "<p>" + slow + "</p>" + chartTable(tr, true, "—(行運上升)")));
   out.push(card("行運 × 本命 相位", "", aspectRows(asps, 14, "行運", "本命")));
   pr.push(...chartLines(nat, "本命盤(" + B.str + ")"));
   pr.push("", ...chartLines(tr, "行運盤(" + N.str + ",宮位為行運星落入的本命宮)"));
@@ -435,7 +442,8 @@ MODES.returns = (B, P, N, q, out, pr) => {
   const nat = fullChart(B, B.lat, B.lon);
   const natSun = nat.list[0].lon, natMoon = nat.list[1].lon;
   let srJd = DC.sunCross(natSun, N.jd - 366); // 最近一次太陽返照(今年生日)
-  if (srJd > N.jd) srJd = DC.sunCross(natSun, N.jd - 732);
+  const srNext = DC.sunCross(natSun, srJd + 180); // 邊界:起盤在返照後一日內,取更近的那次
+  if (srNext != null && srNext <= N.jd) srJd = srNext;
   const srCh = fullChart({ jd: srJd, str: DC.fmtJD(srJd, N.tz) }, N.lat, N.lon);
   const lrJd = DC.lunarReturnAfter(N.jd, natMoon);
   const lrCh = fullChart({ jd: lrJd, str: DC.fmtJD(lrJd, N.tz) }, N.lat, N.lon);
@@ -488,7 +496,7 @@ MODES.horary = (B, P, N, q, out, pr) => {
   if (voc.voc) warns.push("月亮空亡(離開本星座前無入相位)——事情多半「不了了之」或不如預期");
   const sat = ch.list.find(p => p.id === "sat");
   if (sat.house === 7) warns.push("土星在第七宮——占星師易誤判,此盤宜慎讀");
-  if (DC.signOf(moon.lon) === 7) warns.push("月亮在天蠍(落陷)——所問之事帶著情緒暗流");
+  if (DC.signOf(moon.lon) === 7) warns.push("月亮在天蠍(入弱)——所問之事帶著情緒暗流");
   const houses = Array.from({ length: 12 }, (_, i) => {
     const sign = (ch.ascSign + i) % 12, r = DC.RULER[sign], rp = ch.list.find(p => p.zh === r);
     return "第" + (i + 1) + "宮(" + HOUSE_MEAN[i] + ")在" + DC.ZODIAC[sign] + ",宮主" + r + "落第" + rp.house + "宮";
@@ -503,6 +511,7 @@ MODES.horary = (B, P, N, q, out, pr) => {
   pr.push(...chartLines(ch, "卜卦盤(以提問此刻 " + N.str + " 起盤,北緯" + N.lat + " 東經" + N.lon + ")"));
   pr.push("上升主星(問卜者):" + ruler + " 落第" + rulerP.house + "宮" + (rulerP.retro ? "(逆行)" : ""));
   pr.push("宮主星表:" + houses.join(";"));
+  pr.push("盤內主要相位:" + DC.aspects(ch.list).slice(0, 14).map(a => a.a.zh + a.name + a.b.zh + "(" + a.orb.toFixed(1) + "°" + (a.applying == null ? "" : a.applying ? ",入相" : ",離相") + ")").join("、"));
   pr.push("月亮狀態:" + (voc.voc ? "空亡" : "入相位 " + voc.asp + " " + (voc.hit || "")));
   if (warns.length) pr.push("根性警訊:" + warns.join(";"));
   pr.push("", "請依傳統卜卦占星法則解讀:1. 判定問題歸屬哪一宮,找出用事宮主星。2. 問卜者主星與用事主星之間有無入相位、何種相位——事成或不成。3. 月亮的下一步告訴我們什麼。4. 給出明確的是/否傾向與時間量尺(宮位速度換算)。5. 若有根性警訊,說明判斷的保留程度。");
@@ -530,12 +539,14 @@ MODES.dasha = (B, P, N, q, out, pr) => {
   const das = DC.vimshottari(moonSid, B.jd);
   const nowJd = DC.jd(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate(), 12, 0, 8);
   const cur = das.find(d => nowJd >= d.from && nowJd < d.to) || das[das.length - 1];
-  // 當前大運的 antardasha
+  // 當前大運的 antardasha:以「完整大運長」切割(出生殘餘大運須用名義起點,出生前已行過的副運剔除)
   const seq = DC.DASHA_SEQ, si = seq.findIndex(s => s[0] === cur.lord);
-  let t = cur.from; const antar = [];
+  const full = cur.years * 365.2425, t0 = cur.to - full;
+  let t = t0; const antar = [];
   for (let k = 0; k < 9; k++) {
-    const s = seq[(si + k) % 9], len = (cur.to - cur.from) * s[1] / 120;
-    antar.push({ lord: s[0], from: t, to: t + len }); t += len;
+    const s = seq[(si + k) % 9], len = full * s[1] / 120;
+    const a = { lord: s[0], from: t, to: t + len }; t += len;
+    if (a.to > cur.from) { if (a.from < cur.from) a.from = cur.from; antar.push(a); }
   }
   const curA = antar.find(a => nowJd >= a.from && nowJd < a.to);
   out.push(card("Vimśottarī 大運", "Mahādaśā",

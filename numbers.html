@@ -253,7 +253,7 @@ function runLifenum(topic, out, pr) {
     challenge() {
       out.push(card("挑戰", "Challenges", baseKv +
         '<div class="tbl-scroll"><table class="data"><tr><th>階段</th><th>挑戰數</th><th>課題</th></tr>' +
-        L.challenges.map((c, i) => "<tr><td>" + ["青年(~30)", "壯年(30-40)", "中年(40-50)", "晚年(50~)"][i] + '</td><td class="hl">' + c + "</td><td>" + (c === 0 ? "無特定挑戰——自由題,自己出題自己答" : coreOf(c).shadow + "(修成:" + coreOf(c).light + ")") + "</td></tr>").join("") + "</table></div>"));
+        L.challenges.map((c, i) => "<tr><td>" + ["第一(~" + L.pinnacles[0].to + "歲)", "第二(" + L.pinnacles[1].from + "-" + L.pinnacles[1].to + "歲)", "第三(" + L.pinnacles[2].from + "-" + L.pinnacles[2].to + "歲)", "第四(" + L.pinnacles[3].from + "歲~)"][i] + '</td><td class="hl">' + c + "</td><td>" + (c === 0 ? "無特定挑戰——自由題,自己出題自己答" : coreOf(c).shadow + "(修成:" + coreOf(c).light + ")") + "</td></tr>").join("") + "</table></div>"));
       pr.push("請聚焦「挑戰數」解讀:1. 四階段挑戰各自的具體場景。2. 我現在正處於哪一關、如何過。3. 挑戰數 0(若有)的自由題怎麼答。");
     }
   };
@@ -287,10 +287,7 @@ function runMeihua(out, pr, q) {
   }
   if (modeId === "mh-time") {
     const lun = DC.lunar(y, mo, d, 8);
-    const lichun = DC.solarTerm(y, 315);
-    const jdNow = DC.jd(y, mo, d, h, mi, 8);
-    const yr = jdNow >= lichun ? y : y - 1;
-    const yB = ((yr - 4) % 12 + 12) % 12;
+    const yB = DC.lunarYearGZ(y, mo, lun).b; // 邵子古法:年月日時皆依農曆,年支以正月初一換歲
     const hb = Math.floor(((h % 24) + 1) / 2) % 12;
     const uN = (yB + 1) + lun.month + lun.day;
     const lN = uN + (hb + 1);
@@ -315,15 +312,15 @@ function runHeluo(out, pr, q) {
   const hl = DC.heluo(bz, male);
   out.push(card("八字化數", "天地之數",
     '<div class="pillars">' + bz.pillars.map(p => '<div class="pillar"><span class="p-tag">' + p.tag + '</span><span class="p-char">' + p.gz + "</span></div>").join("") + "</div>" +
-    '<p class="lead">天數 ' + hl.tian + "・地數 " + hl.di + "</p>" +
-    "<p>八字各字依河圖之數化為:" + hl.nums.join("、") + "(奇為天數,偶為地數)。</p>"));
-  out.push(card("先天卦與後天卦", "簡式起例",
+    '<p class="lead">天數 ' + hl.tian + "(去廿五餘 " + hl.tianRest + ")・地數 " + hl.di + "(去三十餘 " + hl.diRest + ")</p>" +
+    "<p>天干依納甲洛書數、地支依河圖生成數(一支一奇一偶)化為:" + hl.nums.join("、") + "——奇數之和為天數、偶數之和為地數,天滿二十五去之、地滿三十去之,餘數依洛書配後天卦(一坎二坤三震四巽六乾七兌八艮九離,五寄宮)。</p>"));
+  out.push(card("先天卦與後天卦", "河洛起例",
     '<div class="gua-row">' + guaBox("先天卦(前半生)", hl.xiantian.upper, hl.xiantian.lower, hl.yuantang) + guaBox("後天卦(後半生)", hl.houtian.upper, hl.houtian.lower, 0) + "</div>" +
-    "<p>元堂在第 " + hl.yuantang + " 爻(以時辰定)。先天卦主前半生格局,元堂爻變而成後天卦,主後半生走向。</p>"));
-  pr.push("河洛理數(簡式起例):");
+    "<p>" + (hl.tianUp ? "陽男陰女,天卦居上" : "陰男陽女,地卦居上") + ";元堂在第 " + hl.yuantang + " 爻(依《起元堂詩》陽時數陽爻、陰時數陰爻)。先天卦主前半生格局,元堂爻變、上下卦互換而成後天卦,主後半生走向。</p>"));
+  pr.push("河洛理數:");
   pr.push("  四柱:" + bz.pillars.map(p => p.gz).join(" ") + "(" + (male ? "男" : "女") + "命,生於 " + dv + " " + tv + ")");
-  pr.push("  化數:" + hl.nums.join("、") + ";天數 " + hl.tian + ",地數 " + hl.di);
-  pr.push("  先天卦 " + hl.xiantian.name + ",元堂第 " + hl.yuantang + " 爻,變後天卦 " + hl.houtian.name, "");
+  pr.push("  化數(干納甲洛書數、支河圖生成數):" + hl.nums.join("、") + ";天數 " + hl.tian + " 去廿五餘 " + hl.tianRest + ",地數 " + hl.di + " 去三十餘 " + hl.diRest + ";" + (hl.tianUp ? "陽男陰女天卦上" : "陰男陽女地卦上"));
+  pr.push("  先天卦 " + hl.xiantian.name + ",元堂第 " + hl.yuantang + " 爻(陽時數陽爻、陰時數陰爻之古法),元堂爻變並上下卦互換得後天卦 " + hl.houtian.name + "(坎屯蹇至尊卦之月令例外已依法處理)", "");
   pr.push("請依河洛理數解讀:1. 天數地數的陰陽稟賦。2. 先天卦「" + hl.xiantian.name + "」的前半生格局與卦辭意涵。3. 元堂爻的爻辭即命辭——請引爻辭細論。4. 後天卦「" + hl.houtian.name + "」的後半生轉向。5. 若起例與貴派定法有異,請註明並以卦義為重。");
 }
 

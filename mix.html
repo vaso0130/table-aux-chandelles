@@ -220,9 +220,9 @@ function birth() {
   const dv = $("b-date").value; if (!dv) throw fail("所選術數需要出生日期");
   const tv = $("b-time").value || "12:00";
   const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
-  const tz = parseFloat($("b-tz").value) || 8;
+  const tz = DC.numOr($("b-tz").value, 8);
   return { y, m, d, h, mi, tz, male: $("b-gender").value === "m", jd: DC.jd(y, m, d, h, mi, tz), str: dv + " " + tv,
-    lat: parseFloat($("b-lat").value) || 25.04, lon: parseFloat($("b-lon").value) || 121.51 };
+    lat: DC.numOr($("b-lat").value, 25.04), lon: DC.numOr($("b-lon").value, 121.51) };
 }
 function nowT() { // 起局時刻(可微調;跟隨此刻時每秒對時)
   const dv = $("w-date").value, tv = $("w-time").value;
@@ -251,8 +251,8 @@ $("n-follow").addEventListener("change", () => { if ($("n-follow").checked) setN
 function nowCtx() {
   const t = nowT();
   const { y, m, d, h, mi } = t;
-  const tz = parseFloat($("n-tz").value) || 8;
-  return { y, m, d, h, mi, tz, lat: parseFloat($("n-lat").value) || 25.04, lon: parseFloat($("n-lon").value) || 121.51,
+  const tz = DC.numOr($("n-tz").value, 8);
+  return { y, m, d, h, mi, tz, lat: DC.numOr($("n-lat").value, 25.04), lon: DC.numOr($("n-lon").value, 121.51),
     jd: DC.jd(y, m, d, h, mi, tz), str: y + "-" + DC.pad2(m) + "-" + DC.pad2(d) + " " + DC.pad2(h) + ":" + DC.pad2(mi) };
 }
 function tropChart(jd, lat, lon) {
@@ -338,21 +338,27 @@ GEN["n-meihua"] = () => {
       "  本卦 " + mh.name + ",動爻第" + mh.mov + "爻;互卦 " + mh.hu.name + ";變卦 " + mh.bian.name,
       "  體卦" + DC.TRIG[mh.ti] + "(" + DC.TRIG_WX[mh.ti] + ")、用卦" + DC.TRIG[mh.yong] + "(" + DC.TRIG_WX[mh.yong] + ");" + mh.rel] };
 };
+function taiyiYearOf(T) { // 立春換歲(與命法生年同制)
+  const jdN = DC.jd(T.y, T.m, T.d, T.h || 12, T.mi || 0, 8);
+  return jdN >= DC.solarTerm(T.y, 315) ? T.y : T.y - 1;
+}
 GEN["n-taiyi"] = () => {
-  const ty = DC.taiyi(new Date().getFullYear());
+  const ty = DC.taiyi(taiyiYearOf(nowT()));
   return { title: "太乙歲計",
     html: "<p>" + ty.gz + "年,太乙在" + ty.gongName + "(第" + ty.yearIn + "年)</p>",
-    lines: ["太乙神數歲計(簡式):" + ty.gz + "年,積年 " + ty.jiNian + ",七十二局第" + ty.ju + "局,太乙在" + ty.gongName + "居第" + ty.yearIn + "年"] };
+    lines: ["太乙神數歲計(簡式,立春換歲):" + ty.gz + "年,積年 " + ty.jiNian + ",七十二局第" + ty.ju + "局,太乙在" + ty.gongName + "居第" + ty.yearIn + "年(太乙九宮配卦乾一離二艮三震四兌六坤七坎八巽九)"] };
 };
 GEN["n-taiyiming"] = () => {
   const B = birth();
-  const bb = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
-  const tyB = DC.taiyi(bb.year), tyN = DC.taiyi(nowT().y);
-  const same = tyB.gong === tyN.gong;
+  const tm = DC.taiyiMing(B.y, B.m, B.d, B.h, B.mi, B.tz, B.male);
+  const tyN = DC.taiyi(taiyiYearOf(nowT()));
+  const same = tm.gong === tyN.gong;
+  const jStr = j => j ? "大將" + j.daPos + "參將" + j.canPos : "臨太乙";
   return { title: "太乙命法",
-    html: "<p>本命太乙在" + tyB.gongName + "・今歲在" + tyN.gongName + (same ? "(回臨!)" : "") + "</p>",
-    lines: ["太乙命法(人道命法簡式):命主年柱 " + bb.pillars[0].gz + ",生年積年 " + tyB.jiNian + ",七十二局第" + tyB.ju + "局,本命太乙在" + tyB.gongName + "(居宮第" + tyB.yearIn + "年)",
-      "  今歲(" + tyN.gz + "年)太乙在" + tyN.gongName + (same ? "——回臨本命宮,大數交會之年" : ",與本命宮相參")] };
+    html: "<p>日計第" + tm.ju + "局,太乙在" + tm.gongName + "・命宮" + tm.mingZh + "・今歲在" + tyN.gongName + (same ? "(回臨!)" : "") + "</p>",
+    lines: ["太乙人道命法(日計論命):年柱 " + tm.bb.pillars[0].gz + ";天數" + tm.tian + " 地數" + tm.di + "(入局) 人數" + tm.ren + ",受氣" + tm.shouqi,
+      "  日計陽遁第" + tm.ju + "局:太乙在" + tm.gongName + ",文昌臨" + tm.wenchang.name + "(" + tm.wenchang.pos + "),計神" + tm.jishen.zh + ",始擊臨" + tm.shiji.name + "(" + tm.shiji.pos + ");主算" + tm.zhuSuan + "(" + jStr(tm.zhuJiang) + "),客算" + tm.keSuan + "(" + jStr(tm.keJiang) + ");命宮" + tm.mingZh,
+      "  今歲(" + tyN.gz + "年)歲計太乙在" + tyN.gongName + (same ? "——回臨本命宮,大數交會之年" : ",與本命宮相參")] };
 };
 GEN["n-heluo"] = () => {
   const B = birth();
@@ -360,8 +366,8 @@ GEN["n-heluo"] = () => {
   const hl = DC.heluo(bz, B.male);
   return { title: "河洛理數",
     html: "<p>先天卦" + hl.xiantian.name + "・後天卦" + hl.houtian.name + "・元堂第" + hl.yuantang + "爻</p>",
-    lines: ["河洛理數(簡式,四柱 " + bz.pillars.map(p => p.gz).join(" ") + "):天數" + hl.tian + " 地數" + hl.di,
-      "  先天卦 " + hl.xiantian.name + "(前半生),元堂第" + hl.yuantang + "爻,變後天卦 " + hl.houtian.name + "(後半生)"] };
+    lines: ["河洛理數(干納甲洛書數、支河圖生成數;四柱 " + bz.pillars.map(p => p.gz).join(" ") + "):天數" + hl.tian + "(餘" + hl.tianRest + ") 地數" + hl.di + "(餘" + hl.diRest + ")",
+      "  先天卦 " + hl.xiantian.name + "(前半生),元堂第" + hl.yuantang + "爻(陽時數陽爻陰時數陰爻),爻變並上下互換得後天卦 " + hl.houtian.name + "(後半生)"] };
 };
 GEN["b-bazi"] = () => {
   const B = birth();
@@ -377,8 +383,10 @@ GEN["b-ziwei"] = () => {
   const B = birth();
   const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
   const lun = DC.lunar(B.y, B.m, B.d, B.tz);
-  const zw = DC.ziwei(lun.month, lun.day, bz.hB, bz.pillars[0].s, bz.pillars[0].b, B.male);
-  const lines = ["紫微斗數(農曆" + (lun.isLeap ? "閏" : "") + lun.month + "月" + lun.day + "日" + DC.BRANCHES[bz.hB] + "時," + zw.juName + "):"];
+  const ly = DC.lunarYearGZ(B.y, B.m, lun);
+  const zwMonth = (lun.isLeap && lun.day >= 16) ? lun.month % 12 + 1 : lun.month; // 閏月折半
+  const zw = DC.ziwei(zwMonth, lun.day, bz.hB, ly.s, ly.b, B.male);
+  const lines = ["紫微斗數(農曆" + ly.gz + "年" + (lun.isLeap ? "閏" : "") + lun.month + "月" + lun.day + "日" + DC.BRANCHES[bz.hB] + "時," + zw.juName + ";年界以正月初一換歲之主流取法):"];
   for (let k = 0; k < 12; k++) {
     const b2 = ((zw.ming - k) % 12 + 12) % 12, P = zw.P[b2];
     lines.push("  " + P.palace + "(" + DC.BRANCHES[b2] + (P.isShen ? ",身" : "") + "):" + (P.stars.join(" ") || "無主星") + (P.good.length ? " 吉:" + P.good.join(" ") : "") + (P.bad.length ? " 煞:" + P.bad.join(" ") : "") + (P.hua.length ? " " + P.hua.join(" ") : ""));

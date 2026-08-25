@@ -14,6 +14,7 @@ var DC = {};
   const atan2d = (y, x) => Math.atan2(y, x) / RAD;
   const pad2 = n => String(n).padStart(2, "0");
   DC.rev = rev; DC.pad2 = pad2;
+  DC.numOr = (v, d) => { v = parseFloat(v); return Number.isFinite(v) ? v : d; }; // 「0」不可落回預設(時區 UTC+0 合法)
 
   DC.rand = function (n) { // crypto 隨機 0..n-1
     const u = new Uint32Array(1), lim = Math.floor(4294967296 / n) * n;
@@ -23,7 +24,10 @@ var DC = {};
 
   /* ── 時間 ── */
   DC.jdFromUTC = ms => ms / 86400000 + 2440587.5;
-  DC.utcMs = (y, mo, d, h, mi, tz) => Date.UTC(y, mo - 1, d, h || 0, mi || 0) - (tz || 0) * 3600000;
+  const utc = (y, mo, d, h, mi) => { // Date.UTC 會把 0-99 年映射為 19xx,改用 setUTCFullYear
+    const dt = new Date(0); dt.setUTCFullYear(y, mo - 1, d); dt.setUTCHours(h || 0, mi || 0, 0, 0); return dt.getTime();
+  };
+  DC.utcMs = (y, mo, d, h, mi, tz) => utc(y, mo, d, h, mi) - (tz || 0) * 3600000;
   DC.jd = (y, mo, d, h, mi, tz) => DC.jdFromUTC(DC.utcMs(y, mo, d, h, mi, tz));
   DC.jdToDate = (jd, tz) => new Date((jd - 2440587.5) * 86400000 + (tz || 0) * 3600000); // 讀取用 getUTC*
   DC.fmtJD = function (jd, tz, withTime) {
@@ -33,21 +37,35 @@ var DC = {};
     return s;
   };
   const ldn = (jd, tz) => Math.floor(jd + tz / 24 + 0.5); // 當地日序號(午夜換日)
+  const deltaTdays = jd => { // ΔT=TT−UT(Espenak–Meeus 簡式,1900–2150 適用),單位:日
+    const y = 2000 + (jd - 2451545.0) / 365.25;
+    let t, dt;
+    if (y < 1920) { t = y - 1900; dt = -2.79 + 1.494119 * t - 0.0598939 * t * t + 0.0061966 * t * t * t - 0.000197 * t * t * t * t; }
+    else if (y < 1941) { t = y - 1920; dt = 21.20 + 0.84493 * t - 0.076100 * t * t + 0.0020936 * t * t * t; }
+    else if (y < 1961) { t = y - 1950; dt = 29.07 + 0.407 * t - t * t / 233 + t * t * t / 2547; }
+    else if (y < 1986) { t = y - 1975; dt = 45.45 + 1.067 * t - t * t / 260 - t * t * t / 718; }
+    else if (y < 2005) { t = y - 2000; dt = 63.86 + 0.3345 * t - 0.060374 * t * t + 0.0017275 * t * t * t + 0.000651814 * t * t * t * t + 0.00002373599 * t * t * t * t * t; }
+    else if (y < 2050) { t = y - 2000; dt = 62.92 + 0.32217 * t + 0.005589 * t * t; }
+    else { const u = (y - 1820) / 100; dt = -20 + 32 * u * u - 0.5628 * (2150 - y); }
+    return dt / 86400;
+  };
+  const nutLon = d => -0.00479 * sind(rev(125.04 - 0.052954 * d)); // 黃經章動主項(度)
 
   /* ═══ 天文:太陽/月亮/行星 黃經 ═══ */
-  function sunPos(jd) {
-    const d = jd - 2451543.5;
+  function sunPos(jd) { // 入參 UT;內部以 TT 計,回傳視黃經(含章動與光行差)
+    const d = jd + deltaTdays(jd) - 2451543.5;
     const w = 282.9404 + 4.70935e-5 * d, e = 0.016709 - 1.151e-9 * d, M = rev(356.0470 + 0.9856002585 * d);
     const E = M + e * (180 / Math.PI) * sind(M) * (1 + e * cosd(M));
     const xv = cosd(E) - e, yv = sind(E) * Math.sqrt(1 - e * e);
     const v = atan2d(yv, xv), r = Math.sqrt(xv * xv + yv * yv);
-    const lon = rev(v + w);
-    return { lon, r, x: r * cosd(lon), y: r * sind(lon), Ms: M, ws: w };
+    const lonGeom = rev(v + w); // 幾何黃經(合成行星地心位置用)
+    const lon = rev(lonGeom + nutLon(d) - 0.00569); // 視黃經:章動+光行差 −20.5″
+    return { lon, r, x: r * cosd(lonGeom), y: r * sind(lonGeom), Ms: M, ws: w };
   }
   DC.sunLon = jd => sunPos(jd).lon;
 
-  DC.moonLon = function (jd) {
-    const d = jd - 2451543.5;
+  DC.moonLon = function (jd) { // 入參 UT;內部以 TT 計,回傳視黃經(含章動)
+    const d = jd + deltaTdays(jd) - 2451543.5;
     const N = rev(125.1228 - 0.0529538083 * d), i = 5.1454, w = rev(318.0634 + 0.1643573223 * d);
     const a = 60.2666, e = 0.054900, M = rev(115.3654 + 13.0649929509 * d);
     let E = M + e * (180 / Math.PI) * sind(M) * (1 + e * cosd(M));
@@ -63,7 +81,7 @@ var DC = {};
       - 0.059 * sind(2 * Mm - 2 * D) - 0.057 * sind(Mm - 2 * D + Ms) + 0.053 * sind(Mm + 2 * D)
       + 0.046 * sind(2 * D - Ms) + 0.041 * sind(Mm - Ms) - 0.035 * sind(D)
       - 0.031 * sind(Mm + Ms) - 0.015 * sind(2 * F - 2 * D) + 0.011 * sind(Mm - 4 * D);
-    return rev(lon);
+    return rev(lon + nutLon(d));
   };
   DC.moonNodeLon = function (jd) { // 平均北交點(羅睺)
     return rev(125.1228 - 0.0529538083 * (jd - 2451543.5));
@@ -91,21 +109,22 @@ var DC = {};
       z: r * sind(v + w) * sind(i), M
     };
   }
-  function planetLons(jd) { // 地心黃經(含木土天攝動、冥王星近似式)
-    const d = jd - 2451543.5, s = sunPos(jd), out = {};
+  function planetLons(jd) { // 地心黃經(木土天攝動加於日心黃經後再合成、冥王星近似式)
+    const d = jd + deltaTdays(jd) - 2451543.5, s = sunPos(jd), out = {};
     const Mj = rev(ELEM.jup[10] + ELEM.jup[11] * d), MsS = rev(ELEM.sat[10] + ELEM.sat[11] * d), Mu = rev(ELEM.ura[10] + ELEM.ura[11] * d);
     for (const k in ELEM) {
       const h = helio(ELEM[k], d);
-      let lon = rev(atan2d(h.y + s.y, h.x + s.x));
-      if (k === "jup") lon += -0.332 * sind(2 * Mj - 5 * MsS - 67.6) - 0.056 * sind(2 * Mj - 2 * MsS + 21)
+      let lonh = atan2d(h.y, h.x); // 日心黃經(Schlyter 攝動加在此層)
+      if (k === "jup") lonh += -0.332 * sind(2 * Mj - 5 * MsS - 67.6) - 0.056 * sind(2 * Mj - 2 * MsS + 21)
         + 0.042 * sind(3 * Mj - 5 * MsS + 21) - 0.036 * sind(Mj - 2 * MsS) + 0.022 * cosd(Mj - MsS)
         + 0.023 * sind(2 * Mj - 3 * MsS + 52) - 0.016 * sind(Mj - 5 * MsS - 69);
-      if (k === "sat") lon += 0.812 * sind(2 * Mj - 5 * MsS - 67.6) - 0.229 * cosd(2 * Mj - 4 * MsS - 2)
+      if (k === "sat") lonh += 0.812 * sind(2 * Mj - 5 * MsS - 67.6) - 0.229 * cosd(2 * Mj - 4 * MsS - 2)
         + 0.119 * sind(Mj - 2 * MsS - 3) + 0.046 * sind(2 * Mj - 6 * MsS - 69) + 0.014 * sind(Mj - 3 * MsS + 32);
-      if (k === "ura") lon += 0.040 * sind(MsS - 2 * Mu + 6) + 0.035 * sind(MsS - 3 * Mu + 33) - 0.015 * sind(Mj - Mu + 20);
-      out[k] = rev(lon);
+      if (k === "ura") lonh += 0.040 * sind(MsS - 2 * Mu + 6) + 0.035 * sind(MsS - 3 * Mu + 33) - 0.015 * sind(Mj - Mu + 20);
+      const rh = Math.sqrt(h.x * h.x + h.y * h.y); // 黃道面投影半徑(=r·cos lat)
+      out[k] = rev(atan2d(rh * sind(lonh) + s.y, rh * cosd(lonh) + s.x));
     }
-    { // 冥王星(1900-2100 近似式,日心→地心)
+    { // 冥王星(1900-2100 近似式,日心→地心;未乘 cos(lat),黃經誤差約 0.06°,可容)
       const S = 50.03 + 0.033459652 * d, P = 238.95 + 0.003968789 * d;
       const lonh = 238.9508 + 0.00400703 * d - 19.799 * sind(P) + 19.848 * cosd(P) + 0.897 * sind(2 * P)
         - 4.956 * cosd(2 * P) + 0.610 * sind(3 * P) + 1.211 * cosd(3 * P) - 0.341 * sind(4 * P)
@@ -126,16 +145,18 @@ var DC = {};
     { id: "nep", zh: "海王星", gl: "♆" }, { id: "plu", zh: "冥王星", gl: "♇" },
     { id: "nod", zh: "北交點", gl: "☊" }
   ];
-  DC.chart = function (jd) { // 全行星地心黃經 + 逆行旗標
+  DC.chart = function (jd) { // 全行星地心黃經 + 逆行旗標 + 日速(度/日,入相位判別用)
     const p1 = planetLons(jd - 0.5), p2 = planetLons(jd + 0.5);
     const now = planetLons(jd);
     const list = [
-      { id: "sun", lon: DC.sunLon(jd), retro: false },
-      { id: "moo", lon: DC.moonLon(jd), retro: false }
+      { id: "sun", lon: DC.sunLon(jd), retro: false, speed: rev180(DC.sunLon(jd + 0.5) - DC.sunLon(jd - 0.5)) },
+      { id: "moo", lon: DC.moonLon(jd), retro: false, speed: rev180(DC.moonLon(jd + 0.5) - DC.moonLon(jd - 0.5)) }
     ];
-    for (const k of ["mer", "ven", "mar", "jup", "sat", "ura", "nep", "plu"])
-      list.push({ id: k, lon: now[k], retro: rev180(p2[k] - p1[k]) < 0 });
-    list.push({ id: "nod", lon: DC.moonNodeLon(jd), retro: true });
+    for (const k of ["mer", "ven", "mar", "jup", "sat", "ura", "nep", "plu"]) {
+      const sp = rev180(p2[k] - p1[k]);
+      list.push({ id: k, lon: now[k], retro: sp < 0, speed: sp });
+    }
+    list.push({ id: "nod", lon: DC.moonNodeLon(jd), retro: true, speed: -0.0529538083 });
     for (const p of list) { const m = DC.PLANETS.find(q => q.id === p.id); p.zh = m.zh; p.gl = m.gl; }
     return list;
   };
@@ -157,8 +178,11 @@ var DC = {};
   DC.signOf = lon => Math.floor(rev(lon) / 30);
   DC.fmtLon = function (lon) {
     lon = rev(lon);
-    const s = Math.floor(lon / 30), d = lon - s * 30, dd = Math.floor(d), mm = Math.round((d - dd) * 60);
-    return DC.ZODIAC[s] + " " + dd + "°" + pad2(mm === 60 ? 0 : mm) + "′";
+    let s = Math.floor(lon / 30);
+    const d = lon - s * 30;
+    let dd = Math.floor(d), mm = Math.round((d - dd) * 60);
+    if (mm === 60) { mm = 0; dd += 1; if (dd === 30) { dd = 0; s = (s + 1) % 12; } }
+    return DC.ZODIAC[s] + " " + dd + "°" + pad2(mm) + "′";
   };
 
   DC.ASPECTS = [[0, "合相", "☌"], [60, "六合", "⚹"], [90, "四分", "□"], [120, "三合", "△"], [180, "對分", "☍"]];
@@ -171,9 +195,15 @@ var DC = {};
         const diff = Math.abs(rev180(a.lon - b.lon));
         for (const [ang, name, gl] of DC.ASPECTS) {
           const lum = (a.id === "sun" || a.id === "moo" || b.id === "sun" || b.id === "moo");
-          const orb = lum ? 8 : 6;
-          if (Math.abs(diff - ang) <= orb)
-            res.push({ a, b, ang, name, gl, orb: Math.abs(diff - ang) });
+          const orb = ang === 60 ? (lum ? 4 : 3) : (lum ? 8 : 6); // 六合容許度收窄
+          if (Math.abs(diff - ang) <= orb) {
+            let applying = null; // 入相/離相:兩星皆有速度時,推 0.1 日後角距是否收緊
+            if (typeof a.speed === "number" && typeof b.speed === "number") {
+              const dNext = Math.abs(rev180((a.lon + a.speed * 0.1) - (b.lon + b.speed * 0.1)));
+              applying = Math.abs(dNext - ang) < Math.abs(diff - ang);
+            }
+            res.push({ a, b, ang, name, gl, orb: Math.abs(diff - ang), applying });
+          }
         }
       }
     res.sort((x, y) => x.orb - y.orb);
@@ -344,14 +374,14 @@ var DC = {};
   DC.STEM_WX = ["木", "木", "火", "火", "土", "土", "金", "金", "水", "水"];
   DC.BRANCH_WX = ["水", "土", "木", "木", "土", "火", "火", "土", "金", "金", "土", "水"];
   DC.WX = ["木", "火", "土", "金", "水"];
-  DC.HIDDEN = [["癸"], ["己", "癸", "辛"], ["甲", "丙", "戊"], ["乙"], ["戊", "乙", "癸"], ["丙", "戊", "庚"], ["丁", "己"], ["己", "丁", "乙"], ["庚", "壬", "戊"], ["辛"], ["戊", "辛", "丁"], ["壬", "甲"]];
+  DC.HIDDEN = [["癸"], ["己", "癸", "辛"], ["甲", "丙", "戊"], ["乙"], ["戊", "乙", "癸"], ["丙", "庚", "戊"], ["丁", "己"], ["己", "丁", "乙"], ["庚", "壬", "戊"], ["辛"], ["戊", "辛", "丁"], ["壬", "甲"]];
   DC.NAYIN = ["海中金", "爐中火", "大林木", "路旁土", "劍鋒金", "山頭火", "澗下水", "城頭土", "白蠟金", "楊柳木",
     "泉中水", "屋上土", "霹靂火", "松柏木", "長流水", "砂中金", "山下火", "平地木", "壁上土", "金箔金",
     "覆燈火", "天河水", "大驛土", "釵釧金", "桑柘木", "大溪水", "沙中土", "天上火", "石榴木", "大海水"];
   DC.nayin = gzIdx => DC.NAYIN[Math.floor(gzIdx / 2)];
 
   DC.dayGZ = function (y, m, d) { // 1949-10-01 = 甲子(已驗:2000-01-01 戊午)
-    const days = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(1949, 9, 1)) / 86400000);
+    const days = Math.round((DC.utcMs(y, m, d, 0, 0, 0) - Date.UTC(1949, 9, 1)) / 86400000);
     return ((days % 60) + 60) % 60;
   };
 
@@ -420,10 +450,7 @@ var DC = {};
     const tianyi = [[1, 7], [0, 8], [11, 9], [11, 9], [1, 7], [0, 8], [1, 7], [6, 2], [3, 5], [3, 5]][dS];
     const hitT = bAll.filter(b => tianyi.includes(b));
     if (hitT.length) out.push("天乙貴人(" + hitT.map(b => DC.BRANCHES[b]).join("") + ")——一生逢凶化吉的貴人星");
-    const th = [9, 6, 3, 0]; // 申子辰→酉 寅午戌→卯 巳酉丑→午 亥卯未→子
-    const peach = [9, 6, 3, 0][[0, 1, 2, 3][yB % 4] === 0 ? 0 : yB % 4]; // 依年支三合
-    const taohua = [9, 10, 11, 0, 1, 2][0]; // 佔位不用
-    const peachOf = b => [9, 6, 3, 0][b % 4];
+    const peachOf = b => [9, 6, 3, 0][b % 4]; // 申子辰→酉 寅午戌→卯 巳酉丑→午 亥卯未→子
     if (bAll.some(b => b === peachOf(yB) || b === peachOf(dB))) out.push("桃花——人緣與異性緣旺,魅力外放");
     const maOf = b => [2, 11, 8, 5][b % 4];
     if (bAll.some(b => b === maOf(yB) || b === maOf(dB))) out.push("驛馬——奔波走動、遷移旅行、變動中得利");
@@ -485,6 +512,11 @@ var DC = {};
     let t = DC.newMoonAfter(jd - 35);
     while (true) { const nx = DC.newMoonAfter(t + 1); if (nx > jd) break; t = nx; }
     return t;
+  };
+  DC.lunarYearGZ = function (y, m, lun) { // 農曆歸年(正月初一換歲)之年干支;lun 為 DC.lunar 結果
+    const ly = (m <= 2 && lun.month >= 11) ? y - 1 : y;
+    const idx = ((ly - 4) % 60 + 60) % 60;
+    return { year: ly, idx, s: idx % 10, b: idx % 12, gz: DC.GZ(idx) };
   };
   DC.CN_MONTH = ["正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"];
   DC.CN_DAY = (() => { const a = []; const d1 = ["初", "十", "廿", "三"]; const d2 = "一二三四五六七八九十";
@@ -552,8 +584,8 @@ var DC = {};
     const birthday = DC.numReduce(d, true);
     const attitude = DC.numReduce(rm + rd0, false);
     const c1 = Math.abs(rm - rd0), c2 = Math.abs(rd0 - ry), c3 = Math.abs(c1 - c2), c4 = Math.abs(rm - ry);
-    const p1 = DC.numReduce(rm + rd0, false), p2 = DC.numReduce(rd0 + ry, false),
-      p3 = DC.numReduce(p1 + p2, false), p4 = DC.numReduce(rm + ry, false);
+    const p1 = DC.numReduce(rm + rd0, true), p2 = DC.numReduce(rd0 + ry, true),
+      p3 = DC.numReduce(p1 + p2, true), p4 = DC.numReduce(rm + ry, true); // 巔峰數遇 11/22/33 保留大師數(與生命數/生日數一致)
     const lpS = DC.numReduce(lp, false);
     const a1 = 36 - lpS;
     const py = DC.numReduce(rm + rd0 + DC.numReduce(digitsOf(nowY).reduce((a, b) => a + b, 0), false), false);
@@ -638,7 +670,6 @@ var DC = {};
     for (let k = 0; k < 12; k++) {
       const b = ((ming - k) % 12 + 12) % 12;
       P[b].palace = DC.ZW_PALACES[k];
-      const step = fwd ? k : (12 - k) % 12;
       P[((ming + (fwd ? k : -k)) % 12 + 12) % 12].daxian = (ju + k * 10) + "-" + (ju + k * 10 + 9);
     }
     P[shen].isShen = true;
@@ -749,14 +780,7 @@ var DC = {};
     const dayWx = wxS(dS);
     let chuan = null, keti = "";
     const lowWx = (les, i) => i === 0 ? wxS(dS) : wxB(les.low);
-    // 賊剋
-    const zei = [], ke = [];
-    lessons.forEach((les, i) => {
-      const lw = lowWx(les, i), uw = wxB(les.upB);
-      if (kills(lw, uw)) ke.push(les.upB);       // 上被下?否:下剋上=賊
-      if (kills(uw, lw)) { } // 佔位
-    });
-    // 重新明確:下賊上=下剋上;上剋下
+    // 賊剋:下賊上(下剋上)/上剋下
     const zeiList = [], keList = [];
     lessons.forEach((les, i) => {
       const lw = lowWx(les, i), uw = wxB(les.upB);
@@ -768,21 +792,36 @@ var DC = {};
       const f = arr.filter(b => (b % 2 === 0) === stemYang);
       return f.length ? f : arr;
     };
-    const pickShe = arr => { // 涉害簡法:取地盤四孟,次四仲
-      const meng = [2, 8, 5, 11], zhong = [0, 6, 3, 9];
-      const dipos = b => ((b - o) % 12 + 12) % 12;
-      let f = arr.filter(b => meng.includes(dipos(b)));
-      if (f.length === 1) return f[0];
-      f = (f.length ? f : arr).filter(b => zhong.includes(dipos(b)));
-      return (f.length ? f : arr)[0];
+    const JG = { 2: [0], 4: [1], 5: [2, 4], 7: [3, 5], 8: [6], 10: [7], 11: [8], 1: [9] }; // 十干寄宮(子午卯酉無寄干)
+    const dipos = b => ((b - o) % 12 + 12) % 12;
+    const pickShe = (arr, isZei) => { // 涉害正法(《大全·課經》):自所乘地盤歷歸本家(含起點不含本家),計地支本氣+寄宮干之剋,深者發用
+      const depth = X => {
+        const xw = wxB(X); let n = 0;
+        const P = dipos(X), steps = ((X - P) % 12 + 12) % 12;
+        for (let k = 0; k < steps; k++) {
+          const pos = (P + k) % 12;
+          const elems = [wxB(pos)].concat((JG[pos] || []).map(s => wxS(s)));
+          for (const e of elems) if (isZei ? kills(e, xw) : kills(xw, e)) n++; // 下賊上數受剋,上剋下數所剋
+        }
+        return n;
+      };
+      const ds = arr.map(depth), mx = Math.max.apply(null, ds);
+      const deep = arr.filter((b, i) => ds[i] === mx);
+      if (deep.length === 1) return { b: deep[0], tag: "涉害課" };
+      const meng = [2, 8, 5, 11], zhong = [0, 6, 3, 9]; // 俱深俱淺:先臨孟(見機)、次臨仲(察微)、復等剛日干上柔日支上(綴瑕)
+      let f = deep.filter(b => meng.includes(dipos(b)));
+      if (f.length === 1) return { b: f[0], tag: "涉害課(見機)" };
+      f = deep.filter(b => zhong.includes(dipos(b)));
+      if (f.length === 1) return { b: f[0], tag: "涉害課(察微)" };
+      return { b: stemYang ? k1.upB : k3.upB, tag: "涉害課(綴瑕)" };
     };
     const fuyin = o === 0, fanyin = o === 6;
     let first = null;
     const zu = uniq(zeiList), ku = uniq(keList);
     if (zu.length === 1) { first = zu[0]; keti = "重審課(下賊上)"; }
-    else if (zu.length > 1) { const b = pickBi(zu); if (b.length === 1) { first = b[0]; keti = "知一課(比用)"; } else { first = pickShe(b); keti = "涉害課(簡法取孟)"; } }
+    else if (zu.length > 1) { const b = pickBi(zu); if (b.length === 1) { first = b[0]; keti = "知一課(比用)"; } else { const r = pickShe(b, true); first = r.b; keti = r.tag; } }
     else if (ku.length === 1) { first = ku[0]; keti = "元首課(上剋下)"; }
-    else if (ku.length > 1) { const b = pickBi(ku); if (b.length === 1) { first = b[0]; keti = "知一課(比用)"; } else { first = pickShe(b); keti = "涉害課(簡法取孟)"; } }
+    else if (ku.length > 1) { const b = pickBi(ku); if (b.length === 1) { first = b[0]; keti = "知一課(比用)"; } else { const r = pickShe(b, false); first = r.b; keti = r.tag; } }
     if (first == null && !fuyin && !fanyin) {
       // 遙剋
       const yaoKe = [k2, k3, k4].map(l => l.upB).filter(b => kills(wxB(b), dayWx));
@@ -792,7 +831,7 @@ var DC = {};
     }
     let mid = null, last = null;
     if (first == null && !fuyin && !fanyin) {
-      const distinct = uniq(lessons.map(l => l.upB * 16 + (l.low === -1 ? 12 + dS % 12 : l.low)));
+      const distinct = uniq(lessons.map(l => l.upB * 16 + (l.low === -1 ? ji : l.low))); // 課同以「上神+所臨地盤位」判(干課以寄宮位比對)
       if (distinct.length === 4) { // 昴星
         if (stemYang) { first = up(9); mid = k3.upB; last = k1.upB; keti = "昴星課(虎視)"; }
         else { first = ((9 - o) % 12 + 12) % 12; mid = k1.upB; last = k3.upB; keti = "昴星課(冬蛇掩目)"; }
@@ -800,25 +839,32 @@ var DC = {};
         if (ji === dB) { // 八專
           if (stemYang) first = (k1.upB + 2) % 12; else first = ((k4.upB - 2) % 12 + 12) % 12;
           mid = k1.upB; last = k1.upB; keti = "八專課(簡法)";
-        } else {
-          const heStem = (dS + 5) % 10;
-          first = up(JI[heStem]); mid = k1.upB; last = k1.upB; keti = "別責課(簡法)";
+        } else { // 別責:剛日取干合之干寄宮上神;柔日取支前三合(三合順次位)之天盤字。中末俱干上神
+          if (stemYang) { const heStem = (dS + 5) % 10; first = up(JI[heStem]); }
+          else first = (dB + 4) % 12;
+          mid = k1.upB; last = k1.upB; keti = "別責課";
         }
       }
     }
+    const XING3 = { 0: 3, 3: 0, 1: 10, 10: 7, 7: 1, 2: 5, 5: 8, 8: 2 }; // 三刑(辰午酉亥自刑不在表)
+    const selfXing = b => XING3[b] == null;
     if (fuyin && first == null) {
-      const xing = b => { const m3 = { 2: 5, 5: 8, 8: 2, 1: 10, 10: 7, 7: 1, 0: 3, 3: 0 }; return m3[b] != null ? m3[b] : (b + 6) % 12; };
-      if (stemYang) { first = k1.upB; mid = xing(first); last = xing(mid); }
-      else { first = k3.upB; mid = xing(first); last = xing(mid); }
-      keti = "伏吟課";
+      first = stemYang ? k1.upB : k3.upB; // 陽日自任取干上,陰日自信取支上
+      keti = stemYang ? "伏吟課(自任)" : "伏吟課(自信)";
     }
     if (fanyin && first == null) {
       const ma = [2, 11, 8, 5][dB % 4];
       first = ma; mid = k3.upB; last = k1.upB; keti = "返吟課(無剋取馬)";
     }
-    if (mid == null) { mid = up(first); last = up(mid); }
+    if (mid == null) {
+      if (fuyin) { // 伏吟有剋還為用,迤邐刑之作中末;初自刑中取日辰並,中自刑末取沖
+        if (keti.indexOf("伏吟") < 0) keti += "(伏吟)";
+        mid = selfXing(first) ? (stemYang ? k3.upB : k1.upB) : XING3[first];
+        last = selfXing(mid) ? (mid + 6) % 12 : XING3[mid];
+      } else { mid = up(first); last = up(mid); }
+    }
     // 天將
-    const GUI = [[1, 7], [0, 8], [11, 9], [11, 9], [1, 7], [0, 8], [1, 7], [6, 2], [3, 5], [3, 5]][dS];
+    const GUI = [[1, 7], [0, 8], [11, 9], [11, 9], [1, 7], [0, 8], [1, 7], [6, 2], [5, 3], [5, 3]][dS]; // 壬癸蛇兔藏:晝巳夜卯
     const isDay = hb >= 3 && hb <= 8; // 卯~申為晝
     const gui = isDay ? GUI[0] : GUI[1];
     const guiDi = ((gui - o) % 12 + 12) % 12;
@@ -857,6 +903,9 @@ var DC = {};
   };
 
   /* ═══ 太乙神數(歲計簡式)═══ */
+  // 太乙九宮配卦異於洛書:乾一(天門)、離二、艮三、震四、中五、兌六、坤七、坎八、巽九(對宮合十)
+  DC.TAIYI_GONG = ["", "乾一宮(西北)", "離二宮(南)", "艮三宮(東北)", "震四宮(東)", "中五宮", "兌六宮(西)", "坤七宮(西南)", "坎八宮(北)", "巽九宮(東南)"];
+  DC.TAIYI_GRID = [9, 2, 7, 4, 5, 6, 3, 8, 1]; // 南上北下之太乙式盤面(左上東南…右下西北)
   DC.taiyi = function (year) {
     const jiNian = year + 10153917; // 太乙統宗積年
     const c24 = ((jiNian - 1) % 24 + 24) % 24;
@@ -865,30 +914,131 @@ var DC = {};
     const yearIn = c24 % 3 + 1;
     const ju = ((jiNian - 1) % 72 + 72) % 72 + 1;
     const yIdx = ((year - 4) % 60 + 60) % 60;
-    return { jiNian, gong, gongName: DC.GONG_NAME[gong], yearIn, ju, gz: DC.GZ(yIdx) };
+    return { jiNian, gong, gongName: DC.TAIYI_GONG[gong], yearIn, ju, gz: DC.GZ(yIdx) };
+  };
+
+  /* ═══ 太乙人道命法(日計論命,楊景磐《太乙通解》系;三數與落宮經雙命例驗證)═══ */
+  DC.TAIYI_RING = [ // 十六神環(順時針):[神名, 位, 八正宮數(間神0), 太乙宮號(間神0)]
+    ["地主", "子", 8, 8], ["陽德", "丑", 0, 0], ["和德", "艮", 3, 3], ["呂申", "寅", 0, 0],
+    ["高叢", "卯", 4, 4], ["太陽", "辰", 0, 0], ["大炅", "巽", 9, 9], ["大神", "巳", 0, 0],
+    ["大威", "午", 2, 2], ["天道", "未", 0, 0], ["大武", "坤", 7, 7], ["武德", "申", 0, 0],
+    ["太簇", "酉", 6, 6], ["陰主", "戌", 0, 0], ["陰德", "乾", 1, 1], ["大義", "亥", 0, 0]
+  ];
+  DC.taiyiMing = function (y, m, d, h, mi, tz, male) {
+    tz = tz == null ? 8 : tz;
+    const bb = DC.bazi(y, m, d, h == null ? 12 : h, mi || 0, tz);
+    // 上一個冬至與距日數
+    const bLdn = ldn(DC.jd(y, m, d, 12, 0, tz), tz);
+    let wsY = y, ws = DC.solarTerm(wsY, 270), wsLdn = ldn(ws, tz);
+    if (bLdn < wsLdn) { wsY = y - 1; ws = DC.solarTerm(wsY, 270); wsLdn = ldn(ws, tz); }
+    // 積日:祖數 29277(與統宗積年 10153917 同餘)×歲實 365.2425 取整,再以曆算冬至日干支校正相位
+    let D0 = Math.floor((29277 + wsY) * 365.2425);
+    const wsD = DC.jdToDate(ws, tz);
+    const wsIdx = DC.dayGZ(wsD.getUTCFullYear(), wsD.getUTCMonth() + 1, wsD.getUTCDate());
+    let diffGz = ((wsIdx - D0 % 60) % 60 + 60) % 60; if (diffGz > 30) diffGz -= 60;
+    D0 += diffGz;
+    const jiRi = D0 + (bLdn - wsLdn);
+    // 天地人三數與受氣干支
+    const tian = ((jiRi % 720) + 720) % 720 + 1;
+    const diN = (tian - 1) % 72 + 1;   // 地數=入局數(陽遁七十二局)
+    const ren = (tian - 1) % 12 + 1;
+    const shouqi = DC.GZ((tian - 1) % 60);
+    // 太乙落宮:三日一徙,宮序一二三四(不入五)六七八九
+    const seq8 = [1, 2, 3, 4, 6, 7, 8, 9];
+    const gong = seq8[(Math.ceil(diN / 3) - 1) % 8];
+    const tyRing = { 1: 14, 2: 8, 3: 2, 4: 4, 6: 12, 7: 10, 8: 0, 9: 6 }[gong];
+    // 文昌(天目):局數 mod 18(0作18),自武德(申)次位酉起順行,乾巽(天門地戶)重留——雙命例(局59→亥、局70→未)唯一解
+    const WC_SEQ = [12, 13, 14, 14, 15, 0, 1, 2, 3, 4, 5, 6, 6, 7, 8, 9, 10, 11];
+    const r18 = (diN - 1) % 18;
+    const wcRing = WC_SEQ[r18];
+    const RING_B = [0, 1, 1, 2, 3, 4, 4, 5, 6, 7, 7, 8, 9, 10, 10, 11]; // 環位→支序(維宮取前一支)
+    const wcB = RING_B[wcRing];
+    // 計神:自寅起一逆行十二辰,數至人數
+    const jiShen = ((2 - (ren - 1)) % 12 + 12) % 12;
+    // 始擊(客目):計神加和德(艮),文昌所乘之辰
+    const sjB = ((1 + wcB - jiShen) % 12 + 12) % 12;
+    const B_RING = [0, 1, 3, 4, 5, 7, 8, 9, 11, 12, 13, 15]; // 支序→環位
+    const sjRing = B_RING[sjB];
+    // 主客算:自起點(八正起宮數/間神起一)順行歷八正宮加宮數,至太乙前一宮止
+    const calc = start => {
+      if (start === tyRing) return 0; // 臨太乙宮,算不得行(掩)
+      let n = DC.TAIYI_RING[start][2] || 1;
+      for (let i = (start + 1) % 16; i !== tyRing; i = (i + 1) % 16) n += DC.TAIYI_RING[i][2];
+      return n;
+    };
+    const jiang = suan => { // 大將=算之個位(整十以 mod 9);參將=大將×3 之個位
+      if (!suan) return null;
+      let dg = suan % 10; if (dg === 0) { dg = suan % 9; if (dg === 0) dg = 9; }
+      let cn = (dg * 3) % 10; if (cn === 0) cn = (dg * 3) % 9 || 9;
+      const NAME = { 1: "乾", 2: "午", 3: "艮", 4: "卯", 5: "中", 6: "酉", 7: "坤", 8: "子", 9: "巽" };
+      return { da: dg, daPos: NAME[dg], can: cn, canPos: NAME[cn] };
+    };
+    const zhu = calc(wcRing), ke = calc(sjRing);
+    // 命宮:生月支加臨年支上,陽男陰女順(陰男陽女逆)數至生時支
+    const yZ = bb.pillars[0].b, mZ = bb.pillars[1].b, hZ = bb.hB;
+    const yangY = bb.pillars[0].s % 2 === 0;
+    const fwd = male == null ? true : (male === yangY);
+    const off = ((hZ - mZ) % 12 + 12) % 12;
+    const ming = fwd ? (yZ + off) % 12 : ((yZ - off) % 12 + 12) % 12;
+    return {
+      bb, jiRi, tian, di: diN, ren, shouqi, ju: diN,
+      gong, gongName: DC.TAIYI_GONG[gong],
+      wenchang: { ring: wcRing, name: DC.TAIYI_RING[wcRing][0], pos: DC.TAIYI_RING[wcRing][1], b: wcB },
+      jishen: { b: jiShen, zh: DC.BRANCHES[jiShen] },
+      shiji: { ring: sjRing, name: DC.TAIYI_RING[sjRing][0], pos: DC.TAIYI_RING[sjRing][1], b: sjB },
+      zhuSuan: zhu, zhuJiang: jiang(zhu), keSuan: ke, keJiang: jiang(ke),
+      ming, mingZh: DC.BRANCHES[ming], fwd
+    };
   };
 
   /* ═══ 河洛理數(簡式)═══ */
-  DC.heluo = function (bz, male) {
-    const SN = [9, 8, 7, 6, 5, 9, 8, 7, 6, 5];
-    const BN = [9, 8, 7, 6, 5, 4, 9, 8, 7, 6, 5, 4];
-    const nums = [];
-    for (const p of bz.pillars) { nums.push(SN[p.s]); nums.push(BN[p.b]); }
-    const tian = nums.filter(n => n % 2 === 1).reduce((a, b) => a + b, 0);
-    const di = nums.filter(n => n % 2 === 0).reduce((a, b) => a + b, 0);
-    const guaNum = n => { let g = n % 10; if (g === 0) g = 10; if (g > 8) g -= 8; return g - 1; };
-    const tg = guaNum(tian % 25 === 0 ? 25 : tian % 25);
-    const dg = guaNum(di % 30 === 0 ? 30 : di % 30);
-    const upper = male ? tg : dg, lower = male ? dg : tg;
-    const yuantang = (bz.hB % 6) + 1;
+  DC.heluo = function (bz, male) { // 河洛理數正統起例:天干納甲洛書數+地支河圖生成數(一支一奇一偶)
+    const SN = [6, 2, 8, 7, 1, 9, 3, 4, 6, 2]; // 戊一乙癸二,庚三辛四同,壬甲從六數,丁七丙八宮,己九
+    const BN = [[1, 6], [5, 10], [3, 8], [3, 8], [5, 10], [2, 7], [2, 7], [5, 10], [4, 9], [4, 9], [5, 10], [1, 6]]; // 亥子一六,寅卯三八,巳午二七,申酉四九,辰戌丑未五十
+    let tian = 0, di = 0; const nums = [];
+    for (const p of bz.pillars)
+      for (const n of [SN[p.s]].concat(BN[p.b])) { nums.push(n); if (n % 2 === 1) tian += n; else di += n; }
+    const tr = (tian - 1) % 25 + 1, dr = (di - 1) % 30 + 1; // 天滿25去、地滿30去(1..25/1..30)
+    const yangYear = bz.pillars[0].s % 2 === 0;
+    const LUO = { 1: 5, 2: 7, 3: 3, 4: 4, 6: 0, 7: 1, 8: 6, 9: 2 }; // 洛書數配後天卦:一坎二坤三震四巽六乾七兌八艮九離
+    const guaOf = r => {
+      let g = r % 10; if (g === 0) g = Math.floor(r / 10); // 餘10用1、20用2
+      if (g === 5) { // 五居中無卦:依三元寄卦(上元男艮女坤/中元陽男陰女艮、陰男陽女坤/下元男離女兌)
+        const yy = bz.year;
+        if (yy < 1924) return male ? 6 : 7;
+        if (yy < 1984) return (male === yangYear) ? 6 : 7;
+        return male ? 2 : 1;
+      }
+      return LUO[g];
+    };
+    const tg = guaOf(tr), dg = guaOf(dr);
+    const tianUp = male === yangYear; // 陽男陰女天卦上、陰男陽女地卦上
+    const upper = tianUp ? tg : dg, lower = tianUp ? dg : tg;
     const lines = DC.TRIG_LINES[lower].concat(DC.TRIG_LINES[upper]);
-    const lines2 = lines.slice(); lines2[yuantang - 1] = 1 - lines2[yuantang - 1];
+    // 元堂:子~巳陽時數陽爻、午~亥陰時數陰爻,自初爻起;重宮寄宮依《起元堂詩》
+    const yangHour = bz.hB < 6, h = bz.hB % 6;
+    const same = [], other = [];
+    lines.forEach((v, i) => ((v === 1) === yangHour ? same : other).push(i));
+    const mCnt = same.length;
+    let yt;
+    if (mCnt === 6 || mCnt === 0) yt = (yangHour ? 0 : 3) + h % 3; // 乾坤純卦:陽時下卦、陰時上卦輪兩遍
+    else if (mCnt === 3) yt = same[h % 3];
+    else if (mCnt >= 4) yt = h < mCnt ? same[h] : other[h - mCnt];
+    else yt = h < 2 * mCnt ? same[h % mCnt] : other[h - 2 * mCnt];
+    // 後天卦:元堂爻變+上下卦互換;至尊卦(坎/屯/蹇)逢九五、上六依月令陰陽定互換
+    const lines2 = lines.slice(); lines2[yt] = 1 - lines2[yt];
     const trigOf = ls => DC.TRIG_LINES.findIndex(t => t[0] === ls[0] && t[1] === ls[1] && t[2] === ls[2]);
+    const nl = trigOf(lines2.slice(0, 3)), nu = trigOf(lines2.slice(3, 6));
+    const zhiZun = upper === 5 && (lower === 5 || lower === 3 || lower === 6); // 坎上而坎/震/艮下:坎、屯、蹇
+    const yangMonth = bz.mIdx <= 5; // 寅~未月為陽月
+    let swap = true;
+    if (zhiZun && (yt === 4 || yt === 5)) swap = yt === 4 ? yangMonth : !yangMonth; // 九五變陽月換、上六變陰月換
+    const hUp = swap ? nl : nu, hLo = swap ? nu : nl;
     return {
-      tian, di, nums,
+      tian, di, tianRest: tr, diRest: dr, nums, tianUp,
       xiantian: { upper, lower, name: DC.HEX_NAME[upper][lower] },
-      houtian: { upper: trigOf(lines2.slice(3, 6)), lower: trigOf(lines2.slice(0, 3)), name: DC.HEX_NAME[trigOf(lines2.slice(3, 6))][trigOf(lines2.slice(0, 3))] },
-      yuantang, lines
+      houtian: { upper: hUp, lower: hLo, name: DC.HEX_NAME[hUp][hLo] },
+      yuantang: yt + 1, lines
     };
   };
 
