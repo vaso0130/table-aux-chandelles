@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="zh-Hant">
+<title>燭光鏡廳 · MBTI</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="hall.css">
+<style>
+/* 鏡廳專屬:題目卡與 A/B 選項 */
+.quiz-item { border: 1px solid var(--line, rgba(154,129,85,.35)); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+.quiz-item .q-no { color: var(--gold-dim, #9A8155); font-size: 12px; letter-spacing: .12em; }
+.quiz-item .q-text { margin: 4px 0 10px; font-weight: 600; }
+.quiz-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+@media (max-width: 560px) { .quiz-opts { grid-template-columns: 1fr; } }
+.quiz-opt { text-align: left; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line, rgba(154,129,85,.35)); background: transparent; color: inherit; cursor: pointer; font: inherit; line-height: 1.5; }
+.quiz-opt:hover { border-color: var(--gold-bright, #E8C87A); }
+.quiz-opt.sel { border-color: var(--gold-bright, #E8C87A); background: rgba(232,200,122,.10); }
+.quiz-opt .op-tag { color: var(--gold-dim, #9A8155); margin-right: 6px; }
+.quiz-item.miss { border-color: #E8A08F; }
+.axis-bar { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+.axis-bar .ab-l, .axis-bar .ab-r { width: 5.5em; font-size: 13px; }
+.axis-bar .ab-r { text-align: right; }
+.axis-bar .ab-track { flex: 1; height: 10px; border-radius: 5px; background: rgba(154,129,85,.25); position: relative; overflow: hidden; }
+.axis-bar .ab-fill { position: absolute; top: 0; bottom: 0; left: 0; background: var(--gold-bright, #E8C87A); opacity: .85; }
+#quiz-prog { color: var(--gold-dim, #9A8155); font-size: 13px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="plate">
+      <p class="eyebrow">Le Salon des Miroirs</p>
+      <h1>燭光鏡廳</h1>
+      <p class="subtitle">二十八面小鏡,照出十六種靈魂的姿態——MBTI 量的不是你是誰,是你偏好怎麼活。</p>
+    </div>
+  </header>
+
+  <nav class="halls-nav">
+    <a title="牌卡占卜:雷諾曼、塔羅等十套牌" href="index.html">牌桌館</a>
+    <a title="西洋/印度/卜卦占星與宿曜" href="astro.html">占星館</a>
+    <a title="八字、紫微、九星、唐四柱、人類圖、生命靈數——看生辰" href="bazi.html">八字館</a>
+    <a title="奇門、六壬、太乙、梅花、河洛——問此刻與時機" href="shi.html">式占館</a>
+    <a title="緬甸八曜、爪哇威頓、泰國佛日" href="nanyang.html">南洋館</a>
+    <a title="一句、翹傳、靈籤——開卷即答" href="kaijuan.html">開卷館</a>
+    <a title="MBTI 十六型人格測驗——照見偏好" href="mbti.html" class="here">鏡廳</a>
+    <a title="任選三術同問一事,合議作答" href="mix.html">MIX 三術合參</a>
+  </nav>
+
+  <nav class="views" id="views" aria-label="頁面切換">
+    <button class="view-btn active" data-view="divine">照鏡測驗</button>
+    <button class="view-btn" data-view="learn">入門教學</button>
+  </nav>
+
+  <section id="view-learn"></section>
+
+  <section class="panel" id="panel">
+    <h2>二十八題,憑直覺答</h2>
+    <span class="hint">每題選一個比較像平常的你的答案——別想「應該」,想「習慣」。約三分鐘。</span>
+    <div id="quiz" style="margin-top:14px"></div>
+    <div class="form-grid" style="margin-top:14px">
+      <div class="field full"><label>想帶著問的事(選填)</label>
+        <input id="q-input" type="text" maxlength="200" placeholder="例:這份工作適合我嗎?——會連同你的類型一起寫進提示詞"></div>
+      <div class="field"><label>AI 解讀語氣</label>
+        <select id="tone-select"></select>
+        <input id="tone-custom" type="text" maxlength="40" placeholder="寫下你想要的語氣" hidden style="margin-top:6px"></div>
+    </div>
+    <div class="btn-row">
+      <button class="gold-btn" id="btn-go">照 鏡</button>
+      <span id="quiz-prog"></span>
+      <span class="hint" id="go-hint"></span>
+    </div>
+  </section>
+
+  <section id="out"></section>
+
+  <section class="prompt-sec" id="prompt-sec" hidden>
+    <p class="section-label">AI 解讀提示詞</p>
+    <textarea class="prompt-box" id="prompt-box" readonly></textarea>
+    <div class="btn-row">
+      <button class="gold-btn" id="btn-copy">複製提示詞</button>
+      <span class="copy-ok" id="copy-ok" hidden>已複製,貼給任何 AI 即可。</span>
+    </div>
+  </section>
+
+  <section id="hist-sec">
+    <p class="section-label">占卜歷史</p>
+    <div id="hist-list"></div>
+    <div class="btn-row" style="justify-content:center"><button class="ghost-btn" id="hist-clear">清空歷史</button></div>
+  </section>
+
+  <p class="footnote">
+    本測驗為本站原創題本(每軸七題、正反向配題),量的是<b>偏好</b>不是能力;結果會隨人生階段流動,把它當鏡子,別當籠子。<br>
+    MBTI 為類型學而非占卜——故鏡廳自成一館,不入 MIX 合參。
+  </p>
+</div>
+
+<script src="divine-core.js"></script>
+<script src="divine-ui.js"></script>
+<script src="divine-lore.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+
+/* ── 題本:每軸七題;pole 標 A 選項所代表的字母(正反向交錯防慣性作答)── */
+const QUIZ = [
+  /* E / I */
+  { ax: "EI", a: "E", ta: "聚會結束回到家,我常覺得充飽了電", tb: "聚會結束回到家,我需要獨處把電充回來" },
+  { ax: "EI", a: "I", ta: "想法先在心裡演練成熟,才願意說出口", tb: "想法邊說邊成形,講著講著就清楚了" },
+  { ax: "EI", a: "E", ta: "遇到新環境,我主動開口認識人", tb: "遇到新環境,我先觀察,等人來搭話" },
+  { ax: "EI", a: "I", ta: "週末理想行程:安靜的一人時光或一兩位熟友", tb: "週末理想行程:呼朋引伴,越熱鬧越好" },
+  { ax: "EI", a: "E", ta: "煩惱時,找人聊一聊最能整理思緒", tb: "煩惱時,自己靜靜想最能整理思緒" },
+  { ax: "EI", a: "I", ta: "深交幾個知己,勝過認識一屋子人", tb: "多認識些人,世界才會一直打開" },
+  { ax: "EI", a: "E", ta: "電話響起,我拿起來就接", tb: "電話響起,我常希望對方改傳文字" },
+  /* S / N */
+  { ax: "SN", a: "S", ta: "我信得過親眼所見、親手做過的", tb: "我著迷於還沒發生、可能會有的" },
+  { ax: "SN", a: "N", ta: "讀東西常跳著抓概念,細節之後再補", tb: "讀東西按部就班,細節看仔細才安心" },
+  { ax: "SN", a: "S", ta: "描述一件事,我先講具體發生了什麼", tb: "描述一件事,我先講它代表什麼意義" },
+  { ax: "SN", a: "N", ta: "開會時我常想「五年後這會變成什麼」", tb: "開會時我常想「下一步具體要做什麼」" },
+  { ax: "SN", a: "S", ta: "照著驗證過的方法做,穩", tb: "老方法先放一邊,我想試新路子" },
+  { ax: "SN", a: "N", ta: "我常從一件小事聯想到八竿子遠的地方", tb: "我就事論事,聯想太遠容易失焦" },
+  { ax: "SN", a: "S", ta: "「實際」對我是讚美", tb: "「有想像力」對我是讚美" },
+  /* T / F */
+  { ax: "TF", a: "T", ta: "做決定,先看邏輯與利弊", tb: "做決定,先看對人的影響與感受" },
+  { ax: "TF", a: "F", ta: "朋友訴苦,我先接住情緒再說", tb: "朋友訴苦,我先幫忙分析怎麼解決" },
+  { ax: "TF", a: "T", ta: "說實話比顧面子重要,委婉但要說", tb: "顧到對方心情,有些話可以不說" },
+  { ax: "TF", a: "F", ta: "團隊裡我在意大家處得好不好", tb: "團隊裡我在意事情做得對不對" },
+  { ax: "TF", a: "T", ta: "被批評時,我先檢查它有沒有道理", tb: "被批評時,我先感覺到刺,道理之後才進來" },
+  { ax: "TF", a: "F", ta: "規則之外,人情也是正當理由", tb: "例外一開,規則就不成規則" },
+  { ax: "TF", a: "T", ta: "爭論讓想法變利,我不怕交鋒", tb: "爭論讓關係變緊,能免則免" },
+  /* J / P */
+  { ax: "JP", a: "J", ta: "旅行前,行程訂好我才放鬆", tb: "旅行就是要留白,走到哪算到哪" },
+  { ax: "JP", a: "P", ta: "死線前的爆發力,是我的超能力", tb: "提前完成、從容交件,才是我的風格" },
+  { ax: "JP", a: "J", ta: "待辦清單劃掉一項,快樂似神仙", tb: "清單是參考用的,興致來了先做別的" },
+  { ax: "JP", a: "P", ta: "計畫改來改去沒關係,選項多是好事", tb: "定了就別再改,反覆讓人心累" },
+  { ax: "JP", a: "J", ta: "我的桌面/檔案有一套自己的秩序", tb: "我的桌面/檔案亂中有序,找得到就好" },
+  { ax: "JP", a: "P", ta: "話別說死,留點彈性好辦事", tb: "話說清楚定下來,大家才好做事" },
+  { ax: "JP", a: "J", ta: "先做完正事,玩起來才盡興", tb: "先玩再說,正事到時候自然會做完" }
+];
+const AXES = { EI: ["E", "I", "外向", "內向"], SN: ["S", "N", "實感", "直覺"], TF: ["T", "F", "思考", "情感"], JP: ["J", "P", "判斷", "感知"] };
+/* 十六型速寫(原創文案):[稱號, 一句話, 光面, 影面, 合拍舞台] */
+const TYPES = {
+  ISTJ: ["盡責的石匠", "一磚一瓦,把承諾砌成城牆", "可靠、縝密、說到做到", "太守成,對變動與模糊不耐", "制度、品質、營運——需要「準」的地方"],
+  ISFJ: ["守夜的燭台", "安靜地把每個人的杯子續滿", "體貼入微、忠誠、記得所有小事", "不擅拒絕,委屈往肚裡吞", "照護、教育、後勤——需要「穩」的地方"],
+  INFJ: ["提燈的先知", "看得見別人心裡未熄的火", "洞察、理想、溫柔而堅定", "完美主義,易燃燒殆盡", "諮商、寫作、願景設計——需要「深」的地方"],
+  INTJ: ["棋局的建築師", "十步之外,棋已下完", "戰略、獨立、系統思考", "不耐低效,顯得冷與傲", "策略、研究、架構——需要「遠」的地方"],
+  ISTP: ["冷靜的拆解匠", "先拆開看看,壞的自然會好", "臨危不亂、動手力強、極簡", "疏離,對承諾與流程過敏", "工程、急救、工藝——需要「快狠準」的地方"],
+  ISFP: ["林間的畫師", "把日子過成一幅不署名的畫", "審美、溫和、活在當下", "迴避衝突,錯過為自己發聲", "設計、照護、手作——需要「美」的地方"],
+  INFP: ["懷詩的旅人", "口袋裡永遠有一首沒寫完的詩", "理想、共感、忠於價值", "耽於內心劇場,行動遲疑", "創作、公益、療癒——需要「真」的地方"],
+  INTP: ["思想的鐘錶匠", "把宇宙拆成齒輪,再優雅地裝回去", "分析、原創、求真", "想得深做得少,日常失序", "理論、演算法、寫作——需要「透」的地方"],
+  ESTP: ["場上的閃電", "球來就打,想是打完的事", "行動、膽識、臨場反應", "衝動,忽略長線與感受", "銷售、談判、救火——需要「衝」的地方"],
+  ESFP: ["宴席的煙火", "有我在,冷場是不存在的", "熱情、感染力、及時行樂", "怕無聊,財務與計畫鬆散", "表演、活動、服務——需要「亮」的地方"],
+  ENFP: ["逐光的風箏", "每個明天都是新大陸", "點子噴發、真誠、帶人起飛", "三分鐘熱度,收尾困難", "企劃、傳播、開創——需要「新」的地方"],
+  ENTP: ["辯場的鍊金師", "唱反調不是抬槓,是煉金", "機敏、辯才、破框思考", "為辯而辯,執行常斷線", "創新、辯護、創業——需要「變」的地方"],
+  ESTJ: ["執旗的隊長", "隊伍散著,我來排好", "組織、果決、扛責任", "強勢,聽不進柔軟的聲音", "管理、執行、制度——需要「齊」的地方"],
+  ESFJ: ["爐邊的主人", "大家都好,我才算好", "熱心、周到、凝聚人群", "太在意評價,易被情勒", "人資、社群、款待——需要「和」的地方"],
+  ENFJ: ["領航的燈塔", "照亮別人時,自己也在發光", "感召、利他、看見潛能", "背太多人的課題,忘了自己", "教學、領導、倡議——需要「光」的地方"],
+  ENTJ: ["開疆的統帥", "目標既定,山海皆路", "魄力、效率、天生指揮官", "輾壓感,把人當棋子用", "統御、擴張、變革——需要「贏」的地方"]
+};
+const ans = new Array(QUIZ.length).fill(null); // "A" | "B"
+
+function renderQuiz() {
+  const box = $("quiz");
+  box.innerHTML = "";
+  QUIZ.forEach((it, i) => {
+    const d = document.createElement("div");
+    d.className = "quiz-item"; d.dataset.i = i;
+    d.innerHTML = '<div class="q-no">第 ' + (i + 1) + ' 題</div><div class="q-text">比較像我的是——</div>' +
+      '<div class="quiz-opts">' +
+      '<button type="button" class="quiz-opt" data-v="A"><span class="op-tag">A</span>' + it.ta + "</button>" +
+      '<button type="button" class="quiz-opt" data-v="B"><span class="op-tag">B</span>' + it.tb + "</button></div>";
+    d.querySelectorAll(".quiz-opt").forEach(b => b.onclick = () => {
+      ans[i] = b.dataset.v;
+      d.classList.remove("miss");
+      d.querySelectorAll(".quiz-opt").forEach(x => x.classList.toggle("sel", x === b));
+      const n = ans.filter(Boolean).length;
+      $("quiz-prog").textContent = n < QUIZ.length ? "已答 " + n + "/" + QUIZ.length : "答完了——照鏡吧";
+    });
+    box.appendChild(d);
+  });
+}
+renderQuiz();
+DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣:「[^」]*」/, "語氣:「" + DC.toneValue() + "」"); });
+DC.histBind();
+
+function card(t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
+function score() {
+  const cnt = {};
+  QUIZ.forEach((it, i) => {
+    const [p1, p2] = AXES[it.ax];
+    const pole = ans[i] === "A" ? it.a : (it.a === p1 ? p2 : p1);
+    cnt[pole] = (cnt[pole] || 0) + 1;
+  });
+  let type = "", axes = [];
+  for (const ax of ["EI", "SN", "TF", "JP"]) {
+    const [p1, p2, n1, n2] = AXES[ax];
+    const c1 = cnt[p1] || 0, c2 = cnt[p2] || 0;
+    const w = c1 >= c2 ? p1 : p2;
+    type += w;
+    axes.push({ ax, p1, p2, n1, n2, c1, c2, pct: Math.round(Math.max(c1, c2) / 7 * 100) });
+  }
+  return { type, axes };
+}
+$("btn-go").onclick = () => {
+  $("go-hint").textContent = "";
+  const missing = [];
+  ans.forEach((a, i) => { if (!a) missing.push(i); });
+  document.querySelectorAll(".quiz-item").forEach(d => d.classList.toggle("miss", !ans[+d.dataset.i]));
+  if (missing.length) {
+    $("go-hint").textContent = "還有 " + missing.length + " 題沒答(第 " + missing.slice(0, 5).map(i => i + 1).join("、") + (missing.length > 5 ? "…" : "") + " 題)";
+    document.querySelector('.quiz-item[data-i="' + missing[0] + '"]').scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  const q = $("q-input").value.trim();
+  const R = score();
+  const T = TYPES[R.type];
+  const barsH = R.axes.map(a => {
+    const leftWin = a.c1 >= a.c2;
+    const pctL = Math.round(a.c1 / 7 * 100);
+    return '<div class="axis-bar"><span class="ab-l"' + (leftWin ? ' style="color:var(--gold-bright)"' : "") + ">" + a.p1 + " " + a.n1 + '</span>' +
+      '<span class="ab-track"><span class="ab-fill" style="width:' + pctL + '%"></span></span>' +
+      '<span class="ab-r"' + (!leftWin ? ' style="color:var(--gold-bright)"' : "") + ">" + a.n2 + " " + a.p2 + "</span></div>";
+  }).join("");
+  const out = [];
+  out.push(card("鏡中之人:" + R.type, T[0],
+    '<p class="lead">' + T[1] + "</p>" + barsH +
+    "<p>" + R.axes.map(a => (a.c1 >= a.c2 ? a.p1 + "(" + a.n1 + ")" : a.p2 + "(" + a.n2 + ")") + " " + a.pct + "%").join("・") + "</p>" +
+    "<p><b>光面</b>:" + T[2] + "。<br><b>影面</b>:" + T[3] + "。<br><b>合拍舞台</b>:" + T[4] + "。</p>" +
+    '<p style="color:var(--muted)">偏好 50~64% 屬於邊界地帶——兩邊你都用得順手,情境會決定你出哪隻手。</p>'));
+  $("out").innerHTML = out.join("");
+  const pr = ["你是一位精通 MBTI 與人格心理學的顧問。以下是我剛完成的測驗結果(28 題原創題本,每軸 7 題)。" + DC.toneHead(), ""];
+  if (q) pr.push("我的問題:" + q, "");
+  pr.push("MBTI 測驗結果:");
+  pr.push("  類型:" + R.type + "(" + T[0] + "——" + T[1] + ")");
+  R.axes.forEach(a => pr.push("  " + a.ax + " 軸:" + a.p1 + "(" + a.n1 + ") " + a.c1 + " 題 vs " + a.p2 + "(" + a.n2 + ") " + a.c2 + " 題——偏好強度 " + a.pct + "%" + (a.pct < 65 ? "(邊界,兩側皆可用)" : "")));
+  pr.push("  類型速寫:光面「" + T[2] + "」;影面「" + T[3] + "」;合拍舞台「" + T[4] + "」", "");
+  pr.push("請解讀:1. 這個類型的核心運作方式(認知慣性、能量來源)。2. 各軸偏好強度的意義——邊界軸請特別說明兩側切換的情境。3. 光面如何放大、影面如何馴服(給具體練習)。4. 職涯與關係中的合拍與地雷。5. 提醒:MBTI 是偏好快照不是天花板——哪些情境值得刻意練習非偏好側。" + (q ? "6. 針對我的問題,以此類型視角直答。" : ""));
+  $("prompt-box").value = pr.join("\n");
+  $("prompt-sec").hidden = false;
+  DC.histSave("鏡廳", "MBTI・" + R.type, q, $("out").innerHTML, $("prompt-box").value);
+};
+$("btn-copy").onclick = async () => {
+  try { await navigator.clipboard.writeText($("prompt-box").value); }
+  catch (e) { $("prompt-box").select(); document.execCommand("copy"); }
+  $("copy-ok").hidden = false; setTimeout(() => $("copy-ok").hidden = true, 2500);
+};
+
+/* ── 入門教學 ── */
+function buildLearn() {
+  let h = "";
+  h += DC.lcard("MBTI 在量什麼", '<p class="lead-para">MBTI 源自榮格的心理類型論:人在<b>取得能量、接收資訊、做決定、對外生活</b>四件事上各有慣用的手。四軸各取一邊,組成十六型。它量的是<b>偏好</b>——像慣用手,不是只有一隻手;也會隨人生階段流動。把結果當鏡子照自己,別當籠子關自己,更別拿來釘別人。</p>');
+  h += DC.lcard("四軸速記", DC.ltable(["軸", "一邊", "另一邊"], [
+    ["能量", "E 外向——向人與世界充電", "I 內向——向獨處與內心充電"],
+    ["資訊", "S 實感——信具體與經驗", "N 直覺——信可能與聯想"],
+    ["決策", "T 思考——先論對錯利弊", "F 情感——先顧人與價值"],
+    ["生活", "J 判斷——愛定案與秩序", "P 感知——愛彈性與留白"]]));
+  h += DC.lcard("十六型一覽", DC.ltable(["類型", "稱號", "一句話"], Object.keys(TYPES).map(k => [k, TYPES[k][0], TYPES[k][1]])));
+  h += DC.lcard("照鏡的心法", '<p class="lead-para">① 憑直覺答,選「習慣」不選「應該」。② 偏好強度 50~64% 是邊界——代表你兩側都靈活,不必急著站隊。③ 類型沒有好壞,只有舞台合不合。④ 隔幾年再照一次,鏡子會告訴你,你走了多遠。</p>');
+  return h;
+}
+DC.learnInit(buildLearn);
+
+/* 開發測試:?test=mbti(全 A 作答自動照鏡) */
+(function () {
+  const t = new URLSearchParams(location.search).get("test");
+  if (!t) return;
+  document.querySelectorAll(".quiz-item").forEach(d => d.querySelector('.quiz-opt[data-v="A"]').click());
+  $("q-input").value = "測試提問:這件事會順利嗎?";
+  setTimeout(() => { try { $("btn-go").onclick(); document.title = $("prompt-sec").hidden ? "MBTI-TEST-FAIL(hidden):" + $("go-hint").textContent : "MBTI-TEST-OK"; } catch (e) { document.title = "MBTI-TEST-FAIL " + e.message; } }, 60);
+})();
+</script>
+</html>
