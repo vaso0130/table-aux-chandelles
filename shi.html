@@ -10,16 +10,15 @@
     <div class="plate">
       <p class="eyebrow">Le Pavillon des Trois Rites</p>
       <h1>燭光式閣</h1>
-      <p class="subtitle">太乙測天、奇門測地、六壬測人——三式者,以問時起盤,不問生辰問此刻。</p>
+      <p class="subtitle">太乙測天、奇門測地、六壬測人——三式以問時起盤;梅花以時起卦、河洛以辰化卦,式與數同在此閣。</p>
     </div>
   </header>
 
   <nav class="halls-nav">
     <a title="牌卡占卜:雷諾曼、塔羅等十套牌" href="index.html">牌桌館</a>
     <a title="西洋/印度/卜卦占星與宿曜" href="astro.html">占星館</a>
-    <a title="生命靈數、梅花易數、河洛理數" href="numbers.html">數字館</a>
-    <a title="八字、紫微、九星、唐四柱——看生辰" href="bazi.html">八字館</a>
-    <a title="奇門、六壬、太乙——問此刻與時機" href="shi.html" class="here">式占館</a>
+    <a title="八字、紫微、九星、唐四柱、生命靈數——看生辰" href="bazi.html">八字館</a>
+    <a title="奇門、六壬、太乙、梅花、河洛——問此刻與時機" href="shi.html" class="here">式占館</a>
     <a title="緬甸八曜、爪哇威頓、泰國佛日" href="nanyang.html">南洋館</a>
     <a title="一句、翹傳、靈籤——開卷即答" href="kaijuan.html">開卷館</a>
     <a title="任選三術同問一事,合議作答" href="mix.html">MIX 三術合參</a>
@@ -35,6 +34,9 @@
   <p class="section-label divine-only">選擇式學</p>
   <div class="sys-row" id="sys"></div>
 
+  <p class="section-label divine-only" id="modes-label" hidden>選擇題目</p>
+  <div class="modes" id="modes" hidden></div>
+
   <section class="panel" id="panel">
     <h2 id="p-title"></h2>
     <span class="hint" id="p-hint"></span>
@@ -46,7 +48,14 @@
         <div class="field"><label>時區</label><input id="n-tz" type="number" step="0.5" value="8"></div>
         <div class="field" id="f-target"><label>所問之日(選填)</label><input id="t-date" type="date">
           <div class="note">古法「時間用神」:以此刻起局,把該日干支放進局中論其吉凶——問「某日行事如何」填這裡</div></div>
-        <div class="field full"><div class="note">另一用法:取消「跟隨此刻」直接指定未來時刻,即為該時刻起局(奇門擇時/六壬占期)。</div></div>
+        <div class="field full" id="f-nownote"><div class="note">另一用法:取消「跟隨此刻」直接指定未來時刻,即為該時刻起局(奇門擇時/六壬占期)。</div></div>
+      </div>
+    </div>
+    <div id="form-nums" hidden>
+      <p class="fieldset-label">報數起卦</p>
+      <div class="form-grid">
+        <div class="field"><label>第一個數(上卦)</label><input id="num-a" type="number" min="1" placeholder="心中浮現的數字"></div>
+        <div class="field"><label>第二個數(下卦)</label><input id="num-b" type="number" min="1" placeholder="再報一個數"></div>
       </div>
     </div>
     <div id="form-birth">
@@ -90,8 +99,9 @@
   </section>
 
   <p class="footnote">
-    三式皆以問時起盤:奇門為時家轉盤・拆補定元;六壬三傳依九宗門(涉害取簡法);太乙為歲計簡式。<br>
-    生辰為選填——填了即入年命落宮(奇門)與本命、行年二用神(六壬,虛歲以立春換歲)。
+    三式皆以問時起盤:奇門為時家轉盤・拆補定元;六壬三傳依九宗門(涉害依《課經》正法);太乙為歲計簡式。<br>
+    生辰為選填——填了即入年命落宮(奇門)與本命、行年二用神(六壬,虛歲以立春換歲)。<br>
+    梅花易數依邵子古法(年支+農曆月日起上卦,加時辰起下卦與動爻);河洛理數採正統起例(干納甲洛書數、支河圖生成數)。
   </p>
 </div>
 
@@ -109,9 +119,17 @@ const SYS = [
   { id: "taiyiming", name: "太乙命法", sub: "人道命法・日計論命", now: false, birthReq: true,
     hint: "太乙的論命之法:古法日計入式——祖數歲實推積日,冬至定元,求天地人三數起本命局,觀太乙文昌計神向背;再與今歲太乙相參。問個人,用這個。" },
   { id: "taiyi", name: "太乙歲計", sub: "三式之首・觀天下", now: false,
-    hint: "太乙積年推演本年太乙所在之宮——這是觀天下大勢、年景氣運之術,古為帝王兵家所用,不論個人休咎。" }
+    hint: "太乙積年推演本年太乙所在之宮——這是觀天下大勢、年景氣運之術,古為帝王兵家所用,不論個人休咎。" },
+  { id: "meihua", name: "梅花易數", sub: "邵雍・觀物起卦", now: true,
+    hint: "以起局時刻的年支、農曆月日與時辰起卦,體用生剋直斷——時間本身就是卦。",
+    modes: [
+      ["mh-time", "時間起卦", "以起局時刻的年支、農曆月日與時辰起卦——不必報數,時間本身就是卦。"],
+      ["mh-num", "報數起卦", "心中默想問題,隨口報兩個數——第一數為上卦,第二數為下卦,加時辰取動爻。"]
+    ] },
+  { id: "heluo", name: "河洛理數", sub: "生辰化卦", now: false, birthReq: true,
+    hint: "八字化天地之數,天數地數取先天卦,元堂爻變後天卦——你的命是一枚卦。" }
 ];
-let sysId = "qimen";
+let sysId = "qimen", modeId = "mh-time";
 
 function renderSys() {
   $("sys").innerHTML = "";
@@ -128,21 +146,39 @@ function setNowFields() {
   $("n-date").value = n.getFullYear() + "-" + DC.pad2(n.getMonth() + 1) + "-" + DC.pad2(n.getDate());
   $("n-time").value = DC.pad2(n.getHours()) + ":" + DC.pad2(n.getMinutes());
 }
+function renderModes() {
+  const s = SYS.find(x => x.id === sysId);
+  $("modes").innerHTML = "";
+  (s.modes || []).forEach(([id, name, desc], i) => {
+    const b = document.createElement("button");
+    b.className = "mode-btn" + (id === modeId ? " active" : "");
+    b.innerHTML = '<span class="s-row"><span class="s-idx">' + "壹貳參肆伍陸柒捌"[i] + '</span><span class="s-name">' + name +
+      '</span><span class="s-leader"></span></span><span class="s-desc">' + desc + '</span>';
+    b.onclick = () => { modeId = id; renderModes(); updateForm(); };
+    $("modes").appendChild(b);
+  });
+}
 function updateForm() {
   const s = SYS.find(x => x.id === sysId);
+  $("modes-label").hidden = !s.modes; $("modes").hidden = !s.modes;
+  if (s.modes) { if (!s.modes.some(m => m[0] === modeId)) modeId = s.modes[0][0]; renderModes(); }
   $("form-now").hidden = !s.now;
-  $("form-birth").hidden = !(s.now || s.birthReq); // 奇門/六壬選填、命法必填、歲計不用
-  if (s.birthReq) { // 太乙命法:生辰必填,直接展開
+  $("form-nums").hidden = !(sysId === "meihua" && modeId === "mh-num");
+  $("f-target").hidden = sysId === "meihua";       /* 所問之日是奇門/六壬的用神,梅花不用 */
+  $("f-nownote").hidden = sysId === "meihua";
+  $("form-birth").hidden = !((s.now && sysId !== "meihua") || s.birthReq); // 奇門/六壬選填、命法/河洛必填、歲計/梅花不用
+  if (s.birthReq) { // 生辰必填,直接展開
     $("birth-opt").hidden = true;
     $("birth-fields").hidden = false;
-    $("birth-label").firstChild.textContent = "命主生辰(必填,以年柱起本命太乙)";
+    $("birth-label").firstChild.textContent = sysId === "heluo" ? "命主生辰(必填,八字化數起卦)" : "命主生辰(必填,以年柱起本命太乙)";
   } else {
     $("birth-opt").hidden = false;
     $("birth-fields").hidden = !$("b-enable").checked;
     $("birth-label").firstChild.textContent = "問測人生辰";
   }
-  $("p-title").textContent = s.name;
-  $("p-hint").textContent = s.hint;
+  const m = s.modes ? s.modes.find(x => x[0] === modeId) : null;
+  $("p-title").textContent = s.name + (m ? "・" + m[1] : "");
+  $("p-hint").textContent = m ? m[2] : s.hint;
   $("out").innerHTML = ""; $("prompt-sec").hidden = true;
   if (s.now && $("n-follow").checked) setNowFields();
 }
@@ -336,21 +372,83 @@ function runTaiyiMing(out, pr) {
   pr.push("請依太乙人道命法推演:1. 天地人三數之稟(數中無十為無天、無五為無地、無一為無人之類格局)與受氣干支" + tm.shouqi + "之氣稟。2. 本命太乙宮" + tm.gongName + "與文昌、始擊、計神向背論一生格局、才性與功名。3. 主客算" + tm.zhuSuan + "/" + tm.keSuan + "之數理(得三才數與否、陰陽數)與大小將落宮吉凶。4. 命宮" + tm.mingZh + "起十二宮,論各宮臨十六神之向背。5. 今歲太乙在" + tyN.gongName + "與本命相參論今年吉凶著力點" + (same ? "(回臨本命宮,請特別細論)" : "") + "。6. 身宮與君基臣基民基三基、五福諸神本盤未列,請依《太乙統宗》自行補排並言明;若貴派命例天數與本盤差±360,以局數為準。");
 }
 
+/* ── 梅花易數(自數字館遷入)── */
+function guaBox(title, upper, lower, movLine) {
+  const lines = DC.TRIG_LINES[lower].concat(DC.TRIG_LINES[upper]);
+  let h = '<div class="gua-box"><div class="g-title">' + title + '</div><div class="gua-lines">';
+  lines.forEach((yin1, i) => {
+    h += '<div class="yao' + (movLine === i + 1 ? " moving" : "") + '">' +
+      (yin1 ? '<i class="solid"></i>' : '<i class="half"></i><i class="half"></i>') + "</div>";
+  });
+  h += '</div><div class="g-name">' + DC.HEX_NAME[upper][lower] + '</div><div class="g-sub">' +
+    DC.TRIG_SYM[upper] + DC.TRIG[upper] + "上・" + DC.TRIG_SYM[lower] + DC.TRIG[lower] + "下" + (movLine ? "・動爻第" + movLine + "爻" : "") + "</div></div>";
+  return h;
+}
+function meihuaCard(mh, srcDesc, out, pr) {
+  out.push(card("梅花易數起卦", srcDesc,
+    '<div class="gua-row">' + guaBox("本卦", mh.upper, mh.lower, mh.mov) + guaBox("互卦", mh.hu.upper, mh.hu.lower, 0) + guaBox("變卦", mh.bian.upper, mh.bian.lower, 0) + "</div>" +
+    '<p class="lead">體卦 ' + DC.TRIG[mh.ti] + "(" + DC.TRIG_WX[mh.ti] + ")・用卦 " + DC.TRIG[mh.yong] + "(" + DC.TRIG_WX[mh.yong] + ")</p>" +
+    "<p>" + mh.rel + "。</p>" +
+    "<p>互卦「" + mh.hu.name + "」看過程,變卦「" + mh.bian.name + "」看結局。</p>"));
+  pr.push("梅花易數(" + srcDesc + "):");
+  pr.push("  本卦 " + mh.name + "(" + DC.TRIG[mh.upper] + "上" + DC.TRIG[mh.lower] + "下),動爻第 " + mh.mov + " 爻");
+  pr.push("  互卦 " + mh.hu.name + ",變卦 " + mh.bian.name);
+  pr.push("  體卦 " + DC.TRIG[mh.ti] + "屬" + DC.TRIG_WX[mh.ti] + ",用卦 " + DC.TRIG[mh.yong] + "屬" + DC.TRIG_WX[mh.yong] + ";" + mh.rel, "");
+  pr.push("請依梅花易數體用生剋法解讀:1. 體用關係直斷吉凶。2. 互卦看事情過程、變卦看最終走向。3. 卦氣旺衰(以節氣月令參酌)。4. 外應與應期推估。5. 給出明確結論與建議。");
+}
+function runMeihua(out, pr) {
+  const N = readNow();
+  if (modeId === "mh-time") {
+    const t = DC.meihuaTime(N.y, N.m, N.d, N.h, N.tz); // 起卦式收斂於 core(與 MIX 同源)
+    const { mh, lun, yB, hb, uN, lN } = t;
+    meihuaCard(mh, "時間起卦 " + N.str + ":" + DC.BRANCHES[yB] + "年" + (lun.isLeap ? "閏" : "") + DC.CN_MONTH[lun.month - 1] + "月" + DC.CN_DAY[lun.day - 1] + DC.BRANCHES[hb] + "時(年" + (yB + 1) + "+月" + lun.month + "+日" + lun.day + "=" + uN + ",加時" + (hb + 1) + "=" + lN + ")", out, pr);
+  } else {
+    const a = parseInt($("num-a").value), b = parseInt($("num-b").value);
+    if (!a || !b) throw fail("請報兩個數");
+    const hb = DC.hourBranch(N.h);
+    const mh = DC.meihua(a, b, a + b + hb + 1);
+    meihuaCard(mh, "報數起卦:" + a + "・" + b + "(加" + DC.BRANCHES[hb] + "時" + (hb + 1) + "取動爻)", out, pr);
+  }
+}
+
+/* ── 河洛理數(自數字館遷入)── */
+function runHeluo(out, pr) {
+  const dv = $("b-date").value; if (!dv) throw fail("河洛理數需要出生日期");
+  const tv = $("b-time").value || "12:00";
+  const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
+  const male = $("b-gender").value === "m";
+  const bz = DC.bazi(y, m, d, h, mi, DC.numOr($("b-tz").value, 8));
+  const hl = DC.heluo(bz, male);
+  out.push(card("八字化數", "天地之數",
+    '<div class="pillars">' + bz.pillars.map(p => '<div class="pillar"><span class="p-tag">' + p.tag + '</span><span class="p-char">' + p.gz + "</span></div>").join("") + "</div>" +
+    '<p class="lead">天數 ' + hl.tian + "(去廿五餘 " + hl.tianRest + ")・地數 " + hl.di + "(去三十餘 " + hl.diRest + ")</p>" +
+    "<p>天干依納甲洛書數、地支依河圖生成數(一支一奇一偶)化為:" + hl.nums.join("、") + "——奇數之和為天數、偶數之和為地數,天滿二十五去之、地滿三十去之,餘數依洛書配後天卦(一坎二坤三震四巽六乾七兌八艮九離,五寄宮)。</p>"));
+  out.push(card("先天卦與後天卦", "河洛起例",
+    '<div class="gua-row">' + guaBox("先天卦(前半生)", hl.xiantian.upper, hl.xiantian.lower, hl.yuantang) + guaBox("後天卦(後半生)", hl.houtian.upper, hl.houtian.lower, 0) + "</div>" +
+    "<p>" + (hl.tianUp ? "陽男陰女,天卦居上" : "陰男陽女,地卦居上") + ";元堂在第 " + hl.yuantang + " 爻(依《起元堂詩》陽時數陽爻、陰時數陰爻)。先天卦主前半生格局,元堂爻變、上下卦互換而成後天卦,主後半生走向。</p>"));
+  pr.push("河洛理數:");
+  pr.push("  四柱:" + bz.pillars.map(p => p.gz).join(" ") + "(" + (male ? "男" : "女") + "命,生於 " + dv + " " + tv + ")");
+  pr.push("  化數(干納甲洛書數、支河圖生成數):" + hl.nums.join("、") + ";天數 " + hl.tian + " 去廿五餘 " + hl.tianRest + ",地數 " + hl.di + " 去三十餘 " + hl.diRest + ";" + (hl.tianUp ? "陽男陰女天卦上" : "陰男陽女地卦上"));
+  pr.push("  先天卦 " + hl.xiantian.name + ",元堂第 " + hl.yuantang + " 爻(陽時數陽爻、陰時數陰爻之古法),元堂爻變並上下卦互換得後天卦 " + hl.houtian.name + "(坎屯蹇至尊卦之月令例外已依法處理)", "");
+  pr.push("請依河洛理數解讀:1. 天數地數的陰陽稟賦。2. 先天卦「" + hl.xiantian.name + "」的前半生格局與卦辭意涵。3. 元堂爻的爻辭即命辭——請引爻辭細論。4. 後天卦「" + hl.houtian.name + "」的後半生轉向。5. 若起例與貴派定法有異,請註明並以卦義為重。");
+}
+
 /* ── 主流程 ── */
 $("btn-go").onclick = () => {
   $("go-hint").textContent = "";
   prof.save();
   const q = $("q-input").value.trim();
   const out = [], pr = [];
-  const head = ["你是一位深研三式(太乙、奇門、六壬)的老師。以下是完整的起局資料。" + DC.toneHead(), ""];
+  const head = [(sysId === "meihua" || sysId === "heluo" ? "你是一位精通易數的老師。以下是完整的起卦資料。" : "你是一位深研三式(太乙、奇門、六壬)的老師。以下是完整的起局資料。") + DC.toneHead(), ""];
   if (q) head.push("我的問題:" + q, "");
   try {
-    ({ qimen: runQimen, liuren: runLiuren, taiyi: runTaiyi, taiyiming: runTaiyiMing })[sysId](out, pr);
+    ({ qimen: runQimen, liuren: runLiuren, taiyi: runTaiyi, taiyiming: runTaiyiMing, meihua: runMeihua, heluo: runHeluo })[sysId](out, pr);
   } catch (e) { if (!$("go-hint").textContent) $("go-hint").textContent = "起局失敗:" + e.message; return; }
   $("out").innerHTML = out.join("");
   $("prompt-box").value = head.concat(pr).join("\n");
   $("prompt-sec").hidden = false;
-  DC.histSave("式占館", SYS.find(x => x.id === sysId).name, q, $("out").innerHTML, $("prompt-box").value);
+  const s = SYS.find(x => x.id === sysId), m = s.modes ? s.modes.find(x => x[0] === modeId) : null;
+  DC.histSave("式占館", s.name + (m ? "・" + m[1] : ""), q, $("out").innerHTML, $("prompt-box").value);
 };
 $("btn-copy").onclick = async () => {
   try { await navigator.clipboard.writeText($("prompt-box").value); }
@@ -381,19 +479,31 @@ function buildLearn() {
   h += DC.lcard("大六壬・課式結構", '<p class="lead-para">六壬以<b>月將加時</b>轉出天地盤,再從日干支立<b>四課</b>(我方兩課、彼方兩課),依「賊剋」等九宗門取出<b>三傳</b>——初傳是因、中傳是過程、末傳是果。一句話:四課看人我,三傳看劇情。</p>' +
     DC.ltable(["十二天將", "意義"], JIANG12));
   h += DC.lcard("太乙・命法與歲計", '<p class="lead-para">太乙以「積年」(上古至今的年數)推太乙神所在之宮,三年一徙、廿四年一周。<b>太乙命法</b>以你的生年入式,看本命太乙宮定一生格局——個人問太乙用這個;<b>歲計</b>推的是天下大勢與年景,古為帝王兵家之學,看熱鬧可以,別拿來問自己。</p>');
+  /* 梅花與河洛(自數字館遷入) */
+  const GUA8 = [["乾 ☰", "天", "首領、剛健、父、圓物"], ["兌 ☱", "澤", "口舌、喜悅、少女、毀折"], ["離 ☲", "火", "文明、眼目、中女、文書"],
+    ["震 ☳", "雷", "奮動、驚起、長男、行動"], ["巽 ☴", "風", "進退、傳播、長女、繩直"], ["坎 ☵", "水", "險陷、智慧、中男、暗流"],
+    ["艮 ☶", "山", "止靜、阻隔、少男、門徑"], ["坤 ☷", "地", "柔順、承載、母、方物"]];
+  h += DC.lcard("梅花易數・八卦速記", DC.ltable(["卦", "象", "象意"], GUA8) +
+    '<p class="lead-para">邵雍說「數生象,象生器」——梅花把「時刻」化成卦。起卦:年支數+農曆月+日=上卦(除 8 取餘),再加時辰數=下卦,總數除 6 取餘為動爻。<b>體卦</b>是自己(不含動爻那半),<b>用卦</b>是事情(含動爻那半)。斷法一句訣:<b>用生體吉、體剋用可成、體用比和順、體生用洩耗、用剋體凶</b>。互卦看過程,變卦看結局。</p>');
+  h += DC.lcard("河洛理數・生辰化卦", '<p class="lead-para">八字每個字依納甲洛書數與河圖生成數化為數,奇數之和為<b>天數</b>、偶數之和為<b>地數</b>,各取卦而成先天卦(前半生);再以時辰定<b>元堂爻</b>,一爻變而得後天卦(後半生)。你的命,是一枚會翻面的卦。三式問此刻,河洛問生辰——同在此閣,各答各的題。</p>');
   h += DC.lcard("式占的正確心法", '<p class="lead-para">① 一事一問,問題越具體,盤越誠實。② 同一件事別連問——第一盤就是答案,再問是跟自己討價還價。③ 想擇日:取消「跟隨此刻」,填未來時刻起局,看那一刻的天時利不利你。④ 盤給的是天時與形勢,腳還是自己的。</p>');
   return h;
 }
 DC.learnInit(buildLearn);
 
-/* 開發測試:?test=sysId */
+/* 開發測試:?test=sysId(梅花/河洛沿用數字館 id:mh-time/mh-num/hl-gua) */
 (function () {
   const t = new URLSearchParams(location.search).get("test");
-  if (!t || !SYS.some(s => s.id === t)) return;
-  sysId = t; renderSys(); updateForm();
+  if (!t) return;
+  const MH = { "mh-time": "meihua", "mh-num": "meihua", "hl-gua": "heluo" };
+  if (MH[t]) { sysId = MH[t]; if (t !== "hl-gua") modeId = t; }
+  else if (SYS.some(s => s.id === t)) sysId = t;
+  else return;
+  renderSys(); updateForm();
   $("b-enable").checked = true; $("birth-fields").hidden = false;
   $("b-date").value = "1990-05-15"; $("b-time").value = "10:00";
   $("t-date").value = "2026-08-15";
+  $("num-a").value = "7"; $("num-b").value = "16";
   $("q-input").value = "測試提問:這件事會順利嗎?";
   setTimeout(() => { try { $("btn-go").onclick(); document.title = $("prompt-sec").hidden ? "SHI-TEST-FAIL(hidden):" + $("go-hint").textContent : "SHI-TEST-OK"; } catch (e) { document.title = "SHI-TEST-FAIL " + e.message; } }, 60);
 })();

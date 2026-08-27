@@ -17,9 +17,8 @@
   <nav class="halls-nav">
     <a title="牌卡占卜:雷諾曼、塔羅等十套牌" href="index.html">牌桌館</a>
     <a title="西洋/印度/卜卦占星與宿曜" href="astro.html">占星館</a>
-    <a title="生命靈數、梅花易數、河洛理數" href="numbers.html">數字館</a>
-    <a title="八字、紫微、九星、唐四柱——看生辰" href="bazi.html" class="here">八字館</a>
-    <a title="奇門、六壬、太乙——問此刻與時機" href="shi.html">式占館</a>
+    <a title="八字、紫微、九星、唐四柱、生命靈數——看生辰" href="bazi.html" class="here">八字館</a>
+    <a title="奇門、六壬、太乙、梅花、河洛——問此刻與時機" href="shi.html">式占館</a>
     <a title="緬甸八曜、爪哇威頓、泰國佛日" href="nanyang.html">南洋館</a>
     <a title="一句、翹傳、靈籤——開卷即答" href="kaijuan.html">開卷館</a>
     <a title="任選三術同問一事,合議作答" href="mix.html">MIX 三術合參</a>
@@ -35,6 +34,9 @@
   <p class="section-label divine-only">選擇命術</p>
   <div class="sys-row" id="sys"></div>
 
+  <p class="section-label divine-only" id="modes-label" hidden>選擇題目</p>
+  <div class="modes" id="modes" hidden></div>
+
   <section class="panel" id="panel">
     <h2 id="p-title"></h2>
     <span class="hint" id="p-hint"></span>
@@ -42,15 +44,17 @@
       <p class="fieldset-label" id="birth-label">生辰資料(以出生地當地時間)</p>
       <div class="form-grid">
         <div class="field"><label>出生日期</label><input id="b-date" type="date"></div>
-        <div class="field"><label>出生時間</label><input id="b-time" type="time" value="12:00">
+        <div class="field" id="f-time"><label>出生時間</label><input id="b-time" type="time" value="12:00">
           <div class="note">23:00 後出生以夜子時起翌日日柱(子平慣例)</div></div>
-        <div class="field"><label>性別</label>
+        <div class="field" id="f-gender"><label>性別</label>
           <select id="b-gender"><option value="m">男</option><option value="f">女</option></select></div>
         <div class="field"><label>時區</label><input id="b-tz" type="number" step="0.5" value="8">
           <div class="note">台灣/中國 +8,日本 +9</div></div>
-        <div class="field"><label>紫微年界</label>
+        <div class="field" id="f-zwyear"><label>紫微年界</label>
           <select id="b-zwyear"><option value="cny">正月初一(主流)</option><option value="lichun">立春</option></select>
           <div class="note">僅影響紫微盤;生於立春~正月初一之間者兩法年柱不同(八字恆以立春換年)</div></div>
+        <div class="field" id="f-target" hidden><label>指定日期(選填)</label><input id="t-date" type="date">
+          <div class="note">流年/流月/流日以此日計——想算下個月某日,填那一天;留空即今日</div></div>
       </div>
     </div>
     <div class="form-grid" style="margin-top:14px">
@@ -85,7 +89,7 @@
 
   <p class="footnote">
     節氣與朔望以真實天文計算(太陽黃經定節氣、定朔定農曆);紫微採中州派安星法(閏月折半:十六起作下月),庚干四化取通行「陽武陰同」(中州派原作陽武府同),年界可選正月初一(主流)或立春(生於兩界之間者年柱不同);23:00 後八字日柱進翌日,紫微/唐四柱農曆日不進(各派有異);<br>
-    九星命卦男女異算。皆為起盤,論斷交給 AI 或你信任的老師。太乙、奇門、六壬三式請移駕<b>式占館</b>。
+    九星命卦男女異算;生命靈數採西方生日靈數學。皆為起盤,論斷交給 AI 或你信任的老師。太乙、奇門、六壬三式與梅花、河洛請移駕<b>式占館</b>。
   </p>
 </div>
 
@@ -105,9 +109,23 @@ const SYS = [
   { id: "ninestar", name: "九星氣學", sub: "本命星與吉方位", birth: true,
     hint: "一白到九紫,你的本命星、月命星與今年的方位吉凶。" },
   { id: "dangsaju", name: "唐四柱", sub: "당사주・韓流民俗", birth: true,
-    hint: "朝鮮民間的看圖四柱:年支起星,數月、數日、數時——十二天星定初年/青年/中年/晚年四段人生。" }
+    hint: "朝鮮民間的看圖四柱:年支起星,數月、數日、數時——十二天星定初年/青年/中年/晚年四段人生。" },
+  { id: "lifenum", name: "生命靈數", sub: "Numerology", birth: true, modes: null,
+    hint: "生日加總化為 1-9(11/22/33 卓越數)——西方的生日數字學,你的原廠設定。" }
 ];
-let sysId = "bazi";
+/* 生命靈數八題(自數字館遷入,2026-08 拆館) */
+const TOPICS = [
+  ["blueprint", "人生藍圖", "生命靈數+天賦/生日/態度數+九宮連線——你這一生的原廠設定。"],
+  ["wealth", "財運", "你的數字怎麼賺錢、怎麼漏財——財富流向的個人公式。"],
+  ["love", "戀愛", "生命靈數與態度數的愛情語言:你怎麼愛人,以及需要怎麼被愛。"],
+  ["career", "職涯", "數字給你的職場定位:適合的舞台、發力方式與升遷之道。"],
+  ["study", "學習", "你的大腦如何吸收世界——最有效率的學習模式。"],
+  ["change", "變動", "搬家、轉職、轉彎——你面對變動的體質與目前的變動訊號。"],
+  ["year", "流年", "個人流年/流月/流日——九年週期你走到哪一步,今年的劇本是什麼。"],
+  ["challenge", "挑戰", "四大挑戰數:人生四階段各自要過的關卡。"]
+];
+SYS.find(s => s.id === "lifenum").modes = TOPICS;
+let sysId = "bazi", modeId = "blueprint";
 
 function renderSys() {
   $("sys").innerHTML = "";
@@ -119,10 +137,27 @@ function renderSys() {
     $("sys").appendChild(b);
   });
 }
+function renderModes() {
+  const s = SYS.find(x => x.id === sysId);
+  $("modes").innerHTML = "";
+  (s.modes || []).forEach(([id, name, desc], i) => {
+    const b = document.createElement("button");
+    b.className = "mode-btn" + (id === modeId ? " active" : "");
+    b.innerHTML = '<span class="s-row"><span class="s-idx">' + "壹貳參肆伍陸柒捌"[i] + '</span><span class="s-name">' + name +
+      '</span><span class="s-leader"></span></span><span class="s-desc">' + desc + '</span>';
+    b.onclick = () => { modeId = id; renderModes(); updateForm(); };
+    $("modes").appendChild(b);
+  });
+}
 function updateForm() {
   const s = SYS.find(x => x.id === sysId);
-  $("p-title").textContent = s.name;
-  $("p-hint").textContent = s.hint;
+  const isNum = sysId === "lifenum";
+  $("modes-label").hidden = !s.modes; $("modes").hidden = !s.modes;
+  if (s.modes) { if (!s.modes.some(m => m[0] === modeId)) modeId = s.modes[0][0]; renderModes(); }
+  $("f-time").hidden = isNum; $("f-gender").hidden = isNum; $("f-zwyear").hidden = isNum; $("f-target").hidden = !isNum;
+  const m = s.modes ? s.modes.find(x => x[0] === modeId) : null;
+  $("p-title").textContent = s.name + (m ? "・" + m[1] : "");
+  $("p-hint").textContent = m ? m[2] : s.hint;
   $("out").innerHTML = ""; $("prompt-sec").hidden = true;
 }
 renderSys(); updateForm();
@@ -326,21 +361,97 @@ function runDangsaju(out, pr) {
   pr.push("請以唐四柱(당사주)的民俗風格解讀:1. 四段人生各星的圖像與故事——請像朝鮮命書一樣「看圖說話」,直白生動。2. 四星連起來的人生曲線(何時起、何時伏)。3. 若同星重出或吉凶星相鄰,其加乘之義。4. 給命主一句民間老先生式的忠告。");
 }
 
+/* ── 生命靈數(自數字館遷入)── */
+function coreOf(n) { return DC.NUM_CORE[n] || DC.NUM_CORE[DC.numReduce(n, false)]; }
+const YEAR_MEAN = ["", "播種年——開新局、立新志,種下九年的第一顆種子", "扎根年——耐心經營關係與細節,靜待發芽", "萌芽年——表達、社交、被看見,小有成果",
+  "築基年——蓋地基的苦工年,穩紮穩打", "轉折年——變動與自由之年,舊的走新的來", "收成與責任年——家庭、感情、承擔,愛的功課",
+  "內省年——沉澱、學習、獨處,向內挖金礦", "豐收年——事業與財務的大年,敢拿敢收", "了結年——清倉、告別、放手,為新週期騰位"];
+function runLifenum(topic, out, pr) {
+  const dv = $("b-date").value; if (!dv) throw fail("請填出生日期");
+  const [y, m, d] = dv.split("-").map(Number);
+  const tv = $("t-date").value;
+  const now = tv ? (() => { const [ty, tm, td] = tv.split("-").map(Number); return { getFullYear: () => ty, getMonth: () => tm - 1, getDate: () => td }; })() : new Date();
+  const L = DC.lifeNumbers(y, m, d, now.getFullYear(), now.getMonth() + 1, now.getDate());
+  const C = coreOf(L.lp);
+  const baseKv = '<div class="kv"><span><b>生命靈數</b>' + L.lp + "(" + C.t + ")</span><span><b>天賦數</b>" + L.total + "</span><span><b>生日數</b>" + L.birthday + "</span><span><b>態度數</b>" + L.attitude + "</span><span><b>流年數</b>" + L.py + "</span></div>";
+  let gridH = '<div class="numgrid">';
+  [[3, 6, 9], [2, 5, 8], [1, 4, 7]].forEach(row => row.forEach(n => {
+    gridH += '<div class="cell"><span class="n' + (L.grid[n] ? "" : " none") + '">' + n + '</span><span class="dots">' + (L.grid[n] ? "●".repeat(Math.min(L.grid[n], 4)) : "—") + "</span></div>";
+  }));
+  gridH += "</div>";
+  const linesH = L.lines.length ? L.lines.map(l => '<span class="badge">' + l.name + "(" + l.ln + ")</span>").join(" ") : '<span class="badge dim">無完整連線——自由拼圖型</span>';
+  pr.push("生命靈數資料(生日 " + dv + "):");
+  pr.push("  生命靈數 " + L.lp + "(" + C.t + ")、天賦數 " + L.total + "、生日數 " + L.birthday + "、態度數 " + L.attitude);
+  pr.push("  生日九宮:" + Object.keys(L.grid).map(k => k + "×" + L.grid[k]).join(" ") + ";連線:" + (L.lines.map(l => l.name).join("、") || "無") + ";空缺數字:" + (L.missing.join("、") || "無"));
+  pr.push("  挑戰數:" + L.challenges.join("、") + ";巔峰數:" + L.pinnacles.map(p2 => p2.n + "(" + p2.from + "-" + (p2.to === 999 ? "終" : p2.to) + "歲)").join("、"));
+  pr.push("  流年 " + L.py + "、流月 " + L.pm + "、流日 " + L.pd + "(" + (tv ? "指定日期 " : "") + now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate() + ")", "");
+  const T = {
+    blueprint() {
+      out.push(card("人生藍圖", "Life Blueprint", baseKv +
+        '<p class="lead">' + L.lp + " 號人・" + C.t + "——" + C.key + "</p>" +
+        "<p>光面:" + C.light + "。影面:" + C.shadow + "。</p>" + gridH + "<p>" + linesH + "</p>" +
+        "<p>空缺數字 " + (L.missing.join("、") || "無") + (L.missing.length ? "——這是待補的人生拼圖,不是缺陷" : "——九宮俱全,資源自足") + "。</p>"));
+      pr.push("請以生命靈數解讀我的人生藍圖:1. 生命靈數的核心使命。2. 天賦/生日/態度數如何互相搭配。3. 九宮連線與空缺數字的意義。4. 巔峰數的四階段人生節奏。5. 一段給我的總結。");
+    },
+    wealth() {
+      out.push(card("財運", "Money", baseKv + '<p class="lead">' + L.lp + " 號人的財富公式</p><p>" + C.money + "。</p>" +
+        "<p>生日數 " + L.birthday + " 補充:" + coreOf(L.birthday).money + "。</p>"));
+      pr.push("請聚焦「財運」解讀:1. 生命靈數 " + L.lp + " 的賺錢模式與漏財暗礁。2. 生日數 " + L.birthday + " 的加成。3. 今年流年 " + L.py + " 的財務策略。4. 具體的開源節流建議。");
+    },
+    love() {
+      out.push(card("戀愛", "Love", baseKv + '<p class="lead">' + L.lp + " 號人的愛情語言</p><p>" + C.love + "。</p>" +
+        "<p>態度數 " + L.attitude + "(初見印象):" + coreOf(L.attitude).love + "。</p>"));
+      pr.push("請聚焦「戀愛」解讀:1. 生命靈數 " + L.lp + " 在親密關係中的樣子與地雷。2. 態度數 " + L.attitude + " 給人的第一印象落差。3. 與哪些數字的人最互補/最磨。4. 今年流年 " + L.py + " 的感情機會與提醒。");
+    },
+    career() {
+      out.push(card("職涯", "Career", baseKv + '<p class="lead">' + L.lp + " 號人的職場定位</p><p>" + C.work + "。</p><p>" + linesH + "</p>"));
+      pr.push("請聚焦「職涯」解讀:1. 生命靈數 " + L.lp + " 適合的角色與產業。2. 連線(" + (L.lines.map(l => l.name).join("、") || "無") + ")透露的職場武器。3. 帶人還是單兵、創業還是深耕。4. 未來三年職涯佈局(參考流年)。");
+    },
+    study() {
+      out.push(card("學習", "Learning", baseKv + '<p class="lead">' + L.lp + " 號人的學習模式</p><p>" + C.study + "。</p>"));
+      pr.push("請聚焦「學習」解讀:1. 生命靈數 " + L.lp + " 的最佳學習法。2. 空缺數字 " + (L.missing.join("、") || "無") + " 需要刻意練習的能力。3. 適合的進修方向與考運策略。");
+    },
+    change() {
+      out.push(card("變動", "Change", baseKv +
+        "<p>5 的能量(自由與變動)在你盤中出現 " + (L.grid[5] || 0) + " 次;流年 " + L.py + "——" + YEAR_MEAN[L.py] + "。</p>" +
+        "<p>挑戰數 " + L.challenges.join("、") + " 標示了變動時最容易絆倒的石頭。</p>"));
+      pr.push("請聚焦「變動」解讀:1. 我面對搬遷/轉職/轉變的體質(5 能量 ×" + (L.grid[5] || 0) + ")。2. 流年 " + L.py + " 適不適合大動作。3. 若要變動,最好的時間窗與準備清單。");
+    },
+    year() {
+      out.push(card("流年", "Personal Year " + L.py, baseKv +
+        '<p class="lead">流年 ' + L.py + "——" + YEAR_MEAN[L.py] + "</p>" +
+        "<p>流月 " + L.pm + "、流日 " + L.pd + "。九年一循環,你正走在第 " + L.py + " 步。</p>" +
+        '<div class="tbl-scroll"><table class="data"><tr><th>流年</th><th>主題</th></tr>' +
+        [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => "<tr" + (n === L.py ? ' style="color:var(--gold-bright)"' : "") + "><td>" + n + "</td><td>" + YEAR_MEAN[n] + "</td></tr>").join("") + "</table></div>"));
+      pr.push("請聚焦「流年」解讀:1. 流年 " + L.py + " 這一年的劇本與月份節奏。2. 上半年/下半年的重點。3. 明年流年 " + (L.py % 9 + 1) + " 該提前佈的局。");
+    },
+    challenge() {
+      out.push(card("挑戰", "Challenges", baseKv +
+        '<div class="tbl-scroll"><table class="data"><tr><th>階段</th><th>挑戰數</th><th>課題</th></tr>' +
+        L.challenges.map((c, i) => "<tr><td>" + ["第一(~" + L.pinnacles[0].to + "歲)", "第二(" + L.pinnacles[1].from + "-" + L.pinnacles[1].to + "歲)", "第三(" + L.pinnacles[2].from + "-" + L.pinnacles[2].to + "歲)", "第四(" + L.pinnacles[3].from + "歲~)"][i] + '</td><td class="hl">' + c + "</td><td>" + (c === 0 ? "無特定挑戰——自由題,自己出題自己答" : coreOf(c).shadow + "(修成:" + coreOf(c).light + ")") + "</td></tr>").join("") + "</table></div>"));
+      pr.push("請聚焦「挑戰數」解讀:1. 四階段挑戰各自的具體場景。2. 我現在正處於哪一關、如何過。3. 挑戰數 0(若有)的自由題怎麼答。");
+    }
+  };
+  T[topic]();
+}
+
 /* ── 主流程 ── */
 $("btn-go").onclick = () => {
   $("go-hint").textContent = "";
   prof.save();
   const q = $("q-input").value.trim();
   const out = [], pr = [];
-  const head = ["你是一位深研東亞命理的老師。以下是完整的起盤資料。" + DC.toneHead(), ""];
+  const head = [(sysId === "lifenum" ? "你是一位精通生命靈數的老師。以下是完整的起算資料。" : "你是一位深研東亞命理的老師。以下是完整的起盤資料。") + DC.toneHead(), ""];
   if (q) head.push("我的問題:" + q, "");
   try {
-    ({ bazi: runBazi, ziwei: runZiwei, shichu: runShichu, ninestar: runNinestar, dangsaju: runDangsaju })[sysId](out, pr);
+    ({ bazi: runBazi, ziwei: runZiwei, shichu: runShichu, ninestar: runNinestar, dangsaju: runDangsaju,
+       lifenum: (o, p) => runLifenum(modeId, o, p) })[sysId](out, pr);
   } catch (e) { if (!$("go-hint").textContent) $("go-hint").textContent = "起盤失敗:" + e.message; return; }
   $("out").innerHTML = out.join("");
   $("prompt-box").value = head.concat(pr).join("\n");
   $("prompt-sec").hidden = false;
-  DC.histSave("八字館", SYS.find(x => x.id === sysId).name, q, $("out").innerHTML, $("prompt-box").value);
+  const s = SYS.find(x => x.id === sysId), m = s.modes ? s.modes.find(x => x[0] === modeId) : null;
+  DC.histSave("八字館", s.name + (m ? "・" + m[1] : ""), q, $("out").innerHTML, $("prompt-box").value);
 };
 $("btn-copy").onclick = async () => {
   try { await navigator.clipboard.writeText($("prompt-box").value); }
@@ -389,15 +500,29 @@ function buildLearn() {
     "<p>以出生年(立春換歲)定<b>本命星</b>(男女算法不同),每年九星飛泊換位:你的星飛到哪一宮,那年的主題就在哪;<b>五黃</b>與其對沖(暗劍殺)為年度凶方,動土遠行宜避。</p>");
   h += DC.lcard("唐四柱(당사주)・十二天星", DC.ltable(["天星", "한글", "意義"], DS_STARS.map(s => [s[2] + " " + s[0], s[1], s[3]])) +
     "<p>朝鮮民間的看圖命書:陰曆年支起星,數月、數日、數時,四個落點就是初年/青年/中年/晚年——不談格局,只講故事,是庶民的溫柔命學。</p>");
+  /* 生命靈數(自數字館遷入) */
+  const LINES8 = [["123", "藝術線", "美感、表達與品味"], ["456", "組織線", "秩序、執行與管理"], ["789", "權力線", "影響力、企圖與擔當"],
+    ["147", "務實線", "腳踏實地、積累成業"], ["258", "情感線", "同理、連結與人和"], ["369", "智慧線", "思辨、公益與遠見"],
+    ["159", "事業線", "意志貫徹、勇往直前"], ["357", "人緣線", "表達魅力、廣結善緣"]];
+  h += DC.lcard("生命靈數・怎麼算", '<p class="lead-para">畢達哥拉斯說「萬物皆數」——生命靈數把「生日」化成數:把生日所有數字加總,反覆相加到一位數(11、22、33 為卓越數,保留不再加)。例:1990-05-15 → 1+9+9+0+0+5+1+5 = 30 → 3+0 = <b>3</b>,生命靈數 3。天賦數是加總的原始值(30),生日數是日期(15→6),態度數是月+日再化簡。西方的生日數字學,與八字同看一個生辰,各說各的話。</p>');
+  h += DC.lcard("十二個數字的臉", DC.ltable(["數", "原型", "關鍵詞", "光面", "影面"],
+    Object.keys(DC.NUM_CORE).map(n => { const c = DC.NUM_CORE[n]; return [n, c.t, c.key, c.light, c.shadow]; })));
+  h += DC.lcard("生日九宮與連線", DC.ltable(["連線", "名稱", "意義"], LINES8) +
+    "<p>把生日所有數字填進 1-9 九宮格,湊滿一整排就成「連線」——是你自帶的套裝技能;空缺的數字則是這輩子要練的新招,不是缺陷。</p>");
+  h += DC.lcard("流年九年一輪", DC.ltable(["流年", "主題"], [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => [n, YEAR_MEAN[n]])) +
+    "<p>流年=(你的月+日+當年年份)化簡。九年一循環:1 播種、9 清倉,知道自己走到第幾步,就不會在該蹲的年份硬跳。</p>");
   return h;
 }
 DC.learnInit(buildLearn);
 
-/* 開發測試:?test=sysId */
+/* 開發測試:?test=sysId(生命靈數可直接用題目 id,如 ?test=blueprint) */
 (function () {
   const t = new URLSearchParams(location.search).get("test");
-  if (!t || !SYS.some(s => s.id === t)) return;
-  sysId = t; renderSys(); updateForm();
+  if (!t) return;
+  if (TOPICS.some(tp => tp[0] === t)) { sysId = "lifenum"; modeId = t; }
+  else if (SYS.some(s => s.id === t)) sysId = t;
+  else return;
+  renderSys(); updateForm();
   $("b-date").value = "1990-05-15"; $("b-time").value = "10:00";
   $("q-input").value = "測試提問:這件事會順利嗎?";
   setTimeout(() => { try { $("btn-go").onclick(); document.title = $("prompt-sec").hidden ? "BAZI-TEST-FAIL(hidden):" + $("go-hint").textContent : "BAZI-TEST-OK"; } catch (e) { document.title = "BAZI-TEST-FAIL " + e.message; } }, 60);
