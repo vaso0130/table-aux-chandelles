@@ -5170,6 +5170,34 @@ if (location.search.includes("rwdtest")) {
   }
 }
 
+/* ?selftest=1:牌組資料自檢——張數/schema/盤面長度/combos 煙霧測試,結果進標題 */
+if (location.search.includes("selftest")) {
+  const out = [];
+  const t = (name, cond, detail) => out.push((cond ? "✓ " : "✗ ") + name + (detail ? " → " + detail : ""));
+  const MC = { len: 36, sib: 52, bel: 53, kip: 36, gra: 54, run: 24, esp: 40, yi: 64, zw: 36, dt: 78 };
+  DECKS.forEach((d) => {
+    t(`${d.id} 張數`, d.cards.length === MC[d.id], `${d.cards.length}≠${MC[d.id]}`);
+    const badC = d.cards.filter((c, i) => !(c.n === i + 1 && c.zh && c.keys && c.text && ["good", "bad", "mid"].includes(c.pol) && (!d.reversible || c.rtext || c.norev)));
+    t(`${d.id} 牌 schema`, badC.length === 0, badC.slice(0, 3).map((c) => c.n).join(","));
+    if (d.id === "gra") t("gra 五系列齊備", d.cards.every((c) => c.myth));
+    if (d.id === "run") t("run 三族齊備", d.cards.every((c) => c.aett != null));
+    d.spreads.forEach((s) => {
+      if (!s.gt && s.positions) {
+        t(`${d.id}/${s.id} positions=${s.count}`, s.positions.length === s.count, s.positions.length);
+        if (s.hints) t(`${d.id}/${s.id} hints`, s.hints.length === s.positions.length);
+        if (s.wx) t(`${d.id}/${s.id} wx`, s.wx.length === s.count);
+        if (s.gong) t(`${d.id}/${s.id} gong`, s.gong.length === s.count);
+        if (s.place) t(`${d.id}/${s.id} place`, s.place.length === s.count);
+      }
+      try { s.combos(d.cards.slice(0, s.count)); } catch (e) { t(`${d.id}/${s.id} combos 煙霧`, false, e.message); }
+    });
+  });
+  const bad = out.filter((s) => s.startsWith("✗"));
+  document.title = bad.length ? "SELFTEST-FAIL-" + bad.length : "SELFTEST-OK";
+  const dv = document.createElement("div"); dv.id = "selftest-dump"; dv.hidden = true; dv.textContent = out.join("\n");
+  document.body.appendChild(dv);
+}
+
 /* 開發掛勾:?minidump=1 → 傾印 DECKS_MINI 精簡資料(名/首關鍵詞/吉凶)供 divine-core 重生,改牌名後重抽用 */
 if (location.search.includes("minidump")) {
   const obj = {};

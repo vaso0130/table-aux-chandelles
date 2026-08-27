@@ -1075,6 +1075,25 @@ var DC = {};
     t("奇門起局(2026-07-22 10:00)", !!qm.juName && Object.keys(qm.tianpan).length === 8, qm.juName + " 旬首" + qm.xunName);
     const zwT = DC.ziwei(1, 1, 0, 2, 2, true); // 丙寅年正月初一子時
     t("紫微起盤成立", zwT.P.filter(p => p.stars.length).length >= 6, zwT.juName + " 命宮" + DC.BRANCHES[zwT.ming]);
+    // ── 資料完整性(文庫;DECKS_MINI 同步斷言鎖:改牌名忘重抽會在此紅燈)──
+    try {
+      const MC = { len: 36, sib: 52, bel: 53, kip: 36, gra: 54, run: 24, esp: 40, yi: 64, zw: 36, dt: 78 };
+      const F1 = { len: "騎士", sib: "交談", bel: "命運", kip: "男主人翁", gra: "問卜者", run: "費胡", esp: "金幣一", yi: "乾為天", zw: "紫微", dt: "雲遊者" };
+      let miniOk = true, why = "";
+      for (const k in MC) {
+        const d = DC.DECKS_MINI[k];
+        if (!d || d.cards.length !== MC[k]) { miniOk = false; why = k + " 張數 " + (d ? d.cards.length : "無"); break; }
+        const c0 = d.cards[0];
+        if (!Array.isArray(c0) || c0.length !== 3 || c0[0] !== F1[k] || ["+", "-", "0"].indexOf(c0[2]) < 0) { miniOk = false; why = k + " 首牌 " + JSON.stringify(c0); break; }
+      }
+      t("DECKS_MINI 十套張數/首牌/三元組", miniOk, why);
+      t("DECK_GUIDES 鍵集=DECKS_MINI", Object.keys(DC.DECK_GUIDES).sort().join() === Object.keys(DC.DECKS_MINI).sort().join());
+      t("QS_MINI=100", DC.QS_MINI.length === 100, DC.QS_MINI.length);
+      t("KIEU=35", DC.KIEU.length === 35, DC.KIEU.length);
+      t("YIJU=100", DC.YIJU.length === 100, DC.YIJU.length);
+      t("numOr('0')=0(時區陷阱)", DC.numOr("0", 8) === 0);
+      t("TONES 全形五款", DC.TONES.length === 5 && DC.TONES.every(s => s.indexOf(",") < 0));
+    } catch (e) { t("文庫斷言", false, e.message); }
     return out.join("\n");
   };
 })();
@@ -1501,3 +1520,15 @@ DC.QS_MINI = [
 ["破釜沉舟","中吉","釜破舟沉渡大河/三分糧盡勇心多/一鼓九戰秦師潰/從茲天下識英髦"],
 ["否極泰來","上上","陰剝將殘陽自回/河冰解凍百花開/從來否極泰相繼/守到春風自此來"]
 ];
+/* ── ?selftest=1:自檢結果進標題(無頭驗收用;node 環境自動跳過) ── */
+if (typeof location !== "undefined" && typeof document !== "undefined" && location.search.indexOf("selftest") >= 0) {
+  setTimeout(function () {
+    try {
+      var r = String(DC.selfTest());
+      var bad = r.split("\n").filter(function (s) { return s.indexOf("✗") === 0; });
+      document.title = bad.length ? "SELFTEST-FAIL-" + bad.length : "SELFTEST-OK";
+      var d = document.createElement("div"); d.id = "selftest-dump"; d.hidden = true; d.textContent = r;
+      document.body.appendChild(d);
+    } catch (e) { document.title = "SELFTEST-ERR " + e.message; }
+  }, 50);
+}
