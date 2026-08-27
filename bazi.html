@@ -142,13 +142,7 @@ function readBirth() {
 }
 
 /* ── 八字 ── */
-const STAGE12 = ["長生", "沐浴", "冠帶", "建禄", "帝旺", "衰", "病", "死", "墓", "絕", "胎", "養"]; // 和流稱建禄(子平作臨官);僅四柱推命使用
-const CHANGSHENG = [11, 6, 2, 9, 2, 9, 5, 0, 8, 3]; // 各干長生之支
-function twelveUn(dayStem, branch) {
-  const st = CHANGSHENG[dayStem];
-  const idx = dayStem % 2 === 0 ? ((branch - st) % 12 + 12) % 12 : ((st - branch) % 12 + 12) % 12;
-  return STAGE12[idx];
-}
+const twelveUn = (dayStem, branch) => DC.twelveUn(dayStem, branch, "he"); // 十二運收斂於 core;和流稱建禄
 function wxCount(bz) {
   const cnt = { 木: 0, 火: 0, 土: 0, 金: 0, 水: 0 };
   for (const p of bz.pillars) { cnt[DC.STEM_WX[p.s]]++; cnt[DC.BRANCH_WX[p.b]]++; }
@@ -260,19 +254,15 @@ function runShichu(out, pr) {
 /* ── 九星氣學 ── */
 function runNinestar(out, pr) {
   const B = readBirth();
-  const lichun = DC.solarTerm(B.y, 315);
-  const jdB = DC.jd(B.y, B.m, B.d, B.h, B.mi, B.tz);
-  const effY = jdB >= lichun ? B.y : B.y - 1;
+  const effY = DC.effYearLichun(B.y, B.m, B.d, B.h, B.mi, B.tz);
   const star = B.male ? DC.nineStarYear(effY) : DC.nineStarFemale(effY);
   const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
   const mStar = DC.nineStarMonth(star, bz.mIdx);
-  const nowY = new Date().getFullYear();
-  const lichunNow = DC.solarTerm(nowY, 315);
-  const effNow = DC.jd(nowY, new Date().getMonth() + 1, new Date().getDate(), 12, 0, 8) >= lichunNow ? nowY : nowY - 1;
-  const yearStar = DC.nineStarYear(effNow);
-  const palaceStar = p => ((yearStar - 1 + (p - 5)) % 9 + 9) % 9 + 1; // 年盤飛泊
+  const now = new Date();
+  const effNow = DC.effYearLichun(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  const board = DC.nineStarBoard(effNow);   // 年盤飛泊收斂於 core(與 MIX 同源)
+  const yearStar = board.yearStar, palaceStar = board.palaceStar, wuhuang = board.wuhuang;
   let myPalace = 0; for (let p2 = 1; p2 <= 9; p2++) if (palaceStar(p2) === star) myPalace = p2;
-  const wuhuang = (() => { for (let p2 = 1; p2 <= 9; p2++) if (palaceStar(p2) === 5) return p2; })();
   const OPP = { 1: 9, 9: 1, 2: 8, 8: 2, 3: 7, 7: 3, 4: 6, 6: 4, 5: 5 };
   const myWx = DC.NSTAR_WX[star];
   const shengWo = DC.WX[(DC.WX.indexOf(myWx) + 4) % 5], woSheng = DC.WX[(DC.WX.indexOf(myWx) + 1) % 5];
@@ -312,15 +302,11 @@ const DS_STARS = [ // 子起天貴,依地支序
 ];
 function runDangsaju(out, pr) {
   const B = readBirth();
-  const lun = DC.lunar(B.y, B.m, B.d, B.tz);
+  const ds = DC.dangsaju(B.y, B.m, B.d, B.h, B.tz);   /* 起星收斂於 core(與 MIX 同源) */
+  const lun = ds.lun;
   if (!lun) throw fail("農曆換算失敗");
-  const lunarYear = (B.m <= 2 && lun.month >= 11) ? B.y - 1 : B.y; // 唐四柱以陰曆年(正月初一換歲)
-  const yB = ((lunarYear - 4) % 12 + 12) % 12;
-  const hb = Math.floor(((B.h % 24) + 1) / 2) % 12;
-  const posY = yB;
-  const posM = (posY + lun.month - 1) % 12;
-  const posD = (posM + lun.day - 1) % 12;
-  const posH = (posD + hb) % 12;
+  const yB = ds.yB, hb = ds.hb;
+  const [posY, posM, posD, posH] = ds.pos;
   const stages = [
     ["初年運(~20)", posY, "年支起星"], ["青年運(20-40)", posM, "數至" + (lun.isLeap ? "閏" : "") + DC.CN_MONTH[lun.month - 1] + "月"],
     ["中年運(40-60)", posD, "數至" + DC.CN_DAY[lun.day - 1]], ["晚年運(60~)", posH, "數至" + DC.BRANCHES[hb] + "時"]

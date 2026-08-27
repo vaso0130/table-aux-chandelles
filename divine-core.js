@@ -1186,3 +1186,59 @@ DC.nextWeton = function (birthY, birthM, birthD, fromY, fromM, fromD) { // 下�
   }
   return null;
 };
+
+/* ═══ 跨館共用 summarizer(單一事實來源:各館與 MIX 一律呼叫此處,勿再手刻) ═══ */
+DC.hourBranch = function (h) { return Math.floor(((h % 24) + 1) / 2) % 12; }; // 時支(23時起子)
+DC.effYearLichun = function (y, m, d, h, mi, tz) { // 立春換歲之有效年
+  return DC.jd(y, m, d, h == null ? 12 : h, mi || 0, tz == null ? 8 : tz) >= DC.solarTerm(y, 315) ? y : y - 1;
+};
+DC.meihuaTime = function (y, mo, d, h, tz) { // 梅花時間卦(邵子古法:農曆年月日+時支;年支以正月初一換歲)
+  const lun = DC.lunar(y, mo, d, tz == null ? 8 : tz);
+  const yB = DC.lunarYearGZ(y, mo, lun).b;
+  const hb = DC.hourBranch(h);
+  const uN = (yB + 1) + lun.month + lun.day, lN = uN + hb + 1;
+  return { mh: DC.meihua(uN, lN, lN), lun, yB, hb, uN, lN };
+};
+DC.dangsaju = function (y, m, d, h, tz) { // 唐四柱:陰曆歸年起星,年月日時四落點
+  const lun = DC.lunar(y, m, d, tz == null ? 8 : tz);
+  const yB = DC.lunarYearGZ(y, m, lun).b;
+  const hb = DC.hourBranch(h);
+  const pM = (yB + lun.month - 1) % 12, pD = (pM + lun.day - 1) % 12, pH = (pD + hb) % 12;
+  return { lun, yB, hb, pos: [yB, pM, pD, pH] };
+};
+DC.STAGE12 = ["長生", "沐浴", "冠帶", "臨官", "帝旺", "衰", "病", "死", "墓", "絕", "胎", "養"];
+DC.CHANGSHENG = [11, 6, 2, 9, 2, 9, 5, 0, 8, 3]; // 十干長生位:甲亥乙午丙戊寅丁己酉庚巳辛子壬申癸卯
+DC.twelveUn = function (dayStem, branch, style) { // 十二運;style "he"=和流(臨官稱建禄)
+  const idx = dayStem % 2 === 0
+    ? ((branch - DC.CHANGSHENG[dayStem]) % 12 + 12) % 12
+    : ((DC.CHANGSHENG[dayStem] - branch) % 12 + 12) % 12;
+  const name = DC.STAGE12[idx];
+  return style === "he" && name === "臨官" ? "建禄" : name;
+};
+DC.nineStarBoard = function (effYear) { // 九星年盤飛泊:中宮星/查宮函式/五黃與暗劍殺方(五黃入中則無)
+  const yearStar = DC.nineStarYear(effYear);
+  const palaceStar = function (p) { return ((yearStar - 1 + (p - 5)) % 9 + 9) % 9 + 1; };
+  let wuhuang = 5;
+  for (let p = 1; p <= 9; p++) if (palaceStar(p) === 5) wuhuang = p;
+  const OPP = { 1: 9, 9: 1, 2: 8, 8: 2, 3: 7, 7: 3, 4: 6, 6: 4, 5: 5 };
+  return { yearStar, palaceStar, wuhuang, anjian: OPP[wuhuang], center: wuhuang === 5 };
+};
+DC.qimenNianming = function (qm, year) { // 奇門年命:主流「年干落宮」+輔「年支寄宮」
+  const yIdx = ((year - 4) % 60 + 60) % 60, yS = yIdx % 10, yB = yIdx % 12;
+  const ch = yS === 0 ? ["戊", "己", "庚", "辛", "壬", "癸"][Math.floor(yIdx / 10)] : DC.STEMS[yS];
+  let g = 0;
+  for (const p of [1, 8, 3, 4, 9, 2, 7, 6]) if (qm.tianpan[p] && qm.tianpan[p].stem.includes(ch)) { g = p; break; }
+  return { ch, ganGong: g, zhiB: yB, zhiGong: DC.BR_PALACE[yB] };
+};
+DC.qimenDayYongshen = function (qm, y, m, d, tz) { // 奇門時間用神:所問之日干支入局
+  const bzT = DC.bazi(y, m, d, 12, 0, tz == null ? 8 : tz);
+  const yiX = ["戊", "己", "庚", "辛", "壬", "癸"][Math.floor(bzT.dIdx / 10)];
+  const jia = bzT.pillars[2].s === 0;
+  const ch = jia ? yiX : DC.STEMS[bzT.pillars[2].s];
+  let tG = 0;
+  for (const p of [1, 8, 3, 4, 9, 2, 7, 6]) if (qm.tianpan[p] && qm.tianpan[p].stem.includes(ch)) { tG = p; break; }
+  let dG = 0;
+  for (let p = 1; p <= 9; p++) if (qm.dipan[p] === ch) { dG = p; break; }
+  if (dG === 5) dG = 2;
+  return { bzT, ch, jia, yi: yiX, tG, dG, bG: DC.BR_PALACE[bzT.pillars[2].b] };
+};

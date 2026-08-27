@@ -359,11 +359,7 @@ GEN["n-life"] = () => {
 };
 GEN["n-meihua"] = () => {
   const n = nowT();
-  const lun = DC.lunar(n.y, n.m, n.d, nowTz());
-  const yB = DC.lunarYearGZ(n.y, n.m, lun).b; // 邵子古法:年月日時皆依農曆,年支以正月初一換歲(與 numbers.html 同源)
-  const hb = Math.floor(((n.h % 24) + 1) / 2) % 12;
-  const uN = (yB + 1) + lun.month + lun.day, lN = uN + hb + 1;
-  const mh = DC.meihua(uN, lN, lN);
+  const { mh, lun, yB, hb } = DC.meihuaTime(n.y, n.m, n.d, n.h, nowTz()); // 起卦式收斂於 core(與 numbers.html 同源)
   return { title: "梅花易數",
     html: "<p>本卦" + mh.name + " 動爻" + mh.mov + "・互卦" + mh.hu.name + "・變卦" + mh.bian.name + "</p>",
     lines: ["梅花易數(時間起卦:" + DC.BRANCHES[yB] + "年農曆" + (lun.isLeap ? "閏" : "") + lun.month + "月" + lun.day + "日" + DC.BRANCHES[hb] + "時):",
@@ -373,7 +369,7 @@ GEN["n-meihua"] = () => {
 GEN["n-meihua-zi"] = () => {
   const q = q3(); if (!q) throw fail("梅花字占需要先寫下問題");
   const chars = [...q.replace(/\s/g, "")];
-  const n = nowT(), hb = Math.floor(((n.h % 24) + 1) / 2) % 12;
+  const n = nowT(), hb = DC.hourBranch(n.h);
   const up = Math.max(1, Math.floor(chars.length / 2)), low = Math.max(1, chars.length - up); // 古法:平分,少者為上卦(取天輕清)
   const mh = DC.meihua(up, low, chars.length + hb + 1);
   return { title: "梅花字占",
@@ -382,10 +378,7 @@ GEN["n-meihua-zi"] = () => {
       "  本卦 " + mh.name + ",動爻第" + mh.mov + "爻;互卦 " + mh.hu.name + ";變卦 " + mh.bian.name,
       "  體卦" + DC.TRIG[mh.ti] + "(" + DC.TRIG_WX[mh.ti] + ")、用卦" + DC.TRIG[mh.yong] + "(" + DC.TRIG_WX[mh.yong] + ");" + mh.rel] };
 };
-function taiyiYearOf(T) { // 立春換歲(與命法生年同制)
-  const jdN = DC.jd(T.y, T.m, T.d, T.h || 12, T.mi || 0, nowTz());
-  return jdN >= DC.solarTerm(T.y, 315) ? T.y : T.y - 1;
-}
+const taiyiYearOf = (T) => DC.effYearLichun(T.y, T.m, T.d, T.h, T.mi, nowTz()); // 立春換歲收斂於 core
 GEN["n-taiyi"] = () => {
   const ty = DC.taiyi(taiyiYearOf(nowT()));
   return { title: "太乙歲計",
@@ -442,8 +435,7 @@ GEN["b-shichu"] = () => {
   const B = birth();
   const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
   const dS = bz.pillars[2].s;
-  const STAGE = ["長生", "沐浴", "冠帶", "建禄", "帝旺", "衰", "病", "死", "墓", "絕", "胎", "養"], CS = [11, 6, 2, 9, 2, 9, 5, 0, 8, 3]; // ⇄ 完整版:bazi.html runShichu(和流稱建禄)
-  const un = b => STAGE[dS % 2 === 0 ? ((b - CS[dS]) % 12 + 12) % 12 : ((CS[dS] - b) % 12 + 12) % 12];
+  const un = b => DC.twelveUn(dS, b, "he");   /* 十二運收斂於 core(與 bazi.html 同源) */
   return { title: "四柱推命(和流)",
     html: "<p>" + bz.pillars.map(p => p.gz).join(" ") + "・十二運:" + bz.pillars.map(p => un(p.b)).join("/") + "</p>",
     lines: ["四柱推命(和流," + B.str + "):" + bz.pillars.map(p => p.tag + p.gz).join(" "),
@@ -451,31 +443,27 @@ GEN["b-shichu"] = () => {
 };
 GEN["b-dang"] = () => {
   const B = birth();
-  const lun = DC.lunar(B.y, B.m, B.d, B.tz);
-  const yB = DC.lunarYearGZ(B.y, B.m, lun).b; // 陰曆歸年(正月初一換歲),與 core 同源
-  const hb = Math.floor(((B.h % 24) + 1) / 2) % 12;
+  const ds = DC.dangsaju(B.y, B.m, B.d, B.h, B.tz);   /* 起星收斂於 core(與 bazi.html 同源) */
   const DS = ["天貴", "天厄", "天權", "天破", "天奸", "天文", "天福", "天驛", "天孤", "天刃", "天藝", "天壽"];
-  const pM = (yB + lun.month - 1) % 12, pD = (pM + lun.day - 1) % 12, pH = (pD + hb) % 12;
+  const [pY, pM, pD, pH] = ds.pos, lun = ds.lun;
   return { title: "唐四柱(당사주)",
-    html: "<p>初年" + DS[yB] + "・青年" + DS[pM] + "・中年" + DS[pD] + "・晚年" + DS[pH] + "</p>",
-    lines: ["唐四柱(당사주,陰曆 " + DC.BRANCHES[yB] + "年" + (lun.isLeap ? "閏" : "") + lun.month + "月" + lun.day + "日" + DC.BRANCHES[hb] + "時):初年運" + DS[yB] + "、青年運" + DS[pM] + "、中年運" + DS[pD] + "、晚年運" + DS[pH]] };
+    html: "<p>初年" + DS[pY] + "・青年" + DS[pM] + "・中年" + DS[pD] + "・晚年" + DS[pH] + "</p>",
+    lines: ["唐四柱(당사주,陰曆 " + DC.BRANCHES[ds.yB] + "年" + (lun.isLeap ? "閏" : "") + lun.month + "月" + lun.day + "日" + DC.BRANCHES[ds.hb] + "時):初年運" + DS[pY] + "、青年運" + DS[pM] + "、中年運" + DS[pD] + "、晚年運" + DS[pH]] };
 };
 GEN["b-nine"] = () => {
   const B = birth();
-  const effY = B.jd >= DC.solarTerm(B.y, 315) ? B.y : B.y - 1;
+  const effY = DC.effYearLichun(B.y, B.m, B.d, B.h, B.mi, B.tz);
   const star = B.male ? DC.nineStarYear(effY) : DC.nineStarFemale(effY);
   const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
   const mStar = DC.nineStarMonth(star, bz.mIdx);
   const lines = ["九星氣學:本命星 " + DC.NSTAR[star] + "(" + (B.male ? "男" : "女") + "命,本站女命異算),月命星 " + DC.NSTAR[mStar]];
   const t0 = targetDay() || nowT(); // 年盤:今年(或所問之日該年)飛泊
-  const effNow = DC.jd(t0.y, t0.m, t0.d || 15, 12, 0, nowTz()) >= DC.solarTerm(t0.y, 315) ? t0.y : t0.y - 1;
-  const yStar = DC.nineStarYear(effNow);
-  const palaceStar = p => ((yStar - 1 + (p - 5)) % 9 + 9) % 9 + 1;
-  let myPalace = 5, wuhuang = 5;
-  for (let p = 1; p <= 9; p++) { if (palaceStar(p) === star) myPalace = p; if (palaceStar(p) === 5) wuhuang = p; }
-  const OPP = { 1: 9, 9: 1, 2: 8, 8: 2, 3: 7, 7: 3, 4: 6, 6: 4, 5: 5 };
-  lines.push("  " + effNow + " 年盤(立春起):中宮" + DC.NSTAR[yStar] + ",本命星飛臨" + DC.GONG_NAME[myPalace] + (myPalace === 5 ? "——回中宮,蟄伏蓄勢之年" : "") + ";" +
-    (wuhuang === 5 ? "本年五黃入中,諸方無五黃殺/暗劍殺" : "五黃在" + DC.GONG_NAME[wuhuang] + "、暗劍殺在" + DC.GONG_NAME[OPP[wuhuang]] + "——此二方大凶,動土遠行宜避"));
+  const effNow = DC.effYearLichun(t0.y, t0.m, t0.d || 15);
+  const board = DC.nineStarBoard(effNow);   /* 飛泊收斂於 core(與 bazi.html 同源) */
+  let myPalace = 5;
+  for (let p = 1; p <= 9; p++) if (board.palaceStar(p) === star) myPalace = p;
+  lines.push("  " + effNow + " 年盤(立春起):中宮" + DC.NSTAR[board.yearStar] + ",本命星飛臨" + DC.GONG_NAME[myPalace] + (myPalace === 5 ? "——回中宮,蟄伏蓄勢之年" : "") + ";" +
+    (board.center ? "本年五黃入中,諸方無五黃殺/暗劍殺" : "五黃在" + DC.GONG_NAME[board.wuhuang] + "、暗劍殺在" + DC.GONG_NAME[board.anjian] + "——此二方大凶,動土遠行宜避"));
   return { title: "九星氣學",
     html: "<p>本命星 " + DC.NSTAR[star] + "・月命星 " + DC.NSTAR[mStar] + "・今年飛臨" + DC.GONG_NAME[myPalace] + "</p>",
     lines };
@@ -499,18 +487,15 @@ GEN["b-qimen"] = () => {
     lines.push("  " + DC.GONG_NAME[p] + ":" + (qm.gods[p] || "") + " " + (t ? t.star + " 天盤" + t.stem : "") + " " + (qm.doors[p] || "") + " 地盤" + qm.dipan[p] + (p === qm.tp ? "(時干)" : "") + (p === qm.dayGongTian ? "(日干)" : ""));
   }
   const ob = birthOpt(qm.bz);
-  if (ob) {
-    const np = DC.BR_PALACE[ob.mingB], t = qm.tianpan[np];
-    lines.push("  問測人年命:" + ob.mingGz + "年生(虛歲" + ob.xusui + "),年命" + DC.BRANCHES[ob.mingB] + "寄" + DC.GONG_NAME[np] + "——" + (qm.gods[np] || "") + " " + (t ? t.star + " 天盤" + t.stem : "") + " " + (qm.doors[np] || ""));
+  if (ob) {   /* 年命收斂於 core:主流年干落宮+輔支寄宮(與 shi.html 同源) */
+    const nm = DC.qimenNianming(qm, ob.bb.year);
+    const np = nm.zhiGong, t = qm.tianpan[np], tg2 = qm.tianpan[nm.ganGong];
+    lines.push("  問測人年命:" + ob.mingGz + "年生(虛歲" + ob.xusui + ");年干" + nm.ch + "落天盤" + (nm.ganGong ? DC.GONG_NAME[nm.ganGong] + "(" + (qm.gods[nm.ganGong] || "") + "・" + (tg2 ? tg2.star : "") + "・" + (qm.doors[nm.ganGong] || "") + ")" : "未尋獲") + "(主流年干落宮法);年支" + DC.BRANCHES[ob.mingB] + "寄" + DC.GONG_NAME[np] + "(" + (qm.gods[np] || "") + " " + (t ? t.star + " 天盤" + t.stem : "") + " " + (qm.doors[np] || "") + ")——以年干落宮為主、支寄宮相參");
   }
   const td = targetDay();
-  if (td) { // 時間用神:所問之日干支入局
-    const bzT = DC.bazi(td.y, td.m, td.d, 12, 0, nowTz());
-    const yiX = ["戊", "己", "庚", "辛", "壬", "癸"][Math.floor(bzT.dIdx / 10)];
-    const ch = bzT.pillars[2].s === 0 ? yiX : DC.STEMS[bzT.pillars[2].s];
-    let tG = 0; for (const p of [1, 8, 3, 4, 9, 2, 7, 6]) if (qm.tianpan[p] && qm.tianpan[p].stem.includes(ch)) { tG = p; break; }
-    const bG = DC.BR_PALACE[bzT.pillars[2].b];
-    lines.push("  時間用神(所問之日 " + td.str + "," + bzT.pillars[2].gz + "日):日干落天盤" + (tG ? DC.GONG_NAME[tG] + "(" + (qm.gods[tG] || "") + "・" + (qm.tianpan[tG] ? qm.tianpan[tG].star : "") + "・" + (qm.doors[tG] || "") + ")" : "未尋獲(請人工核局)") + ";日支寄" + DC.GONG_NAME[bG] + "——請以此二宮論該日行事吉凶");
+  if (td) { // 時間用神:所問之日干支入局(收斂於 core,與 shi.html 同源)
+    const ys = DC.qimenDayYongshen(qm, td.y, td.m, td.d, nowTz());
+    lines.push("  時間用神(所問之日 " + td.str + "," + ys.bzT.pillars[2].gz + "日):日干落天盤" + (ys.tG ? DC.GONG_NAME[ys.tG] + "(" + (qm.gods[ys.tG] || "") + "・" + (qm.tianpan[ys.tG] ? qm.tianpan[ys.tG].star : "") + "・" + (qm.doors[ys.tG] || "") + ")" : "未尋獲(請人工核局)") + ";日支寄" + DC.GONG_NAME[ys.bG] + "——請以此二宮論該日行事吉凶");
   }
   return { title: "奇門遁甲", html: "<p>" + qm.juName + "・直符" + qm.fuStar + "・直使" + qm.fuDoor + "</p>", lines };
 };

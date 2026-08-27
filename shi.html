@@ -204,12 +204,7 @@ function runQimen(out, pr) {
     '<div class="grid9">' + [4, 9, 2, 3, 5, 7, 8, 1, 6].map(cellHtml).join("") + "</div>" +
     "<p>吉門(開休生)所在:" + [1, 2, 3, 4, 6, 7, 8, 9].filter(p => ["開門", "休門", "生門"].includes(qm.doors[p])).map(p => qm.doors[p] + "在" + DC.GONG_NAME[p]).join("、") + "。</p>"));
   const ob = readBirthOpt(qm.bz);
-  const yGongOf = () => { // 主流年命法:年干在天盤之落宮(甲年以其旬遁儀代)
-    const yIdx = ((ob.bb.year - 4) % 60 + 60) % 60, yS = yIdx % 10;
-    const ch = yS === 0 ? ["戊", "己", "庚", "辛", "壬", "癸"][Math.floor(yIdx / 10)] : DC.STEMS[yS];
-    for (const p of [1, 8, 3, 4, 9, 2, 7, 6]) if (qm.tianpan[p] && qm.tianpan[p].stem.includes(ch)) return { g: p, ch };
-    return { g: 0, ch };
-  };
+  const yGongOf = () => { const r = DC.qimenNianming(qm, ob.bb.year); return { g: r.ganGong, ch: r.ch }; }; // 年命收斂於 core(與 MIX 同源)
   if (ob) {
     const np = DC.BR_PALACE[ob.mingB], t = qm.tianpan[np];
     const yg = yGongOf(), ty2 = qm.tianpan[yg.g];
@@ -225,12 +220,9 @@ function runQimen(out, pr) {
     pr.push("  " + DC.GONG_NAME[p] + ":" + (qm.gods[p] || "") + "・" + (t ? t.star + "・天盤" + t.stem : "") + "・" + (qm.doors[p] || "") + "・地盤" + qm.dipan[p] + (p === qm.tp ? "(時干落宮)" : "") + (p === qm.dayGongTian ? "(日干所在)" : ""));
   }
   const td = readTargetDay();
-  if (td) { // 時間用神:所問之日干支入局
-    const yiX = ["戊", "己", "庚", "辛", "壬", "癸"][Math.floor(td.dIdx / 10)];
-    const ch = td.s === 0 ? yiX : DC.STEMS[td.s];
-    let tG = 0; for (const p of [1, 8, 3, 4, 9, 2, 7, 6]) if (qm.tianpan[p] && qm.tianpan[p].stem.includes(ch)) { tG = p; break; }
-    let dG = 0; for (let p = 1; p <= 9; p++) if (qm.dipan[p] === ch) { dG = p; break; } if (dG === 5) dG = 2;
-    const bG = DC.BR_PALACE[td.b];
+  if (td) { // 時間用神:所問之日干支入局(收斂於 core,與 MIX 同源)
+    const ys = DC.qimenDayYongshen(qm, td.y, td.m, td.d, N.tz);
+    const yiX = ys.yi, tG = ys.tG, dG = ys.dG, bG = ys.bG;
     const tt = qm.tianpan[tG];
     out.push(card("時間用神・所問之日", td.str + "(" + td.gz + "日)",
       "<p>該日日干" + DC.STEMS[td.s] + (td.s === 0 ? "(甲遁,以其旬儀" + yiX + "代)" : "") + "落於天盤<b style='color:var(--gold-bright)'>" + DC.GONG_NAME[tG] + "</b>——" + (qm.gods[tG] || "") + "・" + (tt ? tt.star : "") + "・" + (qm.doors[tG] || "") + ";地盤在" + DC.GONG_NAME[dG] + "。</p>" +
@@ -293,9 +285,8 @@ function runLiuren(out, pr) {
 
 /* ── 太乙神數 ── */
 function taiyiNowYear() { // 今歲以立春換歲(與命法生年同制;古法另有冬至歲首之說,於提示詞註明)
-  const t = new Date(), y = t.getFullYear(), tz = -t.getTimezoneOffset() / 60;
-  const jdN = DC.jd(y, t.getMonth() + 1, t.getDate(), t.getHours(), t.getMinutes(), tz);
-  return jdN >= DC.solarTerm(y, 315) ? y : y - 1;
+  const t = new Date();
+  return DC.effYearLichun(t.getFullYear(), t.getMonth() + 1, t.getDate(), t.getHours(), t.getMinutes(), -t.getTimezoneOffset() / 60);
 }
 function runTaiyi(out, pr) {
   const ty = DC.taiyi(taiyiNowYear());

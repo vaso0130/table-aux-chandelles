@@ -292,17 +292,13 @@ function runMeihua(out, pr, q) {
     srcTag = "";
   }
   if (modeId === "mh-time") {
-    const lun = DC.lunar(y, mo, d, DC.numOr($("b-tz").value, 8));
-    const yB = DC.lunarYearGZ(y, mo, lun).b; // 邵子古法:年月日時皆依農曆,年支以正月初一換歲
-    const hb = Math.floor(((h % 24) + 1) / 2) % 12;
-    const uN = (yB + 1) + lun.month + lun.day;
-    const lN = uN + (hb + 1);
-    const mh = DC.meihua(uN, lN, lN);
+    const t = DC.meihuaTime(y, mo, d, h, DC.numOr($("b-tz").value, 8)); // 起卦式收斂於 core(與 MIX 同源)
+    const { mh, lun, yB, hb, uN, lN } = t;
     meihuaCard(mh, srcTag + "時間起卦:" + DC.BRANCHES[yB] + "年" + (lun.isLeap ? "閏" : "") + DC.CN_MONTH[lun.month - 1] + "月" + DC.CN_DAY[lun.day - 1] + DC.BRANCHES[hb] + "時(年" + (yB + 1) + "+月" + lun.month + "+日" + lun.day + "=" + uN + ",加時" + (hb + 1) + "=" + lN + ")", out, pr, q);
   } else {
     const a = parseInt($("num-a").value), b = parseInt($("num-b").value);
     if (!a || !b) throw fail("請報兩個數");
-    const hb = Math.floor(((h % 24) + 1) / 2) % 12;
+    const hb = DC.hourBranch(h);
     const mh = DC.meihua(a, b, a + b + hb + 1);
     meihuaCard(mh, srcTag + "報數起卦:" + a + "・" + b + "(加" + DC.BRANCHES[hb] + "時" + (hb + 1) + "取動爻)", out, pr, q);
   }

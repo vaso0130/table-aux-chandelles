@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
    燭光牌桌 · 牌卡資料 cards-data.js(自 index.html 抽出)
-   十套牌卡牌義+盤面定義+組合帮手(pair/sibPair/belPair/kipPair/espSets)
+   十套牌卡牌義+盤面定義+組合幫手(pair/sibPair/belPair/kipPair/espSets)
    +DECKS 註冊表與六牌陣注入。純資料與其閉包,不含儀式引擎。
    載入順序:本檔必須在 index.html 主 script 之前。
    改牌名/keys/pol 後:開 index.html?minidump=1 重抽貼回 divine-lore(DECKS_MINI)。

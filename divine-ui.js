@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
-   燭光牌桌 · 別館 UI 帮手 divine-ui.js(自 divine-core.js 抽出)
-   城市選單/語氣/歷史/教學分頁/文庫瀏覽器/卡片帮手 + ?selftest 掛勾。
+   燭光牌桌 · 別館 UI 幫手 divine-ui.js(自 divine-core.js 抽出)
+   城市選單/語氣/歷史/教學分頁/文庫瀏覽器/卡片幫手 + ?selftest 掛勾。
    載入順序:divine-core.js → divine-ui.js → divine-lore.js。
    ═══════════════════════════════════════════════════════════════ */
 "use strict";
@@ -194,4 +194,108 @@ if (typeof location !== "undefined" && typeof document !== "undefined" && locati
   }).observe(ok, { attributes: true, attributeFilter: ["hidden"] });
   var hint = document.getElementById("go-hint");
   if (hint) hint.setAttribute("role", "status");
+})();
+
+/* ── 全館通用「下載盤面圖」──
+   把 #out(起盤結果)連同標題落款繪成 PNG:複製 DOM+扁平化 computed style,
+   包進 SVG foreignObject 轉點陣——純本地,file:// 可用,無外部依賴。 */
+DC.renderPanImage = function (cb) {
+  var out = document.getElementById("out");
+  if (!out || !out.innerHTML.trim()) out = document.getElementById("slip-scroll"); /* 開卷館籤紙容器 */
+  if (!out || !out.innerHTML.trim()) { cb(null, "empty"); return; }
+  var PROPS = ["display", "flex-direction", "flex-wrap", "justify-content", "align-items", "gap",
+    "grid-template-columns", "grid-template-rows", "grid-column", "grid-row",
+    "width", "min-width", "max-width", "min-height",
+    "margin", "padding", "border", "border-radius", "box-shadow",
+    "background", "background-color", "color", "opacity",
+    "font-family", "font-size", "font-weight", "font-style", "line-height",
+    "letter-spacing", "text-indent", "text-align", "white-space", "writing-mode",
+    "text-shadow", "vertical-align", "overflow", "position"];
+  function inlineStyles(src, dst) {
+    if (src.nodeType !== 1) return;
+    var cs = getComputedStyle(src);
+    for (var i = 0; i < PROPS.length; i++) dst.style.setProperty(PROPS[i], cs.getPropertyValue(PROPS[i]));
+    for (var k = 0; k < src.children.length; k++) inlineStyles(src.children[k], dst.children[k]);
+  }
+  var W = Math.max(560, Math.min(out.scrollWidth || 760, 1200));
+  var clone = out.cloneNode(true);
+  inlineStyles(out, clone);
+  var titleEl = document.querySelector("h1");
+  var d = new Date();
+  var when = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  var holder = document.createElement("div");
+  holder.style.cssText = "position:fixed;left:-99999px;top:0;width:" + W + "px;background:#0D140F;color:#E8DCC2;padding:28px 24px 20px;box-sizing:border-box;border:1.5px solid #C9A45C;font-family:serif";
+  var head = document.createElement("div");
+  head.style.cssText = "text-align:center;color:#E4C989;font-size:22px;letter-spacing:.2em;margin-bottom:4px";
+  head.textContent = (titleEl ? titleEl.textContent : "燭光牌桌");
+  var sub = document.createElement("div");
+  sub.style.cssText = "text-align:center;color:#9A8C70;font-size:12px;margin-bottom:16px";
+  sub.textContent = when;
+  var foot = document.createElement("div");
+  foot.style.cssText = "text-align:center;color:rgba(201,164,92,.7);font-size:12px;letter-spacing:.15em;margin-top:18px";
+  foot.textContent = "── 燭 光 牌 桌 ・ La Table aux Chandelles ──";
+  holder.appendChild(head); holder.appendChild(sub); holder.appendChild(clone); holder.appendChild(foot);
+  document.body.appendChild(holder);
+  var H = holder.scrollHeight;
+  /* 量完高度後改回常規定位——否則序列化進 SVG 後內容被畫到 -99999px 外 */
+  holder.style.position = "static"; holder.style.left = "auto"; holder.style.top = "auto";
+  var xml;
+  try { xml = new XMLSerializer().serializeToString(holder); }
+  catch (e) { document.body.removeChild(holder); cb(null, e.message); return; }
+  document.body.removeChild(holder);
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '">' +
+    '<foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">' + xml + "</div></foreignObject></svg>";
+  var img = new Image();
+  img.onload = function () {
+    var cv = document.createElement("canvas");
+    var scale = 2;
+    cv.width = W * scale; cv.height = H * scale;
+    var g = cv.getContext("2d");
+    g.fillStyle = "#0D140F"; g.fillRect(0, 0, cv.width, cv.height);
+    g.scale(scale, scale);
+    g.drawImage(img, 0, 0);
+    cb(cv, null);
+  };
+  img.onerror = function () { cb(null, "svg-render"); };
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+};
+DC.downloadPan = function () {
+  DC.renderPanImage(function (cv, err) {
+    if (!cv) { alert(err === "empty" ? "先起盤,再下載。" : "此瀏覽器不支援盤面匯出(" + err + ")——可改用列印存 PDF。"); return; }
+    cv.toBlob(function (blob) {
+      if (!blob) { alert("匯出失敗——可改用列印存 PDF。"); return; }
+      var d = new Date();
+      var a = document.createElement("a");
+      a.download = "燭光牌桌盤面-" + d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0") + ".png";
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    }, "image/png");
+  });
+};
+/* 注入「下載盤面圖」鈕(接在複製鍵旁);?pandump=1 無頭驗證掛勾 */
+(function () {
+  if (typeof document === "undefined") return;
+  var copyBtn = document.getElementById("btn-copy");
+  if (copyBtn && !document.getElementById("btn-panshot")) {
+    var b = document.createElement("button");
+    b.className = "ghost-btn"; b.id = "btn-panshot"; b.textContent = "下載盤面圖";
+    b.addEventListener("click", DC.downloadPan);
+    copyBtn.parentElement.insertBefore(b, copyBtn.nextSibling);
+  }
+  if (location.search.indexOf("pandump") >= 0) {
+    setTimeout(function () {
+      DC.renderPanImage(function (cv, err) {
+        var t = document.createElement("div");
+        t.id = "pan-dump"; t.hidden = true;
+        t.textContent = cv ? "PAN " + cv.width + "x" + cv.height : "PAN-ERR " + err;
+        document.body.appendChild(t);
+        if (cv && location.search.indexOf("pandump=2") >= 0) { /* 視覺驗證 */
+          document.body.innerHTML = ""; document.body.style.background = "#000";
+          cv.style.maxWidth = "100%"; cv.style.height = "auto";
+          document.body.appendChild(cv); document.body.appendChild(t);
+        }
+      });
+    }, 1800);
+  }
 })();
