@@ -122,7 +122,7 @@ DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prom
 DC.histBind();
 
 const PK = "dc-ny-profile";
-try { const p = JSON.parse(localStorage.getItem(PK) || "{}"); if (p.bd) { $("b-date").value = p.bd; $("b-time").value = p.bt || "12:00"; } } catch (e) {}
+const prof = DC.profileBind(PK, ["b-date","b-time"]); // 生辰檔案工廠:含舊鍵遷移+跨館共用 dc-profile
 
 function card(t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
 function fail(msg) { $("go-hint").textContent = msg; return new Error(msg); }
@@ -223,7 +223,7 @@ function runThai(out, pr) {
 /* ── 主流程 ── */
 $("btn-go").onclick = () => {
   $("go-hint").textContent = "";
-  try { localStorage.setItem(PK, JSON.stringify({ bd: $("b-date").value, bt: $("b-time").value })); } catch (e) {}
+  prof.save();
   const q = $("q-input").value.trim();
   const out = [], pr = [];
   const head = ["你是一位熟悉東南亞民俗命理的老師。以下是完整的起算資料。" + DC.toneHead(), ""];

@@ -218,11 +218,7 @@ DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prom
 DC.histBind();
 
 const PK = "dc-mix-profile";
-try {
-  const p = JSON.parse(localStorage.getItem(PK) || "{}");
-  if (p.bd) { $("b-date").value = p.bd; $("b-time").value = p.bt || "12:00"; $("b-gender").value = p.g || "m"; }
-  if (p.lat != null) { if (p.city != null) $("b-city").value = p.city; $("b-lat").value = p.lat; $("b-lon").value = p.lon; $("b-tz").value = p.tz; } // 出生地一併記住
-} catch (e) {}
+const prof = DC.profileBind(PK, ["b-date", "b-time", "b-gender", "b-city", "b-lat", "b-lon", "b-tz"]); // 生辰檔案工廠:含舊鍵遷移+跨館共用 dc-profile
 
 /* ── 工具 ── */
 function card(t, body) { return '<div class="result-card"><h3>' + t + "</h3>" + body + "</div>"; }
@@ -645,8 +641,7 @@ const RESON = [
 ];
 $("btn-go").onclick = () => {
   $("go-hint").textContent = "";
-  try { localStorage.setItem(PK, JSON.stringify({ bd: $("b-date").value, bt: $("b-time").value, g: $("b-gender").value,
-    city: $("b-city").value, lat: $("b-lat").value, lon: $("b-lon").value, tz: $("b-tz").value })); } catch (e) {}
+  prof.save();
   const out = [], sections = [];
   try {
     for (const id of picked) {

@@ -299,3 +299,35 @@ DC.downloadPan = function () {
     }, 1800);
   }
 })();
+/* ── 生辰檔案工廠:各館一行宣告,並自動同步跨館共用檔 dc-profile ──
+   fields 為欄位 id 陣列;讀取順序:本館新制 → 本館舊制短鍵 → 跨館共用檔。 */
+DC.profileBind = function (key, fields) {
+  var LEGACY = { "b-date": "bd", "b-time": "bt", "b-gender": "g", "b-tz": "tz", "b-lat": "lat", "b-lon": "lon", "b-city": "city", "b-zwyear": "zw" };
+  var SHARED = { "b-date": "bd", "b-time": "bt", "b-gender": "g", "b-tz": "tz", "b-lat": "lat", "b-lon": "lon", "b-city": "city" };
+  function load() {
+    var p = {}, s = {};
+    try { p = JSON.parse(localStorage.getItem(key) || "{}"); } catch (e) {}
+    try { s = JSON.parse(localStorage.getItem("dc-profile") || "{}"); } catch (e) {}
+    fields.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var v = p[id];
+      if (v == null && LEGACY[id] != null) v = p[LEGACY[id]];
+      if (v == null && SHARED[id] != null) v = s[SHARED[id]];
+      if (v != null && v !== "") el.value = v;
+    });
+  }
+  function save() {
+    var p = {}, s = {};
+    try { s = JSON.parse(localStorage.getItem("dc-profile") || "{}"); } catch (e) {}
+    fields.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      p[id] = el.value;
+      if (SHARED[id] != null && el.value) s[SHARED[id]] = el.value;
+    });
+    try { localStorage.setItem(key, JSON.stringify(p)); localStorage.setItem("dc-profile", JSON.stringify(s)); } catch (e) {}
+  }
+  load();
+  return { save: save, load: load };
+};

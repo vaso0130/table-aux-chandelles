@@ -156,7 +156,7 @@ setInterval(() => { if ($("n-follow").checked && !$("form-now").hidden) setNowFi
 $("n-follow").addEventListener("change", () => { if ($("n-follow").checked) setNowFields(); });
 
 const PK = "dc-shi-profile";
-try { const p = JSON.parse(localStorage.getItem(PK) || "{}"); if (p.bd) { $("b-date").value = p.bd; $("b-time").value = p.bt || "12:00"; $("b-gender").value = p.g || "m"; } } catch (e) {}
+const prof = DC.profileBind(PK, ["b-date","b-time","b-gender","b-tz"]); // 生辰檔案工廠:含舊鍵遷移+跨館共用 dc-profile
 
 function card(t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
 function fail(msg) { $("go-hint").textContent = msg; return new Error(msg); }
@@ -339,7 +339,7 @@ function runTaiyiMing(out, pr) {
 /* ── 主流程 ── */
 $("btn-go").onclick = () => {
   $("go-hint").textContent = "";
-  try { localStorage.setItem(PK, JSON.stringify({ bd: $("b-date").value, bt: $("b-time").value, g: $("b-gender").value })); } catch (e) {}
+  prof.save();
   const q = $("q-input").value.trim();
   const out = [], pr = [];
   const head = ["你是一位深研三式(太乙、奇門、六壬)的老師。以下是完整的起局資料。" + DC.toneHead(), ""];
