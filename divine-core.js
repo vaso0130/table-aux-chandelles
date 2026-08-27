@@ -1075,6 +1075,11 @@ var DC = {};
     t("奇門起局(2026-07-22 10:00)", !!qm.juName && Object.keys(qm.tianpan).length === 8, qm.juName + " 旬首" + qm.xunName);
     const zwT = DC.ziwei(1, 1, 0, 2, 2, true); // 丙寅年正月初一子時
     t("紫微起盤成立", zwT.P.filter(p => p.stars.length).length >= 6, zwT.juName + " 命宮" + DC.BRANCHES[zwT.ming]);
+    const hdT = DC.humanDesign(1990, 5, 15, 10, 0, 8); // 人類圖錨例:太陽弧差恆 88°,樣本命盤鎖定
+    t("人類圖:1990-05-15 錨例", hdT.pers[0].gate === 23 && hdT.pers[0].line === 6 && hdT.des[0].gate === 30 && hdT.type === "P" && hdT.profile === "6/2" && hdT.channels.length === 5,
+      hdT.pers[0].gate + "." + hdT.pers[0].line + "/" + hdT.des[0].gate + " " + hdT.type + " " + hdT.profile);
+    t("人類圖:曼陀羅錨點", DC.hdGate(302).gate === 41 && DC.hdGate(0).gate === 25 && DC.hdGate(280.5).gate === 38,
+      [302, 0, 280.5].map(x => DC.hdGate(x).gate).join(","));
     // ── 資料完整性(文庫;DECKS_MINI 同步斷言鎖:改牌名忘重抽會在此紅燈)──
     try {
       const MC = { len: 36, sib: 52, bel: 53, kip: 36, gra: 54, run: 24, esp: 40, yi: 64, zw: 36, dt: 78 };
@@ -1241,4 +1246,91 @@ DC.qimenDayYongshen = function (qm, y, m, d, tz) { // 奇門時間用神:所問�
   for (let p = 1; p <= 9; p++) if (qm.dipan[p] === ch) { dG = p; break; }
   if (dG === 5) dG = 2;
   return { bzT, ch, jia, yi: yiX, tG, dG, bG: DC.BR_PALACE[bzT.pillars[2].b] };
+};
+/* ═══ 人類圖 Human Design(2026-08 三期③)═══
+   回歸黃道;設計端=本命太陽前 88° 日弧之時刻(牛頓迭代);
+   曼陀羅:閘門41起於302°(水瓶2°),每門5.625°、每爻0.9375°;
+   交點採平均交點(與官方真交點差<1.7°,爻位邊界者於提示詞註明)。 */
+DC.HD_SEQ = [41, 19, 13, 49, 30, 55, 37, 63, 22, 36, 25, 17, 21, 51, 42, 3, 27, 24, 2, 23, 8, 20, 16, 35, 45, 12, 15, 52, 39, 53, 62, 56, 31, 33, 7, 4, 29, 59, 40, 64, 47, 6, 46, 18, 48, 57, 32, 50, 28, 44, 1, 43, 14, 34, 9, 5, 26, 11, 10, 58, 38, 54, 61, 60];
+DC.HD_CENTERS = ["頭腦", "概念(Ajna)", "喉嚨", "G(自我)", "意志(心)", "薦骨", "直覺(脾)", "情緒(太陽神經叢)", "根部"];
+DC.HD_GC = { 64: 0, 61: 0, 63: 0, 47: 1, 24: 1, 4: 1, 17: 1, 43: 1, 11: 1,
+  62: 2, 23: 2, 56: 2, 35: 2, 12: 2, 45: 2, 33: 2, 8: 2, 31: 2, 20: 2, 16: 2,
+  1: 3, 13: 3, 25: 3, 46: 3, 2: 3, 15: 3, 10: 3, 7: 3, 26: 4, 51: 4, 21: 4, 40: 4,
+  34: 5, 5: 5, 14: 5, 29: 5, 59: 5, 9: 5, 3: 5, 42: 5, 27: 5,
+  48: 6, 57: 6, 44: 6, 50: 6, 32: 6, 28: 6, 18: 6, 36: 7, 22: 7, 37: 7, 6: 7, 49: 7, 55: 7, 30: 7,
+  53: 8, 60: 8, 52: 8, 19: 8, 39: 8, 41: 8, 58: 8, 38: 8, 54: 8 };
+DC.HD_CHANNELS = [[1, 8, "啟發"], [2, 14, "脈動"], [3, 60, "突變"], [4, 63, "邏輯"], [5, 15, "韻律"], [6, 59, "親密"],
+  [7, 31, "領導"], [9, 52, "專注"], [10, 20, "覺醒"], [10, 34, "探索"], [10, 57, "完美形式"], [11, 56, "好奇"],
+  [12, 22, "開放"], [13, 33, "浪子"], [16, 48, "才華"], [17, 62, "接受"], [18, 58, "批判"], [19, 49, "整合"],
+  [20, 34, "魅力"], [20, 57, "腦波"], [21, 45, "金錢線"], [23, 43, "架構"], [24, 61, "察覺"], [25, 51, "發起"],
+  [26, 44, "臣服"], [27, 50, "保存"], [28, 38, "掙扎"], [29, 46, "發現"], [30, 41, "夢想"], [32, 54, "蛻變"],
+  [34, 57, "力量"], [35, 36, "無常"], [37, 40, "社群"], [39, 55, "情緒表達"], [42, 53, "成熟"], [47, 64, "抽象"]];
+DC.HD_TYPES = {
+  M: { name: "顯示者 Manifestor", strat: "行動前告知受影響的人", sig: "平和", notself: "憤怒" },
+  G: { name: "生產者 Generator", strat: "等待,然後回應", sig: "滿足", notself: "挫敗" },
+  MG: { name: "顯示生產者 Manifesting Generator", strat: "等待回應,行動前告知", sig: "滿足(兼平和)", notself: "挫敗(兼憤怒)" },
+  P: { name: "投射者 Projector", strat: "等待被認可與邀請", sig: "成功", notself: "苦澀" },
+  R: { name: "反映者 Reflector", strat: "等待一個月循環(約28天)再決定", sig: "驚喜", notself: "失望" }
+};
+DC.HD_PROFILE = { "1/3": "探究者/烈士", "1/4": "探究者/機會主義者", "2/4": "隱士/機會主義者", "2/5": "隱士/異端者",
+  "3/5": "烈士/異端者", "3/6": "烈士/人生典範", "4/6": "機會主義者/人生典範", "4/1": "機會主義者/探究者",
+  "5/1": "異端者/探究者", "5/2": "異端者/隱士", "6/2": "人生典範/隱士", "6/3": "人生典範/烈士" };
+DC.hdGate = function (lon) { // 黃經→閘門.爻
+  const off = (((lon - 302) % 360) + 360) % 360;
+  const idx = Math.floor(off / 5.625);
+  return { gate: DC.HD_SEQ[idx], line: Math.floor((off - idx * 5.625) / 0.9375) + 1 };
+};
+DC.humanDesign = function (y, m, d, h, mi, tz) {
+  const rv = a => ((a % 360) + 360) % 360, rv180 = a => ((a % 360) + 540) % 360 - 180;
+  const jdP = DC.jd(y, m, d, h, mi, tz);
+  const sunP = DC.sunLon(jdP);
+  let jdD = jdP - 88 / 0.985647;                       // 設計端:太陽退 88° 之時刻
+  for (let i = 0; i < 10; i++) jdD += rv180(rv(sunP - 88) - DC.sunLon(jdD)) / 0.985647;
+  const pts = jd => {
+    const ch = DC.chart(jd), o = [];
+    const push = (id, zh, gl, lon) => { const g = DC.hdGate(lon); o.push({ id, zh, gl, lon: rv(lon), gate: g.gate, line: g.line }); };
+    const by = id => ch.find(p => p.id === id);
+    push("sun", "太陽", "☉", by("sun").lon);
+    push("ear", "地球", "⊕", by("sun").lon + 180);
+    push("moo", "月亮", "☽", by("moo").lon);
+    push("nn", "北交點", "☊", by("nod").lon);
+    push("sn", "南交點", "☋", by("nod").lon + 180);
+    for (const k of ["mer", "ven", "mar", "jup", "sat", "ura", "nep", "plu"]) push(k, by(k).zh, by(k).gl, by(k).lon);
+    return o;
+  };
+  const pers = pts(jdP), des = pts(jdD);
+  const gates = new Set();
+  pers.forEach(p => gates.add(p.gate)); des.forEach(p => gates.add(p.gate));
+  const channels = DC.HD_CHANNELS.filter(c => gates.has(c[0]) && gates.has(c[1]));
+  const defined = new Set();
+  channels.forEach(c => { defined.add(DC.HD_GC[c[0]]); defined.add(DC.HD_GC[c[1]]); });
+  // 中心連通性(僅算已定義通道連起的已定義中心)
+  const adj = {}; defined.forEach(c => adj[c] = new Set());
+  channels.forEach(c => { const a = DC.HD_GC[c[0]], b = DC.HD_GC[c[1]]; if (a !== b) { adj[a].add(b); adj[b].add(a); } });
+  const comp = {}; let nComp = 0;
+  defined.forEach(c => {
+    if (comp[c] != null) return;
+    nComp++; const st = [c]; comp[c] = nComp;
+    while (st.length) { const u = st.pop(); adj[u].forEach(v => { if (comp[v] == null) { comp[v] = nComp; st.push(v); } }); }
+  });
+  const reach = (from, to) => defined.has(from) && defined.has(to) && comp[from] === comp[to];
+  const motorThroat = [4, 5, 7, 8].some(mo => reach(mo, 2));
+  let type;
+  if (!defined.size) type = "R";
+  else if (defined.has(5)) type = motorThroat ? "MG" : "G";
+  else type = motorThroat ? "M" : "P";
+  let auth;
+  if (defined.has(7)) auth = "情緒權威——沒有當下的真實,等情緒波過完再決定";
+  else if (defined.has(5)) auth = "薦骨權威——聽當下的直覺聲音(嗯哼/嗯嗯)回應";
+  else if (defined.has(6)) auth = "直覺權威——當下一閃而過的微弱訊號,只說一次";
+  else if (defined.has(4)) auth = "意志權威——聽自己說出口的承諾與想要";
+  else if (defined.has(3)) auth = "自我投射權威——透過說話聽見自己的方向";
+  else if (type === "R") auth = "月循環權威——跟著月亮走完 28 天再定";
+  else auth = "無內在權威(環境權威)——在對的環境與信任的人面前談,答案自然浮現";
+  const pf = pers[0].line + "/" + des[0].line;
+  const DEFN = ["", "一分人(能量一氣呵成)", "二分人(兩區各自運作,需橋樑)", "三分人(三區,需多元人際)", "四分人(四區,極需他人)"];
+  const cross = "(" + pers[0].gate + "/" + pers[1].gate + " | " + des[0].gate + "/" + des[1].gate + ")";
+  const angle = pf === "4/1" ? "並置十字" : (pers[0].line < des[0].line ? "右角度十字" : "左角度十字"); // 右角:1/3~4/6;左角:5/1~6/3
+  return { jdP, jdD, pers, des, gates, channels, defined, nComp, type, T: DC.HD_TYPES[type], auth,
+    profile: pf, profileName: DC.HD_PROFILE[pf] || "", defName: defined.size ? DEFN[nComp] : "無定義(反映者)", cross, angle };
 };
