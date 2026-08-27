@@ -1,3 +1,6 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
 <title>燭光牌桌 · La Table aux Chandelles</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -4675,7 +4678,13 @@ function buildAiPrompt() {
 }
 
 /* ── 建議語氣（可調整並記住） ─────────────── */
-const TONE_KEY = "lenormand-tone", TONE_CUSTOM_KEY = "lenormand-tone-custom";
+const TONE_KEY = "dc-tone", TONE_CUSTOM_KEY = "dc-tone-custom"; // 與別館共用同一組鍵(divine-core toneInit)
+try { /* 一次性遷移舊鍵 */
+  if (!localStorage.getItem("dc-tone") && localStorage.getItem("lenormand-tone")) {
+    localStorage.setItem("dc-tone", localStorage.getItem("lenormand-tone"));
+    localStorage.setItem("dc-tone-custom", localStorage.getItem("lenormand-tone-custom") || "");
+  }
+} catch (e) {}
 const elTone = $("#tone-select"), elToneCustom = $("#tone-custom");
 
 function currentTone() {
@@ -4700,7 +4709,8 @@ elToneCustom.addEventListener("input", toneChanged);
 
 (function restoreTone() {
   try {
-    const saved = localStorage.getItem(TONE_KEY);
+    let saved = localStorage.getItem(TONE_KEY);
+    if (saved && saved !== "__custom__") { const s2 = saved.replace(/,/g, "，"); if ([...elTone.options].some((o) => o.value === s2)) saved = s2; } // 舊半形值遷移
     if (saved && [...elTone.options].some((o) => o.value === saved)) elTone.value = saved;
     elToneCustom.value = localStorage.getItem(TONE_CUSTOM_KEY) || "";
   } catch (e) {}
@@ -5174,3 +5184,4 @@ if (location.search.includes("minidump")) {
   document.body.appendChild(el);
 }
 </script>
+</html>

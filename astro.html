@@ -1,3 +1,5 @@
+<!doctype html>
+<html lang="zh-Hant">
 <title>燭光星壇 · 占星館</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -124,25 +126,10 @@
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-/* ── 城市 ── */
-const CITIES = [
-  ["台北", 25.04, 121.51, 8], ["新北", 25.01, 121.46, 8], ["桃園", 24.99, 121.30, 8], ["台中", 24.15, 120.67, 8],
-  ["台南", 22.99, 120.21, 8], ["高雄", 22.63, 120.30, 8], ["香港", 22.32, 114.17, 8], ["北京", 39.90, 116.41, 8],
-  ["上海", 31.23, 121.47, 8], ["東京", 35.68, 139.69, 9], ["首爾", 37.57, 126.98, 9], ["新加坡", 1.35, 103.82, 8],
-  ["倫敦", 51.51, -0.13, 0], ["巴黎", 48.86, 2.35, 1], ["紐約", 40.71, -74.01, -5], ["洛杉磯", 34.05, -118.24, -8],
-  ["自訂", null, null, null]
-];
-function fillCity(sel, latI, lonI, tzI) {
-  CITIES.forEach(([n], i) => { const o = document.createElement("option"); o.value = i; o.textContent = n; sel.appendChild(o); });
-  sel.addEventListener("change", () => {
-    const c = CITIES[+sel.value];
-    if (c[1] != null) { $(latI).value = c[1]; $(lonI).value = c[2]; $(tzI).value = c[3]; }
-  });
-  sel.value = 0; $(latI).value = CITIES[0][1]; $(lonI).value = CITIES[0][2]; $(tzI).value = CITIES[0][3];
-}
-fillCity($("b-city"), "b-lat", "b-lon", "b-tz");
-fillCity($("p-city"), "p-lat", "p-lon", "p-tz");
-fillCity($("n-city"), "n-lat", "n-lon", "n-tz");
+/* ── 城市(共用清單:DC.CITIES,加城市改 divine-core 一處即可) ── */
+DC.fillCitySelect($("b-city"), $("b-lat"), $("b-lon"), $("b-tz"));
+DC.fillCitySelect($("p-city"), $("p-lat"), $("p-lon"), $("p-tz"));
+DC.fillCitySelect($("n-city"), $("n-lat"), $("n-lon"), $("n-tz"));
 
 /* ── 個人資料記憶 ── */
 const PK = "dc-astro-profile";
@@ -727,3 +714,4 @@ DC.learnInit(buildLearn);
   setTimeout(() => { try { run(); document.title = "ASTRO-TEST-OK"; } catch (e) { document.title = "ASTRO-TEST-FAIL " + e.message; } }, 60);
 })();
 </script>
+</html>

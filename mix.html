@@ -1,3 +1,5 @@
+<!doctype html>
+<html lang="zh-Hant">
 <title>燭光合參 · MIX</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -438,7 +440,7 @@ GEN["b-shichu"] = () => {
   const B = birth();
   const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
   const dS = bz.pillars[2].s;
-  const STAGE = ["長生", "沐浴", "冠帶", "臨官", "帝旺", "衰", "病", "死", "墓", "絕", "胎", "養"], CS = [11, 6, 2, 9, 2, 9, 5, 0, 8, 3];
+  const STAGE = ["長生", "沐浴", "冠帶", "建禄", "帝旺", "衰", "病", "死", "墓", "絕", "胎", "養"], CS = [11, 6, 2, 9, 2, 9, 5, 0, 8, 3]; // ⇄ 完整版:bazi.html runShichu(和流稱建禄)
   const un = b => STAGE[dS % 2 === 0 ? ((b - CS[dS]) % 12 + 12) % 12 : ((CS[dS] - b) % 12 + 12) % 12];
   return { title: "四柱推命(和流)",
     html: "<p>" + bz.pillars.map(p => p.gz).join(" ") + "・十二運:" + bz.pillars.map(p => un(p.b)).join("/") + "</p>",
@@ -740,3 +742,4 @@ DC.learnInit(buildLearn);
   }, 60);
 })();
 </script>
+</html>

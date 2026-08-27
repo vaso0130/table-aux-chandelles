@@ -1121,7 +1121,7 @@ DC.fillCitySelect = function (sel, latEl, lonEl, tzEl) {
   sel.value = 0; latEl.value = DC.CITIES[0][1]; lonEl.value = DC.CITIES[0][2]; tzEl.value = DC.CITIES[0][3];
 };
 
-DC.TONES = ["溫暖但誠實", "直白犀利,不留情面", "溫柔療癒,多些鼓勵", "冷靜理性,條理分析", "詩意神秘,如占卜師低語"];
+DC.TONES = ["溫暖但誠實", "直白犀利，不留情面", "溫柔療癒，多些鼓勵", "冷靜理性，條理分析", "詩意神秘，如占卜師低語"]; // ⇄ index.html 牌桌館的語氣選單須與此逐字相同(兩邊共用 dc-tone 鍵)
 DC.toneInit = function (onChange) { // 需要頁面有 #tone-select 與 #tone-custom
   var sel = document.getElementById("tone-select"), cus = document.getElementById("tone-custom");
   if (!sel) return;
@@ -1129,6 +1129,7 @@ DC.toneInit = function (onChange) { // 需要頁面有 #tone-select 與 #tone-cu
   var oc = document.createElement("option"); oc.value = "__custom__"; oc.textContent = "自訂…"; sel.appendChild(oc);
   try {
     var s = localStorage.getItem("dc-tone") || DC.TONES[0];
+    if (s !== "__custom__" && DC.TONES.indexOf(s) < 0) { var s2 = s.replace(/,/g, "，"); if (DC.TONES.indexOf(s2) >= 0) s = s2; } // 舊半形值遷移
     cus.value = localStorage.getItem("dc-tone-custom") || "";
     sel.value = DC.TONES.indexOf(s) >= 0 ? s : "__custom__";
   } catch (e) { sel.value = DC.TONES[0]; }

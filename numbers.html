@@ -1,3 +1,5 @@
+<!doctype html>
+<html lang="zh-Hant">
 <title>燭光數房 · 數字館</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -47,6 +49,8 @@
           <div class="note">河洛理數需要時辰;生命靈數可不填</div></div>
         <div class="field" id="f-gender"><label>性別(起卦用)</label>
           <select id="b-gender"><option value="m">男</option><option value="f">女</option></select></div>
+        <div class="field" id="f-tz"><label>時區</label><input id="b-tz" type="number" step="0.5" value="8">
+          <div class="note">台灣/中國 +8;河洛依出生地、梅花依所在地</div></div>
         <div class="field" id="f-target"><label>指定日期(選填)</label><input id="t-date" type="date">
           <div class="note">流年/流月/流日以此日計——想算下個月某日,填那一天;留空即今日</div></div>
       </div>
@@ -169,7 +173,7 @@ DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prom
 DC.histBind();
 
 const PK = "dc-num-profile";
-try { const p = JSON.parse(localStorage.getItem(PK) || "{}"); if (p.bd) { $("b-date").value = p.bd; $("b-time").value = p.bt || "12:00"; $("b-gender").value = p.g || "m"; } } catch (e) {}
+try { const p = JSON.parse(localStorage.getItem(PK) || "{}"); if (p.bd) { $("b-date").value = p.bd; $("b-time").value = p.bt || "12:00"; $("b-gender").value = p.g || "m"; if (p.tz != null) $("b-tz").value = p.tz; } } catch (e) {}
 
 function card(t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
 function guaBox(title, upper, lower, movLine) {
@@ -286,7 +290,7 @@ function runMeihua(out, pr, q) {
     srcTag = "";
   }
   if (modeId === "mh-time") {
-    const lun = DC.lunar(y, mo, d, 8);
+    const lun = DC.lunar(y, mo, d, DC.numOr($("b-tz").value, 8));
     const yB = DC.lunarYearGZ(y, mo, lun).b; // 邵子古法:年月日時皆依農曆,年支以正月初一換歲
     const hb = Math.floor(((h % 24) + 1) / 2) % 12;
     const uN = (yB + 1) + lun.month + lun.day;
@@ -308,7 +312,7 @@ function runHeluo(out, pr, q) {
   const tv = $("b-time").value || "12:00";
   const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
   const male = $("b-gender").value === "m";
-  const bz = DC.bazi(y, m, d, h, mi, 8);
+  const bz = DC.bazi(y, m, d, h, mi, DC.numOr($("b-tz").value, 8));
   const hl = DC.heluo(bz, male);
   out.push(card("八字化數", "天地之數",
     '<div class="pillars">' + bz.pillars.map(p => '<div class="pillar"><span class="p-tag">' + p.tag + '</span><span class="p-char">' + p.gz + "</span></div>").join("") + "</div>" +
@@ -328,7 +332,7 @@ function runHeluo(out, pr, q) {
 function fail(msg) { $("go-hint").textContent = msg; return new Error(msg); }
 $("btn-go").onclick = () => {
   $("go-hint").textContent = "";
-  try { localStorage.setItem(PK, JSON.stringify({ bd: $("b-date").value, bt: $("b-time").value, g: $("b-gender").value })); } catch (e) {}
+  try { localStorage.setItem(PK, JSON.stringify({ bd: $("b-date").value, bt: $("b-time").value, g: $("b-gender").value, tz: $("b-tz").value })); } catch (e) {}
   const q = $("q-input").value.trim();
   const out = [], pr = [];
   const head = ["你是一位精通數術的老師。以下是完整的起算資料。" + DC.toneHead(), ""];
@@ -387,3 +391,4 @@ DC.learnInit(buildLearn);
   setTimeout(() => { try { $("btn-go").onclick(); document.title = $("prompt-sec").hidden ? "NUM-TEST-FAIL(hidden)" : "NUM-TEST-OK"; } catch (e) { document.title = "NUM-TEST-FAIL " + e.message; } }, 60);
 })();
 </script>
+</html>
