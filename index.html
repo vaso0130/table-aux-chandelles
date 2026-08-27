@@ -3784,6 +3784,7 @@ function buildAiPrompt() {
     yi:"你是一位精通周易的占卜解讀者，熟悉六十四卦的卦辭、象傳與義理，能將卦義落實到現代處境。請以繁體中文為我解讀以下卦陣。",
     zw:"你是一位經驗豐富的紫微斗數老師，熟悉十四主星、六吉六煞、四化與諸雜曜的星情，以及廟旺落陷的差異。請以繁體中文為我解讀以下星陣（正位視為入廟得力，逆位視為落陷失輝）。",
     dt:"你是一位經驗豐富的塔羅解讀師，眼前是一副以華夏意象重詮的東方塔羅（四象為花色：青龍財帛、朱雀行動、白虎思辨、玄武情感），結構對應標準塔羅。請以繁體中文為我解讀以下牌陣。",
+    esp:"你是一位承襲西班牙與拉丁美洲民間紙牌占卜（cartomancia con baraja española）的解讀師，熟悉四十張牌的花色語彙、人頭牌的人物指認與同數成對的傳統斷法。請以繁體中文為我解讀以下牌陣。",
   }[deckDef.id]);
   if (deckDef.reversible) {
     const norevs = CARDS.filter((c) => c.norev).map((c) => `「${c.zh}」`).join("、");
@@ -3832,7 +3833,7 @@ function buildAiPrompt() {
   drawn.forEach((c, i) => {
     L.push(deckDef.reversible
       ? `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（${c.pk}，${c.norev ? "不分正逆位" : drawnRev[i] ? "逆位" : "正位"}）— 關鍵詞：${c.keys}`
-      : `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（№${c.n}，撲克對應 ${c.pk}）— 關鍵詞：${c.keys}`);
+      : `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（№${c.n}，${{ len: "撲克對應 ", gra: "撲克對應 ", yi: "卦序 ", kip: "牌號 ", esp: "花色點數 " }[deckDef.id] || ""}${c.pk}）— 關鍵詞：${c.keys}`);
   });
   L.push("");
   L.push("【請提供】");
