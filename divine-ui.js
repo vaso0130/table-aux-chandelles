@@ -51,6 +51,36 @@ DC.toneValue = function () {
 };
 DC.toneHead = function () { return "請以繁體中文解讀,語氣:「" + DC.toneValue() + "」。"; };
 
+/* ── 重複占問勸誡:同日同系統同題(模糊比對)第三次起提醒 ──
+   模糊同題:正規化(去標點空白語尾詞)後以字元 bigram Dice 係數比對,防改幾個字繞過。 */
+DC.simQ = function (a, b) {
+  var norm = function (s) {
+    return String(s || "").toLowerCase()
+      .replace(/[\s。，、？！?!.,;:「」『』()（）…~〜-]/g, "")
+      .replace(/[嗎呢啊吧了的呀喔哦欸捏嘛還再又就以我你妳個筆份]/g, "")
+      .replace(/[跟與]/g, "和").replace(/[會可]/g, "能"); /* 同義摺疊:防「跟→和、會→能」式改寫 */
+  };
+  a = norm(a); b = norm(b);
+  if (!a && !b) return 1;              /* 都沒寫問題:同系統連抽視為同題 */
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if (a.length < 2 || b.length < 2) return 0;
+  var grams = function (s) { var m = {}; for (var i = 0; i < s.length - 1; i++) { var g = s.substr(i, 2); m[g] = (m[g] || 0) + 1; } return m; };
+  var ga = grams(a), gb = grams(b), inter = 0, ta = 0, tb = 0, k;
+  for (k in ga) { ta += ga[k]; if (gb[k]) inter += Math.min(ga[k], gb[k]); }
+  for (k in gb) tb += gb[k];
+  var dice = (2 * inter) / (ta + tb);
+  /* 中文短句改幾個虛字會讓 bigram 碎掉,輔以最長公共子序列比率,取較大者 */
+  var dp = [];
+  for (var i2 = 0; i2 <= a.length; i2++) { dp.push(new Array(b.length + 1).fill(0)); }
+  for (var x = 1; x <= a.length; x++) for (var y = 1; y <= b.length; y++)
+    dp[x][y] = a[x - 1] === b[y - 1] ? dp[x - 1][y - 1] + 1 : Math.max(dp[x - 1][y], dp[x][y - 1]);
+  var lcs = (2 * dp[a.length][b.length]) / (a.length + b.length);
+  return Math.max(dice, lcs);
+};
+DC.SIMQ_TH = 0.62; // 同題門檻(經例句校準:改虛字改語序抓得到,換主題抓不到)
+DC.REPEAT_MSG = "同一件事,你今天已用同一套占卜系統問過 {n} 次——\n再問,就只是在抽心安,不是在占卜。\n\n牌不會因為多問一次而換答案;答案不合意時,該換的是問題,或行動。\n(合參心法:機緣說的話,聽三遍就夠了。)";
+
 DC.histBind = function () { // 跨館共用歷史(需 #hist-list/#hist-clear/#out/#prompt-box/#prompt-sec)
   var $id = function (x) { return document.getElementById(x); };
   var list = $id("hist-list");
@@ -92,6 +122,16 @@ DC.histBind = function () { // 跨館共用歷史(需 #hist-list/#hist-clear/#ou
   if (clr) clr.onclick = function () { save([]); render(); };
   DC.histSave = function (page, title, q, html, prompt) {
     var a = all();
+    /* 重複占問勸誡:系統=館+術名(title 第一段);今日同系統同題(模糊)第三次起提醒 */
+    var sysKey = page + "|" + String(title).split("・")[0];
+    var today = new Date().toDateString();
+    var n = 0;
+    a.forEach(function (r) {
+      if (new Date(r.t).toDateString() !== today) return;
+      if (r.page + "|" + String(r.title).split("・")[0] !== sysKey) return;
+      if (DC.simQ(r.q, q) >= DC.SIMQ_TH) n++;
+    });
+    if (n >= 2) setTimeout(function () { alert(DC.REPEAT_MSG.replace("{n}", n + 1)); }, 400);
     a.unshift({ t: Date.now(), page: page, title: title, q: q || "", html: html, prompt: prompt });
     while (a.length > 30) a.pop();
     save(a); render();

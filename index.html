@@ -1608,6 +1608,7 @@ function renderCastLines() {
 
 btnThrow.addEventListener("click", () => {
   if (phase !== "cast" || castLines.length >= 6) return;
+  if (castLines.length === 0 && !repeatGuard()) return;   /* 起卦前勸誡:同日同題三問 */
   const coins = [0, 0, 0].map(() => (rand01() < 0.5 ? 2 : 3));  /* 字=2、背=3 */
   castLines.push({ v: coins[0] + coins[1] + coins[2], coins });
   renderCastLines();
@@ -1638,8 +1639,43 @@ function finishCast() {
   if (zhi) setTimeout(() => placeCard(zhi - 1), 1150);
 }
 
+/* ── 重複占問勸誡(⇄ 同法在 divine-ui.js DC.simQ——牌桌館零依賴故留複本,改演算法請兩邊同步) ── */
+function simQ(a, b) {
+  const norm = (s) => String(s || "").toLowerCase()
+    .replace(/[\s。，、？！?!.,;:「」『』()（）…~〜-]/g, "")
+    .replace(/[嗎呢啊吧了的呀喔哦欸捏嘛還再又就以我你妳個筆份]/g, "")
+    .replace(/[跟與]/g, "和").replace(/[會可]/g, "能");
+  a = norm(a); b = norm(b);
+  if (!a && !b) return 1;
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if (a.length < 2 || b.length < 2) return 0;
+  const grams = (s) => { const m = {}; for (let i = 0; i < s.length - 1; i++) { const g = s.substr(i, 2); m[g] = (m[g] || 0) + 1; } return m; };
+  const ga = grams(a), gb = grams(b);
+  let inter = 0, ta = 0, tb = 0;
+  for (const k in ga) { ta += ga[k]; if (gb[k]) inter += Math.min(ga[k], gb[k]); }
+  for (const k in gb) tb += gb[k];
+  const dice = (2 * inter) / (ta + tb);
+  const dp = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let x = 1; x <= a.length; x++) for (let y = 1; y <= b.length; y++)
+    dp[x][y] = a[x - 1] === b[y - 1] ? dp[x - 1][y - 1] + 1 : Math.max(dp[x - 1][y], dp[x][y - 1]);
+  const lcs = (2 * dp[a.length][b.length]) / (a.length + b.length);
+  return Math.max(dice, lcs);
+}
+function repeatGuard() {
+  if (location.search.includes("rwdtest")) return true;   /* 測試鉤子直通(headless confirm 會卡住) */
+  let arr = [];
+  try { arr = JSON.parse(localStorage.getItem("lenormand-history") || "[]"); } catch (e) {}
+  const today = new Date().toDateString();
+  const q = $("#q-input").value.trim();
+  const n = arr.filter((r) => new Date(r.id).toDateString() === today && r.deck === deckDef.id && simQ(r.q, q) >= 0.62).length;
+  if (n < 2) return true;
+  return confirm(`同一件事,你今天已用「${deckDef.name}」問過 ${n} 次——\n再抽,就只是在抽心安,不是在占卜。\n\n牌不會因為多問一次而換答案;答案不合意時,該換的是問題,或行動。\n\n仍要繼續嗎?`);
+}
+
 btnBegin.addEventListener("click", () => {
   if (btnBegin.disabled || phase !== "ritual") return;
+  if (!repeatGuard()) return;
   phase = "draw";
   elRitual.hidden = true;
   elCaption.hidden = false;
