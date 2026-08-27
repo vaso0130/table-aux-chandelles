@@ -164,3 +164,34 @@ if (typeof location !== "undefined" && typeof document !== "undefined" && locati
   }, 50);
 }
 
+
+/* ── 別館通用強化(零館別改動,divine-ui 統一注入) ──
+   1) 起盤成功(prompt-sec 現身)自動捲到結果——修「按了沒反應」錯覺
+   2) 複製鍵旁補「開啟 ChatGPT / Claude」出口
+   3) 複製成功訊息 3 秒自動收;#go-hint 加 role=status(讀屏可聞) */
+(function () {
+  if (typeof document === "undefined") return;
+  var ps = document.getElementById("prompt-sec"), out = document.getElementById("out");
+  if (ps && out) new MutationObserver(function () {
+    if (!ps.hidden) out.scrollIntoView({ behavior: "smooth", block: "start" });
+  }).observe(ps, { attributes: true, attributeFilter: ["hidden"] });
+  var copyBtn = document.getElementById("btn-copy");
+  if (copyBtn && !document.getElementById("ai-links")) {
+    var wrap = document.createElement("span");
+    wrap.id = "ai-links";
+    wrap.style.cssText = "display:inline-flex;gap:10px";
+    [["開啟 ChatGPT", "https://chatgpt.com/"], ["開啟 Claude", "https://claude.ai/new"]].forEach(function (l) {
+      var a = document.createElement("a");
+      a.className = "ghost-btn"; a.target = "_blank"; a.rel = "noopener";
+      a.href = l[1]; a.textContent = l[0];
+      wrap.appendChild(a);
+    });
+    copyBtn.parentElement.appendChild(wrap);
+  }
+  var ok = document.getElementById("copy-ok");
+  if (ok) new MutationObserver(function () {
+    if (!ok.hidden) setTimeout(function () { ok.hidden = true; }, 3000);
+  }).observe(ok, { attributes: true, attributeFilter: ["hidden"] });
+  var hint = document.getElementById("go-hint");
+  if (hint) hint.setAttribute("role", "status");
+})();

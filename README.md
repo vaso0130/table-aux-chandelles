@@ -38,7 +38,9 @@
 
 ## 功能
 
-- **真實洗牌與切牌**:GSR 鴿尾式交錯洗牌(`crypto` 隨機)、點選位置真實切牌;易經擲卦盤面改為擲錢起卦。
+- **真實洗牌與切牌**:GSR 鴿尾式交錯洗牌(`crypto` 隨機)、**三疊切牌**(點一疊即為新牌頂)、「一鍵完成儀式」(洗七次+隨機一切);步驟指示器(洗→切→抽)、工具列常駐視野;易經擲卦盤面為擲錢起卦。
+- **抽牌雙模式**:預設**命運牌堆**單鍵抽頂(抽前顯示「下一張落〔位置〕」),可切換**攤牌親挑**扇形逐張點選(觸控目標已放大);「讓命運抽完剩下的牌」可隨時停止。
+- **下載盤面圖與分享**:抽齊後一鍵匯出手繪符號版盤面 PNG(金框+圖徽+位置+落款,離線可用)、分享文字版(navigator.share/剪貼簿);產生 AI 提示詞即自動複製,附「開啟 ChatGPT/Claude」出口。
 - **六牌陣・全景**:各牌組通用盤面(易經除外)——過去/現在/未來+助力/阻礙/結果,一事六面。
 - **親手抽牌**:牌堆扇形展開逐張點選;九張以上盤面可「讓命運抽完剩下的牌」。
 - **解讀帳冊**:逐位置牌義(依正逆位切換)、關鍵詞、雷諾曼組合語句;點牌面彈出牌義浮框。
@@ -51,9 +53,10 @@
 
 | 路徑 | 說明 |
 | --- | --- |
-| `index.html` | 牌桌館(HTML + CSS + JS 單檔) |
+| `index.html` + `cards-data.js` | 牌桌館(儀式引擎)+ 十套牌卡資料與盤面定義(缺檔會明示) |
 | `astro.html`、`numbers.html`、`bazi.html`、`shi.html`、`nanyang.html`、`kaijuan.html`、`mix.html` | 占星館/數字館/八字館/式占館/南洋館/開卷館/MIX 合參 |
-| `divine-core.js`、`hall.css` | 別館共用計算引擎與樣式 |
+| `divine-core.js` → `divine-ui.js` → `divine-lore.js` | 別館三連載:純計算引擎/UI 帮手(城市/語氣/歷史/教學+?selftest)/跨館文庫(DECKS_MINI 由 index?minidump=1 重生) |
+| `qs-data.js`、`hall.css` | 百首靈籤全文(開卷館)與別館樣式 |
 | `cards/`、`cards-sibilla/`、`cards-belline/`、`cards-kipper/`、`cards-grand/`、`cards-runes/` | 西方館牌面 + 卡背(600px 寬 JPEG) |
 | `cards-yijing/`、`cards-ziwei/`、`cards-dongtarot/` | 東方館牌面 + 卡背(600px 寬 JPEG) |
 

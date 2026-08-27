@@ -7,7 +7,7 @@
   --felt-line: #2E4237;
   --gold: #C9A45C;
   --gold-bright: #E5CC8F;
-  --gold-dim: #8A7245;
+  --gold-dim: #9A8155;   /* 對比 4.6:1,小字可讀 */
   --ivory: #F2E8D5;
   --ivory-shade: #E2D2B4;
   --ink: #33291D;
@@ -426,4 +426,10 @@ table.data td.red { color: #E8A08F; }
   .grid12 { grid-template-columns: repeat(4, minmax(72px, 1fr)); font-size: 11.5px; }
   .grid12 .cell { padding: 5px; font-size: 11px; }
   .pillar { min-width: 76px; }
+}
+
+
+/* 動效防護:偏好減少動態者關閉全部動畫 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
