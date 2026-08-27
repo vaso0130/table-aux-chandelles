@@ -5159,4 +5159,18 @@ if (location.search.includes("rwdtest")) {
     }
   }
 }
+
+/* 開發掛勾:?minidump=1 → 傾印 DECKS_MINI 精簡資料(名/首關鍵詞/吉凶)供 divine-core 重生,改牌名後重抽用 */
+if (location.search.includes("minidump")) {
+  const obj = {};
+  DECKS.forEach((d) => {
+    if (d.id === "qs") return;
+    obj[d.id] = { name: d.name, rev: !!d.reversible,
+      cards: d.cards.map((c) => [c.zh, (c.keys || "").split("・")[0], c.pol === "good" ? "+" : c.pol === "bad" ? "-" : "0"]) };
+  });
+  const el = document.createElement("div");
+  el.id = "mini-dump"; el.hidden = true;
+  el.textContent = JSON.stringify(obj);
+  document.body.appendChild(el);
+}
 </script>
