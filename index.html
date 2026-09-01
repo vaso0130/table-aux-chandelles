@@ -513,9 +513,48 @@
     box-shadow: 0 2px 6px rgba(0,0,0,.35);
     transition: transform .38s cubic-bezier(.3, .7, .3, 1);
   }
-  /* 三疊切牌:大目標,點一疊即以其牌頂為新牌頂 */
+  /* 起卜默唸:占卜前的儀式提醒(易經誦《筮儀》命筮辭,各牌組有各自的默唸引) */
+  #invocation { max-width: 640px; margin: 10px auto 2px; text-align: center; }
+  #inv-head {
+    background: none; border: none; cursor: pointer; padding: 2px 10px;
+    font: inherit; font-size: 12px; letter-spacing: .35em; text-indent: .35em; color: var(--gold-dim);
+  }
+  #inv-head::after { content: " ▾"; letter-spacing: 0; text-indent: 0; }
+  #invocation.folded #inv-head::after { content: " ▸"; }
+  #inv-head:hover, #inv-head:focus-visible { color: var(--gold-bright); }
+  #inv-text {
+    margin: 8px auto 0; padding: 12px 18px; max-width: 560px;
+    border: 1px solid rgba(201,164,92,.28); border-radius: 6px;
+    font-size: 14px; line-height: 2; color: var(--muted); letter-spacing: .05em;
+    background: rgba(201,164,92,.04);
+  }
+  #inv-text b { color: var(--gold-bright); font-weight: 600; }
+  #invocation.folded #inv-text { display: none; }
+
+  /* 洗牌金光:交錯回插時一道斜光掠過牌疊(只動 opacity/transform,一次性) */
+  #stack::after {
+    content: ""; position: absolute; inset: -8px; border-radius: 10px; pointer-events: none; opacity: 0;
+    background: linear-gradient(115deg, transparent 32%, rgba(232,200,122,.4) 50%, transparent 68%);
+  }
+  #stack.shimmer::after { animation: stack-shine .7s ease-out .28s; }
+  @keyframes stack-shine {
+    0% { opacity: 0; transform: translateX(-45%); }
+    35% { opacity: 1; }
+    100% { opacity: 0; transform: translateX(45%); }
+  }
+  /* 三疊切牌:大目標,點一疊即從該深度切開 */
   #cut-piles { display: flex; justify-content: center; gap: 34px; padding: 22px 0 30px; flex-wrap: wrap; }
-  .cut-pile { position: relative; width: 100px; height: 152px; cursor: pointer; background: none; border: none; padding: 0; }
+  .cut-pile {
+    position: relative; width: 100px; height: 152px; cursor: pointer; background: none; border: none; padding: 0;
+    transition: transform .28s cubic-bezier(.3, .7, .3, 1), opacity .28s ease;
+    animation: pile-in .32s cubic-bezier(.2, .8, .3, 1) both;
+  }
+  .cut-pile:nth-child(2) { animation-delay: .07s; }
+  .cut-pile:nth-child(3) { animation-delay: .14s; }
+  @keyframes pile-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  .cut-pile.picked { transform: translateY(-20px); }
+  .cut-pile.picked .stack-card { box-shadow: 0 12px 24px rgba(0,0,0,.5), 0 0 16px rgba(232,200,122,.45); }
+  .cut-pile.dimmed { opacity: .22; transform: translateY(10px); }
   .cut-pile .stack-card { transition: transform .2s ease; }
   .cut-pile:hover .stack-card, .cut-pile:focus-visible .stack-card { transform: translateY(-8px) !important; box-shadow: 0 10px 22px rgba(0,0,0,.45), 0 0 12px rgba(201,164,92,.3); }
   .cut-pile:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
@@ -564,9 +603,30 @@
     mask-image: linear-gradient(90deg, transparent, #000 22px, #000 calc(100% - 22px), transparent);
   }
 
+  /* 飛行牌:手動抽牌時卡背自牌堆/扇面飛至槽位(FLIP,單一臨時元素,只動 transform/opacity) */
+  .fly-card {
+    position: fixed; z-index: 40; pointer-events: none; border-radius: 8px;
+    border: 1px solid rgba(201,164,92,.5);
+    background:
+      repeating-linear-gradient(45deg, rgba(201,164,92,.12) 0 1px, transparent 1px 9px),
+      repeating-linear-gradient(-45deg, rgba(201,164,92,.12) 0 1px, transparent 1px 9px),
+      linear-gradient(160deg, var(--back-1), var(--back-2));
+    box-shadow: 0 10px 24px rgba(0,0,0,.45);
+    transition: transform .34s cubic-bezier(.3, .75, .35, 1), opacity .34s ease;
+    will-change: transform;
+  }
+  /* 落牌金暈:僅手動抽牌路徑,一次性 */
+  .card3d.revealed.glow { animation: land-glow .55s ease-out; }
+  @keyframes land-glow {
+    0% { filter: drop-shadow(0 0 0 rgba(232,200,122,0)); }
+    35% { filter: drop-shadow(0 0 13px rgba(232,200,122,.5)); }
+    100% { filter: drop-shadow(0 0 0 rgba(232,200,122,0)); }
+  }
+
   /* 專屬卡背（各牌組一款；載入成功時啟用，缺圖退回花紋） */
   body.has-back .fan-card,
   body.has-back .stack-card,
+  body.has-back .fly-card,
   body.has-back .cface.back {
     background: #1E2A4A var(--back-url, url("cards/back.jpg")) center / cover no-repeat;
     border-color: rgba(201,164,92,.55);
@@ -813,6 +873,10 @@
     </div>
 
     <div id="deck-area">
+      <div id="invocation" hidden>
+        <button id="inv-head" type="button" aria-expanded="true">起 卜 默 唸</button>
+        <p id="inv-text"></p>
+      </div>
       <div id="sigpick" hidden>
         <p class="deck-caption">要以指示牌開陣嗎？指定的牌代表這一問的主體，將置於陣中央——也可以不指定，全憑抽。</p>
         <div id="sigpick-btns"></div>
@@ -1234,7 +1298,41 @@ function resetTable() {
   elAiPrompt.value = "";
   $("#btn-copy").hidden = true;
   $("#ai-links").hidden = true;
+  updateInvocation();
 }
+
+/* ── 起卜默唸:占卜前的儀式提醒 ──────────────
+   易經誦朱子《筮儀》命筮辭;其餘牌組各有默唸引。問題即時代入。 */
+const INVOCATIONS = {
+  yi:  (q) => `假爾泰筮有常，假爾泰筮有常。<br>弟子〔默唸姓名〕，今以 ${q} 未知可否，爰質所疑于神于靈。<br>吉凶得失，悔吝憂虞，惟爾有神，尚明告之。`,
+  qs:  (q) => `弟子〔默唸姓名〕焚香叩首——今為 ${q} 敬叩司籤，伏乞賜籤明示。若蒙允准，願得聖筊。`,
+  len: (q) => `燭已點好，先靜三息。我為此事而來：${q}——願三十六張小圖，直言不諱。`,
+  sib: (q) => `西碧拉夫人，市井之聲皆是預言。今問：${q}——請以人情世故，說我聽得懂的話。`,
+  bel: (q) => `諸星在上，靈使引路。今以 ${q} 相叩——願星辰之語，落於牌面。`,
+  kip: (q) => `人物登場，各就其位。我所問者：${q}——請眾人物演給我看，來者是誰、去向何方。`,
+  gra: (q) => `神話的長河，眾英雄靜聽。今有一問：${q}——請以古老的故事，映照眼前的路。`,
+  run: (q) => `眾神之文，奧丁所懸。我以誠心問盧恩：${q}——願刻痕顯義，風霜作證。`,
+  esp: (q) => `四十張古牌，金杯劍棒。今問：${q}——請以古伊比利的直白，賜我一句準話。`,
+  zw:  (q) => `斗數眾星，各安其垣。今以 ${q} 叩問——願星曜借牌現身，明示吉凶。`,
+  dt:  (q) => `四象環列，青龍白虎朱雀玄武。今問：${q}——願陰陽有應，卦象有靈。`,
+};
+const elInv = $("#invocation"), elInvText = $("#inv-text"), elInvHead = $("#inv-head");
+function updateInvocation() {
+  if (!spread || !deckDef) { elInv.hidden = true; return; }
+  const raw = $("#q-input").value.trim();
+  const q = raw
+    ? "「<b>" + raw.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</b>」"
+    : "「<b>心中默想之事</b>」";
+  elInvText.innerHTML = (INVOCATIONS[deckDef.id] || INVOCATIONS.len)(q);
+  elInv.hidden = false;
+}
+$("#q-input").addEventListener("input", () => { if (!elInv.hidden) updateInvocation(); });
+try { if (localStorage.getItem("lenormand-inv-fold") === "1") { elInv.classList.add("folded"); elInvHead.setAttribute("aria-expanded", "false"); } } catch (e) {}
+elInvHead.addEventListener("click", () => {
+  const folded = elInv.classList.toggle("folded");
+  elInvHead.setAttribute("aria-expanded", String(!folded));
+  try { localStorage.setItem("lenormand-inv-fold", folded ? "1" : "0"); } catch (e) {}
+});
 
 /* ── 洗牌與切牌儀式 ───────────────────────── */
 function buildStack() {
@@ -1262,15 +1360,24 @@ function shuffleOnce(animate) {
   shuffleCount++;
   if (!animate) return;
   const cards = [...elStack.children];
-  cards.forEach((c) => {
-    c.style.transform = `translate(${(rand01() * 2 - 1) * 70}px, ${(rand01() * 2 - 1) * 34}px) rotate(${(rand01() * 2 - 1) * 30}deg)`;
+  elStack.classList.remove("shimmer"); void elStack.offsetWidth; elStack.classList.add("shimmer");
+  /* 第一段:鴿尾式分半——偶數張出左、奇數張出右,外旋微沉 */
+  cards.forEach((c, i) => {
+    const left = i % 2 === 0;
+    c.style.transitionDelay = i * 9 + "ms";
+    c.style.transform = `translate(${left ? -76 : 76}px, ${8 + (i % 4) * 3}px) rotate(${left ? -13 : 13}deg)`;
   });
+  /* 第二段:左右輪流交錯回插(逐張 stagger,overshoot 曲線自帶回彈) */
   setTimeout(() => {
     cards.forEach((c, i) => {
+      c.style.transitionDelay = i * 18 + "ms";
       c.style.transform = `translate(${(i % 3) - 1}px, ${-i * 1.2}px) rotate(${(i % 5) - 2}deg)`;
     });
+  }, 210);
+  setTimeout(() => {
+    cards.forEach((c) => { c.style.transitionDelay = ""; });
     ritualBusy = false;
-  }, 400);
+  }, 210 + cards.length * 18 + 400);
 }
 
 btnShuffle.addEventListener("click", () => {
@@ -1308,7 +1415,7 @@ function enterCutView() {
     lab.className = "pile-label";
     lab.textContent = `${label}・提 ${pos} 張`;
     b.appendChild(lab);
-    b.addEventListener("click", () => doCut(pos));
+    b.addEventListener("click", () => doCut(pos, b));
     elCutPiles.appendChild(b);
   });
   elStackWrap.hidden = true;
@@ -1540,12 +1647,19 @@ btnQiu.addEventListener("click", () => {
   }
 });
 
-function doCut(pos) {
-  deck = cutDeck(deck, pos);   /* 牌序真的從這裡切開 */
-  cutCount++;
-  exitCutView();
-  ritualStatus();
-  elRitualCaption.textContent = `已切牌——提起 ${pos} 張，下段翻上成為新牌頂。` + (shuffleCount ? "可再切、再洗，或開始抽牌。" : "（記得也要洗牌）");
+function doCut(pos, btn) {
+  if (ritualBusy) return;
+  ritualBusy = true;
+  /* 儀式感:選中疊上抬亮起,其餘沉暗——300ms 後牌序才真的切開 */
+  [...elCutPiles.children].forEach((b) => b.classList.add(b === btn ? "picked" : "dimmed"));
+  setTimeout(() => {
+    deck = cutDeck(deck, pos);   /* 牌序真的從這裡切開 */
+    cutCount++;
+    exitCutView();
+    ritualStatus();
+    elRitualCaption.textContent = `已切牌——提起 ${pos} 張，下段翻上成為新牌頂。` + (shuffleCount ? "可再切、再洗，或開始抽牌。" : "（記得也要洗牌）");
+    ritualBusy = false;
+  }, 300);
 }
 
 /* ── 擲卦（易經：三枚銅錢六擲起卦） ────────── */
@@ -1696,13 +1810,38 @@ btnMode.addEventListener("click", () => {
   setDrawMode(drawMode === "pile" ? "fan" : "pile");
 });
 
+/* 手動抽牌的飛行(FLIP):卡背自起點飛至槽位,落地才現牌翻面;自動連抽不飛(求快省效能) */
+function placeCardFlying(fromEl, cardIdx) {
+  const fromRect = fromEl.getBoundingClientRect();
+  const slotIdx = drawn.length;
+  placeCard(cardIdx);
+  const well = elSlots.querySelector(`.slot[data-idx="${slotIdx}"] .card-well`);
+  const c3 = well && well.lastElementChild;
+  if (!c3) return;
+  const toRect = well.getBoundingClientRect();
+  /* 目標槽在視窗外(大盤橫捲)就不飛,直接落牌 */
+  if (toRect.bottom < 0 || toRect.top > innerHeight || toRect.right < 0 || toRect.left > innerWidth) return;
+  c3.classList.add("glow");
+  c3.style.visibility = "hidden";
+  const ghost = document.createElement("div");
+  ghost.className = "fly-card";
+  ghost.style.cssText = `left:${fromRect.left}px;top:${fromRect.top}px;width:${fromRect.width}px;height:${fromRect.height}px;`;
+  document.body.appendChild(ghost);
+  ghost.getBoundingClientRect();   /* 強制排版,讓下一行 transform 走 transition */
+  ghost.style.transform = `translate(${toRect.left + toRect.width / 2 - (fromRect.left + fromRect.width / 2)}px,${toRect.top + toRect.height / 2 - (fromRect.top + fromRect.height / 2)}px) rotate(${(rand01() * 2 - 1) * 9}deg) scale(${toRect.width / fromRect.width})`;
+  let landed = false;
+  const land = () => { if (landed) return; landed = true; ghost.remove(); c3.style.visibility = ""; };
+  ghost.addEventListener("transitionend", land);
+  setTimeout(land, 460);   /* 兜底:reduced-motion 或 transition 被中斷時仍落牌 */
+}
+
 /* 從牌頂抽一張(牌堆模式) */
 function drawTop() {
   if (phase !== "draw" || drawn.length >= target) return;
   const el = elFan.querySelector(".fan-card:not(.gone)");
   if (!el) return;
   el.classList.add("gone");
-  placeCard(deck[el.dataset.deckPos]);
+  placeCardFlying(elDrawPile, deck[el.dataset.deckPos]);
 }
 elDrawPile.addEventListener("click", drawTop);
 
@@ -1803,7 +1942,7 @@ function buildFan() {
 function drawFromFan(el, deckPos) {
   if (phase !== "draw" || drawn.length >= target || el.classList.contains("gone")) return;
   el.classList.add("gone");
-  placeCard(deck[deckPos]);
+  placeCardFlying(el, deck[deckPos]);
 }
 
 elAuto.addEventListener("click", () => {
