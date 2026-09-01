@@ -513,6 +513,46 @@
     box-shadow: 0 2px 6px rgba(0,0,0,.35);
     transition: transform .38s cubic-bezier(.3, .7, .3, 1);
   }
+  /* 擲錢:三枚古銅錢 3D 拋旋(只動 transform,transition 旋轉+keyframes 起落) */
+  #coin-stage { display: flex; justify-content: center; gap: 30px; padding: 16px 0 6px; perspective: 700px; }
+  .coin { width: 62px; height: 62px; }
+  .coin.tossing { animation: coin-hop .8s cubic-bezier(.3, .6, .4, 1); }
+  @keyframes coin-hop {
+    0% { transform: translateY(0); }
+    40% { transform: translateY(-44px); }
+    72% { transform: translateY(3px); }
+    86% { transform: translateY(-7px); }
+    100% { transform: translateY(0); }
+  }
+  .coin-inner {
+    position: relative; width: 100%; height: 100%;
+    transform-style: preserve-3d;
+    transition: transform .8s cubic-bezier(.25, .65, .35, 1);
+    will-change: transform;
+  }
+  .coin-face {
+    position: absolute; inset: 0; border-radius: 50%;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    background: radial-gradient(circle at 35% 28%, #A08350, #6E572F 62%, #4C3B1E);
+    border: 1px solid rgba(232,200,122,.5);
+    box-shadow: inset 0 2px 6px rgba(255,226,160,.28), inset 0 -3px 8px rgba(0,0,0,.5), 0 3px 8px rgba(0,0,0,.4);
+  }
+  .coin-face::after {   /* 方孔 */
+    content: ""; position: absolute; left: 50%; top: 50%; width: 16px; height: 16px;
+    transform: translate(-50%, -50%);
+    background: #14100A; border: 1px solid rgba(232,200,122,.35);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,.85);
+  }
+  .coin-face.bei { transform: rotateX(180deg); }
+  .coin-face .cz {
+    position: absolute; font-size: 12.5px; font-weight: 700; line-height: 1;
+    color: rgba(28,20,8,.9); text-shadow: 0 1px 0 rgba(255,226,160,.4);
+  }
+  .cz.t { top: 6px; left: 50%; transform: translateX(-50%); }
+  .cz.b { bottom: 6px; left: 50%; transform: translateX(-50%); }
+  .cz.r { right: 7px; top: 50%; transform: translateY(-50%); }
+  .cz.l { left: 7px; top: 50%; transform: translateY(-50%); }
+
   /* 起卜默唸:占卜前的儀式提醒(易經誦《筮儀》命筮辭,各牌組有各自的默唸引) */
   #invocation { max-width: 640px; margin: 10px auto 2px; text-align: center; }
   #inv-head {
@@ -890,6 +930,20 @@
       </div>
       <div id="cast" hidden>
         <p class="deck-caption" id="cast-caption">三枚銅錢,擲六次——由下而上,六爻成卦。</p>
+        <div id="coin-stage" aria-hidden="true">
+          <div class="coin"><div class="coin-inner">
+            <div class="coin-face zi"><span class="cz t">乾</span><span class="cz b">隆</span><span class="cz r">通</span><span class="cz l">寶</span></div>
+            <div class="coin-face bei"></div>
+          </div></div>
+          <div class="coin"><div class="coin-inner">
+            <div class="coin-face zi"><span class="cz t">乾</span><span class="cz b">隆</span><span class="cz r">通</span><span class="cz l">寶</span></div>
+            <div class="coin-face bei"></div>
+          </div></div>
+          <div class="coin"><div class="coin-inner">
+            <div class="coin-face zi"><span class="cz t">乾</span><span class="cz b">隆</span><span class="cz r">通</span><span class="cz l">寶</span></div>
+            <div class="coin-face bei"></div>
+          </div></div>
+        </div>
         <div id="cast-lines" aria-live="polite"></div>
         <div class="deck-tools">
           <button class="ghost-btn gold" id="btn-throw">擲 錢</button>
@@ -1258,6 +1312,7 @@ function resetTable() {
     phase = "cast";
     castLines = [];
     castInfo = null;
+    castBusy = false;   /* 拋擲中重設不卡死 */
     btnThrow.disabled = false;
     $("#cast-caption").textContent = "三枚銅錢,擲六次——由下而上,六爻成卦。";
     renderCastLines();
@@ -1776,13 +1831,41 @@ function renderCastLines() {
   }
 }
 
-btnThrow.addEventListener("click", () => {
-  if (phase !== "cast" || castLines.length >= 6) return;
-  if (castLines.length === 0 && !repeatGuard()) return;   /* 起卦前勸誡:同日同題三問 */
-  const coins = [0, 0, 0].map(() => (rand01() < 0.5 ? 2 : 3));  /* 字=2、背=3 */
+/* 擲錢動畫:三枚銅錢拋起 3D 旋轉,落定時字背朝上即為結果(累計轉角,每擲至少兩圈半) */
+const elCoinInners = [...document.querySelectorAll("#coin-stage .coin-inner")];
+const coinRot = [0, 0, 0];
+let castBusy = false;
+function animateCoins(coins) {
+  elCoinInners.forEach((inner, i) => {
+    const coin = inner.parentElement;
+    coin.classList.remove("tossing"); void coin.offsetWidth; coin.classList.add("tossing");
+    coin.style.animationDelay = i * 90 + "ms";
+    inner.style.transitionDelay = i * 90 + "ms";
+    let t = coinRot[i] + 900;                       /* +兩圈半 */
+    const wantBei = coins[i] === 3;                 /* 背=3 → 落定背面朝上 */
+    if ((((t % 360) + 360) % 360 === 180) !== wantBei) t += 180;
+    coinRot[i] = t;
+    inner.style.transform = `rotateX(${t}deg)`;
+  });
+}
+function commitThrow(coins) {
   castLines.push({ v: coins[0] + coins[1] + coins[2], coins });
   renderCastLines();
   if (castLines.length === 6) finishCast();
+}
+btnThrow.addEventListener("click", () => {
+  if (phase !== "cast" || castLines.length >= 6 || castBusy) return;
+  if (castLines.length === 0 && !repeatGuard()) return;   /* 起卦前勸誡:同日同題三問 */
+  const coins = [0, 0, 0].map(() => (rand01() < 0.5 ? 2 : 3));  /* 字=2、背=3 */
+  if (location.search.includes("rwdtest")) { commitThrow(coins); return; }   /* 測試直通:六連擲不等動畫 */
+  castBusy = true;
+  btnThrow.disabled = true;
+  animateCoins(coins);
+  setTimeout(() => {
+    castBusy = false;
+    commitThrow(coins);
+    btnThrow.disabled = phase !== "cast";   /* 第六擲 finishCast 轉入 draw,按鈕保持停用 */
+  }, 1000);
 });
 
 function finishCast() {
