@@ -1283,23 +1283,21 @@ btnShuffle.addEventListener("click", () => {
   btnBegin.title = "";
 });
 
-/* 三疊切牌:淺/中/深三疊,點一疊即以其牌頂為新牌頂(可重複切) */
+/* 三疊切牌:淺/中/深三種切口,點哪一疊就從那個深度切開——三疊皆為真切(可重複切) */
 function enterCutView() {
   elCutPiles.innerHTML = "";
   const N = deck.length;
-  const n1 = Math.max(1, Math.round(N * (0.26 + rand01() * 0.12)));
-  const n2 = Math.min(N - 1, Math.round(N * (0.58 + rand01() * 0.12)));
-  const piles = [
-    [0, n1, "上 疊", "維持牌頂"],
-    [n1, n2 - n1, "中 疊", `自第 ${n1 + 1} 張切起`],
-    [n2, N - n2, "下 疊", `自第 ${n2 + 1} 張切起`],
+  const cuts = [
+    [Math.max(1, Math.round(N * (0.20 + rand01() * 0.10))), "淺 切"],
+    [Math.round(N * (0.45 + rand01() * 0.10)), "中 切"],
+    [Math.min(N - 1, Math.round(N * (0.70 + rand01() * 0.10))), "深 切"],
   ];
-  piles.forEach(([pos, size, label, title]) => {
+  cuts.forEach(([pos, label]) => {
     const b = document.createElement("button");
     b.className = "cut-pile";
-    b.title = title + `（${size} 張）`;
-    b.setAttribute("aria-label", `${label}:${title}`);
-    const layers = Math.max(2, Math.min(10, Math.round(size / N * 14)));
+    b.title = `提起 ${pos} 張——自第 ${pos + 1} 張切起`;
+    b.setAttribute("aria-label", `${label}:提起 ${pos} 張,下段翻上成為新牌頂`);
+    const layers = Math.max(2, Math.min(10, Math.round(pos / N * 12)));
     for (let i = 0; i < layers; i++) {
       const c = document.createElement("div");
       c.className = "stack-card";
@@ -1308,7 +1306,7 @@ function enterCutView() {
     }
     const lab = document.createElement("span");
     lab.className = "pile-label";
-    lab.textContent = `${label}・${size} 張`;
+    lab.textContent = `${label}・提 ${pos} 張`;
     b.appendChild(lab);
     b.addEventListener("click", () => doCut(pos));
     elCutPiles.appendChild(b);
@@ -1316,7 +1314,7 @@ function enterCutView() {
   elStackWrap.hidden = true;
   elCutPiles.hidden = false;
   btnCut.textContent = "收回牌堆";
-  elRitualCaption.textContent = "牌分三疊——點選一疊，它的第一張就成為新的牌頂（點上疊＝不切）。";
+  elRitualCaption.textContent = "三種切口——點選一疊，牌就從那個深度切開，下段翻上成為新牌頂；不想切就按「收回牌堆」。";
 }
 
 function exitCutView() {
@@ -1543,15 +1541,11 @@ btnQiu.addEventListener("click", () => {
 });
 
 function doCut(pos) {
-  if (pos > 0) {
-    deck = cutDeck(deck, pos);   /* 牌序真的從這裡切開 */
-    cutCount++;
-  }
+  deck = cutDeck(deck, pos);   /* 牌序真的從這裡切開 */
+  cutCount++;
   exitCutView();
   ritualStatus();
-  elRitualCaption.textContent = pos > 0
-    ? `已切牌——下疊翻上成為新牌頂。` + (shuffleCount ? "可再切、再洗，或開始抽牌。" : "（記得也要洗牌）")
-    : "點的是上疊——牌頂不變。想換牌頂，點中疊或下疊。";
+  elRitualCaption.textContent = `已切牌——提起 ${pos} 張，下段翻上成為新牌頂。` + (shuffleCount ? "可再切、再洗，或開始抽牌。" : "（記得也要洗牌）");
 }
 
 /* ── 擲卦（易經：三枚銅錢六擲起卦） ────────── */

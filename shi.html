@@ -125,7 +125,8 @@ const SYS = [
     hint: "以起局時刻的年支、農曆月日與時辰起卦,體用生剋直斷——時間本身就是卦。",
     modes: [
       ["mh-time", "時間起卦", "以起局時刻的年支、農曆月日與時辰起卦——不必報數,時間本身就是卦。"],
-      ["mh-num", "報數起卦", "心中默想問題,隨口報兩個數——第一數為上卦,第二數為下卦,加時辰取動爻。"]
+      ["mh-num", "報數起卦", "心中默想問題,隨口報兩個數——第一數為上卦,第二數為下卦,加時辰取動爻。"],
+      ["mh-zi", "字占起卦", "把問題寫下來,以字數起卦——古法「字數平分,少者為上卦」,你的問題本身就是卦。"]
     ] },
   { id: "heluo", name: "河洛理數", sub: "生辰化卦", now: false, birthReq: true,
     hint: "八字化天地之數,天數地數取先天卦,元堂爻變後天卦——你的命是一枚卦。" }
@@ -403,6 +404,14 @@ function runMeihua(out, pr) {
     const t = DC.meihuaTime(N.y, N.m, N.d, N.h, N.tz); // 起卦式收斂於 core(與 MIX 同源)
     const { mh, lun, yB, hb, uN, lN } = t;
     meihuaCard(mh, "時間起卦 " + N.str + ":" + DC.BRANCHES[yB] + "年" + (lun.isLeap ? "閏" : "") + DC.CN_MONTH[lun.month - 1] + "月" + DC.CN_DAY[lun.day - 1] + DC.BRANCHES[hb] + "時(年" + (yB + 1) + "+月" + lun.month + "+日" + lun.day + "=" + uN + ",加時" + (hb + 1) + "=" + lN + ")", out, pr);
+  } else if (modeId === "mh-zi") {
+    const q = $("q-input").value.trim();
+    if (!q) throw fail("字占需要先寫下你的問題");
+    const chars = [...q.replace(/\s/g, "")];
+    const hb = DC.hourBranch(N.h);
+    const up = Math.max(1, Math.floor(chars.length / 2)), low = Math.max(1, chars.length - up); // 古法:平分,少者為上卦(取天輕清)——與 MIX 字占同式
+    const mh = DC.meihua(up, low, chars.length + hb + 1);
+    meihuaCard(mh, "字占起卦:問題 " + chars.length + " 字(字數平分,少者為上卦:上卦數" + up + "、下卦數" + low + ",加" + DC.BRANCHES[hb] + "時" + (hb + 1) + "取動爻)", out, pr);
   } else {
     const a = parseInt($("num-a").value), b = parseInt($("num-b").value);
     if (!a || !b) throw fail("請報兩個數");
@@ -485,7 +494,7 @@ function buildLearn() {
     ["震 ☳", "雷", "奮動、驚起、長男、行動"], ["巽 ☴", "風", "進退、傳播、長女、繩直"], ["坎 ☵", "水", "險陷、智慧、中男、暗流"],
     ["艮 ☶", "山", "止靜、阻隔、少男、門徑"], ["坤 ☷", "地", "柔順、承載、母、方物"]];
   h += DC.lcard("梅花易數・八卦速記", DC.ltable(["卦", "象", "象意"], GUA8) +
-    '<p class="lead-para">邵雍說「數生象,象生器」——梅花把「時刻」化成卦。起卦:年支數+農曆月+日=上卦(除 8 取餘),再加時辰數=下卦,總數除 6 取餘為動爻。<b>體卦</b>是自己(不含動爻那半),<b>用卦</b>是事情(含動爻那半)。斷法一句訣:<b>用生體吉、體剋用可成、體用比和順、體生用洩耗、用剋體凶</b>。互卦看過程,變卦看結局。</p>');
+    '<p class="lead-para">邵雍說「數生象,象生器」——梅花把「時刻」化成卦,也能把「報數」與「問題的字數」化成卦(字占古法:字數平分,少者為上卦,取天輕清)。時間起卦:年支數+農曆月+日=上卦(除 8 取餘),再加時辰數=下卦,總數除 6 取餘為動爻。<b>體卦</b>是自己(不含動爻那半),<b>用卦</b>是事情(含動爻那半)。斷法一句訣:<b>用生體吉、體剋用可成、體用比和順、體生用洩耗、用剋體凶</b>。互卦看過程,變卦看結局。</p>');
   h += DC.lcard("河洛理數・生辰化卦", '<p class="lead-para">八字每個字依納甲洛書數與河圖生成數化為數,奇數之和為<b>天數</b>、偶數之和為<b>地數</b>,各取卦而成先天卦(前半生);再以時辰定<b>元堂爻</b>,一爻變而得後天卦(後半生)。你的命,是一枚會翻面的卦。三式問此刻,河洛問生辰——同在此閣,各答各的題。</p>');
   h += DC.lcard("式占的正確心法", '<p class="lead-para">① 一事一問,問題越具體,盤越誠實。② 同一件事別連問——第一盤就是答案,再問是跟自己討價還價。③ 想擇日:取消「跟隨此刻」,填未來時刻起局,看那一刻的天時利不利你。④ 盤給的是天時與形勢,腳還是自己的。</p>');
   return h;
@@ -496,7 +505,7 @@ DC.learnInit(buildLearn);
 (function () {
   const t = new URLSearchParams(location.search).get("test");
   if (!t) return;
-  const MH = { "mh-time": "meihua", "mh-num": "meihua", "hl-gua": "heluo" };
+  const MH = { "mh-time": "meihua", "mh-num": "meihua", "mh-zi": "meihua", "hl-gua": "heluo" };
   if (MH[t]) { sysId = MH[t]; if (t !== "hl-gua") modeId = t; }
   else if (SYS.some(s => s.id === t)) sysId = t;
   else return;
