@@ -556,6 +556,13 @@
   .cut-pile.picked .stack-card { box-shadow: 0 12px 24px rgba(0,0,0,.5), 0 0 16px rgba(232,200,122,.45); }
   .cut-pile.dimmed { opacity: .22; transform: translateY(10px); }
   .cut-pile .stack-card { transition: transform .2s ease; }
+  /* 攤牌親切:牌背攤開,點哪張就從那張切開 */
+  #cut-fan-scroll { overflow-x: auto; padding: 8px 6px 4px; }
+  #cut-fan { display: flex; width: max-content; margin: 0 auto; padding: 22px 20px 14px; }
+  #cut-fan .fan-card.picked { transform: translateY(-16px) !important; box-shadow: 0 10px 22px rgba(0,0,0,.45), 0 0 14px rgba(232,200,122,.45); }
+  #cut-fan.picking .fan-card:not(.picked) { opacity: .3; }
+  #cut-fan .fan-card.top-now { opacity: .45; cursor: default; }
+  #cut-tools { display: flex; justify-content: center; padding: 2px 0 14px; }
   .cut-pile:hover .stack-card, .cut-pile:focus-visible .stack-card { transform: translateY(-8px) !important; box-shadow: 0 10px 22px rgba(0,0,0,.45), 0 0 12px rgba(201,164,92,.3); }
   .cut-pile:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
   .pile-label { position: absolute; left: 0; right: 0; bottom: -24px; text-align: center; font-size: 12px; color: var(--muted); letter-spacing: .18em; }
@@ -911,6 +918,8 @@
           <div id="stack"></div>
         </div>
         <div id="cut-piles" hidden></div>
+        <div id="cut-fan-scroll" hidden><div id="cut-fan"></div></div>
+        <div id="cut-tools" hidden><button class="ghost-btn" id="btn-cutmode">攤 牌 親 切</button></div>
         <div class="deck-tools sticky-tools">
           <button class="ghost-btn" id="btn-shuffle">洗 牌</button>
           <button class="ghost-btn" id="btn-cut">切 牌</button>
@@ -1276,6 +1285,9 @@ function resetTable() {
   elStackWrap.hidden = false;
   elCutPiles.hidden = true;
   elCutPiles.innerHTML = "";
+  $("#cut-fan-scroll").hidden = true;
+  $("#cut-fan").innerHTML = "";
+  $("#cut-tools").hidden = true;
   btnBegin.disabled = true;
   btnCut.textContent = "切 牌";
   elRitualCaption.textContent = "全新牌序——先洗牌，把牌序交給你的手；切牌可略；然後開始抽牌。"
@@ -1383,15 +1395,18 @@ function shuffleOnce(animate) {
 btnShuffle.addEventListener("click", () => {
   if (ritualBusy || phase !== "ritual") return;
   ritualBusy = true;
-  if (!elCutPiles.hidden) exitCutView();
+  if (!elCutPiles.hidden || !elCutFanScroll.hidden) exitCutView();
   shuffleOnce(true);   /* 牌序真的改變:一次鴿尾式交錯洗牌 */
   ritualStatus();
   btnBegin.disabled = false;
   btnBegin.title = "";
 });
 
-/* 三疊切牌:淺/中/深三種切口,點哪一疊就從那個深度切開——三疊皆為真切(可重複切) */
-function enterCutView() {
+/* 切牌雙模式:三疊(淺/中/深切口)或攤牌親切(點哪張就從那張切開) */
+const elCutFanScroll = $("#cut-fan-scroll"), elCutFan = $("#cut-fan"), elCutTools = $("#cut-tools"), btnCutMode = $("#btn-cutmode");
+let cutMode = "piles";   // "piles" | "fan"
+
+function buildCutPiles() {
   elCutPiles.innerHTML = "";
   const N = deck.length;
   const cuts = [
@@ -1418,21 +1433,60 @@ function enterCutView() {
     b.addEventListener("click", () => doCut(pos, b));
     elCutPiles.appendChild(b);
   });
-  elStackWrap.hidden = true;
-  elCutPiles.hidden = false;
-  btnCut.textContent = "收回牌堆";
-  elRitualCaption.textContent = "三種切口——點選一疊，牌就從那個深度切開，下段翻上成為新牌頂；不想切就按「收回牌堆」。";
 }
+
+function buildCutFan() {
+  elCutFan.innerHTML = "";
+  deck.forEach((_, pos) => {
+    const c = document.createElement("button");
+    c.className = "fan-card";
+    c.type = "button";
+    c.style.transform = `rotate(${(pos - deck.length / 2) * 0.4}deg)`;
+    if (pos === 0) {
+      c.disabled = true;
+      c.classList.add("top-now");
+      c.title = "現任牌頂";
+      c.setAttribute("aria-label", "現任牌頂(不可選)");
+    } else {
+      c.title = `自第 ${pos + 1} 張切開`;
+      c.setAttribute("aria-label", `自第 ${pos + 1} 張切開,它成為新牌頂`);
+      c.addEventListener("click", () => doCutFan(pos, c));
+    }
+    elCutFan.appendChild(c);
+  });
+}
+
+function enterCutView() {
+  const fan = cutMode === "fan";
+  if (fan) buildCutFan(); else buildCutPiles();
+  elCutPiles.hidden = fan;
+  elCutFanScroll.hidden = !fan;
+  elCutTools.hidden = false;
+  btnCutMode.textContent = fan ? "三 疊 切 牌" : "攤 牌 親 切";
+  elStackWrap.hidden = true;
+  btnCut.textContent = "收回牌堆";
+  elRitualCaption.textContent = fan
+    ? "牌背攤開——點哪一張，牌就從那一張切開，它成為新的牌頂。"
+    : "三種切口——點選一疊，牌就從那個深度切開，下段翻上成為新牌頂；不想切就按「收回牌堆」。";
+}
+
+btnCutMode.addEventListener("click", () => {
+  if (ritualBusy || phase !== "ritual") return;
+  cutMode = cutMode === "piles" ? "fan" : "piles";
+  enterCutView();
+});
 
 function exitCutView() {
   elStackWrap.hidden = false;
   elCutPiles.hidden = true;
+  elCutFanScroll.hidden = true;
+  elCutTools.hidden = true;
   btnCut.textContent = "切 牌";
 }
 
 btnCut.addEventListener("click", () => {
   if (ritualBusy || phase !== "ritual") return;
-  if (elCutPiles.hidden) enterCutView();
+  if (elCutPiles.hidden && elCutFanScroll.hidden) enterCutView();
   else { exitCutView(); ritualStatus(); }
 });
 
@@ -1440,7 +1494,7 @@ btnCut.addEventListener("click", () => {
 btnQuick.addEventListener("click", () => {
   if (ritualBusy || phase !== "ritual") return;
   ritualBusy = true;
-  if (!elCutPiles.hidden) exitCutView();
+  if (!elCutPiles.hidden || !elCutFanScroll.hidden) exitCutView();
   for (let k = 0; k < 7; k++) { deck = riffle(deck); }
   shuffleCount += 7;
   deck = cutDeck(deck, 1 + Math.floor(rand01() * (deck.length - 1)));
@@ -1647,19 +1701,27 @@ btnQiu.addEventListener("click", () => {
   }
 });
 
+function performCut(pos) {
+  deck = cutDeck(deck, pos);   /* 牌序真的從這裡切開 */
+  cutCount++;
+  exitCutView();
+  ritualStatus();
+  elRitualCaption.textContent = `已切牌——提起 ${pos} 張，下段翻上成為新牌頂。` + (shuffleCount ? "可再切、再洗，或開始抽牌。" : "（記得也要洗牌）");
+  ritualBusy = false;
+}
 function doCut(pos, btn) {
   if (ritualBusy) return;
   ritualBusy = true;
   /* 儀式感:選中疊上抬亮起,其餘沉暗——300ms 後牌序才真的切開 */
   [...elCutPiles.children].forEach((b) => b.classList.add(b === btn ? "picked" : "dimmed"));
-  setTimeout(() => {
-    deck = cutDeck(deck, pos);   /* 牌序真的從這裡切開 */
-    cutCount++;
-    exitCutView();
-    ritualStatus();
-    elRitualCaption.textContent = `已切牌——提起 ${pos} 張，下段翻上成為新牌頂。` + (shuffleCount ? "可再切、再洗，或開始抽牌。" : "（記得也要洗牌）");
-    ritualBusy = false;
-  }, 300);
+  setTimeout(() => performCut(pos), 300);
+}
+function doCutFan(pos, el) {
+  if (ritualBusy) return;
+  ritualBusy = true;
+  el.classList.add("picked");
+  elCutFan.classList.add("picking");   /* 單一類名讓其餘牌背沉暗,不逐張改樣式 */
+  setTimeout(() => { elCutFan.classList.remove("picking"); performCut(pos); }, 300);
 }
 
 /* ── 擲卦（易經：三枚銅錢六擲起卦） ────────── */
