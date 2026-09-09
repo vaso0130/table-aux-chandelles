@@ -41,6 +41,7 @@
   <section class="panel" id="panel">
     <h2 id="p-title"></h2>
     <span class="hint" id="p-hint"></span>
+    <div class="note" id="school-note" style="margin:8px 0 14px"></div>
     <div id="form-now">
       <p class="fieldset-label">起局時刻<label class="follow-now"><input type="checkbox" id="n-follow" checked><span class="live-dot"></span>跟隨此刻</label></p>
       <div class="form-grid">
@@ -132,6 +133,14 @@ const SYS = [
     hint: "八字化天地之數,天數地數取先天卦,元堂爻變後天卦——你的命是一枚卦。" }
 ];
 let sysId = "qimen", modeId = "mh-time";
+const SCHOOL_NOTE = {
+  qimen: "本頁固定採時家轉盤、拆補定元。置閏、飛盤等法需要另一套完整排盤，未混入本盤。",
+  liuren: "本頁採月將加時與九宗門；涉害依《課經》取法。不同傳承的晝夜貴人分界可能不同。",
+  taiyi: "歲計採《太乙統宗》積年簡式，年界以立春計；不作個人命斷。",
+  taiyiming: "命法採日計陽遁與冬至定元；其他太乙命法的積數不可與本盤混用。",
+  meihua: "採先天卦數、動爻分體用；時間卦用農曆年月日與時支。",
+  heluo: "採干納甲洛書數、支河圖生成數與《起元堂詩》規則。"
+};
 
 function renderSys() {
   $("sys").innerHTML = "";
@@ -181,6 +190,7 @@ function updateForm() {
   const m = s.modes ? s.modes.find(x => x[0] === modeId) : null;
   $("p-title").textContent = s.name + (m ? "・" + m[1] : "");
   $("p-hint").textContent = m ? m[2] : s.hint;
+  $("school-note").textContent = "本次取法：" + SCHOOL_NOTE[sysId];
   $("out").innerHTML = ""; $("prompt-sec").hidden = true;
   if (s.now && $("n-follow").checked) setNowFields();
 }
@@ -449,7 +459,8 @@ $("btn-go").onclick = () => {
   prof.save();
   const q = $("q-input").value.trim();
   const out = [], pr = [];
-  const head = [(sysId === "meihua" || sysId === "heluo" ? "你是一位精通易數的老師。以下是完整的起卦資料。" : "你是一位深研三式(太乙、奇門、六壬)的老師。以下是完整的起局資料。") + DC.toneHead(), ""];
+  const head = [(sysId === "meihua" || sysId === "heluo" ? "請依所選易數規則分析以下卦象。" : "請依所選三式規則分析以下局式。") + DC.toneHead(), ""];
+  head.push("取法說明:" + SCHOOL_NOTE[sysId] + " 請沿用本盤取法；如採其他傳承，請分開列出差異，不要直接改寫盤面。", "");
   if (q) head.push("我的問題:" + q, "");
   try {
     ({ qimen: runQimen, liuren: runLiuren, taiyi: runTaiyi, taiyiming: runTaiyiMing, meihua: runMeihua, heluo: runHeluo })[sysId](out, pr);

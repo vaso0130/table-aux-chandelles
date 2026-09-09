@@ -392,9 +392,9 @@ var DC = {};
     return [["比肩", "劫財"], ["食神", "傷官"], ["偏財", "正財"], ["七殺", "正官"], ["偏印", "正印"]][rel][same ? 0 : 1];
   };
 
-  DC.bazi = function (y, m, d, h, mi, tz) { // 回傳完整四柱
+  DC.bazi = function (y, m, d, h, mi, tz, dayBoundary) { // dayBoundary: lateZi(預設，23時換日) / midnight
     let Y = y, M = m, D = d;
-    if (h >= 23) { // 夜子時起翌日日柱(子平慣例)
+    if (h >= 23 && dayBoundary !== "midnight") { // 夜子時起翌日日柱
       const nd = new Date(Date.UTC(y, m - 1, d + 1)); Y = nd.getUTCFullYear(); M = nd.getUTCMonth() + 1; D = nd.getUTCDate();
     }
     const jdB = DC.jd(y, m, d, h, mi, tz);
@@ -1098,6 +1098,11 @@ var DC = {};
       t("YIJU=100", DC.YIJU.length === 100, DC.YIJU.length);
       t("numOr('0')=0(時區陷阱)", DC.numOr("0", 8) === 0);
       t("TONES 全形五款", DC.TONES.length === 5 && DC.TONES.every(s => s.indexOf(",") < 0));
+      const j28 = DC.jodoh(12, 16), j32 = DC.jodoh(16, 16);
+      t("威頓合婚採八類", DC.JODOH8.length === 8 && j28.remainder === 4 && j28.result[0].indexOf("Topo") === 0,
+        "28→" + j28.result[0]);
+      t("威頓合婚整除作 Pesthi", j32.remainder === 8 && j32.result[0].indexOf("Pesthi") === 0,
+        "32→" + j32.result[0]);
     } catch (e) { t("文庫斷言", false, e.message); }
     return out.join("\n");
   };
@@ -1166,15 +1171,25 @@ DC.WETON_SPECIAL = { // 特殊威頓日(wd,pas)
   "5,0": ["Jumat Legi 光明之金曜", "與印尼獨立日同威頓:光明開闊之日,宜開創、宜宣告"],
   "6,1": ["Sabtu Pahing 至剛之日", "neptu 18 全曆最高:氣場最硬,成大事也最固執——剛不可久,記得留柔"]
 };
-DC.JODOH7 = [ // 合婚:(男neptu+女neptu)%7
+// 傳統 Primbon 合婚使用八類循環。餘 0 作第八類 Pesthi；不能用
+// JavaScript 陣列索引直接套餘數，也不能誤除以 7（會漏掉 Pesthi 並讓
+// 28 等整除案例落到錯誤的 Sujanan）。
+DC.JODOH8 = [
   ["Pegat 離", "聚散頻繁,多阻隔——非不能成,須有覺悟經營"],
   ["Ratu 王", "天作之合如王與后,人人稱羨"],
   ["Jodoh 合", "本然之配,包容彼此,白首可期"],
   ["Topo 苦盡甘", "先苦後甘,共患難而後共富貴"],
   ["Tinari 福", "順遂有福,財路平坦"],
   ["Padu 吵", "口角不斷卻離不開——吵吵鬧鬧一輩子"],
-  ["Sujanan 疑", "多疑多妒,須以坦誠為藥"]
+  ["Sujanan 疑", "多疑多妒,須以坦誠為藥"],
+  ["Pesthi 安", "平靜安穩,家運和順——以長久經營守住福分"]
 ];
+DC.jodoh = function (neptuA, neptuB) {
+  const total = Number(neptuA) + Number(neptuB);
+  if (!Number.isFinite(total)) return null;
+  const remainder = ((total - 1) % 8 + 8) % 8 + 1; // 1..8，整除為 8
+  return { total, remainder, result: DC.JODOH8[remainder - 1] };
+};
 DC.weton = function (y, m, d) { // 1945-08-17 = Jumat Legi(印尼獨立日)錨定
   const days = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(1945, 7, 17)) / 86400000);
   const pas = ((days % 5) + 5) % 5;

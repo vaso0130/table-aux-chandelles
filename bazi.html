@@ -46,7 +46,7 @@
       <div class="form-grid">
         <div class="field"><label>出生日期</label><input id="b-date" type="date"></div>
         <div class="field" id="f-time"><label>出生時間</label><input id="b-time" type="time" value="12:00">
-          <div class="note">23:00 後出生以夜子時起翌日日柱(子平慣例)</div></div>
+          <div class="note">八字與四柱推命可在下方選擇 23:00 或 00:00 換日</div></div>
         <div class="field" id="f-gender"><label>性別</label>
           <select id="b-gender"><option value="m">男</option><option value="f">女</option></select></div>
         <div class="field"><label>時區</label><input id="b-tz" type="number" step="0.5" value="8">
@@ -54,6 +54,12 @@
         <div class="field" id="f-zwyear"><label>紫微年界</label>
           <select id="b-zwyear"><option value="cny">正月初一(主流)</option><option value="lichun">立春</option></select>
           <div class="note">僅影響紫微盤;生於立春~正月初一之間者兩法年柱不同(八字恆以立春換年)</div></div>
+        <div class="field" id="f-dayboundary"><label>八字換日法</label>
+          <select id="b-dayboundary"><option value="lateZi">晚子初換日（23:00）</option><option value="midnight">午夜換日（00:00）</option></select>
+          <div class="note">只在 23:00–23:59 產生差異；提示詞會註明選法。</div></div>
+        <div class="field" id="f-zwleap"><label>紫微閏月法</label>
+          <select id="b-zwleap"><option value="split">折半法（十六日起作下月）</option><option value="same">全月作本月</option><option value="next">全月作下月</option></select>
+          <div class="note">只在閏月出生時影響安星月份。</div></div>
         <div class="field" id="f-target" hidden><label>指定日期(選填)</label><input id="t-date" type="date">
           <div class="note">流年/流月/流日以此日計——想算下個月某日,填那一天;留空即今日</div></div>
       </div>
@@ -89,7 +95,7 @@
   </section>
 
   <p class="footnote">
-    節氣與朔望以真實天文計算(太陽黃經定節氣、定朔定農曆);紫微採中州派安星法(閏月折半:十六起作下月),庚干四化取通行「陽武陰同」(中州派原作陽武府同),年界可選正月初一(主流)或立春(生於兩界之間者年柱不同);23:00 後八字日柱進翌日,紫微/唐四柱農曆日不進(各派有異);<br>
+    節氣與朔望以天文近似計算；紫微年界、閏月安星與八字換日法可自行選擇，選項會一併寫入提示詞。庚干四化目前固定採通行「陽武陰同」；紫微與唐四柱的農曆日不隨晚子時遞進。<br>
     九星命卦男女異算;生命靈數採西方生日靈數學;人類圖採回歸黃道、設計端取太陽前 88° 日弧(交點為平均交點,與官方真交點差小於 1.7°)。皆為起盤,論斷交給 AI 或你信任的老師。太乙、奇門、六壬三式與梅花、河洛請移駕<b>式占館</b>。
   </p>
 </div>
@@ -102,9 +108,9 @@ const $ = id => document.getElementById(id);
 
 const SYS = [
   { id: "bazi", name: "八字命盤", sub: "子平四柱", birth: true,
-    hint: "年月日時四柱、十神藏干、大運神煞——中式命理的骨架全圖。" },
+    hint: "列出四柱、十神、藏干、大運與常用神煞。" },
   { id: "ziwei", name: "紫微斗數", sub: "十四主星十二宮", birth: true,
-    hint: "農曆生辰安星,命身十二宮、四化祿權科忌、十年大限。" },
+    hint: "依農曆生辰安置命身十二宮、主星、四化與大限。" },
   { id: "shichu", name: "四柱推命", sub: "和流・通変星十二運", birth: true,
     hint: "同樣的四柱,日本流派的讀法:通変星、十二運星、身強身弱。" },
   { id: "ninestar", name: "九星氣學", sub: "本命星與吉方位", birth: true,
@@ -114,17 +120,17 @@ const SYS = [
   { id: "humand", name: "人類圖", sub: "Human Design", birth: true,
     hint: "出生時刻與其前 88° 日弧的「設計時刻」各取十三星體落閘門——類型、權威、人生角色、通道與九中心,你的能量使用說明書(出生時間務必精確)。" },
   { id: "lifenum", name: "生命靈數", sub: "Numerology", birth: true, modes: null,
-    hint: "生日加總化為 1-9(11/22/33 卓越數)——西方的生日數字學,你的原廠設定。" }
+    hint: "依西方生日數字學計算 1–9 與 11/22/33 等數字。" }
 ];
 /* 生命靈數八題(自數字館遷入,2026-08 拆館) */
 const TOPICS = [
-  ["blueprint", "人生藍圖", "生命靈數+天賦/生日/態度數+九宮連線——你這一生的原廠設定。"],
-  ["wealth", "財運", "你的數字怎麼賺錢、怎麼漏財——財富流向的個人公式。"],
+  ["blueprint", "人生藍圖", "列出生命靈數、天賦數、生日數、態度數與九宮連線。"],
+  ["wealth", "財運", "從核心數字整理常見的理財傾向與盲點。"],
   ["love", "戀愛", "生命靈數與態度數的愛情語言:你怎麼愛人,以及需要怎麼被愛。"],
   ["career", "職涯", "數字給你的職場定位:適合的舞台、發力方式與升遷之道。"],
-  ["study", "學習", "你的大腦如何吸收世界——最有效率的學習模式。"],
+  ["study", "學習", "從核心數字整理偏好的學習方式。"],
   ["change", "變動", "搬家、轉職、轉彎——你面對變動的體質與目前的變動訊號。"],
-  ["year", "流年", "個人流年/流月/流日——九年週期你走到哪一步,今年的劇本是什麼。"],
+  ["year", "流年", "個人流年/流月/流日——計算個人流年、流月與流日所在的九年週期。"],
   ["challenge", "挑戰", "四大挑戰數:人生四階段各自要過的關卡。"]
 ];
 SYS.find(s => s.id === "lifenum").modes = TOPICS;
@@ -157,7 +163,7 @@ function updateForm() {
   const isNum = sysId === "lifenum", isHd = sysId === "humand";
   $("modes-label").hidden = !s.modes; $("modes").hidden = !s.modes;
   if (s.modes) { if (!s.modes.some(m => m[0] === modeId)) modeId = s.modes[0][0]; renderModes(); }
-  $("f-time").hidden = isNum; $("f-gender").hidden = isNum || isHd; $("f-zwyear").hidden = isNum || isHd; $("f-target").hidden = !isNum;
+  $("f-time").hidden = isNum; $("f-gender").hidden = isNum || isHd; $("f-zwyear").hidden = sysId !== "ziwei"; $("f-zwleap").hidden = sysId !== "ziwei"; $("f-dayboundary").hidden = isNum || isHd || sysId === "ziwei" || sysId === "dangsaju"; $("f-target").hidden = !isNum;
   const m = s.modes ? s.modes.find(x => x[0] === modeId) : null;
   $("p-title").textContent = s.name + (m ? "・" + m[1] : "");
   $("p-hint").textContent = m ? m[2] : s.hint;
@@ -168,7 +174,7 @@ DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prom
 DC.histBind();
 
 const PK = "dc-bazi-profile";
-const prof = DC.profileBind(PK, ["b-date","b-time","b-gender","b-tz","b-zwyear"]); // 生辰檔案工廠:含舊鍵遷移+跨館共用 dc-profile
+const prof = DC.profileBind(PK, ["b-date","b-time","b-gender","b-tz","b-zwyear","b-dayboundary","b-zwleap"]);
 
 function card(t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
 function fail(msg) { $("go-hint").textContent = msg; return new Error(msg); }
@@ -176,7 +182,7 @@ function readBirth() {
   const dv = $("b-date").value; if (!dv) throw fail("請填出生日期");
   const tv = $("b-time").value || "12:00";
   const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
-  return { y, m, d, h, mi, tz: DC.numOr($("b-tz").value, 8), male: $("b-gender").value === "m", str: dv + " " + tv };
+  return { y, m, d, h, mi, tz: DC.numOr($("b-tz").value, 8), male: $("b-gender").value === "m", dayBoundary: $("b-dayboundary").value, str: dv + " " + tv };
 }
 
 /* ── 八字 ── */
@@ -200,7 +206,7 @@ function pillarsHtml(bz, withTen) {
 }
 function runBazi(out, pr) {
   const B = readBirth();
-  const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
+  const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz, B.dayBoundary);
   const dy = DC.dayun(bz, B.male);
   const ss = DC.shensha(bz);
   const cnt = wxCount(bz);
@@ -218,8 +224,9 @@ function runBazi(out, pr) {
   pr.push("  日主 " + DC.STEMS[dS] + DC.STEM_WX[dS] + ";天干十神:" + bz.pillars.map((p, i) => i === 2 ? "日主" : p.tag[0] + "干" + DC.tenGod(dS, p.s)).join("、"));
   pr.push("  地支藏干:" + bz.pillars.map(p => p.gz[1] + "藏" + DC.HIDDEN[p.b].map(hc => hc + DC.tenGod(dS, DC.STEMS.indexOf(hc))).join("/")).join("、"));
   pr.push("  五行:" + Object.entries(cnt).map(([k, v]) => k + "×" + v).join(" ") + ";空亡 " + bz.kong.join("") + (ss.length ? ";神煞:" + ss.join(";") : ""));
+  pr.push("  換日法:" + (B.dayBoundary === "midnight" ? "午夜 00:00 換日" : "晚子初 23:00 換日") + "。請依此日柱解讀,不要自行改換日法。");
   pr.push("  大運(" + dy.startAge.toFixed(1) + " 歲起," + (dy.fwd ? "順" : "逆") + "行):" + dy.list.map(d => Math.round(d.fromAge) + "歲 " + d.gz).join("、"), "");
-  pr.push("請以子平法解讀:1. 日主強弱與格局(月令得氣、通根透干)。2. 用神喜忌。3. 十神配置的性格與六親。4. 大運走勢——哪十年是黃金、哪十年要蹲低。5. 結合流年" + new Date().getFullYear() + "的提醒。6. 若我有提問,以命盤直答。");
+  pr.push("請以子平法解讀:1. 日主強弱與格局(月令得氣、通根透干)。2. 用神喜忌。3. 十神配置的性格與六親。4. 大運走勢——各步大運的有利條件與需留意之處。5. 結合流年" + new Date().getFullYear() + "的提醒。6. 若我有提問,以命盤直答。");
 }
 
 /* ── 紫微 ── */
@@ -233,8 +240,9 @@ function runZiwei(out, pr) {
   const ly = DC.lunarYearGZ(B.y, B.m, lun);
   const yS = useLichun ? bz.pillars[0].s : ly.s, yB = useLichun ? bz.pillars[0].b : ly.b;
   const yGZ = useLichun ? bz.pillars[0].gz : ly.gz;
+  const leapRule = $("b-zwleap").value;
   let zwMonth = lun.month;
-  if (lun.isLeap && lun.day >= 16) zwMonth = lun.month % 12 + 1; // 中州派閏月折半:初一~十五作本月,十六起作下月
+  if (lun.isLeap && (leapRule === "next" || (leapRule === "split" && lun.day >= 16))) zwMonth = lun.month % 12 + 1;
   const zw = DC.ziwei(zwMonth, lun.day, bz.hB, yS, yB, B.male);
   const lunStr = (lun.isLeap ? "閏" : "") + DC.CN_MONTH[lun.month - 1] + "月" + DC.CN_DAY[lun.day - 1] + DC.BRANCHES[bz.hB] + "時";
   let grid = '<div class="grid12">';
@@ -268,21 +276,21 @@ function runZiwei(out, pr) {
     const b2 = ((zw.ming - k) % 12 + 12) % 12, P = zw.P[b2];
     pr.push("  " + P.palace + "(" + DC.STEMS[P.stem] + DC.BRANCHES[b2] + (P.isShen ? ",身宮" : "") + "):主星[" + (P.stars.join(" ") || "無") + "] 吉[" + (P.good.join(" ") || "—") + "] 煞[" + (P.bad.join(" ") || "—") + "]" + (P.hua.length ? " 四化[" + P.hua.join(" ") + "]" : "") + " 大限" + P.daxian);
   }
-  if (lun.isLeap) pr.push("  閏月安星:本盤依中州派折半法——閏月初一至十五作本月、十六起作下月" + (lun.day >= 16 ? "(本命已折入下月安星)" : "(本命仍作本月)") + "。");
-  if (B.h >= 23) pr.push("  晚子時:本盤八字日柱依子平慣例進翌日,紫微安星之農曆日仍用出生當日(各派有異,請依此規則解讀)。");
+  if (lun.isLeap) pr.push("  閏月安星:" + ({ split: "折半法（初一至十五作本月、十六日起作下月）", same: "全月作本月", next: "全月作下月" }[leapRule]) + "；本盤按" + zwMonth + "月安星。請沿用此法,並在比較其他命盤時先確認規則相同。");
   pr.push("", "請解讀:1. 命宮主星組合與命格總論。2. 身宮所在的人生重心。3. 四化祿權科忌落宮的吉凶樞紐。4. 財帛/官祿/夫妻三宮詳論。5. 現行大限與未來十年。");
 }
 
 /* ── 四柱推命(和流)── */
 function runShichu(out, pr) {
   const B = readBirth();
-  const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
+  const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz, B.dayBoundary);
   const dS = bz.pillars[2].s;
   out.push(card("四柱推命", "命式(" + B.str + ")", pillarsHtml(bz, true) +
     '<div class="tbl-scroll"><table class="data"><tr><th>柱</th><th>干支</th><th>通変星</th><th>十二運</th></tr>' +
     bz.pillars.map((p, i) => "<tr><td>" + p.tag + '</td><td class="hl">' + p.gz + "</td><td>" + (i === 2 ? "日主" : DC.tenGod(dS, p.s).replace("七殺", "偏官").replace("正印", "印綬")) + "</td><td>" + twelveUn(dS, p.b) + "</td></tr>").join("") + "</table></div>" +
     "<p>十二運星看每一柱的氣勢盛衰:年柱主祖上與少年、月柱主家庭與青年、日柱主自身與中年、時柱主晚年與子息。</p>"));
   pr.push("四柱推命命式(" + B.str + ",UTC+" + B.tz + "," + (B.male ? "男" : "女") + "命):");
+  pr.push("  換日法:" + (B.dayBoundary === "midnight" ? "午夜 00:00 換日" : "晚子初 23:00 換日") + "。以下干支已按此法排定。");
   pr.push("  " + bz.pillars.map(p => p.tag + " " + p.gz).join("、") + ";日主 " + DC.STEMS[dS]);
   pr.push("  通変星:" + bz.pillars.map((p, i) => i === 2 ? "日主" : p.tag + DC.tenGod(dS, p.s).replace("七殺", "偏官").replace("正印", "印綬")).join("、"));
   pr.push("  十二運:" + bz.pillars.map(p => p.tag + twelveUn(dS, p.b)).join("、") + ";空亡 " + bz.kong.join(""), "");
@@ -475,9 +483,9 @@ $("btn-go").onclick = () => {
   prof.save();
   const q = $("q-input").value.trim();
   const out = [], pr = [];
-  const head = [(sysId === "lifenum" ? "你是一位精通生命靈數的老師。以下是完整的起算資料。"
-    : sysId === "humand" ? "你是一位精通人類圖(Human Design)的分析師。以下是完整的起圖資料。"
-    : "你是一位深研東亞命理的老師。以下是完整的起盤資料。") + DC.toneHead(), ""];
+  const head = [(sysId === "lifenum" ? "請依生命靈數的既定規則分析以下資料。"
+    : sysId === "humand" ? "請依 Human Design 體系分析以下資料。"
+    : "請依所列東亞命理體系分析以下盤面。") + DC.toneHead(), ""];
   if (q) head.push("我的問題:" + q, "");
   try {
     ({ bazi: runBazi, ziwei: runZiwei, shichu: runShichu, ninestar: runNinestar, dangsaju: runDangsaju,
