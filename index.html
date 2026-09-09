@@ -101,14 +101,15 @@
   }
   .spread-btn:first-child { border-top: 1px solid var(--felt-line); }
   .spread-btn:hover, .spread-btn:focus-visible { background: rgba(201,164,92,.06); }
-  .spread-btn:focus-visible { outline: 1px solid var(--gold-dim); outline-offset: -1px; }
-  .spread-btn .s-row { display: flex; align-items: baseline; gap: 12px; }
+  .spread-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+  .spread-btn .s-row { display: flex; align-items: baseline; gap: 12px; position: relative; }
   .spread-btn .s-idx {
-    flex: 0 0 auto; width: 1.6em;
+    flex: 0 0 auto; width: 2.2em; white-space: nowrap;   /* 「拾壹」兩字也不換行 */
     color: var(--gold-dim); font-size: 14px;
   }
   .spread-btn.active .s-idx { color: var(--gold-bright); }
-  .spread-btn.active .s-idx::before { content: "❧ "; font-size: 11px; }
+  /* 選中標記掛在編號左側外緣，不擠壓編號本身 */
+  .spread-btn.active .s-idx::before { content: "❧"; font-size: 11px; position: absolute; left: -1.3em; top: .15em; }
   .spread-btn .s-name { flex: 0 0 auto; font-size: 16.5px; color: var(--gold-bright); letter-spacing: .06em; }
   .spread-btn .s-leader {
     flex: 1; min-width: 24px;
@@ -117,7 +118,7 @@
   }
   .spread-btn:hover .s-leader { border-color: var(--gold-dim); }
   .spread-btn .s-count { flex: 0 0 auto; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .spread-btn .s-desc { font-size: 13px; color: var(--muted); line-height: 1.6; margin-top: 4px; padding-left: calc(1.6em + 12px); }
+  .spread-btn .s-desc { font-size: 13px; color: var(--muted); line-height: 1.6; margin-top: 4px; padding-left: calc(2.2em + 12px); }
 
   /* ── 頁面切換（占卜牌桌／牌義字典） ────────── */
   .views {
@@ -135,7 +136,7 @@
   }
   .view-btn + .view-btn { border-left: 1px solid var(--felt-line); }
   .view-btn:hover, .view-btn:focus-visible { color: var(--ivory); }
-  .view-btn:focus-visible { outline: 1px solid var(--gold-dim); outline-offset: -1px; }
+  .view-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
   .view-btn.active { color: var(--gold-bright); background: rgba(201,164,92,.08); }
 
   /* ── 館別導覽(牌桌/占星/數字/八字/MIX) ── */
@@ -176,7 +177,7 @@
     transition: border-color .2s, background-color .2s;
   }
   .deck-btn:hover, .deck-btn:focus-visible { background: rgba(201,164,92,.06); }
-  .deck-btn:focus-visible { outline: 1px solid var(--gold-dim); outline-offset: -1px; }
+  .deck-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
   .deck-btn.active { border-color: var(--gold-dim); }
   .deck-btn .d-name { display: block; font-size: 16.5px; letter-spacing: .14em; text-indent: .14em; color: var(--ivory); }
   .deck-btn.active .d-name { color: var(--gold-bright); }
@@ -202,6 +203,10 @@
   }
   .ghost-btn:hover, .ghost-btn:focus-visible { color: var(--gold-bright); border-color: var(--gold-dim); }
   .ghost-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  /* 觸控裝置：按鈕高度補到 44px，指尖不必對準細邊 */
+  @media (pointer: coarse) {
+    .ghost-btn { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
+  }
 
   /* 十字陣：指示牌選擇 */
   #sigpick-btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 560px; margin: 0 auto; }
@@ -257,7 +262,7 @@
   #slots.qiu { display: block; width: auto; max-width: 100%; }
   .qslip {
     --qred: #9b2b1f; --qink: #3d2e19;
-    /* 直排內容不會隨容器縮寬:紙框必須跟著內容走，平移交給外層捲動 */
+    /* 直排內容不會隨容器縮寬：紙框必須跟著內容走，平移交給外層捲動 */
     display: inline-block; width: max-content; max-width: none; margin: 0 auto; padding: 10px;
     background: linear-gradient(165deg, #f7eed6, #efe0ba 55%, #e7d3a4);
     border: 1px solid #c9a45c; border-radius: 2px;
@@ -390,7 +395,7 @@
     padding: calc(var(--cw) * .07);
   }
   .cface.front .c-num {
-    font-size: calc(var(--cw) * .11);
+    font-size: max(10px, calc(var(--cw) * .11));   /* 大盤 82px 牌寬時不低於 10px */
     letter-spacing: .08em;
     color: var(--ink-soft);
     display: flex; justify-content: space-between;
@@ -412,7 +417,7 @@
   }
   .cface.front .c-latin {
     text-align: center;
-    font-size: calc(var(--cw) * .085);
+    font-size: max(9px, calc(var(--cw) * .085));
     letter-spacing: .12em;
     color: var(--ink-soft);
     text-transform: uppercase;
@@ -513,7 +518,7 @@
     box-shadow: 0 2px 6px rgba(0,0,0,.35);
     transition: transform .38s cubic-bezier(.3, .7, .3, 1);
   }
-  /* 擲錢:三枚古銅錢 3D 拋旋(只動 transform,transition 旋轉+keyframes 起落) */
+  /* 擲錢：三枚古銅錢 3D 拋旋（只動 transform,transition 旋轉+keyframes 起落） */
   #coin-stage { display: flex; justify-content: center; gap: 30px; padding: 16px 0 6px; perspective: 700px; }
   .coin { width: 62px; height: 62px; }
   .coin.tossing { animation: coin-hop .8s cubic-bezier(.3, .6, .4, 1); }
@@ -553,7 +558,7 @@
   .cz.r { right: 7px; top: 50%; transform: translateY(-50%); }
   .cz.l { left: 7px; top: 50%; transform: translateY(-50%); }
 
-  /* 起卜默唸:占卜前的儀式提醒(易經誦《筮儀》命筮辭,各牌組有各自的默唸引) */
+  /* 起卜默唸：占卜前的儀式提醒（易經誦《筮儀》命筮辭，各牌組有各自的默唸引） */
   #invocation { max-width: 640px; margin: 10px auto 2px; text-align: center; }
   #inv-head {
     background: none; border: none; cursor: pointer; padding: 2px 10px;
@@ -571,7 +576,7 @@
   #inv-text b { color: var(--gold-bright); font-weight: 600; }
   #invocation.folded #inv-text { display: none; }
 
-  /* 洗牌金光:交錯回插時一道斜光掠過牌疊(只動 opacity/transform,一次性) */
+  /* 洗牌金光：交錯回插時一道斜光掠過牌疊（只動 opacity/transform,一次性） */
   #stack::after {
     content: ""; position: absolute; inset: -8px; border-radius: 10px; pointer-events: none; opacity: 0;
     background: linear-gradient(115deg, transparent 32%, rgba(232,200,122,.4) 50%, transparent 68%);
@@ -582,7 +587,7 @@
     35% { opacity: 1; }
     100% { opacity: 0; transform: translateX(45%); }
   }
-  /* 三疊切牌:大目標,點一疊即從該深度切開 */
+  /* 三疊切牌：大目標，點一疊即從該深度切開 */
   #cut-piles { display: flex; justify-content: center; gap: 34px; padding: 22px 0 30px; flex-wrap: wrap; }
   .cut-pile {
     position: relative; width: 100px; height: 152px; cursor: pointer; background: none; border: none; padding: 0;
@@ -596,7 +601,7 @@
   .cut-pile.picked .stack-card { box-shadow: 0 12px 24px rgba(0,0,0,.5), 0 0 16px rgba(232,200,122,.45); }
   .cut-pile.dimmed { opacity: .22; transform: translateY(10px); }
   .cut-pile .stack-card { transition: transform .2s ease; }
-  /* 攤牌親切:牌背攤開,點哪張就從那張切開 */
+  /* 攤牌親切：牌背攤開，點哪張就從那張切開 */
   #cut-fan-scroll { overflow-x: auto; padding: 8px 6px 4px; }
   #cut-fan { display: flex; width: max-content; margin: 0 auto; padding: 22px 20px 14px; }
   #cut-fan .fan-card.picked { transform: translateY(-16px) !important; box-shadow: 0 10px 22px rgba(0,0,0,.45), 0 0 14px rgba(232,200,122,.45); }
@@ -606,7 +611,7 @@
   .cut-pile:hover .stack-card, .cut-pile:focus-visible .stack-card { transform: translateY(-8px) !important; box-shadow: 0 10px 22px rgba(0,0,0,.45), 0 0 12px rgba(201,164,92,.3); }
   .cut-pile:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
   .pile-label { position: absolute; left: 0; right: 0; bottom: -24px; text-align: center; font-size: 12px; color: var(--muted); letter-spacing: .18em; }
-  /* 命運牌堆:單鍵抽牌的大目標 */
+  /* 命運牌堆：單鍵抽牌的大目標 */
   #draw-pile-wrap { display: flex; justify-content: center; padding: 16px 0 4px; }
   #draw-pile {
     position: relative; width: 128px; height: 192px; border-radius: 8px; padding: 0; cursor: pointer;
@@ -628,12 +633,12 @@
   /* 步驟指示器 */
   #ritual-steps { display: flex; justify-content: center; align-items: baseline; gap: 8px; font-size: 12.5px; letter-spacing: .12em; color: var(--muted); padding-top: 4px; flex-wrap: wrap; }
   .rstep { padding: 3px 9px; border: 1px solid transparent; border-radius: 3px; white-space: nowrap; }
-  .rstep small { font-size: 10px; }
+  .rstep small { font-size: 11px; }
   .rstep.on { color: var(--gold-bright); border-color: var(--gold-dim); }
   .rstep.done { color: var(--gold-dim); }
   .rstep.done::after { content: " ✓"; }
   .rsep { color: rgba(201,164,92,.25); font-size: 10px; }
-  /* 工具列常駐視野(手機不再捲過空牌陣找按鈕) */
+  /* 工具列常駐視野（手機不再捲過空牌陣找按鈕） */
   .sticky-tools { position: sticky; bottom: 10px; z-index: 6; background: rgba(12,19,14,.92); padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(201,164,92,.18); }
   /* 橫捲提示 */
   #scroll-hint { text-align: center; font-size: 12px; color: var(--muted); letter-spacing: .15em; margin: 2px 0 0; }
@@ -642,7 +647,7 @@
   .first-guide a { color: var(--gold-bright); text-decoration: none; border-bottom: 1px dotted var(--gold-dim); }
   /* 盤面分組小標與「上次」徽章 */
   .spreads .hall-label.spread-group { margin: 16px 0 4px; }
-  .s-last { font-size: 10px; color: var(--gold-bright); border: 1px solid var(--gold-dim); border-radius: 3px; padding: 1px 6px; margin-left: 8px; letter-spacing: .15em; vertical-align: 2px; }
+  .s-last { font-size: 11px; color: var(--gold-bright); border: 1px solid var(--gold-dim); border-radius: 3px; padding: 1px 6px; margin-left: 8px; letter-spacing: .15em; vertical-align: 2px; }
   #ai-links { display: inline-flex; gap: 10px; }
   #ai-links[hidden] { display: none; }
   #slots-scroll.can-scroll, #fan-scroll.can-scroll {
@@ -650,7 +655,7 @@
     mask-image: linear-gradient(90deg, transparent, #000 22px, #000 calc(100% - 22px), transparent);
   }
 
-  /* 飛行牌:手動抽牌時卡背自牌堆/扇面飛至槽位(FLIP,單一臨時元素,只動 transform/opacity) */
+  /* 飛行牌：手動抽牌時卡背自牌堆/扇面飛至槽位(FLIP,單一臨時元素，只動 transform/opacity) */
   .fly-card {
     position: fixed; z-index: 40; pointer-events: none; border-radius: 8px;
     border: 1px solid rgba(201,164,92,.5);
@@ -662,7 +667,7 @@
     transition: transform .34s cubic-bezier(.3, .75, .35, 1), opacity .34s ease;
     will-change: transform;
   }
-  /* 落牌金暈:僅手動抽牌路徑,一次性 */
+  /* 落牌金暈：僅手動抽牌路徑，一次性 */
   .card3d.revealed.glow { animation: land-glow .55s ease-out; }
   @keyframes land-glow {
     0% { filter: drop-shadow(0 0 0 rgba(232,200,122,0)); }
@@ -822,7 +827,7 @@
     transition: background-color .2s;
   }
   .dict-card:hover, .dict-card:focus-visible { background: rgba(201,164,92,.08); }
-  .dict-card:focus-visible { outline: 1px solid var(--gold-dim); }
+  .dict-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
   .dict-card .dc-img {
     width: 100%; display: block;
     border-radius: 5px;
@@ -857,13 +862,25 @@
   .dict-sec { border-top: 1px solid rgba(138,114,69,.3); margin-top: 18px; padding-top: 16px; }
 
   footer {
-    text-align: center; color: var(--muted); opacity: .7;
-    font-size: 12px; letter-spacing: .2em; margin-top: 64px;
+    text-align: center; color: var(--muted); opacity: .8;
+    font-size: 12.5px; letter-spacing: .12em; line-height: 1.9; margin-top: 64px;
   }
+
+  /* ── 紙面對話框：取代瀏覽器原生 alert/confirm，與帳冊同紙 ── */
+  dialog.note {
+    background: linear-gradient(170deg, var(--ivory), var(--ivory-shade)); color: var(--ink);
+    border: 1px solid var(--gold-dim); border-radius: 4px;
+    box-shadow: 0 18px 50px rgba(0,0,0,.55), inset 0 0 0 4px var(--ivory), inset 0 0 0 5px rgba(138,114,69,.45);
+    padding: 26px 28px 22px; max-width: min(440px, 88vw);
+    font-family: var(--serif); font-size: 15px; line-height: 1.8;
+  }
+  dialog.note::backdrop { background: rgba(6,10,8,.62); }
+  dialog.note p { margin: 0 0 18px; white-space: pre-line; }
+  dialog.note .note-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
 
   @media (max-width: 640px) {
     #slots { --cw: 92px; }
-    .fan-card { width: 56px; height: 84px; margin-left: -14px; }   /* 露出 42px,達觸控目標 */
+    .fan-card { width: 56px; height: 84px; margin-left: -12px; }   /* 露出 44px，達觸控目標 */
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -881,14 +898,14 @@
   </header>
 
   <nav class="halls-nav" aria-label="館別導覽">
-    <a title="牌卡占卜:雷諾曼、塔羅等十套牌" href="index.html" class="here">牌桌館</a>
+    <a title="牌卡占卜：雷諾曼、塔羅等十套牌" href="index.html" class="here">牌桌館</a>
     <a title="西洋/印度/卜卦占星與宿曜" href="astro.html">占星館</a>
     <a title="八字、紫微、九星、唐四柱、人類圖、生命靈數——看生辰" href="bazi.html">八字館</a>
     <a title="奇門、六壬、太乙、梅花、河洛——問此刻與時機" href="shi.html">式占館</a>
     <a title="緬甸八曜、爪哇威頓、泰國佛日" href="nanyang.html">南洋館</a>
     <a title="一句、翹傳、靈籤——開卷即答" href="kaijuan.html">開卷館</a>
     <a title="MBTI 十六型人格測驗——照見偏好" href="mbti.html">鏡廳</a>
-    <a title="任選三術同問一事,合議作答" href="mix.html">MIX 三術合參</a>
+    <a title="任選三術同問一事，合議作答" href="mix.html">MIX 三術合參</a>
   </nav>
 
   <nav class="views" id="views" aria-label="頁面切換">
@@ -896,7 +913,7 @@
     <button class="view-btn" data-view="dict">牌義字典</button>
   </nav>
 
-  <p class="first-guide">初次來此?牌卡在本館——問生辰命盤請往<a href="bazi.html">八字館</a>,問時機吉凶請往<a href="shi.html">式占館</a>,拿不定主意就交給 <a href="mix.html">MIX 三術合參</a>。</p>
+  <p class="first-guide">第一次來？牌卡在這一館。問生辰命盤請往<a href="bazi.html">八字館</a>，問時機吉凶請往<a href="shi.html">式占館</a>，拿不定主意就交給 <a href="mix.html">MIX 三術合參</a>。</p>
 
   <p class="section-label">選擇牌組</p>
   <div class="decks" id="decks" role="group" aria-label="牌組選擇"></div>
@@ -916,7 +933,7 @@
     <div class="question-row">
       <label for="q-input">你的問題</label>
       <input id="q-input" type="text" maxlength="200"
-        placeholder="默想並寫下你想問的事（選填，會直接寫進 AI 解讀提示詞）">
+        placeholder="默想，寫下你想問的事（選填）">
     </div>
 
     <div id="deck-area">
@@ -929,7 +946,7 @@
         <div id="sigpick-btns"></div>
       </div>
       <div id="cast" hidden>
-        <p class="deck-caption" id="cast-caption">三枚銅錢,擲六次——由下而上,六爻成卦。</p>
+        <p class="deck-caption" id="cast-caption">三枚銅錢，擲六次——由下而上，六爻成卦。</p>
         <div id="coin-stage" aria-hidden="true">
           <div class="coin"><div class="coin-inner">
             <div class="coin-face zi"><span class="cz t">乾</span><span class="cz b">隆</span><span class="cz r">通</span><span class="cz l">寶</span></div>
@@ -967,7 +984,7 @@
             class="rstep" data-step="cut">② 切牌<small>（可略）</small></span><span class="rsep">──</span><span
             class="rstep" data-step="draw">③ 抽牌</span>
         </div>
-        <p class="deck-caption" id="ritual-caption" aria-live="polite">全新牌序——先洗牌，把牌序交給你的手；切牌可略；然後開始抽牌。</p>
+        <p class="deck-caption" id="ritual-caption" aria-live="polite">先洗牌，把牌序交給你的手。切不切牌隨你，然後抽牌。</p>
         <div id="stack-wrap">
           <div id="stack"></div>
         </div>
@@ -978,7 +995,7 @@
           <button class="ghost-btn" id="btn-shuffle">洗 牌</button>
           <button class="ghost-btn" id="btn-cut">切 牌</button>
           <button class="ghost-btn gold" id="btn-begin" disabled title="請先洗牌至少一次">開 始 抽 牌</button>
-          <button class="ghost-btn" id="btn-quick" title="洗七次＋隨機一切，直接可抽">一鍵完成儀式</button>
+          <button class="ghost-btn" id="btn-quick" title="替你洗七次、切一刀，馬上能抽">替我洗好切好</button>
         </div>
       </div>
       <p class="deck-caption" id="deck-caption" aria-live="polite" hidden></p>
@@ -1010,7 +1027,7 @@
       <div id="combos"></div>
       <div class="ai-block" id="ai-block" hidden>
         <div class="cb-title">交 給 AI 解 讀</div>
-        <p class="ai-note">把整個牌陣化成一段提示詞——複製後，貼給你信任的任何 AI 占卜師。</p>
+        <p class="ai-note">把整個牌陣寫成一段提示詞，貼給你信任的 AI，就能替你細讀。</p>
         <div class="tone-row">
           <label for="tone-select">建議語氣</label>
           <select id="tone-select">
@@ -1025,7 +1042,7 @@
             placeholder="寫下你想要的語氣，例如：像老朋友一樣直說" hidden>
         </div>
         <div class="ai-tools">
-          <button class="ghost-btn dark" id="btn-ai">產生解讀 Prompt</button>
+          <button class="ghost-btn dark" id="btn-ai">寫成提示詞</button>
           <button class="ghost-btn dark" id="btn-download">下載盤面圖</button>
           <button class="ghost-btn dark" id="btn-share">分享文字</button>
           <button class="ghost-btn dark" id="btn-copy" hidden>複製全文</button>
@@ -1051,24 +1068,51 @@
 
   <section id="dict" hidden>
     <p class="section-label">牌義字典</p>
-    <p class="dict-hint">目前牌組的每一張牌都在這裡——點開學習定義、正逆位，以及它落在不同位置時的讀法。</p>
+    <p class="dict-hint">這副牌的每一張都在這裡。點一張，看牌義、正逆位，和它落在不同位置時怎麼讀。</p>
     <div id="dict-grid"></div>
     <div id="dict-detail" class="paper" hidden></div>
   </section>
 
-  <footer>燭光牌桌 La Table aux Chandelles · 牌面依十九世紀式樣重繪 · 牌序由你的手決定 · 僅供靜心與娛樂</footer>
+  <footer>燭光牌桌 La Table aux Chandelles<br>牌面依十九世紀式樣重繪，牌序由你的手決定。僅供靜心與娛樂。</footer>
 </div>
+
+<dialog id="note" class="note" aria-labelledby="note-text">
+  <form method="dialog">
+    <p id="note-text"></p>
+    <div class="note-actions">
+      <button class="ghost-btn dark" id="note-cancel" value="cancel" hidden></button>
+      <button class="ghost-btn dark" id="note-ok" value="ok">知道了</button>
+    </div>
+  </form>
+</dialog>
 
 <script src="cards-data.js"></script>
 <script>
 "use strict";
 
-/* 牌卡資料外置於 cards-data.js——缺檔即明示(整包複製時勿漏檔) */
+/* 牌卡資料外置於 cards-data.js——缺檔即明示（整包複製時勿漏檔） */
 if (typeof LEN_CARDS === "undefined" || typeof DECKS === "undefined") {
   document.body.innerHTML = "<p style='padding:40px;font-size:18px;color:#E8DCC2'>缺少 cards-data.js——請確認它與 index.html 在同一資料夾。</p>";
   throw new Error("cards-data.js missing");
 }
 
+
+/* 紙面對話框：取代 alert/confirm。回傳 Promise<boolean>（按「ok」為 true，Esc 或取消為 false） */
+function say(msg, opts = {}) {
+  const dlg = document.getElementById("note");
+  if (!dlg || typeof dlg.showModal !== "function") return Promise.resolve(opts.cancel ? confirm(msg) : (alert(msg), true));
+  return new Promise((res) => {
+    document.getElementById("note-text").textContent = msg;
+    const ok = document.getElementById("note-ok"), cancel = document.getElementById("note-cancel");
+    ok.textContent = opts.ok || "知道了";
+    cancel.hidden = !opts.cancel; cancel.textContent = opts.cancel || "";
+    const done = () => { dlg.removeEventListener("close", done); res(dlg.returnValue === "ok"); };
+    dlg.addEventListener("close", done);
+    dlg.returnValue = "";
+    dlg.showModal();
+    (opts.cancel ? cancel : ok).focus();
+  });
+}
 
 const HALLS = [["west","西方館"], ["east","東方館"]];
 let deckDef = DECKS[0];
@@ -1099,9 +1143,9 @@ const elFanScroll = $("#fan-scroll");
 const elDrawStage = $("#draw-stage"), elDrawPile = $("#draw-pile"), elPileWrap = $("#draw-pile-wrap");
 const elPileCount = $("#pile-count"), btnMode = $("#btn-mode"), elScrollHint = $("#scroll-hint");
 const elSlotsScroll = $("#slots-scroll");
-let drawMode = "pile";   /* pile=命運牌堆(預設) / fan=攤牌親挑 */
+let drawMode = "pile";   /* pile=命運牌堆（預設） / fan=攤牌親挑 */
 
-/* 橫捲 affordance:內容比容器寬才加漸層遮罩與提示;滾輪可橫捲 */
+/* 橫捲 affordance:內容比容器寬才加漸層遮罩與提示；滾輪可橫捲 */
 function refreshScrollables() {
   [elSlotsScroll, elFanScroll].forEach((el) => {
     el.classList.toggle("can-scroll", el.scrollWidth > el.clientWidth + 4);
@@ -1120,7 +1164,7 @@ function ritualSteps() {
   const st = { shuffle: shuffleCount > 0 ? "done" : "on", cut: "", draw: "" };
   if (shuffleCount > 0) st.cut = cutCount > 0 ? "done" : "on";
   if (shuffleCount > 0) st.draw = phase === "draw" ? "done" : (cutCount > 0 ? "on" : "");
-  if (shuffleCount > 0 && cutCount === 0) st.draw = "on";   /* 切牌可略:洗過即可抽 */
+  if (shuffleCount > 0 && cutCount === 0) st.draw = "on";   /* 切牌可略：洗過即可抽 */
   document.querySelectorAll(".rstep").forEach((el) => {
     el.classList.toggle("on", st[el.dataset.step] === "on");
     el.classList.toggle("done", st[el.dataset.step] === "done");
@@ -1229,7 +1273,7 @@ function buildSpreadMenu() {
   groups.forEach(([gname, test]) => {
     const list = SPREADS.filter(test);
     if (!list.length) return;
-    if (SPREADS.length > 6) {   /* 盤面多才分組,免得小牌組被切碎 */
+    if (SPREADS.length > 6) {   /* 盤面多才分組，免得小牌組被切碎 */
       const lab = document.createElement("div");
       lab.className = "hall-label spread-group";
       lab.textContent = gname;
@@ -1254,7 +1298,7 @@ function buildSpreadMenu() {
   });
 }
 buildSpreadMenu();
-/* 記住上次牌組:回訪自動切到上次使用的牌組 */
+/* 記住上次牌組：回訪自動切到上次使用的牌組 */
 try {
   const last = JSON.parse(localStorage.getItem("lenormand-last") || "null");
   if (last && last.deck && last.deck !== deckDef.id) {
@@ -1274,7 +1318,7 @@ function selectSpread(s, btn) {
   document.querySelectorAll(".spread-btn").forEach((x) => x.classList.remove("active"));
   btn.classList.add("active");
   spread = s;
-  /* 問題保留——換盤面不清空(換牌組才清) */
+  /* 問題保留——換盤面不清空（換牌組才清） */
   resetTable();
   preloadCards();
   elTable.classList.add("on");
@@ -1305,7 +1349,7 @@ function resetTable() {
   $("#btn-reset").textContent = spread.cast ? "重新起卦" : spread.qiu ? "重新求籤" : "重新洗牌";
   buildSlots();
   buildStack();
-  /* 擲卦盤面:以銅錢起卦,不走洗切抽流程 */
+  /* 擲卦盤面：以銅錢起卦，不走洗切抽流程 */
   const isCast = !!spread.cast;
   elCast.hidden = !isCast;
   if (isCast) {
@@ -1314,15 +1358,15 @@ function resetTable() {
     castInfo = null;
     castBusy = false;   /* 拋擲中重設不卡死 */
     btnThrow.disabled = false;
-    $("#cast-caption").textContent = "三枚銅錢,擲六次——由下而上,六爻成卦。";
+    $("#cast-caption").textContent = "三枚銅錢，擲六次——由下而上，六爻成卦。";
     renderCastLines();
   }
-  /* 十字陣:可先擇指示牌置中,或不指定全憑抽 */
+  /* 十字陣：可先擇指示牌置中，或不指定全憑抽 */
   sigPicked = null;
   const isSig = !!spread.sig;
   elSigPick.hidden = !isSig;
   if (isSig) { phase = "sig"; renderSigPick(); }
-  /* 求籤盤面:請筊搖籤,不走洗切抽流程 */
+  /* 求籤盤面：請筊搖籤，不走洗切抽流程 */
   const isQiu = !!spread.qiu;
   elQiu.hidden = !isQiu;
   if (isQiu) {
@@ -1345,7 +1389,7 @@ function resetTable() {
   $("#cut-tools").hidden = true;
   btnBegin.disabled = true;
   btnCut.textContent = "切 牌";
-  elRitualCaption.textContent = "全新牌序——先洗牌，把牌序交給你的手；切牌可略；然後開始抽牌。"
+  elRitualCaption.textContent = "先洗牌，把牌序交給你的手。切不切牌隨你，然後抽牌。"
     + (spread.count >= 12 ? "（大陣可用「讓命運抽完」一次補齊）" : "");
   ritualSteps();
   elCaption.hidden = true;
@@ -1368,8 +1412,8 @@ function resetTable() {
   updateInvocation();
 }
 
-/* ── 起卜默唸:占卜前的儀式提醒 ──────────────
-   易經誦朱子《筮儀》命筮辭;其餘牌組各有默唸引。問題即時代入。 */
+/* ── 起卜默唸：占卜前的儀式提醒 ──────────────
+   易經誦朱子《筮儀》命筮辭；其餘牌組各有默唸引。問題即時代入。 */
 const INVOCATIONS = {
   yi:  (q) => `假爾泰筮有常，假爾泰筮有常。<br>弟子〔默唸姓名〕，今以 ${q} 未知可否，爰質所疑于神于靈。<br>吉凶得失，悔吝憂虞，惟爾有神，尚明告之。`,
   qs:  (q) => `弟子〔默唸姓名〕焚香叩首——今為 ${q} 敬叩司籤，伏乞賜籤明示。若蒙允准，願得聖筊。`,
@@ -1413,12 +1457,15 @@ function buildStack() {
 }
 
 function ritualStatus() {
-  const parts = [`已洗牌 ${shuffleCount} 次`];
-  if (shuffleCount > 0 && shuffleCount < 7) parts.push("再洗幾次會更均勻");
-  if (cutCount > 0) parts.push(`已切牌 ${cutCount} 次`);
-  if (shuffleCount >= 7) parts.push("牌序已充分混洗");
-  if (shuffleCount > 0) parts.push("可隨時開始抽牌");
-  elRitualCaption.textContent = parts.join("・") + "。";
+  let s;
+  if (shuffleCount === 0) {
+    s = cutCount > 0 ? `切了 ${cutCount} 次，但還沒洗牌。` : "還沒洗牌。";
+  } else {
+    s = shuffleCount < 7 ? `洗了 ${shuffleCount} 次，再洗幾次會更勻` : `洗了 ${shuffleCount} 次，牌序已經夠亂了`;
+    if (cutCount > 0) s += `，切了 ${cutCount} 次`;
+    s += "。隨時可以抽。";
+  }
+  elRitualCaption.textContent = s;
   ritualSteps();
 }
 
@@ -1428,13 +1475,13 @@ function shuffleOnce(animate) {
   if (!animate) return;
   const cards = [...elStack.children];
   elStack.classList.remove("shimmer"); void elStack.offsetWidth; elStack.classList.add("shimmer");
-  /* 第一段:鴿尾式分半——偶數張出左、奇數張出右,外旋微沉 */
+  /* 第一段：鴿尾式分半——偶數張出左、奇數張出右，外旋微沉 */
   cards.forEach((c, i) => {
     const left = i % 2 === 0;
     c.style.transitionDelay = i * 9 + "ms";
     c.style.transform = `translate(${left ? -76 : 76}px, ${8 + (i % 4) * 3}px) rotate(${left ? -13 : 13}deg)`;
   });
-  /* 第二段:左右輪流交錯回插(逐張 stagger,overshoot 曲線自帶回彈) */
+  /* 第二段：左右輪流交錯回插（逐張 stagger,overshoot 曲線自帶回彈） */
   setTimeout(() => {
     cards.forEach((c, i) => {
       c.style.transitionDelay = i * 18 + "ms";
@@ -1451,13 +1498,13 @@ btnShuffle.addEventListener("click", () => {
   if (ritualBusy || phase !== "ritual") return;
   ritualBusy = true;
   if (!elCutPiles.hidden || !elCutFanScroll.hidden) exitCutView();
-  shuffleOnce(true);   /* 牌序真的改變:一次鴿尾式交錯洗牌 */
+  shuffleOnce(true);   /* 牌序真的改變：一次鴿尾式交錯洗牌 */
   ritualStatus();
   btnBegin.disabled = false;
   btnBegin.title = "";
 });
 
-/* 切牌雙模式:三疊(淺/中/深切口)或攤牌親切(點哪張就從那張切開) */
+/* 切牌雙模式：三疊（淺/中/深切口）或攤牌親切（點哪張就從那張切開） */
 const elCutFanScroll = $("#cut-fan-scroll"), elCutFan = $("#cut-fan"), elCutTools = $("#cut-tools"), btnCutMode = $("#btn-cutmode");
 let cutMode = "piles";   // "piles" | "fan"
 
@@ -1473,7 +1520,7 @@ function buildCutPiles() {
     const b = document.createElement("button");
     b.className = "cut-pile";
     b.title = `提起 ${pos} 張——自第 ${pos + 1} 張切起`;
-    b.setAttribute("aria-label", `${label}:提起 ${pos} 張,下段翻上成為新牌頂`);
+    b.setAttribute("aria-label", `${label}:提起 ${pos} 張，下段翻上成為新牌頂`);
     const layers = Math.max(2, Math.min(10, Math.round(pos / N * 12)));
     for (let i = 0; i < layers; i++) {
       const c = document.createElement("div");
@@ -1501,10 +1548,10 @@ function buildCutFan() {
       c.disabled = true;
       c.classList.add("top-now");
       c.title = "現任牌頂";
-      c.setAttribute("aria-label", "現任牌頂(不可選)");
+      c.setAttribute("aria-label", "現任牌頂（不可選）");
     } else {
       c.title = `自第 ${pos + 1} 張切開`;
-      c.setAttribute("aria-label", `自第 ${pos + 1} 張切開,它成為新牌頂`);
+      c.setAttribute("aria-label", `自第 ${pos + 1} 張切開，它成為新牌頂`);
       c.addEventListener("click", () => doCutFan(pos, c));
     }
     elCutFan.appendChild(c);
@@ -1545,7 +1592,7 @@ btnCut.addEventListener("click", () => {
   else { exitCutView(); ritualStatus(); }
 });
 
-/* 一鍵完成儀式:洗七次+隨機一切——給趕時間的人,牌序仍是真隨機 */
+/* 一鍵完成儀式：洗七次+隨機一切——給趕時間的人，牌序仍是真隨機 */
 btnQuick.addEventListener("click", () => {
   if (ritualBusy || phase !== "ritual") return;
   ritualBusy = true;
@@ -1564,7 +1611,7 @@ btnQuick.addEventListener("click", () => {
     });
     ritualBusy = false;
   }, 450);
-  elRitualCaption.textContent = "儀式已代行:洗七次、隨機一切——牌序已定，可直接開始抽牌。";
+  elRitualCaption.textContent = "替你洗了七次、切了一刀。牌序已定，可以抽了。";
   ritualSteps();
   btnBegin.disabled = false;
   btnBegin.title = "";
@@ -1606,17 +1653,17 @@ function pickSig(n) {
 }
 
 /* ── 求籤・擲筊 ────────────────────────────
-   此桌無神:筊以 crypto 真隨機為斷——聖筊 1/2、笑筊 1/4、陰筊 1/4。
-   流程:上香默稟 → 請籤筊(聖筊開筒) → 搖籤 → 問籤筊。
-   定籤須「連得三聖筊」;笑筊退籤重搖;全程陰筊累計三次,
-   即告機緣未到,今日不取籤。 */
+   此桌無神：筊以 crypto 真隨機為斷——聖筊 1/2、笑筊 1/4、陰筊 1/4。
+   流程：上香默稟 → 請籤筊（聖筊開筒） → 搖籤 → 問籤筊。
+   定籤須「連得三聖筊」；笑筊退籤重搖；全程陰筊累計三次,
+   即告機緣未到，今日不取籤。 */
 const elQiu = $("#qiu"), elQiuCap = $("#qiu-caption"), elQiuLog = $("#qiu-log");
 const elJiao = $("#jiao"), elJiaoA = $("#jiao-a"), elJiaoB = $("#jiao-b");
 const elQiuStick = $("#qiu-stick"), btnQiu = $("#btn-qiu");
 let qiuStep = "bing", qiuStick = 0, qiuLog = [], qiuBusy = false;
 let qiuSheng = 0, qiuYin = 0;   /* 本支籤的連續聖筊數／本次求籤累計陰筊數 */
 
-/* 陰筊三至:機緣未到,收筊歇手 */
+/* 陰筊三至：機緣未到，收筊歇手 */
 function qiuRest() {
   qiuStep = "rest";
   qiuStick = 0;
@@ -1672,7 +1719,7 @@ function confirmQian() {
   drawn = [card]; drawnRev = [false];
   elSlots.innerHTML = "";
   elSlots.appendChild(buildSlip(card));
-  /* 直排籤紙由右讀起:窄螢幕先捲到最右端 */
+  /* 直排籤紙由右讀起：窄螢幕先捲到最右端 */
   const scroller = elSlots.parentElement;
   if (scroller) scroller.scrollLeft = scroller.scrollWidth;
   elQiuCap.textContent = `第${cnNum(card.n)}籤・${card.grade}——「${card.zh}」。籤紙已展於案上。`;
@@ -1767,7 +1814,7 @@ function performCut(pos) {
 function doCut(pos, btn) {
   if (ritualBusy) return;
   ritualBusy = true;
-  /* 儀式感:選中疊上抬亮起,其餘沉暗——300ms 後牌序才真的切開 */
+  /* 儀式感：選中疊上抬亮起，其餘沉暗——300ms 後牌序才真的切開 */
   [...elCutPiles.children].forEach((b) => b.classList.add(b === btn ? "picked" : "dimmed"));
   setTimeout(() => performCut(pos), 300);
 }
@@ -1775,7 +1822,7 @@ function doCutFan(pos, el) {
   if (ritualBusy) return;
   ritualBusy = true;
   el.classList.add("picked");
-  elCutFan.classList.add("picking");   /* 單一類名讓其餘牌背沉暗,不逐張改樣式 */
+  elCutFan.classList.add("picking");   /* 單一類名讓其餘牌背沉暗，不逐張改樣式 */
   setTimeout(() => { elCutFan.classList.remove("picking"); performCut(pos); }, 300);
 }
 
@@ -1784,7 +1831,7 @@ const elCast = $("#cast"), elCastLines = $("#cast-lines"), btnThrow = $("#btn-th
 let castLines = [];   // 由下而上的六爻:{v: 6|7|8|9, coins:[2|3,…]}
 let castInfo = null;  // {lines, moving, ben, zhi}
 
-/* 三爻(由下而上)→ 八卦索引:乾兌離震巽坎艮坤 */
+/* 三爻（由下而上）→ 八卦索引：乾兌離震巽坎艮坤 */
 const TRIGRAM = { "111":0, "110":1, "101":2, "100":3, "011":4, "010":5, "001":6, "000":7 };
 /* 文王卦序:KW[下卦][上卦] */
 const KW = [
@@ -1801,7 +1848,7 @@ function hexNum(bits) {
   return KW[TRIGRAM[bits.slice(0, 3).join("")]][TRIGRAM[bits.slice(3, 6).join("")]];
 }
 const YAO_NAMES = ["初爻","二爻","三爻","四爻","五爻","上爻"];
-/* 卦的簡稱:乾為天→乾、天雷無妄→無妄 */
+/* 卦的簡稱：乾為天→乾、天雷無妄→無妄 */
 function yiShort(n) {
   const zh = YI_CARDS[n - 1].zh;
   return zh.includes("為") ? zh[0] : zh.slice(2);
@@ -1831,7 +1878,7 @@ function renderCastLines() {
   }
 }
 
-/* 擲錢動畫:三枚銅錢拋起 3D 旋轉,落定時字背朝上即為結果(累計轉角,每擲至少兩圈半) */
+/* 擲錢動畫：三枚銅錢拋起 3D 旋轉，落定時字背朝上即為結果（累計轉角，每擲至少兩圈半） */
 const elCoinInners = [...document.querySelectorAll("#coin-stage .coin-inner")];
 const coinRot = [0, 0, 0];
 let castBusy = false;
@@ -1853,11 +1900,9 @@ function commitThrow(coins) {
   renderCastLines();
   if (castLines.length === 6) finishCast();
 }
-btnThrow.addEventListener("click", () => {
-  if (phase !== "cast" || castLines.length >= 6 || castBusy) return;
-  if (castLines.length === 0 && !repeatGuard()) return;   /* 起卦前勸誡:同日同題三問 */
+function throwOnce() {
   const coins = [0, 0, 0].map(() => (rand01() < 0.5 ? 2 : 3));  /* 字=2、背=3 */
-  if (location.search.includes("rwdtest")) { commitThrow(coins); return; }   /* 測試直通:六連擲不等動畫 */
+  if (location.search.includes("rwdtest")) { commitThrow(coins); return; }   /* 測試直通：六連擲不等動畫 */
   castBusy = true;
   btnThrow.disabled = true;
   animateCoins(coins);
@@ -1866,6 +1911,14 @@ btnThrow.addEventListener("click", () => {
     commitThrow(coins);
     btnThrow.disabled = phase !== "cast";   /* 第六擲 finishCast 轉入 draw,按鈕保持停用 */
   }, 1000);
+}
+btnThrow.addEventListener("click", () => {
+  if (phase !== "cast" || castLines.length >= 6 || castBusy) return;
+  if (castLines.length === 0) {   /* 起卦前勸誡：同日同題三問（無需勸誡時同步直通，測試鉤子才能連擲） */
+    const ok = repeatGuard();
+    if (ok !== true) { ok.then((yes) => { if (yes && phase === "cast" && castLines.length === 0) throwOnce(); }); return; }
+  }
+  throwOnce();
 });
 
 function finishCast() {
@@ -1880,10 +1933,10 @@ function finishCast() {
   castInfo = { lines: castLines.map((l) => l.v), moving, ben, zhi };
   target = zhi ? 2 : 1;
   $("#cast-caption").textContent = zhi
-    ? `得「${yiShort(ben)}之${yiShort(zhi)}」——動爻:${moving.map((i) => YAO_NAMES[i]).join("、")};本卦為體,之卦為變。`
-    : `得「${yiShort(ben)}」,六爻皆靜——以本卦卦辭為斷。`;
+    ? `得「${yiShort(ben)}之${yiShort(zhi)}」——動爻:${moving.map((i) => YAO_NAMES[i]).join("、")};本卦為體，之卦為變。`
+    : `得「${yiShort(ben)}」，六爻皆靜——以本卦卦辭為斷。`;
   if (!zhi) {
-    /* 六爻皆靜:之卦格明確標示,不留懸念 */
+    /* 六爻皆靜：之卦格明確標示，不留懸念 */
     const zhiLabel = elSlots.querySelector('.slot[data-idx="1"] .pos-label');
     if (zhiLabel) zhiLabel.textContent = "之卦・無（六爻皆靜）";
   }
@@ -1892,7 +1945,7 @@ function finishCast() {
   if (zhi) setTimeout(() => placeCard(zhi - 1), 1150);
 }
 
-/* ── 重複占問勸誡(⇄ 同法在 divine-ui.js DC.simQ——牌桌館零依賴故留複本,改演算法請兩邊同步) ── */
+/* ── 重複占問勸誡(⇄ 同法在 divine-ui.js DC.simQ——牌桌館零依賴故留複本，改演算法請兩邊同步) ── */
 function simQ(a, b) {
   const norm = (s) => String(s || "").toLowerCase()
     .replace(/[\s。，、？！?!.,;:「」『』()（）…~〜-]/g, "")
@@ -1915,32 +1968,37 @@ function simQ(a, b) {
   const lcs = (2 * dp[a.length][b.length]) / (a.length + b.length);
   return Math.max(dice, lcs);
 }
+/* 回傳 true（免勸誡，同步直通）或 Promise<boolean>（紙面對話框問過再說） */
 function repeatGuard() {
-  if (location.search.includes("rwdtest")) return true;   /* 測試鉤子直通(headless confirm 會卡住) */
+  if (location.search.includes("rwdtest")) return true;   /* 測試鉤子直通（無頭瀏覽器會卡在對話框） */
   let arr = [];
   try { arr = JSON.parse(localStorage.getItem("lenormand-history") || "[]"); } catch (e) {}
   const today = new Date().toDateString();
   const q = $("#q-input").value.trim();
   const n = arr.filter((r) => new Date(r.id).toDateString() === today && r.deck === deckDef.id && simQ(r.q, q) >= 0.62).length;
   if (n < 2) return true;
-  return confirm(`同一件事,你今天已用「${deckDef.name}」問過 ${n} 次——\n再抽,就只是在抽心安,不是在占卜。\n\n牌不會因為多問一次而換答案;答案不合意時,該換的是問題,或行動。\n\n仍要繼續嗎?`);
+  return say(`同一件事，你今天已用「${deckDef.name}」問過 ${n} 次。\n再抽，就只是在抽心安，不是在占卜。\n\n牌不會因為多問一次而換答案。答案不合意時，該換的是問題，或行動。`, { ok: "仍要抽", cancel: "先不抽" });
 }
 
-btnBegin.addEventListener("click", () => {
-  if (btnBegin.disabled || phase !== "ritual") return;
-  if (!repeatGuard()) return;
+function beginDraw() {
   phase = "draw";
   elRitual.hidden = true;
   elCaption.hidden = false;
   elDrawStage.hidden = false;
-  buildFan();               /* 扇形恆為抽牌之源;牌堆模式時隱藏,親挑時展開 */
+  buildFan();               /* 扇形恆為抽牌之源；牌堆模式時隱藏，親挑時展開 */
   setDrawMode("pile");
   elAuto.hidden = spread.count < 9;
   updateCaption();
   ritualSteps();
+}
+btnBegin.addEventListener("click", () => {
+  if (btnBegin.disabled || phase !== "ritual") return;
+  const ok = repeatGuard();
+  if (ok === true) { beginDraw(); return; }
+  ok.then((yes) => { if (yes && phase === "ritual") beginDraw(); });
 });
 
-/* 抽牌雙模式:命運牌堆(單鍵抽頂,預設)⇄ 攤牌親挑(扇形逐張點) */
+/* 抽牌雙模式：命運牌堆（單鍵抽頂，預設）⇄ 攤牌親挑（扇形逐張點） */
 function setDrawMode(mode) {
   drawMode = mode;
   const pile = mode === "pile";
@@ -1955,7 +2013,7 @@ btnMode.addEventListener("click", () => {
   setDrawMode(drawMode === "pile" ? "fan" : "pile");
 });
 
-/* 手動抽牌的飛行(FLIP):卡背自起點飛至槽位,落地才現牌翻面;自動連抽不飛(求快省效能) */
+/* 手動抽牌的飛行(FLIP):卡背自起點飛至槽位，落地才現牌翻面；自動連抽不飛（求快省效能） */
 function placeCardFlying(fromEl, cardIdx) {
   const fromRect = fromEl.getBoundingClientRect();
   const slotIdx = drawn.length;
@@ -1964,7 +2022,7 @@ function placeCardFlying(fromEl, cardIdx) {
   const c3 = well && well.lastElementChild;
   if (!c3) return;
   const toRect = well.getBoundingClientRect();
-  /* 目標槽在視窗外(大盤橫捲)就不飛,直接落牌 */
+  /* 目標槽在視窗外（大盤橫捲）就不飛，直接落牌 */
   if (toRect.bottom < 0 || toRect.top > innerHeight || toRect.right < 0 || toRect.left > innerWidth) return;
   c3.classList.add("glow");
   c3.style.visibility = "hidden";
@@ -1972,7 +2030,7 @@ function placeCardFlying(fromEl, cardIdx) {
   ghost.className = "fly-card";
   ghost.style.cssText = `left:${fromRect.left}px;top:${fromRect.top}px;width:${fromRect.width}px;height:${fromRect.height}px;`;
   document.body.appendChild(ghost);
-  ghost.getBoundingClientRect();   /* 強制排版,讓下一行 transform 走 transition */
+  ghost.getBoundingClientRect();   /* 強制排版，讓下一行 transform 走 transition */
   ghost.style.transform = `translate(${toRect.left + toRect.width / 2 - (fromRect.left + fromRect.width / 2)}px,${toRect.top + toRect.height / 2 - (fromRect.top + fromRect.height / 2)}px) rotate(${(rand01() * 2 - 1) * 9}deg) scale(${toRect.width / fromRect.width})`;
   let landed = false;
   const land = () => { if (landed) return; landed = true; ghost.remove(); c3.style.visibility = ""; };
@@ -1980,7 +2038,7 @@ function placeCardFlying(fromEl, cardIdx) {
   setTimeout(land, 460);   /* 兜底:reduced-motion 或 transition 被中斷時仍落牌 */
 }
 
-/* 從牌頂抽一張(牌堆模式) */
+/* 從牌頂抽一張（牌堆模式） */
 function drawTop() {
   if (phase !== "draw" || drawn.length >= target) return;
   const el = elFan.querySelector(".fan-card:not(.gone)");
@@ -2006,7 +2064,7 @@ function buildSlots() {
   elSlots.innerHTML = "";
   elSlots.classList.toggle("tableau", !!spread.gt);
   elSlots.classList.toggle("qiu", !!spread.qiu);
-  if (spread.qiu) { elSlots.style.gridTemplateColumns = ""; return; }   /* 籤紙直接展於此,不建牌位 */
+  if (spread.qiu) { elSlots.style.gridTemplateColumns = ""; return; }   /* 籤紙直接展於此，不建牌位 */
   /* span2：以半格欄位排出金字塔的交錯置中（欄寬 = 半張牌扣掉半個間距） */
   elSlots.style.gridTemplateColumns = spread.span2
     ? `repeat(${spread.cols}, calc(var(--cw) / 2 - 7px))`
@@ -2252,7 +2310,7 @@ function gtHouseNote(card, slotIdx) {
   return `<br><em>落於${house.zh}宮（${house.keys.split("・")[0]}之所）——這張牌的訊息，正發生在「${house.zh}」掌管的領域。</em>`;
 }
 
-/* ── 各牌組專屬落位註記(大盤已有宮位註記,不重複) ── */
+/* ── 各牌組專屬落位註記（大盤已有宮位註記，不重複） ── */
 const SIB_PERSONS = {
   7:"有才華的年輕男子", 11:"戀人或熱烈追求的男子", 12:"愛人或溫暖慷慨的女子",
   13:"有力的年長男性", 17:"可信賴的女性朋友", 24:"效力於你的年輕人",
@@ -2292,7 +2350,7 @@ function belFamilyNote(card, slotIdx) {
     : `<br><em>${fam}家族坐助力之位——順風；讓「${card.keys.split("・")[0]}」為你使力。</em>`;
   return "";
 }
-/* 紫微:星曜×宮位——先查特例表,查無走廟陷通則 */
+/* 紫微：星曜×宮位——先查特例表，查無走廟陷通則 */
 const ZW_GONG_SPECIAL = {
   "擎羊|財帛":"刀口上的財——入廟是競爭搶下的業績，落陷是破財傷本，防紛爭損耗。",
   "化忌|夫妻":"情之所執——這段關係正是你放不下的課題；先認清虧欠，再談進退。",
@@ -2312,7 +2370,7 @@ function zwGongNote(card, slotIdx) {
   if (!rev) return `<br><em>${card.zh}入廟於${g}位——「${k}」在此得力${card.pol === "bad" ? "，煞為我用：銳氣用在刀口，反成利器" : "，可順勢而為"}。</em>`;
   return `<br><em>${card.zh}落陷於${g}位——此處首防「${k}」走樣${card.pol === "good" ? "：吉星失輝，助力打折，關鍵事親自確認" : "：煞氣直落，避其鋒、預作止損"}。</em>`;
 }
-/* 東方塔羅:四象×位置五行 */
+/* 東方塔羅：四象×位置五行 */
 const DT_WX = { "青龍":"木", "朱雀":"火", "白虎":"金", "玄武":"水" };
 const WX_SHENG = { "木":"火", "火":"土", "土":"金", "金":"水", "水":"木" };
 const WX_KE = { "木":"土", "土":"水", "水":"火", "火":"金", "金":"木" };
@@ -2334,7 +2392,7 @@ function deckNote(card, slotIdx) {
   if (deckDef.id === "dt") return dtWxNote(card, slotIdx);
   return "";
 }
-/* 奇卜小陣近遠法:人物牌讀四鄰(整齊網格陣適用) */
+/* 奇卜小陣近遠法：人物牌讀四鄰（整齊網格陣適用） */
 const KIP_PERSONS = new Set([1, 2, 5, 6, 8, 12, 13, 18, 22, 30]);
 function kipProximity() {
   if (deckDef.id !== "kip" || spread.gt || spread.place) return [];
@@ -2356,7 +2414,7 @@ function kipProximity() {
   return out;
 }
 
-/* 轉宮環鏈:牌落誰家,便追到那家主人的牌——落自宮定錨、回訪成環而止 */
+/* 轉宮環鏈：牌落誰家，便追到那家主人的牌——落自宮定錨、回訪成環而止 */
 function gtChainText(startN) {
   const seen = new Set([startN]);
   const steps = [];
@@ -2374,7 +2432,7 @@ function gtChainText(startN) {
   return steps.join(" → ");
 }
 
-/* 指示牌八方鄰宮(組合用) */
+/* 指示牌八方鄰宮（組合用） */
 function gtNeighbors(at) {
   const cols = spread.cols;
   const r = Math.floor(at / cols), c = at % cols;
@@ -2617,7 +2675,7 @@ function buildAiPrompt() {
       "六爻皆動：乾坤二卦以用九、用六之辭為斷，餘卦以之卦卦辭為斷。",
     ];
     L.push(`斷法指引（朱子古法）：${ZHU[castInfo.moving.length]}請依此規則定主從，不必逐爻平均著墨。`);
-    /* 互錯綜:本卦之推導,輔參不另起陣 */
+    /* 互錯綜：本卦之推導，輔參不另起陣 */
     const bits = castInfo.lines.map((v) => (v === 7 || v === 9 ? 1 : 0));
     const hu = hexNum([bits[1], bits[2], bits[3], bits[2], bits[3], bits[4]]);
     const cuo = hexNum(bits.map((b) => 1 - b));
@@ -2710,10 +2768,10 @@ $("#btn-ai").addEventListener("click", async () => {
   $("#ai-links").hidden = false;
   elAiPrompt.style.height = "auto";
   elAiPrompt.style.height = Math.min(elAiPrompt.scrollHeight + 8, 560) + "px";
-  /* 產生即複製——省一步;失敗再由複製鍵兜底 */
+  /* 產生即複製——省一步；失敗再由複製鍵兜底 */
   try {
     await navigator.clipboard.writeText(elAiPrompt.value);
-    $("#btn-copy").textContent = "已複製 ✓（可直接貼上）";
+    $("#btn-copy").textContent = "已複製 ✓";
     setTimeout(() => { $("#btn-copy").textContent = "複製全文"; }, 3000);
   } catch (e) { elAiPrompt.focus(); elAiPrompt.select(); }
 });
@@ -2721,8 +2779,8 @@ $("#btn-ai").addEventListener("click", async () => {
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideTip(); });
 
 /* ── 分享與下載 ─────────────────────────────
-   下載盤面圖:純 canvas 手繪符號版(file:// 下引入牌圖會污染畫布,故以
-   金框+圖徽+牌名重繪,可離線匯出);分享文字:navigator.share/剪貼簿。 */
+   下載盤面圖：純 canvas 手繪符號版(file:// 下引入牌圖會污染畫布，故以
+   金框+圖徽+牌名重繪，可離線匯出);分享文字:navigator.share/剪貼簿。 */
 function buildShareText() {
   const d = new Date();
   const when = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
@@ -2733,13 +2791,16 @@ function buildShareText() {
   return L.join("\n");
 }
 $("#btn-share").addEventListener("click", async () => {
-  if (!drawn.length) { alert("先抽完牌,再分享。"); return; }
+  if (!drawn.length) { say("先抽完牌，再分享。"); return; }
   const text = buildShareText();
   if (navigator.share) {
     try { await navigator.share({ text }); return; } catch (e) { /* 使用者取消或不支援→退回複製 */ }
   }
-  try { await navigator.clipboard.writeText(text); alert("盤面文字已複製——貼到任何地方分享。"); }
-  catch (e) { prompt("複製以下文字:", text); }
+  try { await navigator.clipboard.writeText(text); say("盤面文字已複製，貼到哪裡都行。"); }
+  catch (e) {
+    elAiPrompt.value = text; elAiPrompt.hidden = false; elAiPrompt.focus(); elAiPrompt.select();
+    say("這個瀏覽器不讓網頁寫入剪貼簿。盤面文字已放進下方文字框，請自行全選複製。");
+  }
 });
 
 function drawSpreadImage() {
@@ -2747,11 +2808,11 @@ function drawSpreadImage() {
     CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h) { this.rect(x, y, w, h); return this; };
   const GOLD = "#C9A45C", GOLDB = "#E4C989", IVORY = "#E8DCC2", MUTED = "#9A8C70", FELT = "#0D140F", CARDBG = "#131E16";
   const CW = 128, CH = 192, GAP = 18, PAD = 44, LABEL_H = 34;
-  /* 槽位幾何:沿用盤面定義(place/gt 底四/預設網格;span2 以半格計) */
+  /* 槽位幾何：沿用盤面定義(place/gt 底四/預設網格;span2 以半格計) */
   const cells = [];
   for (let i = 0; i < drawn.length; i++) {
     let col, row;
-    if (i >= spread.count) { col = (i - spread.count) * 2 + 2; row = 90; }          /* 補牌:另起一列 */
+    if (i >= spread.count) { col = (i - spread.count) * 2 + 2; row = 90; }          /* 補牌：另起一列 */
     else if (spread.place) { col = spread.place[i][0]; row = spread.place[i][1]; }
     else if (spread.id === "gt" && i >= 32) { col = 3 + (i - 32); row = Math.floor(32 / spread.cols) + 1; }
     else { col = (i % spread.cols) + 1; row = Math.floor(i / spread.cols) + 1; }
@@ -2807,10 +2868,10 @@ function drawSpreadImage() {
   return cv;
 }
 $("#btn-download").addEventListener("click", () => {
-  if (!drawn.length) { alert("先抽完牌,再下載盤面。"); return; }
+  if (!drawn.length) { say("先抽完牌，再下載盤面。"); return; }
   const cv = drawSpreadImage();
   cv.toBlob((blob) => {
-    if (!blob) { alert("匯出失敗——瀏覽器不支援畫布匯出。"); return; }
+    if (!blob) { say("這個瀏覽器做不出盤面圖。可改用「分享文字」，或直接截圖。"); return; }
     const a = document.createElement("a");
     const d = new Date();
     a.download = `燭光牌桌-${spread.id}-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}.png`;
@@ -2981,7 +3042,7 @@ $("#btn-hist-clear").addEventListener("click", () => {
 
 /* 重看：把紀錄還原到牌桌與解讀帳冊（不重新保存） */
 function replayReading(rec) {
-  if (rec.deck === "qs") { alert("靈籤已遷至開卷館——這筆舊紀錄無法在牌桌館重看,請至開卷館重新求籤。"); return; }
+  if (rec.deck === "qs") { say("靈籤已經搬到開卷館。這筆舊紀錄在這裡重看不了，請到開卷館重新求籤。"); return; }
   const dk = DECKS.find((x) => x.id === (rec.deck || "len"));
   if (!dk) return;
   if (deckDef !== dk) selectDeck(dk);
@@ -3011,7 +3072,7 @@ function replayReading(rec) {
 
   suppressSave = true;
   if (spread.qiu && rec.cards.length) {
-    /* 重看靈籤:直接展開籤紙 */
+    /* 重看靈籤：直接展開籤紙 */
     elQiu.hidden = true;
     qiuLog = rec.qlog ? rec.qlog.slice() : [];
     const qc = CARDS[rec.cards[0] - 1];
@@ -3046,7 +3107,7 @@ const elDictGrid = $("#dict-grid"), elDictDetail = $("#dict-detail");
 /* 八種常見位置的讀法：依牌的關鍵詞與吉凶組句 */
 function dictPosLines(c) {
   const K = c.keys.split("・");
-  const last = deckDef.id === "yi" ? (K[1] || K[0]) : K[K.length - 1]; /* 易經末詞常為卦辭截語,改取次詞 */
+  const last = deckDef.id === "yi" ? (K[1] || K[0]) : K[K.length - 1]; /* 易經末詞常為卦辭截語，改取次詞 */
   const isLen = deckDef.id === "len";
   const unit = { yi: "這一卦", run: "這枚符文", zw: "這顆星" }[deckDef.id] || "這張牌";
   const isPerson = /當事人|指示牌/.test(c.keys) || (deckDef.id === "sib" && SIB_PERSONS[c.n]);
@@ -3119,7 +3180,7 @@ function renderDict() {
 
 function showDictCard(i) {
   const c = CARDS[i];
-  /* 靈籤:字典直接展開古式籤紙 */
+  /* 靈籤：字典直接展開古式籤紙 */
   if (deckDef.id === "qs") {
     elDictDetail.innerHTML = `<div style="text-align:center;overflow-x:auto;padding:4px 0"></div>`;
     const wrap = elDictDetail.firstElementChild;
@@ -3168,7 +3229,7 @@ function showDictCard(i) {
     ${revBlock}
     ${extra}
     <div class="dict-sec"><div class="cb-title">位 置 解 讀</div>
-      <p class="ai-note" style="margin:0 0 4px">同一張牌落在不同位置，說的是不同層面的話——以下用八種常見位置示範讀法。</p>
+      <p class="ai-note" style="margin:0 0 4px">同一張牌落在不同位置，說的是不同層面的話。八種常見位置，各示範一種讀法。</p>
       ${posRows}
     </div>`;
   const img = elDictDetail.querySelector(".dd-img");
@@ -3228,22 +3289,22 @@ if (location.search.includes("rwdtest")) {
   if (idx >= 0) {
     document.querySelector(`.spread-btn[data-sid="${id}"]`).click();
     if (spread.cast) {
-      for (let i = 0; i < 6; i++) btnThrow.click();   /* 擲卦盤面:擲滿六爻 */
+      for (let i = 0; i < 6; i++) btnThrow.click();   /* 擲卦盤面：擲滿六爻 */
     } else if (spread.qiu) {
       if (location.search.includes("qiufull")) {
-        /* 完整流程測試:反覆按鈕直到聖筊定籤 */
+        /* 完整流程測試：反覆按鈕直到聖筊定籤 */
         const t = setInterval(() => {
           if (btnQiu.hidden) { clearInterval(t); return; }
           if (!qiuBusy) btnQiu.click();
         }, 700);
       } else {
-        /* 求籤盤面:略過筊,直接搖籤定籤 */
+        /* 求籤盤面：略過筊，直接搖籤定籤 */
         qiuStick = 1 + Math.floor(rand01() * CARDS.length);
         qiuLog = ["請籤筊：聖筊——允", `第${qiuStick}籤・聖筊 1／3`, `第${qiuStick}籤・聖筊 2／3`, `第${qiuStick}籤・聖筊 3／3`];
         confirmQian();
       }
     } else {
-      if (spread.sig) $("#sigpick-btns .sig-btn").click();   /* 十字陣:選第一個指示牌選項 */
+      if (spread.sig) $("#sigpick-btns .sig-btn").click();   /* 十字陣：選第一個指示牌選項 */
       deck = riffle(deck); shuffleCount++;
       btnBegin.disabled = false;
       btnBegin.click();
@@ -3268,7 +3329,7 @@ if (location.search.includes("rwdtest")) {
   }
 }
 
-/* ?selftest=1:牌組資料自檢——張數/schema/盤面長度/combos 煙霧測試,結果進標題 */
+/* ?selftest=1:牌組資料自檢——張數/schema/盤面長度/combos 煙霧測試，結果進標題 */
 if (location.search.includes("selftest")) {
   const out = [];
   const t = (name, cond, detail) => out.push((cond ? "✓ " : "✗ ") + name + (detail ? " → " + detail : ""));
@@ -3290,7 +3351,7 @@ if (location.search.includes("selftest")) {
       try { s.combos(d.cards.slice(0, s.count)); } catch (e) { t(`${d.id}/${s.id} combos 煙霧`, false, e.message); }
     });
   });
-  /* 版面:頁面不得橫向溢出(手機可讀性);失敗時列出過寬元素 */
+  /* 版面：頁面不得橫向溢出（手機可讀性）;失敗時列出過寬元素 */
   const dw = document.documentElement.scrollWidth, vw = window.innerWidth;
   if (dw > vw + 2) {
     const wide = [...document.querySelectorAll("body *")]
@@ -3305,7 +3366,7 @@ if (location.search.includes("selftest")) {
   document.body.appendChild(dv);
 }
 
-/* 開發掛勾:?minidump=1 → 傾印 DECKS_MINI 精簡資料(名/首關鍵詞/吉凶)供 divine-core 重生,改牌名後重抽用 */
+/* 開發掛勾:?minidump=1 → 傾印 DECKS_MINI 精簡資料（名/首關鍵詞/吉凶）供 divine-core 重生，改牌名後重抽用 */
 if (location.search.includes("minidump")) {
   const obj = {};
   DECKS.forEach((d) => {

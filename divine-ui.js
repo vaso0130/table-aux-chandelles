@@ -21,7 +21,7 @@ DC.fillCitySelect = function (sel, latEl, lonEl, tzEl) {
   sel.value = 0; latEl.value = DC.CITIES[0][1]; lonEl.value = DC.CITIES[0][2]; tzEl.value = DC.CITIES[0][3];
 };
 
-DC.TONES = ["溫暖但誠實", "直白犀利，不留情面", "溫柔療癒，多些鼓勵", "冷靜理性，條理分析", "詩意神秘，如占卜師低語"]; // ⇄ index.html 牌桌館的語氣選單須與此逐字相同(兩邊共用 dc-tone 鍵)
+DC.TONES = ["溫暖但誠實", "直白犀利，不留情面", "溫柔療癒，多些鼓勵", "冷靜理性，條理分析", "詩意神秘，如占卜師低語"]; // ⇄ index.html 牌桌館的語氣選單須與此逐字相同（兩邊共用 dc-tone 鍵）
 DC.toneInit = function (onChange) { // 需要頁面有 #tone-select 與 #tone-custom
   var sel = document.getElementById("tone-select"), cus = document.getElementById("tone-custom");
   if (!sel) return;
@@ -49,19 +49,35 @@ DC.toneValue = function () {
   if (!sel) return "溫暖但誠實";
   return sel.value === "__custom__" ? (cus.value.trim() || "溫暖但誠實") : sel.value;
 };
-DC.toneHead = function () { return "請以繁體中文解讀,語氣:「" + DC.toneValue() + "」。"; };
+DC.toneHead = function () { return "用繁體中文解讀，語氣：「" + DC.toneValue() + "」。"; };
 
-/* ── 重複占問勸誡:同日同系統同題(模糊比對)第三次起提醒 ──
-   模糊同題:正規化(去標點空白語尾詞)後以字元 bigram Dice 係數比對,防改幾個字繞過。 */
+/* 紙面對話框：取代 alert（樣式在 hall.css 的 dialog.note） */
+DC.say = function (msg, okLabel) {
+  if (typeof document === "undefined") return;
+  var dlg = document.getElementById("note");
+  if (!dlg) {
+    dlg = document.createElement("dialog"); dlg.id = "note"; dlg.className = "note";
+    dlg.setAttribute("aria-labelledby", "note-text");
+    dlg.innerHTML = '<form method="dialog"><p id="note-text"></p><div class="note-actions"><button class="ghost-btn" id="note-ok" value="ok">知道了</button></div></form>';
+    document.body.appendChild(dlg);
+  }
+  if (typeof dlg.showModal !== "function") { alert(msg); return; }
+  document.getElementById("note-text").textContent = msg;
+  document.getElementById("note-ok").textContent = okLabel || "知道了";
+  dlg.showModal();
+};
+
+/* ── 重複占問勸誡：同日同系統同題（模糊比對）第三次起提醒 ──
+   模糊同題：正規化（去標點空白語尾詞）後以字元 bigram Dice 係數比對，防改幾個字繞過。 */
 DC.simQ = function (a, b) {
   var norm = function (s) {
     return String(s || "").toLowerCase()
       .replace(/[\s。，、？！?!.,;:「」『』()（）…~〜-]/g, "")
       .replace(/[嗎呢啊吧了的呀喔哦欸捏嘛還再又就以我你妳個筆份]/g, "")
-      .replace(/[跟與]/g, "和").replace(/[會可]/g, "能"); /* 同義摺疊:防「跟→和、會→能」式改寫 */
+      .replace(/[跟與]/g, "和").replace(/[會可]/g, "能"); /* 同義摺疊：防「跟→和、會→能」式改寫 */
   };
   a = norm(a); b = norm(b);
-  if (!a && !b) return 1;              /* 都沒寫問題:同系統連抽視為同題 */
+  if (!a && !b) return 1;              /* 都沒寫問題：同系統連抽視為同題 */
   if (!a || !b) return 0;
   if (a === b) return 1;
   if (a.length < 2 || b.length < 2) return 0;
@@ -70,7 +86,7 @@ DC.simQ = function (a, b) {
   for (k in ga) { ta += ga[k]; if (gb[k]) inter += Math.min(ga[k], gb[k]); }
   for (k in gb) tb += gb[k];
   var dice = (2 * inter) / (ta + tb);
-  /* 中文短句改幾個虛字會讓 bigram 碎掉,輔以最長公共子序列比率,取較大者 */
+  /* 中文短句改幾個虛字會讓 bigram 碎掉，輔以最長公共子序列比率，取較大者 */
   var dp = [];
   for (var i2 = 0; i2 <= a.length; i2++) { dp.push(new Array(b.length + 1).fill(0)); }
   for (var x = 1; x <= a.length; x++) for (var y = 1; y <= b.length; y++)
@@ -78,8 +94,8 @@ DC.simQ = function (a, b) {
   var lcs = (2 * dp[a.length][b.length]) / (a.length + b.length);
   return Math.max(dice, lcs);
 };
-DC.SIMQ_TH = 0.62; // 同題門檻(經例句校準:改虛字改語序抓得到,換主題抓不到)
-DC.REPEAT_MSG = "同一件事,你今天已用同一套占卜系統問過 {n} 次——\n再問,就只是在抽心安,不是在占卜。\n\n牌不會因為多問一次而換答案;答案不合意時,該換的是問題,或行動。\n(合參心法:機緣說的話,聽三遍就夠了。)";
+DC.SIMQ_TH = 0.62; // 同題門檻（經例句校準：改虛字改語序抓得到，換主題抓不到）
+DC.REPEAT_MSG = "同一件事，你今天已用同一套占卜系統問過 {n} 次。\n再問，就只是在抽心安，不是在占卜。\n\n盤不會因為多問一次而換答案。答案不合意時，該換的是問題，或行動。\n（合參心法：機緣說的話，聽三遍就夠了。）";
 
 DC.histBind = function () { // 跨館共用歷史(需 #hist-list/#hist-clear/#out/#prompt-box/#prompt-sec)
   var $id = function (x) { return document.getElementById(x); };
@@ -90,7 +106,7 @@ DC.histBind = function () { // 跨館共用歷史(需 #hist-list/#hist-clear/#ou
   var save = function (a) { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} };
   var render = function () {
     var arr = all();
-    if (!arr.length) { list.innerHTML = '<p class="hist-empty">尚無紀錄——起一盤吧。</p>'; return; }
+    if (!arr.length) { list.innerHTML = '<p class="hist-empty">還沒有紀錄。問過一次，就會留在這裡。</p>'; return; }
     list.innerHTML = "";
     arr.forEach(function (r, i) {
       var d = new Date(r.t);
@@ -122,7 +138,7 @@ DC.histBind = function () { // 跨館共用歷史(需 #hist-list/#hist-clear/#ou
   if (clr) clr.onclick = function () { save([]); render(); };
   DC.histSave = function (page, title, q, html, prompt) {
     var a = all();
-    /* 重複占問勸誡:系統=館+術名(title 第一段);今日同系統同題(模糊)第三次起提醒 */
+    /* 重複占問勸誡：系統=館+術名(title 第一段);今日同系統同題（模糊）第三次起提醒 */
     var sysKey = page + "|" + String(title).split("・")[0];
     var today = new Date().toDateString();
     var n = 0;
@@ -131,7 +147,7 @@ DC.histBind = function () { // 跨館共用歷史(需 #hist-list/#hist-clear/#ou
       if (r.page + "|" + String(r.title).split("・")[0] !== sysKey) return;
       if (DC.simQ(r.q, q) >= DC.SIMQ_TH) n++;
     });
-    if (n >= 2) setTimeout(function () { alert(DC.REPEAT_MSG.replace("{n}", n + 1)); }, 400);
+    if (n >= 2) setTimeout(function () { DC.say(DC.REPEAT_MSG.replace("{n}", n + 1)); }, 400);
     a.unshift({ t: Date.now(), page: page, title: title, q: q || "", html: html, prompt: prompt });
     while (a.length > 30) a.pop();
     save(a); render();
@@ -140,7 +156,7 @@ DC.histBind = function () { // 跨館共用歷史(需 #hist-list/#hist-clear/#ou
 };
 DC.histSave = function () {}; // histBind 前的安全預設
 
-/* ── 入門教學分頁(需 #views 兩顆 .view-btn 與 #view-learn 容器)── */
+/* ── 入門教學分頁（需 #views 兩顆 .view-btn 與 #view-learn 容器）── */
 DC.learnInit = function (build, after) {
   var views = document.getElementById("views"), learn = document.getElementById("view-learn");
   if (!views || !learn) return;
@@ -155,7 +171,7 @@ DC.learnInit = function (build, after) {
   if (/[?&]learn=1/.test(location.search)) show(true);
 };
 
-/* 一覽/逐張瀏覽元件(仿牌桌館字典 UX):磚牆一覽 → 點一張看一張,可前後翻頁 */
+/* 一覽/逐張瀏覽元件(仿牌桌館字典 UX):磚牆一覽 → 點一張看一張，可前後翻頁 */
 DC.browser = function (mount, items, renderDetail) {
   var view = -1;
   var draw = function (scroll) {
@@ -191,7 +207,7 @@ DC.ltable = function (headers, rows) {
     rows.map(function (r) { return "<tr>" + r.map(function (c, i) { return "<td" + (i === 0 ? ' class="hl"' : "") + ">" + c + "</td>"; }).join("") + "</tr>"; }).join("") + "</table></div>";
 };
 
-/* ── ?selftest=1:自檢結果進標題(無頭驗收用;node 環境自動跳過) ── */
+/* ── ?selftest=1:自檢結果進標題（無頭驗收用;node 環境自動跳過） ── */
 if (typeof location !== "undefined" && typeof document !== "undefined" && location.search.indexOf("selftest") >= 0) {
   setTimeout(function () {
     try {
@@ -205,7 +221,7 @@ if (typeof location !== "undefined" && typeof document !== "undefined" && locati
 }
 
 
-/* ── 別館通用強化(零館別改動,divine-ui 統一注入) ──
+/* ── 別館通用強化（零館別改動,divine-ui 統一注入） ──
    1) 起盤成功(prompt-sec 現身)自動捲到結果——修「按了沒反應」錯覺
    2) 複製鍵旁補「開啟 ChatGPT / Claude」出口
    3) 複製成功訊息 3 秒自動收;#go-hint 加 role=status(讀屏可聞) */
@@ -229,6 +245,7 @@ if (typeof location !== "undefined" && typeof document !== "undefined" && locati
     copyBtn.parentElement.appendChild(wrap);
   }
   var ok = document.getElementById("copy-ok");
+  if (ok) ok.setAttribute("role", "status");   /* 讀屏也聽得到「已複製」 */
   if (ok) new MutationObserver(function () {
     if (!ok.hidden) setTimeout(function () { ok.hidden = true; }, 3000);
   }).observe(ok, { attributes: true, attributeFilter: ["hidden"] });
@@ -238,7 +255,7 @@ if (typeof location !== "undefined" && typeof document !== "undefined" && locati
 
 /* ── 全館通用「下載盤面圖」──
    把 #out(起盤結果)連同標題落款繪成 PNG:複製 DOM+扁平化 computed style,
-   包進 SVG foreignObject 轉點陣——純本地,file:// 可用,無外部依賴。 */
+   包進 SVG foreignObject 轉點陣——純本地,file:// 可用，無外部依賴。 */
 DC.renderPanImage = function (cb) {
   var out = document.getElementById("out");
   if (!out || !out.innerHTML.trim()) out = document.getElementById("slip-scroll"); /* 開卷館籤紙容器 */
@@ -301,9 +318,9 @@ DC.renderPanImage = function (cb) {
 };
 DC.downloadPan = function () {
   DC.renderPanImage(function (cv, err) {
-    if (!cv) { alert(err === "empty" ? "先起盤,再下載。" : "此瀏覽器不支援盤面匯出(" + err + ")——可改用列印存 PDF。"); return; }
+    if (!cv) { DC.say(err === "empty" ? "先起盤，再下載。" : "這個瀏覽器做不出盤面圖。可改用列印存成 PDF，或直接截圖。"); return; }
     cv.toBlob(function (blob) {
-      if (!blob) { alert("匯出失敗——可改用列印存 PDF。"); return; }
+      if (!blob) { DC.say("這個瀏覽器做不出盤面圖。可改用列印存成 PDF，或直接截圖。"); return; }
       var d = new Date();
       var a = document.createElement("a");
       a.download = "燭光牌桌盤面-" + d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0") + ".png";
@@ -313,7 +330,7 @@ DC.downloadPan = function () {
     }, "image/png");
   });
 };
-/* 注入「下載盤面圖」鈕(接在複製鍵旁);?pandump=1 無頭驗證掛勾 */
+/* 注入「下載盤面圖」鈕（接在複製鍵旁）;?pandump=1 無頭驗證掛勾 */
 (function () {
   if (typeof document === "undefined") return;
   var copyBtn = document.getElementById("btn-copy");
@@ -339,8 +356,8 @@ DC.downloadPan = function () {
     }, 1800);
   }
 })();
-/* ── 生辰檔案工廠:各館一行宣告,並自動同步跨館共用檔 dc-profile ──
-   fields 為欄位 id 陣列;讀取順序:本館新制 → 本館舊制短鍵 → 跨館共用檔。 */
+/* ── 生辰檔案工廠：各館一行宣告，並自動同步跨館共用檔 dc-profile ──
+   fields 為欄位 id 陣列；讀取順序：本館新制 → 本館舊制短鍵 → 跨館共用檔。 */
 DC.profileBind = function (key, fields) {
   var LEGACY = { "b-date": "bd", "b-time": "bt", "b-gender": "g", "b-tz": "tz", "b-lat": "lat", "b-lon": "lon", "b-city": "city", "b-zwyear": "zw" };
   var SHARED = { "b-date": "bd", "b-time": "bt", "b-gender": "g", "b-tz": "tz", "b-lat": "lat", "b-lon": "lon", "b-city": "city" };

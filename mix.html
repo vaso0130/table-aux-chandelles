@@ -27,19 +27,19 @@
     <div class="plate">
       <p class="eyebrow">Le Concile des Arts</p>
       <h1>燭光合參</h1>
-      <p class="subtitle">一術可欺,二術可疑,三術合參——讓三套語言互相對質,說出同一個真相。</p>
+      <p class="subtitle">一術可欺，二術可疑，三術合參——讓三套語言互相對質，說出同一個真相。</p>
     </div>
   </header>
 
   <nav class="halls-nav">
-    <a title="牌卡占卜:雷諾曼、塔羅等十套牌" href="index.html">牌桌館</a>
+    <a title="牌卡占卜：雷諾曼、塔羅等十套牌" href="index.html">牌桌館</a>
     <a title="西洋/印度/卜卦占星與宿曜" href="astro.html">占星館</a>
     <a title="八字、紫微、九星、唐四柱、人類圖、生命靈數——看生辰" href="bazi.html">八字館</a>
     <a title="奇門、六壬、太乙、梅花、河洛——問此刻與時機" href="shi.html">式占館</a>
     <a title="緬甸八曜、爪哇威頓、泰國佛日" href="nanyang.html">南洋館</a>
     <a title="一句、翹傳、靈籤——開卷即答" href="kaijuan.html">開卷館</a>
     <a title="MBTI 十六型人格測驗——照見偏好" href="mbti.html">鏡廳</a>
-    <a title="任選三術同問一事,合議作答" href="mix.html" class="here">MIX 三術合參</a>
+    <a title="任選三術同問一事，合議作答" href="mix.html" class="here">MIX 三術合參</a>
   </nav>
 
   <nav class="views" id="views" aria-label="頁面切換">
@@ -49,14 +49,14 @@
 
   <section id="view-learn"></section>
 
-  <p class="section-label divine-only">選三術(任意組合)</p>
+  <p class="section-label divine-only">選三術（任意組合）</p>
   <div class="pool-group" id="pool-group"></div>
   <div class="presets" id="presets"></div>
   <p id="pick-count">已選 <b>0</b> / 3</p>
 
   <section class="panel" id="panel">
     <h2>合參資料</h2>
-    <span class="hint">依你選的三術,填其所需——不需要的欄位會自動隱藏。</span>
+    <span class="hint">依你選的三術，填其所需——不需要的欄位會自動隱藏。</span>
     <div id="form-birth" hidden>
       <p class="fieldset-label">生辰資料</p>
       <div class="form-grid">
@@ -68,13 +68,13 @@
         <div class="field"><label>緯度 / 經度 / 時區</label>
           <div style="display:flex;gap:6px">
             <input id="b-lat" type="number" step="0.01" style="width:33%" title="緯度">
-            <input id="b-lon" type="number" step="0.01" style="width:33%" title="經度(東正西負)">
+            <input id="b-lon" type="number" step="0.01" style="width:33%" title="經度（東正西負）">
             <input id="b-tz" type="number" step="0.5" style="width:33%" title="時區">
           </div></div>
       </div>
     </div>
     <div id="form-loc" hidden>
-      <p class="fieldset-label">所在地(占星起盤用)</p>
+      <p class="fieldset-label">所在地（占星起盤用）</p>
       <div class="form-grid">
         <div class="field"><label>城市</label><select id="n-city"></select></div>
         <div class="field"><label>緯度 / 經度 / 時區</label>
@@ -90,16 +90,16 @@
       <div class="form-grid">
         <div class="field"><label>日期</label><input id="w-date" type="date"></div>
         <div class="field"><label>時間</label><input id="w-time" type="time"></div>
-        <div class="field"><label>所問之日(選填)</label><input id="t-date" type="date">
-          <div class="note">奇門/六壬以該日干支入局為用神;靈數流年流日、南洋值曜/威頓以該日論</div></div>
+        <div class="field"><label>所問之日（選填）</label><input id="t-date" type="date">
+          <div class="note">奇門/六壬以該日干支入局為用神；靈數流年流日、南洋值曜/威頓以該日論</div></div>
       </div>
     </div>
     <div class="form-grid" style="margin-top:14px">
-      <div class="field full"><label>你的問題(三術共用)</label>
-        <input id="q-input" type="text" maxlength="200" placeholder="一個問題,三套語言來答——寫下它"></div>
+      <div class="field full"><label>你的問題（三術共用）</label>
+        <input id="q-input" type="text" maxlength="200" placeholder="一個問題，三套語言來答——寫下它"></div>
       <div class="field"><label>AI 解讀語氣</label>
         <select id="tone-select"></select>
-        <input id="tone-custom" type="text" maxlength="40" placeholder="寫下你想要的語氣" hidden style="margin-top:6px"></div>
+        <input id="tone-custom" type="text" maxlength="40" placeholder="寫下你想要的語氣，例如：像老朋友一樣直說" hidden style="margin-top:6px"></div>
     </div>
     <div class="btn-row">
       <button class="gold-btn" id="btn-go" disabled>三 術 合 參</button>
@@ -114,7 +114,7 @@
     <textarea class="prompt-box" id="prompt-box" readonly></textarea>
     <div class="btn-row">
       <button class="gold-btn" id="btn-copy">複製提示詞</button>
-      <span class="copy-ok" id="copy-ok" hidden>已複製,貼給任何 AI 即可。</span>
+      <span class="copy-ok" id="copy-ok" hidden>已複製。貼給你信任的 AI 就行。</span>
     </div>
   </section>
 
@@ -125,8 +125,8 @@
   </section>
 
   <p class="footnote">
-    牌卡快抽為 <b>crypto</b> 真隨機、僅取牌名(完整儀式請回各館);星曆與干支皆為真實計算。<br>
-    合參之義:三術同聲則信之,三術相左則深思——命運不怕被多問幾次。
+    牌卡快抽為 <b>crypto</b> 真隨機、僅取牌名（完整儀式請回各館）;星曆與干支皆為真實計算。<br>
+    合參之義：三術同聲則信之，三術相左則深思——命運不怕被多問幾次。
   </p>
 </div>
 
@@ -141,28 +141,28 @@ const q3 = () => $("q-input").value.trim();
 const POOL = [
   { g: "星學", items: [
     ["a-natal", "西洋本命盤", "birth"], ["a-transit", "西洋行運", "birth"], ["a-horary", "卜卦占星", "loc"],
-    ["a-vedic", "印度本命盤", "birth"], ["a-prashna", "印度問事", "loc"], ["a-xiu", "宿曜(本命+今日)", "birth"]
+    ["a-vedic", "印度本命盤", "birth"], ["a-prashna", "印度問事", "loc"], ["a-xiu", "宿曜（本命+今日）", "birth"]
   ]},
   { g: "數術", items: [
-    ["n-life", "生命靈數", "birth"], ["n-meihua", "梅花易數(時間卦)", ""], ["n-meihua-zi", "梅花字占(問題起卦)", ""], ["n-heluo", "河洛理數", "birth"]
+    ["n-life", "生命靈數", "birth"], ["n-meihua", "梅花易數（時間卦）", ""], ["n-meihua-zi", "梅花字占（問題起卦）", ""], ["n-heluo", "河洛理數", "birth"]
   ]},
   { g: "命術", items: [
-    ["b-bazi", "八字四柱", "birth"], ["b-ziwei", "紫微斗數", "birth"], ["b-shichu", "四柱推命(和流)", "birth"],
+    ["b-bazi", "八字四柱", "birth"], ["b-ziwei", "紫微斗數", "birth"], ["b-shichu", "四柱推命（和流）", "birth"],
     ["b-nine", "九星氣學", "birth"], ["b-dang", "唐四柱(당사주)", "birth"]
   ]},
-  { g: "式占(三式)", items: [
+  { g: "式占（三式）", items: [
     ["n-taiyiming", "太乙命法", "birth"], ["n-taiyi", "太乙歲計", ""], ["b-qimen", "奇門遁甲", ""], ["b-liuren", "大六壬", ""]
   ]},
   { g: "南洋", items: [
     ["y-maha", "緬甸八曜", "birth"], ["y-weton", "爪哇威頓", "birth"], ["y-thai", "泰國七曜佛日", "birth"]
   ]},
   { g: "開卷", items: [
-    ["c-yiju", "燭光一句", ""], ["c-kieu", "翹傳開卷(越南)", ""], ["c-qs", "靈籤(快取)", ""]
+    ["c-yiju", "燭光一句", ""], ["c-kieu", "翹傳開卷（越南）", ""], ["c-qs", "靈籤（快取）", ""]
   ]},
-  { g: "牌卡快抽(六張)", items: [
+  { g: "牌卡快抽（六張）", items: [
     ["c-len", "雷諾曼", ""], ["c-sib", "西碧拉", ""], ["c-bel", "貝林神諭", ""], ["c-kip", "奇卜", ""],
     ["c-gra", "大雷諾曼", ""], ["c-run", "盧恩符文", ""], ["c-zw", "紫微星曜", ""], ["c-dt", "東方塔羅", ""],
-    ["c-esp", "西班牙牌", ""], ["c-yi", "易經(擲卦)", ""]
+    ["c-esp", "西班牙牌", ""], ["c-yi", "易經（擲卦）", ""]
   ]}
 ];
 const PRESETS = [
@@ -214,11 +214,11 @@ function syncForm() {
 renderPool();
 DC.fillCitySelect($("b-city"), $("b-lat"), $("b-lon"), $("b-tz"));
 DC.fillCitySelect($("n-city"), $("n-lat"), $("n-lon"), $("n-tz"));
-DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣:「[^」]*」/, "語氣:「" + DC.toneValue() + "」"); });
+DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣：「[^」]*」/, "語氣：「" + DC.toneValue() + "」"); });
 DC.histBind();
 
 const PK = "dc-mix-profile";
-const prof = DC.profileBind(PK, ["b-date", "b-time", "b-gender", "b-city", "b-lat", "b-lon", "b-tz"]); // 生辰檔案工廠:含舊鍵遷移+跨館共用 dc-profile
+const prof = DC.profileBind(PK, ["b-date", "b-time", "b-gender", "b-city", "b-lat", "b-lon", "b-tz"]); // 生辰檔案工廠：含舊鍵遷移+跨館共用 dc-profile
 
 /* ── 工具 ── */
 function card(t, body) { return '<div class="result-card"><h3>' + t + "</h3>" + body + "</div>"; }
@@ -231,7 +231,7 @@ function birth() {
   return { y, m, d, h, mi, tz, male: $("b-gender").value === "m", jd: DC.jd(y, m, d, h, mi, tz), str: dv + " " + tv,
     lat: DC.numOr($("b-lat").value, 25.04), lon: DC.numOr($("b-lon").value, 121.51) };
 }
-function nowT() { // 起局時刻(可微調;跟隨此刻時每秒對時)
+function nowT() { // 起局時刻（可微調；跟隨此刻時每秒對時）
   const dv = $("w-date").value, tv = $("w-time").value;
   if (dv && tv) {
     const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
@@ -240,7 +240,7 @@ function nowT() { // 起局時刻(可微調;跟隨此刻時每秒對時)
   const n = new Date();
   return { y: n.getFullYear(), m: n.getMonth() + 1, d: n.getDate(), h: n.getHours(), mi: n.getMinutes() };
 }
-function targetDay() { // 所問之日(選填)
+function targetDay() { // 所問之日（選填）
   const tv = $("t-date").value;
   if (!tv) return null;
   const [y, m, d] = tv.split("-").map(Number);
@@ -255,7 +255,7 @@ setNowFields();
 setInterval(() => { if ($("n-follow").checked) setNowFields(); }, 1000);
 ["w-date", "w-time"].forEach(id => $(id).addEventListener("input", () => { $("n-follow").checked = false; }));
 $("n-follow").addEventListener("change", () => { if ($("n-follow").checked) setNowFields(); });
-function nowTz() { return DC.numOr($("n-tz").value, 8); } // 起局地時區(奇門/六壬/梅花等式占共用,勿硬編碼 8)
+function nowTz() { return DC.numOr($("n-tz").value, 8); } // 起局地時區(奇門/六壬/梅花等式占共用，勿硬編碼 8)
 function nowCtx() {
   const t = nowT();
   const { y, m, d, h, mi } = t;
@@ -270,7 +270,7 @@ function tropChart(jd, lat, lon) {
   return { list, asc: am.asc, mc: am.mc, ascSign };
 }
 
-/* ── 各術產生器:回傳 {title, html, lines[]} ── */
+/* ── 各術產生器：回傳 {title, html, lines[]} ── */
 const GEN = {};
 GEN["a-natal"] = () => {
   const B = birth(), ch = tropChart(B.jd, B.lat, B.lon);
@@ -331,17 +331,17 @@ GEN["a-xiu"] = () => {
   const my = DC.nakOf(DC.rev(DC.moonLon(B.jd) - DC.ayanamsa(B.jd)));
   const td = DC.nakOf(DC.rev(DC.moonLon(now.jd) - DC.ayanamsa(now.jd)));
   const rel = DC.xiuRelation(my.idx, td.idx);
-  const lines = ["宿曜占星:本命" + DC.XIU27[my.idx] + "宿(" + DC.XIU_NOTE[my.idx] + ")",
-    "  今日(" + now.str + ")月在" + DC.XIU27[td.idx] + "宿,三九秘法為「" + rel.rel + "」日(" + rel.ring + ",第" + rel.dist + "宿)"];
+  const lines = ["宿曜占星：本命" + DC.XIU27[my.idx] + "宿(" + DC.XIU_NOTE[my.idx] + ")",
+    "  今日(" + now.str + ")月在" + DC.XIU27[td.idx] + "宿，三九秘法為「" + rel.rel + "」日(" + rel.ring + ",第" + rel.dist + "宿)"];
   const tdd = targetDay();
   if (tdd) {
     const jdT = DC.jd(tdd.y, tdd.m, tdd.d, 12, 0, nowTz());
     const tx = DC.nakOf(DC.rev(DC.moonLon(jdT) - DC.ayanamsa(jdT)));
     const relT = DC.xiuRelation(my.idx, tx.idx);
-    lines.push("  所問之日 " + tdd.str + " 月在" + DC.XIU27[tx.idx] + "宿,對本命為「" + relT.rel + "」日(" + relT.ring + ")——以此論該日吉凶");
+    lines.push("  所問之日 " + tdd.str + " 月在" + DC.XIU27[tx.idx] + "宿，對本命為「" + relT.rel + "」日(" + relT.ring + ")——以此論該日吉凶");
   }
   return { title: "宿曜占星",
-    html: "<p>本命" + DC.XIU27[my.idx] + "宿,今日月在" + DC.XIU27[td.idx] + "宿——「" + rel.rel + "」日(" + rel.ring + ")</p>",
+    html: "<p>本命" + DC.XIU27[my.idx] + "宿，今日月在" + DC.XIU27[td.idx] + "宿——「" + rel.rel + "」日(" + rel.ring + ")</p>",
     lines };
 };
 GEN["n-life"] = () => {
@@ -359,27 +359,27 @@ GEN["n-meihua"] = () => {
   return { title: "梅花易數",
     html: "<p>本卦" + mh.name + " 動爻" + mh.mov + "・互卦" + mh.hu.name + "・變卦" + mh.bian.name + "</p>",
     lines: ["梅花易數(時間起卦:" + DC.BRANCHES[yB] + "年農曆" + (lun.isLeap ? "閏" : "") + lun.month + "月" + lun.day + "日" + DC.BRANCHES[hb] + "時):",
-      "  本卦 " + mh.name + ",動爻第" + mh.mov + "爻;互卦 " + mh.hu.name + ";變卦 " + mh.bian.name,
+      "  本卦 " + mh.name + ",動爻第" + mh.mov + "爻；互卦 " + mh.hu.name + ";變卦 " + mh.bian.name,
       "  體卦" + DC.TRIG[mh.ti] + "(" + DC.TRIG_WX[mh.ti] + ")、用卦" + DC.TRIG[mh.yong] + "(" + DC.TRIG_WX[mh.yong] + ");" + mh.rel] };
 };
 GEN["n-meihua-zi"] = () => {
   const q = q3(); if (!q) throw fail("梅花字占需要先寫下問題");
   const chars = [...q.replace(/\s/g, "")];
   const n = nowT(), hb = DC.hourBranch(n.h);
-  const up = Math.max(1, Math.floor(chars.length / 2)), low = Math.max(1, chars.length - up); // 古法:平分,少者為上卦(取天輕清)
+  const up = Math.max(1, Math.floor(chars.length / 2)), low = Math.max(1, chars.length - up); // 古法：平分，少者為上卦（取天輕清）
   const mh = DC.meihua(up, low, chars.length + hb + 1);
   return { title: "梅花字占",
-    html: "<p>問題 " + chars.length + " 字起卦:本卦" + mh.name + " 動爻" + mh.mov + "・變卦" + mh.bian.name + "</p>",
-    lines: ["梅花字占(以問題字數起卦,古法「字數平分,少者為上卦」:" + chars.length + " 字→上卦數" + up + "、下卦數" + low + ",加" + DC.BRANCHES[hb] + "時取動爻):",
-      "  本卦 " + mh.name + ",動爻第" + mh.mov + "爻;互卦 " + mh.hu.name + ";變卦 " + mh.bian.name,
+    html: "<p>問題 " + chars.length + " 字起卦：本卦" + mh.name + " 動爻" + mh.mov + "・變卦" + mh.bian.name + "</p>",
+    lines: ["梅花字占(以問題字數起卦，古法「字數平分，少者為上卦」:" + chars.length + " 字→上卦數" + up + "、下卦數" + low + ",加" + DC.BRANCHES[hb] + "時取動爻):",
+      "  本卦 " + mh.name + ",動爻第" + mh.mov + "爻；互卦 " + mh.hu.name + ";變卦 " + mh.bian.name,
       "  體卦" + DC.TRIG[mh.ti] + "(" + DC.TRIG_WX[mh.ti] + ")、用卦" + DC.TRIG[mh.yong] + "(" + DC.TRIG_WX[mh.yong] + ");" + mh.rel] };
 };
 const taiyiYearOf = (T) => DC.effYearLichun(T.y, T.m, T.d, T.h, T.mi, nowTz()); // 立春換歲收斂於 core
 GEN["n-taiyi"] = () => {
   const ty = DC.taiyi(taiyiYearOf(nowT()));
   return { title: "太乙歲計",
-    html: "<p>" + ty.gz + "年,太乙在" + ty.gongName + "(居宮第" + ty.yearIn + "年,三年一徙)</p>",
-    lines: ["太乙神數歲計(簡式,立春換歲):" + ty.gz + "年,積年 " + ty.jiNian + ",七十二局第" + ty.ju + "局,太乙在" + ty.gongName + "居宮第" + ty.yearIn + "年(三年一徙;太乙九宮配卦乾一離二艮三震四兌六坤七坎八巽九)"] };
+    html: "<p>" + ty.gz + "年，太乙在" + ty.gongName + "(居宮第" + ty.yearIn + "年，三年一徙)</p>",
+    lines: ["太乙神數歲計（簡式，立春換歲）:" + ty.gz + "年，積年 " + ty.jiNian + ",七十二局第" + ty.ju + "局，太乙在" + ty.gongName + "居宮第" + ty.yearIn + "年（三年一徙；太乙九宮配卦乾一離二艮三震四兌六坤七坎八巽九）"] };
 };
 GEN["n-taiyiming"] = () => {
   const B = birth();
@@ -388,10 +388,10 @@ GEN["n-taiyiming"] = () => {
   const same = tm.gong === tyN.gong;
   const jStr = j => j ? "大將" + j.daPos + "參將" + j.canPos : "臨太乙";
   return { title: "太乙命法",
-    html: "<p>日計第" + tm.ju + "局,太乙在" + tm.gongName + "・命宮" + tm.mingZh + "・今歲在" + tyN.gongName + (same ? "(回臨!)" : "") + "</p>",
-    lines: ["太乙人道命法(日計論命):年柱 " + tm.bb.pillars[0].gz + ";天數" + tm.tian + " 地數" + tm.di + "(入局) 人數" + tm.ren + ",受氣" + tm.shouqi,
-      "  日計陽遁第" + tm.ju + "局:太乙在" + tm.gongName + ",文昌臨" + tm.wenchang.name + "(" + tm.wenchang.pos + "),計神" + tm.jishen.zh + ",始擊臨" + tm.shiji.name + "(" + tm.shiji.pos + ");主算" + tm.zhuSuan + "(" + jStr(tm.zhuJiang) + "),客算" + tm.keSuan + "(" + jStr(tm.keJiang) + ");命宮" + tm.mingZh,
-      "  今歲(" + tyN.gz + "年)歲計太乙在" + tyN.gongName + (same ? "——回臨本命宮,大數交會之年" : ",與本命宮相參")] };
+    html: "<p>日計第" + tm.ju + "局，太乙在" + tm.gongName + "・命宮" + tm.mingZh + "・今歲在" + tyN.gongName + (same ? "(回臨！)" : "") + "</p>",
+    lines: ["太乙人道命法（日計論命）:年柱 " + tm.bb.pillars[0].gz + ";天數" + tm.tian + " 地數" + tm.di + "(入局) 人數" + tm.ren + ",受氣" + tm.shouqi,
+      "  日計陽遁第" + tm.ju + "局：太乙在" + tm.gongName + ",文昌臨" + tm.wenchang.name + "(" + tm.wenchang.pos + "),計神" + tm.jishen.zh + ",始擊臨" + tm.shiji.name + "(" + tm.shiji.pos + ");主算" + tm.zhuSuan + "(" + jStr(tm.zhuJiang) + "),客算" + tm.keSuan + "(" + jStr(tm.keJiang) + ");命宮" + tm.mingZh,
+      "  今歲(" + tyN.gz + "年)歲計太乙在" + tyN.gongName + (same ? "——回臨本命宮，大數交會之年" : ",與本命宮相參")] };
 };
 GEN["n-heluo"] = () => {
   const B = birth();
@@ -399,8 +399,8 @@ GEN["n-heluo"] = () => {
   const hl = DC.heluo(bz, B.male);
   return { title: "河洛理數",
     html: "<p>先天卦" + hl.xiantian.name + "・後天卦" + hl.houtian.name + "・元堂第" + hl.yuantang + "爻</p>",
-    lines: ["河洛理數(干納甲洛書數、支河圖生成數;四柱 " + bz.pillars.map(p => p.gz).join(" ") + "):天數" + hl.tian + "(餘" + hl.tianRest + ") 地數" + hl.di + "(餘" + hl.diRest + ")",
-      "  先天卦 " + hl.xiantian.name + "(前半生),元堂第" + hl.yuantang + "爻(陽時數陽爻陰時數陰爻),爻變並上下互換得後天卦 " + hl.houtian.name + "(後半生)"] };
+    lines: ["河洛理數(干納甲洛書數、支河圖生成數；四柱 " + bz.pillars.map(p => p.gz).join(" ") + "):天數" + hl.tian + "(餘" + hl.tianRest + ") 地數" + hl.di + "(餘" + hl.diRest + ")",
+      "  先天卦 " + hl.xiantian.name + "(前半生),元堂第" + hl.yuantang + "爻（陽時數陽爻陰時數陰爻）,爻變並上下互換得後天卦 " + hl.houtian.name + "(後半生)"] };
 };
 GEN["b-bazi"] = () => {
   const B = birth();
@@ -432,7 +432,7 @@ GEN["b-shichu"] = () => {
   const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
   const dS = bz.pillars[2].s;
   const un = b => DC.twelveUn(dS, b, "he");   /* 十二運收斂於 core(與 bazi.html 同源) */
-  return { title: "四柱推命(和流)",
+  return { title: "四柱推命（和流）",
     html: "<p>" + bz.pillars.map(p => p.gz).join(" ") + "・十二運:" + bz.pillars.map(p => un(p.b)).join("/") + "</p>",
     lines: ["四柱推命(和流," + B.str + "):" + bz.pillars.map(p => p.tag + p.gz).join(" "),
       "  通変星:" + bz.pillars.map((p, i) => i === 2 ? "日主" : DC.tenGod(dS, p.s).replace("七殺", "偏官").replace("正印", "印綬")).join("、") + ";十二運:" + bz.pillars.map(p => p.tag + un(p.b)).join("、") + ";天中殺 " + bz.kong.join("")] };
@@ -452,19 +452,19 @@ GEN["b-nine"] = () => {
   const star = B.male ? DC.nineStarYear(effY) : DC.nineStarFemale(effY);
   const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
   const mStar = DC.nineStarMonth(star, bz.mIdx);
-  const lines = ["九星氣學:本命星 " + DC.NSTAR[star] + "(" + (B.male ? "男" : "女") + "命,本站女命異算),月命星 " + DC.NSTAR[mStar]];
-  const t0 = targetDay() || nowT(); // 年盤:今年(或所問之日該年)飛泊
+  const lines = ["九星氣學：本命星 " + DC.NSTAR[star] + "(" + (B.male ? "男" : "女") + "命，本站女命異算),月命星 " + DC.NSTAR[mStar]];
+  const t0 = targetDay() || nowT(); // 年盤：今年（或所問之日該年）飛泊
   const effNow = DC.effYearLichun(t0.y, t0.m, t0.d || 15);
   const board = DC.nineStarBoard(effNow);   /* 飛泊收斂於 core(與 bazi.html 同源) */
   let myPalace = 5;
   for (let p = 1; p <= 9; p++) if (board.palaceStar(p) === star) myPalace = p;
-  lines.push("  " + effNow + " 年盤(立春起):中宮" + DC.NSTAR[board.yearStar] + ",本命星飛臨" + DC.GONG_NAME[myPalace] + (myPalace === 5 ? "——回中宮,蟄伏蓄勢之年" : "") + ";" +
-    (board.center ? "本年五黃入中,諸方無五黃殺/暗劍殺" : "五黃在" + DC.GONG_NAME[board.wuhuang] + "、暗劍殺在" + DC.GONG_NAME[board.anjian] + "——此二方大凶,動土遠行宜避"));
+  lines.push("  " + effNow + " 年盤（立春起）:中宮" + DC.NSTAR[board.yearStar] + ",本命星飛臨" + DC.GONG_NAME[myPalace] + (myPalace === 5 ? "——回中宮，蟄伏蓄勢之年" : "") + ";" +
+    (board.center ? "本年五黃入中，諸方無五黃殺/暗劍殺" : "五黃在" + DC.GONG_NAME[board.wuhuang] + "、暗劍殺在" + DC.GONG_NAME[board.anjian] + "——此二方大凶，動土遠行宜避"));
   return { title: "九星氣學",
     html: "<p>本命星 " + DC.NSTAR[star] + "・月命星 " + DC.NSTAR[mStar] + "・今年飛臨" + DC.GONG_NAME[myPalace] + "</p>",
     lines };
 };
-function birthOpt(nowBz) { // 生辰欄有填就入本命/行年(虛歲以立春換歲)
+function birthOpt(nowBz) { // 生辰欄有填就入本命/行年（虛歲以立春換歲）
   if (!$("b-date").value) return null;
   try {
     const B = birth();
@@ -483,15 +483,15 @@ GEN["b-qimen"] = () => {
     lines.push("  " + DC.GONG_NAME[p] + ":" + (qm.gods[p] || "") + " " + (t ? t.star + " 天盤" + t.stem : "") + " " + (qm.doors[p] || "") + " 地盤" + qm.dipan[p] + (p === qm.tp ? "(時干)" : "") + (p === qm.dayGongTian ? "(日干)" : ""));
   }
   const ob = birthOpt(qm.bz);
-  if (ob) {   /* 年命收斂於 core:主流年干落宮+輔支寄宮(與 shi.html 同源) */
+  if (ob) {   /* 年命收斂於 core:主流年干落宮+輔支寄宮（與 shi.html 同源） */
     const nm = DC.qimenNianming(qm, ob.bb.year);
     const np = nm.zhiGong, t = qm.tianpan[np], tg2 = qm.tianpan[nm.ganGong];
     lines.push("  問測人年命:" + ob.mingGz + "年生(虛歲" + ob.xusui + ");年干" + nm.ch + "落天盤" + (nm.ganGong ? DC.GONG_NAME[nm.ganGong] + "(" + (qm.gods[nm.ganGong] || "") + "・" + (tg2 ? tg2.star : "") + "・" + (qm.doors[nm.ganGong] || "") + ")" : "未尋獲") + "(主流年干落宮法);年支" + DC.BRANCHES[ob.mingB] + "寄" + DC.GONG_NAME[np] + "(" + (qm.gods[np] || "") + " " + (t ? t.star + " 天盤" + t.stem : "") + " " + (qm.doors[np] || "") + ")——以年干落宮為主、支寄宮相參");
   }
   const td = targetDay();
-  if (td) { // 時間用神:所問之日干支入局(收斂於 core,與 shi.html 同源)
+  if (td) { // 時間用神：所問之日干支入局（收斂於 core,與 shi.html 同源）
     const ys = DC.qimenDayYongshen(qm, td.y, td.m, td.d, nowTz());
-    lines.push("  時間用神(所問之日 " + td.str + "," + ys.bzT.pillars[2].gz + "日):日干落天盤" + (ys.tG ? DC.GONG_NAME[ys.tG] + "(" + (qm.gods[ys.tG] || "") + "・" + (qm.tianpan[ys.tG] ? qm.tianpan[ys.tG].star : "") + "・" + (qm.doors[ys.tG] || "") + ")" : "未尋獲(請人工核局)") + ";日支寄" + DC.GONG_NAME[ys.bG] + "——請以此二宮論該日行事吉凶");
+    lines.push("  時間用神(所問之日 " + td.str + "," + ys.bzT.pillars[2].gz + "日):日干落天盤" + (ys.tG ? DC.GONG_NAME[ys.tG] + "(" + (qm.gods[ys.tG] || "") + "・" + (qm.tianpan[ys.tG] ? qm.tianpan[ys.tG].star : "") + "・" + (qm.doors[ys.tG] || "") + ")" : "未尋獲（請人工核局）") + ";日支寄" + DC.GONG_NAME[ys.bG] + "——請以此二宮論該日行事吉凶");
   }
   return { title: "奇門遁甲", html: "<p>" + qm.juName + "・直符" + qm.fuStar + "・直使" + qm.fuDoor + "</p>", lines };
 };
@@ -499,13 +499,13 @@ GEN["b-liuren"] = () => {
   const n = nowT();
   const bz = DC.bazi(n.y, n.m, n.d, n.h, n.mi, nowTz());
   const lr = DC.liuren(bz.dIdx, bz.hB, DC.sunLon(DC.jd(n.y, n.m, n.d, n.h, n.mi, nowTz())));
-  const lines = ["大六壬(" + bz.pillars[2].gz + "日" + DC.BRANCHES[bz.hB] + "時,月將" + lr.jiangZh + "):課體 " + lr.keti,
+  const lines = ["大六壬(" + bz.pillars[2].gz + "日" + DC.BRANCHES[bz.hB] + "時，月將" + lr.jiangZh + "):課體 " + lr.keti,
     "  四課:" + lr.lessons.map((l, i) => l.low + "→" + l.up + "/" + l.jiang).join(";"),
     "  三傳:" + lr.chuan.map((c, i) => ["初", "中", "末"][i] + c.zh + "(" + c.dun + "," + c.jiang + "," + c.qin + ")").join("、")];
   const ob = birthOpt(bz);
   if (ob) {
     const mUp = lr.up(ob.mingB), xUp = lr.up(ob.xn.b);
-    lines.push("  問測人:本命" + DC.BRANCHES[ob.mingB] + "(" + ob.mingGz + "年生,虛歲" + ob.xusui + "),本命上神" + DC.BRANCHES[mUp] + "乘" + lr.jiangOf(mUp) + ";行年" + ob.xn.gz + ",行年上神" + DC.BRANCHES[xUp] + "乘" + lr.jiangOf(xUp));
+    lines.push("  問測人：本命" + DC.BRANCHES[ob.mingB] + "(" + ob.mingGz + "年生，虛歲" + ob.xusui + "),本命上神" + DC.BRANCHES[mUp] + "乘" + lr.jiangOf(mUp) + ";行年" + ob.xn.gz + ",行年上神" + DC.BRANCHES[xUp] + "乘" + lr.jiangOf(xUp));
   }
   const td = targetDay();
   if (td) {
@@ -517,7 +517,7 @@ GEN["b-liuren"] = () => {
     html: "<p>" + bz.pillars[2].gz + "日" + DC.BRANCHES[bz.hB] + "時・" + lr.keti + "・三傳 " + lr.chuan.map(c => c.zh).join("→") + "</p>",
     lines };
 };
-/* 牌卡快抽:每張帶首關鍵詞與吉凶,附牌組讀法總綱與吉凶盤點 */
+/* 牌卡快抽：每張帶首關鍵詞與吉凶，附牌組讀法總綱與吉凶盤點 */
 function drawCards(deckId, deckName) {
   const D = DC.DECKS_MINI[deckId];
   const idx = new Set();
@@ -528,12 +528,12 @@ function drawCards(deckId, deckName) {
   const good = drawn.filter(c => c.pol === "+").length, bad = drawn.filter(c => c.pol === "-").length;
   return { title: deckName + "・六張快抽",
     html: "<p>" + drawn.map((c, i) => '<span class="badge">' + POS[i] + ":" + c.zh + (c.rev ? "(逆)" : "") + "</span>").join(" ") + "</p>",
-    lines: [deckName + " 六張快抽(crypto 真隨機;快抽為簡式,合議時權重可略低於完整起盤之術):",
+    lines: [deckName + " 六張快抽(crypto 真隨機；快抽為簡式，合議時權重可略低於完整起盤之術):",
       "  牌組讀法:" + (DC.DECK_GUIDES[deckId] || ""),
-      "  陣型:前三張為時間軸(過去→現在→未來),後三張為力量軸(助力/阻礙/結果)",
+      "  陣型：前三張為時間軸（過去→現在→未來）,後三張為力量軸（助力/阻礙/結果）",
       ...drawn.map((c, i) => "  " + POS[i] + ":「" + c.zh + "」" + (c.rev ? "(逆位)" : D.rev ? "(正位)" : "") + "——" + c.key + "・" + polZh(c.pol)),
-      "  吉凶盤點:吉 " + good + "、挑戰 " + bad + "、中性 " + (6 - good - bad) +
-        (bad > good ? "——挑戰居多,先問「該防什麼」" : good > bad ? "——吉多於險,問「如何順勢」" : "——吉凶相持,關鍵在中性牌倒向哪邊")] };
+      "  吉凶盤點：吉 " + good + "、挑戰 " + bad + "、中性 " + (6 - good - bad) +
+        (bad > good ? "——挑戰居多，先問「該防什麼」" : good > bad ? "——吉多於險，問「如何順勢」" : "——吉凶相持，關鍵在中性牌倒向哪邊")] };
 }
 for (const [id, dk, nm] of [["c-len", "len", "雷諾曼"], ["c-sib", "sib", "西碧拉"], ["c-bel", "bel", "貝林神諭"], ["c-kip", "kip", "奇卜"],
   ["c-gra", "gra", "大雷諾曼"], ["c-run", "run", "盧恩符文"], ["c-zw", "zw", "紫微星曜"], ["c-dt", "dt", "東方塔羅"], ["c-esp", "esp", "西班牙牌"]])
@@ -548,7 +548,7 @@ GEN["y-maha"] = () => {
   const td = targetDay();
   if (td) {
     const ti = DC.bur8Index(td.y, td.m, td.d, 12);
-    lines.push("  所問之日 " + td.str + " 值" + DC.BUR8[ti][0] + "日(" + DC.BUR8[ti][1] + ")" + (ti === idx ? "——本命曜日,宜行大事" : "——以生曜對該日曜論宜忌"));
+    lines.push("  所問之日 " + td.str + " 值" + DC.BUR8[ti][0] + "日(" + DC.BUR8[ti][1] + ")" + (ti === idx ? "——本命曜日，宜行大事" : "——以生曜對該日曜論宜忌"));
   }
   return { title: "緬甸八曜",
     html: "<p>" + yao + "日生・" + animal + "・佛塔" + dir + "角</p>", lines };
@@ -557,11 +557,11 @@ GEN["y-weton"] = () => {
   const B = birth();
   const w = DC.weton(B.y, B.m, B.d);
   const lines = ["爪哇威頓 Weton:" + w.name + "(" + DC.DAY_ID[w.wd] + " × " + DC.PASARAN[w.pas][0] + "),neptu " + w.neptu,
-    "  市集日性情:" + DC.PASARAN[w.pas][3] + ";五神數(簡法):" + DC.PANCASUDA[w.panca][0] + "——" + DC.PANCASUDA[w.panca][1]];
+    "  市集日性情:" + DC.PASARAN[w.pas][3] + ";五神數（簡法）:" + DC.PANCASUDA[w.panca][0] + "——" + DC.PANCASUDA[w.panca][1]];
   const td = targetDay();
   if (td) {
     const tw = DC.weton(td.y, td.m, td.d);
-    lines.push("  所問之日 " + td.str + " 為 " + tw.name + "(neptu " + tw.neptu + ")" + (tw.wd === w.wd && tw.pas === w.pas ? "——本命威頓日,大事吉" : "——與本命威頓合參論該日"));
+    lines.push("  所問之日 " + td.str + " 為 " + tw.name + "(neptu " + tw.neptu + ")" + (tw.wd === w.wd && tw.pas === w.pas ? "——本命威頓日，大事吉" : "——與本命威頓合參論該日"));
   }
   return { title: "爪哇威頓",
     html: "<p>" + w.name + "・neptu " + w.neptu + "</p>", lines };
@@ -570,11 +570,11 @@ GEN["y-thai"] = () => {
   const B = birth();
   const idx = DC.thai7Index(B.y, B.m, B.d, B.h);
   const [buddha, color, badColor, trait] = DC.THAI7[idx];
-  const lines = ["泰國七曜佛日:本命佛「" + buddha + "」,本命色" + color + ",忌色" + badColor + "(民俗簡表)——" + trait];
+  const lines = ["泰國七曜佛日：本命佛「" + buddha + "」，本命色" + color + ",忌色" + badColor + "(民俗簡表)——" + trait];
   const td = targetDay();
   if (td) {
     const ti = DC.thai7Index(td.y, td.m, td.d, 12);
-    lines.push("  所問之日 " + td.str + " 值" + (ti === 7 ? "週三夜佛" : DC.THAI7[ti][0]) + (ti === idx ? "——本命佛日,宜佈施求願" : "——與本命佛日相參論該日"));
+    lines.push("  所問之日 " + td.str + " 值" + (ti === 7 ? "週三夜佛" : DC.THAI7[ti][0]) + (ti === idx ? "——本命佛日，宜佈施求願" : "——與本命佛日相參論該日"));
   }
   return { title: "泰國七曜佛日",
     html: "<p>" + buddha + "・本命色" + color + "</p>", lines };
@@ -600,31 +600,31 @@ GEN["c-yi"] = () => {
   const name1 = DC.HEX_NAME[u1][l1], name2 = DC.HEX_NAME[u2][l2];
   return { title: "易經・擲卦",
     html: "<p>本卦" + name1 + (mov.length ? "・動爻" + mov.join(",") + "・之卦" + name2 : "・六爻安靜") + "</p>",
-    lines: ["易經三枚錢擲卦:本卦 " + name1 + (mov.length ? ",動爻第" + mov.join("、") + "爻,之卦 " + name2 : ",六爻安靜") ] };
+    lines: ["易經三枚錢擲卦：本卦 " + name1 + (mov.length ? ",動爻第" + mov.join("、") + "爻，之卦 " + name2 : ",六爻安靜") ] };
 };
 GEN["c-yiju"] = () => {
   const i = DC.rand(DC.YIJU.length);
   return { title: "燭光一句・第" + (i + 1) + "句",
     html: "<p style='font-size:17px;color:var(--gold-bright)'>「" + DC.YIJU[i] + "」</p>",
-    lines: ["燭光一句(本站原創答案之書,crypto 百句取一):第" + (i + 1) + "句「" + DC.YIJU[i] + "」"] };
+    lines: ["燭光一句（本站原創答案之書,crypto 百句取一）:第" + (i + 1) + "句「" + DC.YIJU[i] + "」"] };
 };
 GEN["c-qs"] = () => {
   const i = DC.rand(DC.QS_MINI.length), [t, g, poem] = DC.QS_MINI[i];
   return { title: "靈籤・第" + (i + 1) + "籤",
     html: "<p>「" + t + "」(" + g + ")</p><p style='color:var(--muted)'>" + poem.split("/").join(",") + "</p>",
-    lines: ["靈籤快取(crypto 隨機,未經擲筊儀式):第" + (i + 1) + "籤「" + t + "」,等第" + g + ",籤詩:" + poem.split("/").join(";")] };
+    lines: ["靈籤快取(crypto 隨機，未經擲筊儀式):第" + (i + 1) + "籤「" + t + "」，等第" + g + ",籤詩:" + poem.split("/").join(";")] };
 };
 
 /* ── 主流程 ── */
-/* 三術類型(合參裁決用):依 id 歸類 */
+/* 三術類型（合參裁決用）:依 id 歸類 */
 function mixType(id) {
   if (["b-bazi", "b-ziwei", "b-shichu", "b-dang", "a-natal", "a-vedic", "n-heluo", "n-taiyiming", "n-life", "y-maha", "y-weton", "y-thai"].includes(id)) return ["命理", "管稟賦與底盤格局"];
   if (["b-qimen", "b-liuren", "a-horary", "a-prashna", "n-meihua", "n-meihua-zi", "c-yi"].includes(id)) return ["式占卦占", "管此事成敗——對成敗問題有優先裁決權"];
   if (["a-xiu", "b-nine", "n-taiyi", "a-transit"].includes(id)) return ["時運擇日", "管時機與某日吉凶"];
-  if (["c-yiju", "c-kieu", "c-qs"].includes(id)) return ["開卷機緣", "管一句點醒,不參與成敗裁決"];
+  if (["c-yiju", "c-kieu", "c-qs"].includes(id)) return ["開卷機緣", "管一句點醒，不參與成敗裁決"];
   return ["牌卡", "管當下心境與檯面下的訊息"];
 }
-/* 共振象徵詞庫:兩術以上同見即點題(機械掃描,提示詞註明由 AI 複核) */
+/* 共振象徵詞庫：兩術以上同見即點題（機械掃描，提示詞註明由 AI 複核） */
 const RESON = [
   ["文書契約", ["文昌", "朱雀", "文曲", "契約", "文書", "「信」", "「書」", "信件", "信函", "姻盟", "化科", "文件", "要訊", "消息"]],
   ["貴人相助", ["天乙", "天魁", "天鉞", "貴人", "大貴人", "摯友", "六合", "善紳士", "善夫人", "左輔", "右弼", "「女僕」", "支持", "靠山", "奧援"]],
@@ -653,12 +653,12 @@ $("btn-go").onclick = () => {
   } catch (e) { if (!$("go-hint").textContent) $("go-hint").textContent = "起盤失敗:" + e.message; return; }
   $("out").innerHTML = out.join("");
   const q = q3();
-  const pr = ["你是一位同時精通多種占卜體系的顧問。以下是針對同一個問題,以三套不同術數(或依生辰、或依此刻、或依機緣)起出的盤面。" + DC.toneHead(), ""];
+  const pr = ["你是一位同時精通多種占卜體系的顧問。這是同一個問題，用三套不同術數（或依生辰、或依此刻、或依機緣）起出的盤面。" + DC.toneHead(), ""];
   if (q) pr.push("我的問題:" + q, "");
   sections.forEach((g, i) => { pr.push("【第" + "一二三"[i] + "術】"); pr.push(...g.lines); pr.push(""); });
   /* 三術類型與主術裁決 */
   pr.push("三術類型:" + sections.map((g, i) => { const t = mixType(g.id); return "第" + "一二三"[i] + "術「" + g.title + "」屬" + t[0] + "(" + t[1] + ")"; }).join(";") + "。");
-  pr.push("裁決規則:相左時依問題性質定主術——問成敗聽式占卦占、問稟賦聽命理、問時機聽時運擇日;主術定調,他術補條件;開卷機緣只作點醒,不推翻合議。");
+  pr.push("裁決規則：相左時依問題性質定主術——問成敗聽式占卦占、問稟賦聽命理、問時機聽時運擇日；主術定調，他術補條件；開卷機緣只作點醒，不推翻合議。");
   /* 共振自動掃描 */
   const texts = sections.map(g => g.lines.join(" "));
   const hits = [];
@@ -667,14 +667,14 @@ $("btn-go").onclick = () => {
     if (per.filter(x => x.length).length >= 2)
       hits.push(cat + "(" + per.map((x, i) => x.length ? "第" + "一二三"[i] + "術:" + x.slice(0, 3).map(w => w.replace(/[「」]/g, "")).join("/") : null).filter(Boolean).join(";") + ")");
   });
-  if (hits.length) pr.push("⚡共振自動偵測(機械字詞掃描,請以術理複核):" + hits.join("。") + "——兩術以上同見之象,請優先檢驗。");
+  if (hits.length) pr.push("⚡共振自動偵測（機械字詞掃描，請以術理複核）:" + hits.join("。") + "——兩術以上同見之象，請優先檢驗。");
   pr.push("");
   pr.push("請進行三術合參:");
-  pr.push("1. 先各自獨立解讀三套盤面,每套給出明確傾向(吉/凶/條件吉),不要互相污染。");
-  pr.push("2. 找出三術的「共振」——它們不約而同指向的同一件事(可自上方自動偵測出發,但以術理為準)。");
-  pr.push("3. 誠實指出三術的「相左」之處,並依上方裁決規則判斷哪一術對此問最有發言權。");
-  pr.push("4. 留意時間尺度:命理論年、式占論日時、牌卡論當下——先把各術結論標上時間尺度再比對,勿以長程盤否決短程斷。");
-  pr.push("5. 合議出最終結論:傾向、時機、條件與具體行動建議。");
+  pr.push("1. 先各自獨立解讀三套盤面，每套給出明確傾向（吉/凶/條件吉）,不要互相污染。");
+  pr.push("2. 找出三術的「共振」——它們不約而同指向的同一件事（可自上方自動偵測出發，但以術理為準）。");
+  pr.push("3. 誠實指出三術的「相左」之處，並依上方裁決規則判斷哪一術對此問最有發言權。");
+  pr.push("4. 留意時間尺度：命理論年、式占論日時、牌卡論當下——先把各術結論標上時間尺度再比對，勿以長程盤否決短程斷。");
+  pr.push("5. 合議出最終結論：傾向、時機、條件與具體行動建議。");
   pr.push("6. 最後用一句話總結——如果三位老師只能留一句話給我。");
   $("prompt-box").value = pr.join("\n");
   $("prompt-sec").hidden = false;
@@ -689,16 +689,16 @@ $("btn-copy").onclick = async () => {
 /* ── 合參心法 ── */
 function buildLearn() {
   let h = "";
-  h += DC.lcard("為什麼是三術", '<p class="lead-para">一術可欺——任何單一系統都可能被你的期待帶著走;二術可疑——兩個答案相左時無從裁決;<b>三術合參,才有多數決,也才有「相左本身就是訊息」的空間</b>。這是古人「卜筮不過三」的智慧反面:不是同一術問三次,而是三種語言問同一次。</p>');
-  h += DC.lcard("怎麼挑三術:讓題目選工具", DC.ltable(["你想問的", "適合的類型", "本站選項"], [
-    ["我是什麼樣的人/天賦何在", "命理類(看出生)", "八字、紫微、西洋/印度本命、生命靈數、威頓、八曜"],
-    ["這件事會不會成", "卦占/式占類(看此刻)", "奇門、六壬、卜卦占星、印度問事、梅花、易經、翹傳、各牌卡"],
-    ["什麼時候做最好", "時運類", "西洋行運、太乙歲計、流年靈數、擇日(指定日期);返照請回占星館"],
+  h += DC.lcard("為什麼是三術", '<p class="lead-para">一術可欺——任何單一系統都可能被你的期待帶著走；二術可疑——兩個答案相左時無從裁決；<b>三術合參，才有多數決，也才有「相左本身就是訊息」的空間</b>。這是古人「卜筮不過三」的智慧反面：不是同一術問三次，而是三種語言問同一次。</p>');
+  h += DC.lcard("怎麼挑三術：讓題目選工具", DC.ltable(["你想問的", "適合的類型", "本站選項"], [
+    ["我是什麼樣的人/天賦何在", "命理類（看出生）", "八字、紫微、西洋/印度本命、生命靈數、威頓、八曜"],
+    ["這件事會不會成", "卦占/式占類（看此刻）", "奇門、六壬、卜卦占星、印度問事、梅花、易經、翹傳、各牌卡"],
+    ["什麼時候做最好", "時運類", "西洋行運、太乙歲計、流年靈數、擇日（指定日期）;返照請回占星館"],
     ["某一天吉不吉", "擇日類", "宿曜今日、佛日、值曜、威頓日、九星年盤"],
-    ["我和某人合不合", "關係類(回各館)", "關係星盤、組合盤、宿曜相性"]]) +
-    '<p class="lead-para">最強的組合是<b>三類各取一</b>:一個命理(底盤)+一個式占(此問)+一個時運(時機)——例如「看大局」預設的西洋本命+紫微+八字是三面鏡子照底盤,「問抉擇」的梅花+卜卦+雷諾曼是三口鐘問同一事。</p>');
-  h += DC.lcard("怎麼讀合參結果", '<p class="lead-para">① <b>先分開讀</b>:三術各自說什麼,別急著混。② <b>找共振</b>:三術不約而同指到的字眼(等待/貴人/守成),那就是答案的骨頭。③ <b>面對相左</b>:誰的管轄權大聽誰的——問成敗聽式占、問性格聽命理、問時機聽時運;相左本身常代表「事情條件未齊」。④ 提示詞已把這套流程寫給 AI,它會照此合議。</p>');
-  h += DC.lcard("合參的分寸", '<p class="lead-para">同一個問題,合參一次就好——三術已是三個意見,再抽第四、第五術,是在人海裡找一個肯附和你的人。答案不合意時,正確的下一步不是換術,是把問題問得更誠實。此桌無神,司盤者機緣也;機緣說的話,聽三遍就夠了。</p>');
+    ["我和某人合不合", "關係類（回各館）", "關係星盤、組合盤、宿曜相性"]]) +
+    '<p class="lead-para">最強的組合是<b>三類各取一</b>:一個命理（底盤）+一個式占（此問）+一個時運（時機）——例如「看大局」預設的西洋本命+紫微+八字是三面鏡子照底盤，「問抉擇」的梅花+卜卦+雷諾曼是三口鐘問同一事。</p>');
+  h += DC.lcard("怎麼讀合參結果", '<p class="lead-para">① <b>先分開讀</b>:三術各自說什麼，別急著混。② <b>找共振</b>:三術不約而同指到的字眼（等待/貴人/守成）,那就是答案的骨頭。③ <b>面對相左</b>:誰的管轄權大聽誰的——問成敗聽式占、問性格聽命理、問時機聽時運；相左本身常代表「事情條件未齊」。④ 提示詞已把這套流程寫給 AI,它會照此合議。</p>');
+  h += DC.lcard("合參的分寸", '<p class="lead-para">同一個問題，合參一次就好——三術已是三個意見，再抽第四、第五術，是在人海裡找一個肯附和你的人。答案不合意時，正確的下一步不是換術，是把問題問得更誠實。此桌無神，司盤者機緣也；機緣說的話，聽三遍就夠了。</p>');
   return h;
 }
 DC.learnInit(buildLearn);
@@ -711,7 +711,7 @@ DC.learnInit(buildLearn);
   renderPool(); syncForm();
   $("b-date").value = "1990-05-15"; $("b-time").value = "10:00";
   $("t-date").value = "2026-08-15";
-  $("q-input").value = "測試提問:這件事會順利嗎?";
+  $("q-input").value = "測試提問：這件事會順利嗎？";
   setTimeout(() => {
     try {
       $("btn-go").onclick();
