@@ -160,13 +160,30 @@ DC.histSave = function () {}; // histBind 前的安全預設
 DC.learnInit = function (build, after) {
   var views = document.getElementById("views"), learn = document.getElementById("view-learn");
   if (!views || !learn) return;
+  var tabs = Array.prototype.slice.call(views.querySelectorAll(".view-btn"));
+  /* 分頁語意：tablist/tab + aria-selected，左右鍵可在分頁間移動（讀屏與鍵盤使用者才知道這是分頁） */
+  views.setAttribute("role", "tablist");
+  learn.setAttribute("role", "tabpanel");
   var show = function (isLearn) {
-    views.querySelectorAll(".view-btn").forEach(function (x) { x.classList.toggle("active", (x.dataset.view === "learn") === isLearn); });
+    tabs.forEach(function (x) {
+      var on = (x.dataset.view === "learn") === isLearn;
+      x.classList.toggle("active", on);
+      x.setAttribute("aria-selected", on ? "true" : "false");
+      x.tabIndex = on ? 0 : -1;
+    });
     document.body.classList.toggle("learning", isLearn);
     if (isLearn && !learn.dataset.built) { learn.innerHTML = build(); learn.dataset.built = "1"; if (after) after(learn); }
   };
-  views.querySelectorAll(".view-btn").forEach(function (b) {
+  tabs.forEach(function (b, i) {
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-selected", b.classList.contains("active") ? "true" : "false");
+    b.tabIndex = b.classList.contains("active") ? 0 : -1;
     b.addEventListener("click", function () { show(b.dataset.view === "learn"); });
+    b.addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      var next = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+      next.focus(); next.click(); e.preventDefault();
+    });
   });
   if (/[?&]learn=1/.test(location.search)) show(true);
 };

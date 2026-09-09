@@ -47,6 +47,7 @@
       <div class="form-grid">
         <div class="field"><label>日期</label><input id="n-date" type="date"></div>
         <div class="field"><label>時間</label><input id="n-time" type="time"></div>
+        <div class="field"><label>起局地</label><select id="n-city"></select></div>
         <div class="field"><label>時區</label><input id="n-tz" type="number" step="0.5" value="8"></div>
         <div class="field" id="f-target"><label>所問之日（選填）</label><input id="t-date" type="date">
           <div class="note">古法「時間用神」：以此刻起局，把該日干支放進局中論其吉凶——問「某日行事如何」填這裡</div></div>
@@ -67,6 +68,7 @@
         <div class="field"><label>出生時間</label><input id="b-time" type="time" value="12:00"></div>
         <div class="field"><label>性別（行年用）</label>
           <select id="b-gender"><option value="m">男</option><option value="f">女</option></select></div>
+        <div class="field"><label>出生地</label><select id="b-city"></select></div>
         <div class="field"><label>出生時區</label><input id="b-tz" type="number" step="0.5" value="8"></div>
       </div>
     </div>
@@ -204,7 +206,9 @@ setInterval(() => { if ($("n-follow").checked && !$("form-now").hidden) setNowFi
 $("n-follow").addEventListener("change", () => { if ($("n-follow").checked) setNowFields(); });
 
 const PK = "dc-shi-profile";
-const prof = DC.profileBind(PK, ["b-date","b-time","b-gender","b-tz"]); // 生辰檔案工廠：含舊鍵遷移+跨館共用 dc-profile
+DC.fillCitySelect($("n-city"), {}, {}, $("n-tz"));   /* 與占星館、MIX 同一份城市清單；本館只需時區 */
+DC.fillCitySelect($("b-city"), {}, {}, $("b-tz"));
+const prof = DC.profileBind(PK, ["b-date","b-time","b-gender","b-city","b-tz"]); // 生辰檔案工廠：含舊鍵遷移+跨館共用 dc-profile
 
 function card(t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
 function fail(msg) { $("go-hint").textContent = msg; return new Error(msg); }

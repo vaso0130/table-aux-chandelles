@@ -49,8 +49,10 @@
           <div class="note">八字與四柱推命可在下方選擇 23:00 或 00:00 換日</div></div>
         <div class="field" id="f-gender"><label>性別</label>
           <select id="b-gender"><option value="m">男</option><option value="f">女</option></select></div>
+        <div class="field"><label>出生地</label><select id="b-city"></select>
+          <div class="note">選了會自動填時區；不在清單裡就選「自訂」再填</div></div>
         <div class="field"><label>時區</label><input id="b-tz" type="number" step="0.5" value="8">
-          <div class="note">台灣/中國 +8,日本 +9</div></div>
+          <div class="note">台灣/中國 +8，日本 +9</div></div>
         <div class="field" id="f-zwyear"><label>紫微年界</label>
           <select id="b-zwyear"><option value="cny">正月初一（主流）</option><option value="lichun">立春</option></select>
           <div class="note">僅影響紫微盤；生於立春~正月初一之間者兩法年柱不同（八字恆以立春換年）</div></div>
@@ -95,8 +97,8 @@
   </section>
 
   <p class="footnote">
-    節氣與朔望以天文近似計算；紫微年界、閏月安星與八字換日法可自行選擇，選項會一併寫入提示詞。庚干四化目前固定採通行「陽武陰同」；紫微與唐四柱的農曆日不隨晚子時遞進。<br>
-    九星命卦男女異算；生命靈數採西方生日靈數學；人類圖採回歸黃道、設計端取太陽前 88° 日弧(交點為平均交點，與官方真交點差小於 1.7°)。皆為起盤，論斷交給 AI 或你信任的老師。太乙、奇門、六壬三式與梅花、河洛請移駕<b>式占館</b>。
+    此房只起盤，論斷交給 AI 或你信任的老師。年界、閏月與換日法由你選，選了什麼都會寫進提示詞；節氣與朔望是天文近似值，人類圖的交點採平均交點。細節與各術取法見 AUDIT.md。<br>
+    太乙、奇門、六壬三式與梅花、河洛，請移駕<b>式占館</b>。
   </p>
 </div>
 
@@ -174,7 +176,8 @@ DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prom
 DC.histBind();
 
 const PK = "dc-bazi-profile";
-const prof = DC.profileBind(PK, ["b-date","b-time","b-gender","b-tz","b-zwyear","b-dayboundary","b-zwleap"]);
+DC.fillCitySelect($("b-city"), {}, {}, $("b-tz"));   /* 與占星館、MIX 同一份城市清單；本館只需時區 */
+const prof = DC.profileBind(PK, ["b-date","b-time","b-gender","b-city","b-tz","b-zwyear","b-dayboundary","b-zwleap"]);
 
 function card(t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
 function fail(msg) { $("go-hint").textContent = msg; return new Error(msg); }

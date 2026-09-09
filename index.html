@@ -640,6 +640,9 @@
   .rsep { color: rgba(201,164,92,.25); font-size: 10px; }
   /* 工具列常駐視野（手機不再捲過空牌陣找按鈕） */
   .sticky-tools { position: sticky; bottom: 10px; z-index: 6; background: rgba(12,19,14,.92); padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(201,164,92,.18); }
+  /* 鍵盤跳過連結：大盤 36–54 個牌位不必逐一 Tab，聚焦時才現身 */
+  .skip-link { position: absolute; left: -9999px; font-size: 13px; letter-spacing: .1em; color: var(--gold-bright); }
+  .skip-link:focus { position: static; display: inline-block; margin: 6px 0; padding: 6px 12px; border: 1px solid var(--gold-dim); border-radius: 2px; outline: 2px solid var(--gold); outline-offset: 2px; }
   /* 橫捲提示 */
   #scroll-hint { text-align: center; font-size: 12px; color: var(--muted); letter-spacing: .15em; margin: 2px 0 0; }
   /* 首訪導引 */
@@ -908,9 +911,9 @@
     <a title="任選三術同問一事，合議作答" href="mix.html">MIX 三術合參</a>
   </nav>
 
-  <nav class="views" id="views" aria-label="頁面切換">
-    <button class="view-btn active" data-view="divine">占卜牌桌</button>
-    <button class="view-btn" data-view="dict">牌義字典</button>
+  <nav class="views" id="views" aria-label="頁面切換" role="tablist">
+    <button class="view-btn active" data-view="divine" role="tab" aria-selected="true" aria-controls="view-divine">占卜牌桌</button>
+    <button class="view-btn" data-view="dict" role="tab" aria-selected="false" aria-controls="dict" tabindex="-1">牌義字典</button>
   </nav>
 
   <p class="first-guide">第一次來？牌卡在這一館。問生辰命盤請往<a href="bazi.html">八字館</a>，問時機吉凶請往<a href="shi.html">式占館</a>，拿不定主意就交給 <a href="mix.html">MIX 三術合參</a>。</p>
@@ -1006,7 +1009,7 @@
             <span id="pile-count"></span>
           </button>
         </div>
-        <div id="fan-scroll" hidden><div id="fan"></div></div>
+        <div id="fan-scroll" hidden><a class="skip-link" href="#draw-tools">跳過牌扇，到抽牌工具列</a><div id="fan"></div></div>
         <div class="deck-tools sticky-tools" id="draw-tools">
           <button class="ghost-btn" id="btn-mode">攤 牌 親 挑</button>
           <button class="ghost-btn" id="btn-auto" hidden>讓命運抽完剩下的牌</button>
@@ -1015,6 +1018,7 @@
       </div>
     </div>
 
+    <a class="skip-link" href="#reading">跳過牌陣，到解讀</a>
     <div id="slots-scroll"><div id="slots"></div></div>
     <p id="scroll-hint" hidden>← 盤面比螢幕寬，可左右滑動 →</p>
   </section>
@@ -3252,8 +3256,12 @@ function setView(v) {
   const dict = v === "dict";
   elViewDivine.hidden = dict;
   elDictSection.hidden = !dict;
-  document.querySelectorAll(".view-btn").forEach((b) =>
-    b.classList.toggle("active", (b.dataset.view === "dict") === dict));
+  document.querySelectorAll(".view-btn").forEach((b) => {
+    const on = (b.dataset.view === "dict") === dict;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-selected", on ? "true" : "false");
+    b.tabIndex = on ? 0 : -1;
+  });
   hideTip();
   const hash = dict ? "#dict" : "";
   if (location.hash !== hash) {
