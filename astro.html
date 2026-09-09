@@ -86,6 +86,9 @@
       </div>
     </div>
     <div class="form-grid" style="margin-top:14px">
+      <div class="field" id="f-house-system"><label>宮位算法</label>
+        <select id="house-system"><option value="whole">整宮制（上升星座為第一宮）</option><option value="equal">等宮制（以上升度數每 30° 分宮）</option></select>
+        <div class="note">兩者都保留實際上升點；行星靠近宮界時，宮位可能不同。</div></div>
       <div class="field full"><label>你的問題</label>
         <input id="q-input" type="text" maxlength="200" placeholder="默想並寫下你想問的事(卜卦與問事占星必填,其餘選填)"></div>
       <div class="field"><label>AI 解讀語氣</label>
@@ -138,13 +141,15 @@ const PK = "dc-astro-profile";
 function saveProfile() {
   try { localStorage.setItem(PK, JSON.stringify({
     bd: $("b-date").value, bt: $("b-time").value, blat: $("b-lat").value, blon: $("b-lon").value, btz: $("b-tz").value,
-    pd: $("p-date").value, pt: $("p-time").value, plat: $("p-lat").value, plon: $("p-lon").value, ptz: $("p-tz").value
+    pd: $("p-date").value, pt: $("p-time").value, plat: $("p-lat").value, plon: $("p-lon").value, ptz: $("p-tz").value,
+    hs: $("house-system").value
   })); } catch (e) {}
 }
 try {
   const p = JSON.parse(localStorage.getItem(PK) || "{}");
   if (p.bd) { $("b-date").value = p.bd; $("b-time").value = p.bt || "12:00"; $("b-lat").value = p.blat; $("b-lon").value = p.blon; $("b-tz").value = p.btz; }
   if (p.pd) { $("p-date").value = p.pd; $("p-time").value = p.pt || "12:00"; $("p-lat").value = p.plat; $("p-lon").value = p.plon; $("p-tz").value = p.ptz; }
+  if (p.hs) $("house-system").value = p.hs;
 } catch (e) {}
 
 function setNowFields() {
@@ -233,6 +238,7 @@ function updateForm() {
   $("form-birth").hidden = !need[0];
   $("form-partner").hidden = !need[1];
   $("form-now").hidden = !need[2];
+  $("f-house-system").hidden = !(sysId === "west" || sysId === "horary");
   const s = SYS.find(x => x.id === sysId), m = s.modes.find(x => x[0] === modeId);
   $("p-title").textContent = s.name + "・" + m[1];
   $("p-hint").textContent = m[2];
@@ -259,8 +265,15 @@ function fullChart(when, lat, lon) {
   const list = DC.chart(when.jd);
   const am = DC.ascMc(when.jd, lat, lon);
   const ascSign = DC.signOf(am.asc);
-  for (const p of list) p.house = ((DC.signOf(p.lon) - ascSign) % 12 + 12) % 12 + 1;
-  return { list, asc: am.asc, mc: am.mc, ascSign, when, lat, lon };
+  const houseSystem = (sysId === "west" || sysId === "horary") ? $("house-system").value : "whole";
+  for (const p of list) p.house = houseSystem === "equal"
+    ? Math.floor(DC.rev(p.lon - am.asc) / 30) + 1
+    : ((DC.signOf(p.lon) - ascSign) % 12 + 12) % 12 + 1;
+  return { list, asc: am.asc, mc: am.mc, ascSign, when, lat, lon, houseSystem };
+}
+function houseOf(lon, ch) {
+  return ch.houseSystem === "equal" ? Math.floor(DC.rev(lon - ch.asc) / 30) + 1
+    : ((DC.signOf(lon) - ch.ascSign) % 12 + 12) % 12 + 1;
 }
 function chartTable(ch, withHouse, ascNote) { // ascNote:行運/合盤等場合的上升列註記(避免與本命宮位混淆)
   let h = '<div class="tbl-scroll"><table class="data"><tr><th>星體</th><th>位置</th>' + (withHouse ? "<th>宮位</th>" : "") + '<th>狀態</th></tr>';
@@ -311,7 +324,7 @@ function card(title, en, body) { return '<div class="result-card"><h3>' + title 
 function chartLines(ch, tag) { // 提示詞用
   const L = [tag + ":"];
   for (const p of ch.list) L.push("  " + p.zh + " " + DC.fmtLon(p.lon) + (p.retro ? "(逆行)" : "") + " 第" + p.house + "宮");
-  L.push("  上升 " + DC.fmtLon(ch.asc) + "/天頂 " + DC.fmtLon(ch.mc) + "(整宮制)");
+  L.push("  上升 " + DC.fmtLon(ch.asc) + "/天頂 " + DC.fmtLon(ch.mc) + "(宮位算法:" + (ch.houseSystem === "equal" ? "等宮制" : "整宮制") + ")");
   return L;
 }
 function sidLines(ch, ay, tag) {
@@ -360,8 +373,9 @@ function run() {
   const out = [], pr = [];
   MODES[modeId](B, P, N, q, out, pr);
   $("out").innerHTML = out.join("");
-  const head = ["你是一位資深占星師。以下是完整的起盤資料。" + DC.toneHead(),
-    "(本盤由「燭光星壇」以真實天文計算起出;宮位採整宮制,恆星制採 Lahiri。)", ""];
+  const activeHouse = (sysId === "west" || sysId === "horary") && $("house-system").value === "equal" ? "等宮制" : "整宮制";
+  const head = ["請依以下盤面資料解讀。" + DC.toneHead(),
+    "(天體位置使用簡化天文根數;本盤宮位採" + activeHouse + ",印度與宿曜採 Lahiri。請沿用所選算法,不要混用其他宮制。)", ""];
   if (q) head.push("我的問題:" + q, "");
   $("prompt-box").value = head.concat(pr).join("\n");
   $("prompt-sec").hidden = false;
@@ -385,7 +399,7 @@ MODES.natal = (B, P, N, q, out, pr) => {
 };
 MODES.transit = (B, P, N, q, out, pr) => {
   const nat = fullChart(B, B.lat, B.lon), tr = fullChart(N, N.lat, N.lon);
-  for (const p of tr.list) p.house = ((DC.signOf(p.lon) - nat.ascSign) % 12 + 12) % 12 + 1; // 行運落本命宮
+  for (const p of tr.list) p.house = houseOf(p.lon, nat); // 行運落本命宮
   const asps = DC.aspects(tr.list.filter(p => ["jup", "sat", "ura", "nep", "plu", "nod"].includes(p.id)),
     nat.list.concat([{ id: "asc", zh: "上升", lon: nat.asc }, { id: "mc", zh: "天頂", lon: nat.mc }]));
   let slow = tr.list.filter(p => ["jup", "sat", "ura", "nep", "plu"].includes(p.id))
@@ -400,7 +414,7 @@ MODES.transit = (B, P, N, q, out, pr) => {
 MODES.synastry = (B, P, N, q, out, pr) => {
   const a = fullChart(B, B.lat, B.lon), b = fullChart(P, P.lat, P.lon);
   const asps = DC.aspects(a.list, b.list).filter(x => ["sun", "moo", "ven", "mar", "mer", "asc"].includes(x.a.id) || ["sun", "moo", "ven", "mar"].includes(x.b.id));
-  const overlay = a.list.map(p => ({ ...p, house: ((DC.signOf(p.lon) - b.ascSign) % 12 + 12) % 12 + 1 }));
+  const overlay = a.list.map(p => ({ ...p, house: houseOf(p.lon, b) }));
   out.push(card("我的星盤", "", svgWheel(a) + chartTable(a, true)));
   out.push(card("對方星盤", "", svgWheel(b) + chartTable(b, true)));
   out.push(card("關係相位(合盤)", "Synastry", aspectRows(asps, 16, "我", "對方") +
@@ -413,9 +427,9 @@ MODES.synastry = (B, P, N, q, out, pr) => {
 MODES.composite = (B, P, N, q, out, pr) => {
   const a = fullChart(B, B.lat, B.lon), b = fullChart(P, P.lat, P.lon);
   const mid = (x, y) => DC.rev(x + ((((y - x) % 360) + 540) % 360 - 180) / 2);
-  const comp = { list: a.list.map((p, i) => ({ ...p, lon: mid(p.lon, b.list[i].lon), retro: false })), asc: mid(a.asc, b.asc), mc: mid(a.mc, b.mc) };
+  const comp = { list: a.list.map((p, i) => ({ ...p, lon: mid(p.lon, b.list[i].lon), retro: false })), asc: mid(a.asc, b.asc), mc: mid(a.mc, b.mc), houseSystem: a.houseSystem };
   comp.ascSign = DC.signOf(comp.asc);
-  for (const p of comp.list) p.house = ((DC.signOf(p.lon) - comp.ascSign) % 12 + 12) % 12 + 1;
+  for (const p of comp.list) p.house = houseOf(p.lon, comp);
   const inner = DC.aspects(comp.list);
   const tr = fullChart(N, N.lat, N.lon);
   const hits = DC.aspects(tr.list.filter(p => ["jup", "sat", "ura", "nep", "plu"].includes(p.id)), comp.list);
