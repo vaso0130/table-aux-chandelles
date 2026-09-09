@@ -97,9 +97,6 @@
     <div class="form-grid" style="margin-top:14px">
       <div class="field full"><label>你的問題（三術共用）</label>
         <input id="q-input" type="text" maxlength="200" placeholder="一個問題，三套語言來答——寫下它"></div>
-      <div class="field"><label>AI 解讀語氣</label>
-        <select id="tone-select"></select>
-        <input id="tone-custom" type="text" maxlength="40" placeholder="寫下你想要的語氣，例如：像老朋友一樣直說" hidden style="margin-top:6px"></div>
     </div>
     <div class="btn-row">
       <button class="gold-btn" id="btn-go" disabled>三 術 合 參</button>
@@ -111,6 +108,7 @@
 
   <section class="prompt-sec" id="prompt-sec" hidden>
     <p class="section-label">AI 合參提示詞</p>
+    <div class="tone-row"><label for="tone-select">建議語氣</label><select id="tone-select"></select><input id="tone-custom" type="text" maxlength="40" placeholder="寫下你想要的語氣，例如：像老朋友一樣直說" hidden></div>
     <textarea class="prompt-box" id="prompt-box" readonly></textarea>
     <div class="btn-row">
       <button class="gold-btn" id="btn-copy">複製提示詞</button>
@@ -366,11 +364,12 @@ GEN["n-meihua-zi"] = () => {
   const q = q3(); if (!q) throw fail("梅花字占需要先寫下問題");
   const chars = [...q.replace(/\s/g, "")];
   const n = nowT(), hb = DC.hourBranch(n.h);
-  const up = Math.max(1, Math.floor(chars.length / 2)), low = Math.max(1, chars.length - up); // 古法：平分，少者為上卦（取天輕清）
-  const mh = DC.meihua(up, low, chars.length + hb + 1);
+  const zi = DC.meihuaZi(chars.length, hb);   /* 十字以內字數加時，十一字以上平分（與式占館同式） */
+  const up = zi.up, low = zi.low;
+  const mh = DC.meihua(up, low, zi.mov);
   return { title: "梅花字占",
     html: "<p>問題 " + chars.length + " 字起卦：本卦" + mh.name + " 動爻" + mh.mov + "・變卦" + mh.bian.name + "</p>",
-    lines: ["梅花字占(以問題字數起卦，古法「字數平分，少者為上卦」:" + chars.length + " 字→上卦數" + up + "、下卦數" + low + ",加" + DC.BRANCHES[hb] + "時取動爻):",
+    lines: ["梅花字占(以問題字數起卦，" + zi.note + ":" + chars.length + " 字→上卦數" + up + "、下卦數" + low + ",加" + DC.BRANCHES[hb] + "時取動爻):",
       "  本卦 " + mh.name + ",動爻第" + mh.mov + "爻；互卦 " + mh.hu.name + ";變卦 " + mh.bian.name,
       "  體卦" + DC.TRIG[mh.ti] + "(" + DC.TRIG_WX[mh.ti] + ")、用卦" + DC.TRIG[mh.yong] + "(" + DC.TRIG_WX[mh.yong] + ");" + mh.rel] };
 };
@@ -598,9 +597,15 @@ GEN["c-yi"] = () => {
   const lines2 = lines.map((x, i) => mov.includes(i + 1) ? 1 - x : x);
   const l2 = trig(lines2.slice(0, 3)), u2 = trig(lines2.slice(3, 6));
   const name1 = DC.HEX_NAME[u1][l1], name2 = DC.HEX_NAME[u2][l2];
+  const mini = (DC.DECKS_MINI && DC.DECKS_MINI.yi) ? DC.DECKS_MINI.yi.cards : null;
+  const kw = nm => { const c = mini && mini.find(x => x[0] === nm); return c ? nm + "（" + c[1] + "，" + (c[2] === "+" ? "吉" : c[2] === "-" ? "慎" : "平") + "）" : nm; };
+  const ZHU = ["六爻皆靜，以本卦卦辭為斷（內卦為貞、外卦為悔）", "一爻動，專以本卦動爻之爻辭為斷", "二爻動，以本卦二動爻之爻辭為斷，居上之爻為主",
+    "三爻動，本卦為貞、之卦為悔，依朱子變占表前十主貞、後十主悔", "四爻動，以之卦中二不變爻之爻辭為斷，居下之爻為主", "五爻動，以之卦中唯一不變爻之爻辭為斷", "六爻皆動，乾坤以用九用六為斷，餘卦以之卦卦辭為斷"];
+  const hu = DC.HEX_NAME[trig([lines[2], lines[3], lines[4]])][trig([lines[1], lines[2], lines[3]])];
   return { title: "易經・擲卦",
     html: "<p>本卦" + name1 + (mov.length ? "・動爻" + mov.join(",") + "・之卦" + name2 : "・六爻安靜") + "</p>",
-    lines: ["易經三枚錢擲卦：本卦 " + name1 + (mov.length ? ",動爻第" + mov.join("、") + "爻，之卦 " + name2 : ",六爻安靜") ] };
+    lines: ["易經三枚錢擲卦：本卦 " + kw(name1) + (mov.length ? ",動爻第" + mov.join("、") + "爻，之卦 " + kw(name2) : ",六爻安靜") + "；互卦 " + hu,
+      "  斷法（朱子）：" + ZHU[mov.length] + "。" + (DC.DECK_GUIDES && DC.DECK_GUIDES.yi ? DC.DECK_GUIDES.yi : "")] };
 };
 GEN["c-yiju"] = () => {
   const i = DC.rand(DC.YIJU.length);

@@ -1760,7 +1760,7 @@ const YI_DATA = [
   ["地風升","Pushing Upward","good","上升・積小・柔升・南征","地中生木，升。像樹一樣安靜生長——積小以高大，一步一步，升而有階。"],
   ["澤水困","Oppression","bad","困窮・受制・守信・寡言","澤無水，困。資源枯竭、處處受制——身困志不困；有言不信，此刻少說多撐。"],
   ["水風井","The Well","mid","水井・共養・修井・不遷","木上有水，井。井養而不窮——把自己修成一口好井；改邑不改井，價值不因環境而變。"],
-  ["澤火革","Revolution","mid","變革・革新・順天・巳日","澤中有火，革。舊的必須翻過去——時機成熟再動手（巳日乃孚）,順天應人，革而當。"],
+  ["澤火革","Revolution","mid","變革・革新・順天・己日","澤中有火，革。舊的必須翻過去——時機成熟再動手（己日乃孚），順天應人，革而當。"],
   ["火風鼎","The Cauldron","good","鼎新・成器・養賢・正位","木上有火，鼎。革故之後鼎新——建立新秩序，培養新人才；正位凝命，大器已成。"],
   ["震為雷","The Arousing","mid","震動・驚醒・戒懼・不喪","洊雷，震。驚雷連響，人心惶惶——君子恐懼修省；震驚百里，不喪匕鬯，穩住手上的勺。"],
   ["艮為山","Keeping Still","mid","靜止・知止・背對・無咎","兼山，艮。該停就停——艮其背，不獲其身；止於所當止，思不出其位。"],
@@ -1792,43 +1792,87 @@ YI_CARDS.forEach((c, i) => {
   c.img = "cards-yijing/" + String(c.n).padStart(2, "0") + ".jpg";
 });
 
+/* 梅花起卦小引擎（牌桌館零依賴，與 divine-core.js DC.meihua 同法）：
+   先天卦序 乾一兌二離三震四巽五坎六艮七坤八；經卦三爻由下而上；KW[下卦][上卦]＝文王卦序 */
+const YI_MH = {
+  trig: ["乾","兌","離","震","巽","坎","艮","坤"],
+  wx: ["金","金","火","木","木","水","土","土"],
+  lines: [[1,1,1],[1,1,0],[1,0,1],[1,0,0],[0,1,1],[0,1,0],[0,0,1],[0,0,0]],
+  kw: [[1,43,14,34,9,5,26,11],[10,58,38,54,61,60,41,19],[13,49,30,55,37,63,22,36],[25,17,21,51,42,3,27,24],
+       [44,28,50,32,57,48,18,46],[6,47,64,40,59,29,4,7],[33,31,56,62,53,39,52,15],[12,45,35,16,20,8,23,2]],
+  order: ["木","火","土","金","水"],
+  trigOf(ls) { return this.lines.findIndex((t) => t[0] === ls[0] && t[1] === ls[1] && t[2] === ls[2]); },
+  hexName(u, l) { return YI_CARDS[this.kw[l][u] - 1].zh; },
+  hourNum(d) { return Math.floor(((d.getHours() + 1) % 24) / 2) + 1; },   /* 子1…亥12 */
+  rel(x, ti) {   /* 經卦 x 對體卦 ti 的五行關係（《梅花易數・體用總訣》） */
+    const i = (w) => this.order.indexOf(w), xw = this.wx[x], tw = this.wx[ti];
+    if (xw === tw) return "比和，和氣相扶，事多順遂";
+    if ((i(xw) + 1) % 5 === i(tw)) return "生體，得外力相助，吉";
+    if ((i(tw) + 1) % 5 === i(xw)) return "體生之，洩氣耗損，事多費力難成";
+    if ((i(xw) + 2) % 5 === i(tw)) return "剋體，外境相迫，凶，宜避其鋒";
+    return "體剋之，我能制事，事雖成而遲";
+  },
+  cast(n1, n2, h) {   /* 上卦數、下卦數、時辰數 → 本互變、體用、生剋 */
+    const u = (n1 - 1) % 8, l = (n2 - 1) % 8;
+    let mov = (n1 + n2 + h) % 6; if (mov === 0) mov = 6;
+    const ls = this.lines[l].concat(this.lines[u]);
+    const ls2 = ls.slice(); ls2[mov - 1] = 1 - ls2[mov - 1];
+    const l2 = this.trigOf(ls2.slice(0, 3)), u2 = this.trigOf(ls2.slice(3, 6));
+    const hl = this.trigOf([ls[1], ls[2], ls[3]]), hu = this.trigOf([ls[2], ls[3], ls[4]]);
+    const tiLower = mov > 3, ti = tiLower ? l : u, yong = tiLower ? u : l;
+    const huY = tiLower ? hu : hl, bianY = tiLower ? u2 : l2;   /* 互、變各取「用」那一側的經卦與體論生剋 */
+    const tag = (x) => `${this.trig[x]}（${this.wx[x]}）`;
+    return { u, l, mov, name: this.hexName(u, l), huName: this.hexName(hu, hl), bianName: this.hexName(u2, l2),
+      ti, yong, rel: this.rel(yong, ti), huRel: tag(huY) + this.rel(huY, ti), bianRel: tag(bianY) + this.rel(bianY, ti) };
+  },
+};
+
 const YI_SPREADS = [
-  { id:"yi-cast", name:"擲卦・六爻成卦", count:2, cols:2, cast:true,
-    desc:"正統起卦法：三枚銅錢擲六次，由下而上成卦。老陰老陽為動爻——本卦為體，之卦為變。",
-    positions:["本卦・體","之卦・變"], combos: () => [] },
+  { id:"yi-shi", name:"揲蓍・大衍筮法", count:2, cols:2, cast:true, method:"yarrow",
+    desc:"《繫辭》原法：五十策去其一，分二、掛一、揲四、歸奇，三變成一爻，十八變成卦。陽爻易動、陰爻難動，與《筮儀》命筮辭相配。",
+    positions:["本卦・貞","之卦・悔"], combos: () => [] },
+  { id:"yi-cast", name:"擲卦・三錢六擲", count:2, cols:2, cast:true,
+    desc:"《火珠林》系俗法：三枚銅錢擲六次，由下而上成卦。老陰老陽為動爻，本卦為貞（現況），之卦為悔（趨向）。",
+    positions:["本卦・貞","之卦・悔"], combos: () => [] },
   { id:"yi-one", name:"單卦・快抽", count:1, cols:1,
-    desc:"沒有銅錢的時候——心中默念所問之事，直接抽一卦。",
+    desc:"沒有銅錢的時候，心中默念所問之事，直接抽一卦。象徵抽籤，非筮法：沒有動爻，以卦辭與大象為斷。",
     positions:["本卦"], combos: () => [] },
   { id:"yi-three", name:"三卦・三才", count:3, cols:3,
-    desc:"天時、地利、人和——一件事的三個支點。",
+    desc:"借三才之名分三面看事：天時、地利、人和各抽一卦。三卦各為一象徵抽籤，非一卦六爻的三才之位。",
     positions:["天時","地利","人和"], combos: () => [] },
   { id:"yi-four", name:"四卦・元亨利貞", count:4, cols:4,
-    desc:"元亨利貞四德：開端、發展、轉機、結局。",
-    positions:["元・開端","亨・發展","利・轉機","貞・結局"], combos: () => [] },
-  { id:"yi-tiyong", name:"兩卦・梅花體用", count:2, cols:2,
-    desc:"梅花心易之法：體卦為我，用卦為事——體用相參，吉凶立判。",
-    positions:["體卦・我之情狀","用卦・事之應勢"],
-    combos:(d) => [{ label:"體用相參", a:d[0], b:d[1],
-      text:`以「${d[0].zh}」之體，應「${d[1].zh}」之用——我的「${d[0].keys.split("・")[0]}」，對上事的「${d[1].keys.split("・")[0]}」；體強則足以任事，用旺則其勢已至。` }] },
-  { id:"yi-sangua", name:"三卦・一事三占", count:3, cols:3,
-    desc:"一事起三卦：本卦觀其事，意卦觀其心，末卦觀其終。",
-    positions:["本卦・事之象","意卦・心之所向","末卦・事之所終"],
+    desc:"《文言》四德：元者善之長、亨者嘉之會、利者義之和、貞者事之幹。四卦各為一象徵抽籤，看一件事的發端、通達、所宜與守成。",
+    positions:["元・發端","亨・通達","利・所宜","貞・守成"], combos: () => [] },
+  { id:"yi-tiyong", name:"梅花・以牌起卦", count:2, cols:2,
+    desc:"邵子報數法，數從牌來：第一張卦序為上卦數，第二張為下卦數，加時辰數取動爻。動者為用、靜者為體，再看互卦與變卦對體的生剋。兩張牌只是取數，不論其卦義。",
+    positions:["上卦數・第一張卦序","下卦數・第二張卦序"],
+    combos:(d) => {
+      const h = YI_MH.hourNum(new Date());
+      const m = YI_MH.cast(d[0].n, d[1].n, h);
+      const T = YI_MH.trig, W = YI_MH.wx;
+      return [
+        { label:"起卦", a:d[0], b:d[1],
+          text:`第一張第 ${d[0].n} 卦取上卦 ${T[m.u]}，第二張第 ${d[1].n} 卦取下卦 ${T[m.l]}，加時辰數 ${h} 得動爻第 ${m.mov} 爻。本卦「${m.name}」，互卦「${m.huName}」，變卦「${m.bianName}」。` },
+        { label:"體用生剋", a:d[0], b:d[1],
+          text:`動爻在${m.mov > 3 ? "上" : "下"}卦，故${T[m.yong]}（${W[m.yong]}）為用、${T[m.ti]}（${W[m.ti]}）為體。用對體：${m.rel}。互卦用互${m.huRel}，此為過程；變卦${m.bianRel}，此為結局。` },
+      ];
+    } },
+  { id:"yi-sangua", name:"三卦・事心終", count:3, cols:3,
+    desc:"一事抽三卦：本卦觀其事，心卦觀其心，終卦觀其終。三卦各為一象徵抽籤，非《洪範》「三人占則從二人」的三筮法。",
+    positions:["本卦・事之象","心卦・心之所向","終卦・事之所終"],
     combos:(d) => [
       { label:"事 × 心", a:d[0], b:d[1],
-        text:`事象「${d[0].keys.split("・")[0]}」，心向「${d[1].keys.split("・")[0]}」——心與事同則順成，相違則先調其心。` },
+        text:`事象「${d[0].keys.split("・")[0]}」，心向「${d[1].keys.split("・")[0]}」。心與事同則順成，相違則先調其心。` },
       { label:"事 → 終", a:d[0], b:d[2],
-        text:`由「${d[0].zh}」而至「${d[2].zh}」——事勢終往「${d[2].keys.split("・")[0]}」處收束。` },
+        text:`由「${d[0].zh}」而至「${d[2].zh}」，事勢終往「${d[2].keys.split("・")[0]}」處收束。` },
     ] },
-  { id:"yi-liuwei", name:"六卦・六位時成", count:6, cols:1,
-    desc:"如乾之六龍，由下而上布六卦——初潛上亢，看一件事怎麼一步步走高，又在哪裡該收。",
+  { id:"yi-liuwei", name:"六階・潛見惕躍飛亢", count:6, cols:1,
+    desc:"借乾卦六龍為六個階段的模板，由下而上各抽一卦，看一件事怎麼一步步走高，又在哪裡該收。六張各為一整卦，非一卦六爻。",
     positions:["初・潛龍（蓄勢未動）","二・見龍（初露頭角）","三・惕龍（日乾夕惕）","四・躍龍（進退之際）","五・飛龍（大展之時）","上・亢龍（盛極知返）"],
     place:[[1,6],[1,5],[1,4],[1,3],[1,2],[1,1]],
-    combos:(d) => [
-      { label:"二五相應", a:d[1], b:d[4],
-        text:`內有「${d[1].keys.split("・")[0]}」之援，上有「${d[4].keys.split("・")[0]}」之主——內外相應則事濟，相違則先固其內。` },
-    ] },
+    combos: () => [] },
   { id:"yi-nine", name:"九宮・洛書陣", count:9, cols:3,
-    desc:"洛書九數布後天八卦：八方各主一事，中央太極為此問之心。",
+    desc:"洛書九數布後天八卦，八方各主一事，中央太極為此問之心。方位取象的占盤，非周易筮法。",
     positions:[
       "中五・太極（問事核心）","離九・南方（檯面名聲）","坎一・北方（暗流險阻)",
       "震三・東方（發動起事）","兌七・西方（口舌喜悅）","乾六・西北（貴人長上）",

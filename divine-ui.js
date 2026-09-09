@@ -172,7 +172,30 @@ DC.learnInit = function (build, after) {
       x.tabIndex = on ? 0 : -1;
     });
     document.body.classList.toggle("learning", isLearn);
-    if (isLearn && !learn.dataset.built) { learn.innerHTML = build(); learn.dataset.built = "1"; if (after) after(learn); }
+    if (isLearn && !learn.dataset.built) {
+      learn.innerHTML = build(); learn.dataset.built = "1";
+      /* 目次：一頁十來張教學卡不好讀，先給一列標題可跳可展；只展開第一張，其餘收著 */
+      var cards = Array.prototype.slice.call(learn.querySelectorAll("details.lcard"));
+      if (cards.length > 2) {
+        var toc = document.createElement("nav"); toc.className = "learn-toc"; toc.setAttribute("aria-label", "教學目次");
+        cards.forEach(function (c, i) {
+          c.id = c.id || "learn-" + (i + 1);
+          if (i === 0) c.open = true;
+          var a = document.createElement("a"); a.href = "#" + c.id; a.textContent = c.querySelector("h3").textContent;
+          a.addEventListener("click", function (e) { e.preventDefault(); c.open = true; c.scrollIntoView({ behavior: "smooth", block: "start" }); });
+          toc.appendChild(a);
+        });
+        learn.insertBefore(toc, learn.firstChild);
+        var all = document.createElement("button"); all.type = "button"; all.className = "ghost-btn learn-all"; all.textContent = "全部展開";
+        all.addEventListener("click", function () {
+          var open = cards.some(function (c) { return !c.open; });
+          cards.forEach(function (c) { c.open = open; });
+          all.textContent = open ? "全部收起" : "全部展開";
+        });
+        toc.appendChild(all);
+      } else cards.forEach(function (c) { c.open = true; });
+      if (after) after(learn);
+    }
   };
   tabs.forEach(function (b, i) {
     b.setAttribute("role", "tab");
@@ -218,7 +241,8 @@ DC.browser = function (mount, items, renderDetail) {
   draw(false);
   return { open: function (i) { view = i; draw(false); } };
 };
-DC.lcard = function (t, body) { return '<div class="result-card"><h3>' + t + "</h3>" + body + "</div>"; };
+/* 教學卡：可摺疊的 details，第一張預設展開；learnInit 會在頂端補一列目次 */
+DC.lcard = function (t, body) { return '<details class="result-card lcard"><summary><h3>' + t + "</h3></summary>" + body + "</details>"; };
 DC.ltable = function (headers, rows) {
   return '<div class="tbl-scroll"><table class="data wrap"><tr>' + headers.map(function (h) { return "<th>" + h + "</th>"; }).join("") + "</tr>" +
     rows.map(function (r) { return "<tr>" + r.map(function (c, i) { return "<td" + (i === 0 ? ' class="hl"' : "") + ">" + c + "</td>"; }).join("") + "</tr>"; }).join("") + "</table></div>";

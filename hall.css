@@ -107,6 +107,22 @@ body.learning .sys-row, body.learning .modes, body.learning .panel, body.learnin
 body.learning .prompt-sec, body.learning #hist-sec, body.learning .divine-only,
 body.learning #pool-group, body.learning #presets, body.learning #pick-count { display: none; }
 #view-learn .lead-para { color: var(--ivory-shade); font-size: 15px; line-height: 1.9; }
+/* 教學目次與可摺疊教學卡 */
+.learn-toc { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 26px 0 6px; }
+.learn-toc a {
+  color: var(--ivory-shade); text-decoration: none; font-size: 13px; letter-spacing: .06em;
+  border: 1px solid var(--felt-line); border-radius: 2px; padding: 6px 12px;
+  transition: border-color .2s, color .2s;
+}
+.learn-toc a:hover, .learn-toc a:focus-visible { border-color: var(--gold-dim); color: var(--gold-bright); }
+.learn-toc .learn-all { padding: 6px 12px; font-size: 12.5px; }
+details.lcard > summary { list-style: none; cursor: pointer; }
+details.lcard > summary::-webkit-details-marker { display: none; }
+details.lcard > summary h3 { margin: 0; padding-right: 1.6em; position: relative; }
+details.lcard > summary h3::after { content: "＋"; position: absolute; right: 0; top: 0; color: var(--gold-dim); font-weight: 400; }
+details.lcard[open] > summary h3::after { content: "－"; }
+details.lcard:not([open]) > summary h3 { border-bottom: none; padding-bottom: 0; }
+details.lcard > summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 table.data.wrap th, table.data.wrap td { white-space: normal; text-align: left; }
 table.data.wrap td:first-child { white-space: nowrap; }
 
@@ -374,6 +390,15 @@ table.data td.red { color: #E8A08F; }
 
 /* ── AI 提示詞 ── */
 .prompt-sec { margin-top: 26px; }
+/* 語氣選在提示詞旁：先起盤，再挑語氣，提示詞即時改寫（與牌桌館同流程） */
+.tone-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 12px; }
+.tone-row label { font-size: 12px; letter-spacing: .25em; text-indent: .25em; color: var(--gold-dim); white-space: nowrap; }
+.tone-row select, .tone-row input {
+  font-family: inherit; font-size: 13.5px; color: var(--ivory);
+  background: var(--felt-950); border: 1px solid var(--felt-line); border-radius: 2px; padding: 7px 10px;
+}
+.tone-row input { flex: 1; min-width: 180px; }
+.tone-row select:focus, .tone-row input:focus { outline: 1px solid var(--gold-dim); }
 .prompt-box {
   width: 100%; min-height: 260px; resize: vertical;
   font-family: "Consolas", "Noto Sans Mono CJK TC", monospace;

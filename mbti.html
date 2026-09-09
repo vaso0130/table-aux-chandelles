@@ -11,10 +11,17 @@
 .quiz-item .q-text { margin: 4px 0 10px; font-weight: 600; }
 .quiz-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 @media (max-width: 560px) { .quiz-opts { grid-template-columns: 1fr; } }
-.quiz-opt { text-align: left; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line, rgba(154,129,85,.35)); background: transparent; color: inherit; cursor: pointer; font: inherit; line-height: 1.5; }
-.quiz-opt:hover { border-color: var(--gold-bright, #E8C87A); }
-.quiz-opt.sel { border-color: var(--gold-bright, #E8C87A); background: rgba(232,200,122,.10); }
-.quiz-opt .op-tag { color: var(--gold-dim, #9A8155); margin-right: 6px; }
+.quiz-opt-text { text-align: left; padding: 8px 10px; border-left: 2px solid var(--line, rgba(154,129,85,.35)); line-height: 1.55; }
+.quiz-opt-text .op-tag { color: var(--gold-dim, #9A8155); margin-right: 6px; }
+/* 四段強度：A 很像／A 稍像／B 稍像／B 很像，沒有中點 */
+.quiz-scale { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
+.scale-btn { padding: 9px 4px; min-height: 40px; border-radius: 6px; border: 1px solid var(--line, rgba(154,129,85,.35)); background: transparent; color: var(--ivory-shade); cursor: pointer; font: inherit; font-size: 13.5px; letter-spacing: .04em; }
+.scale-btn:hover { border-color: var(--gold-bright, #E8C87A); }
+.scale-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.scale-btn.sel { border-color: var(--gold-bright, #E8C87A); background: rgba(232,200,122,.12); color: var(--gold-bright); }
+.scale-btn:nth-child(1), .scale-btn:nth-child(4) { font-weight: 600; }
+.quiz-rest { text-align: center; color: var(--gold-dim); font-size: 13px; letter-spacing: .2em; margin: 18px 0 14px; }
+.axis-bar .ab-se { position: absolute; top: 0; bottom: 0; left: 42.5%; width: 15%; background: rgba(232,200,122,.18); border-left: 1px dashed rgba(232,200,122,.45); border-right: 1px dashed rgba(232,200,122,.45); }
 .quiz-item.miss { border-color: #E8A08F; }
 .quiz-item.done { opacity: .72; }
 .quiz-item.done:hover, .quiz-item.done:focus-within { opacity: 1; }
@@ -24,7 +31,7 @@
 .axis-bar .ab-l, .axis-bar .ab-r { width: 5.5em; font-size: 13px; }
 .axis-bar .ab-r { text-align: right; }
 .axis-bar .ab-track { flex: 1; height: 10px; border-radius: 5px; background: rgba(154,129,85,.25); position: relative; overflow: hidden; }
-.axis-bar .ab-fill { position: absolute; top: 0; bottom: 0; left: 0; background: var(--gold-bright, #E8C87A); opacity: .85; }
+.axis-bar .ab-fill { position: absolute; top: 0; bottom: 0; left: 0; background: var(--gold-bright, #E8C87A); opacity: .85; mix-blend-mode: screen; }
 #quiz-prog { color: var(--gold-dim, #9A8155); font-size: 13px; }
 </style>
 
@@ -33,7 +40,7 @@
     <div class="plate">
       <p class="eyebrow">Le Salon des Miroirs</p>
       <h1>燭光鏡廳</h1>
-      <p class="subtitle">三十六面小鏡，照出十六種靈魂的姿態——MBTI 量的不是你是誰，是你偏好怎麼活。</p>
+      <p class="subtitle">四十八面小鏡，照出十六種靈魂的姿態——MBTI 量的不是你是誰，是你偏好怎麼活。</p>
     </div>
   </header>
 
@@ -56,15 +63,12 @@
   <section id="view-learn"></section>
 
   <section class="panel" id="panel">
-    <h2>三十六題，憑直覺答</h2>
-    <span class="hint">每題選一個比較像平常的你的答案——別想「應該」，想「習慣」。約四分鐘。</span>
+    <h2>四十八題，憑直覺答</h2>
+    <span class="hint">每題先挑比較像平常的你的那一句，再說有多像。別想「應該」，想「習慣」。約六分鐘。</span>
     <div id="quiz" style="margin-top:14px"></div>
     <div class="form-grid" style="margin-top:14px">
       <div class="field full"><label>想帶著問的事（選填）</label>
         <input id="q-input" type="text" maxlength="200" placeholder="例：這份工作適合我嗎?——會連同你的類型一起寫進提示詞"></div>
-      <div class="field"><label>AI 解讀語氣</label>
-        <select id="tone-select"></select>
-        <input id="tone-custom" type="text" maxlength="40" placeholder="寫下你想要的語氣，例如：像老朋友一樣直說" hidden style="margin-top:6px"></div>
     </div>
     <div class="btn-row">
       <button class="gold-btn" id="btn-go">照 鏡</button>
@@ -77,6 +81,7 @@
 
   <section class="prompt-sec" id="prompt-sec" hidden>
     <p class="section-label">AI 解讀提示詞</p>
+    <div class="tone-row"><label for="tone-select">建議語氣</label><select id="tone-select"></select><input id="tone-custom" type="text" maxlength="40" placeholder="寫下你想要的語氣，例如：像老朋友一樣直說" hidden></div>
     <textarea class="prompt-box" id="prompt-box" readonly></textarea>
     <div class="btn-row">
       <button class="gold-btn" id="btn-copy">複製提示詞</button>
@@ -91,7 +96,7 @@
   </section>
 
   <p class="footnote">
-    本測驗為本站原創題本（每軸九題、正反向配題、四軸輪轉出題防猜量）,量的是<b>偏好</b>不是能力；結果會隨人生階段流動，把它當鏡子，別當籠子。<br>
+    本測驗為本站原創題本（每軸十二題、四段強度、正反向配題與配對題、四軸輪轉出題防猜量）,量的是<b>偏好</b>不是能力；結果會隨人生階段流動，把它當鏡子，別當籠子。<br>
     本測驗非臨床工具，不用於任何心理診斷；類型也不宜作為招聘、分組或評價他人的依據——照自己可以，釘別人不行。<br>
     MBTI 為類型學而非占卜——故鏡廳自成一館，不入 MIX 合參。
   </p>
@@ -107,77 +112,175 @@ const $ = id => document.getElementById(id);
    出題採四軸輪轉(EI→SN→TF→JP 循環九輪)且各軸內極性不規則交錯——
    相鄰題永遠不同軸，防「這一段在量內外向」的自我一致性偏誤。 */
 const Q_AX = {
-  EI: [ /* 極性序 E,I,I,E,E,I,E,I,E */
-    { a: "E", ta: "聚會結束回到家，我常覺得充飽了電", tb: "聚會結束回到家，我需要獨處把電充回來" },
+  EI: [ /* 極性序 E,I,I,E,E,I,I,E,E,I,E,I */
+    { a: "E", ta: "和一群人相處幾小時後，我反而更有精神", tb: "和一群人相處幾小時後，我需要獨處回血", pair: "EI-1" },
     { a: "I", ta: "想法先在心裡演練成熟，才願意說出口", tb: "想法邊說邊成形，講著講著就清楚了" },
-    { a: "I", ta: "週末理想行程：安靜的一人時光或一兩位熟友", tb: "週末理想行程：約上朋友，行程滿滿才過癮" },
-    { a: "E", ta: "路上巧遇熟人，我樂得停下來聊上幾句", tb: "路上巧遇熟人，寒暄兩句我就想繼續趕路" },
+    { a: "I", ta: "週末我更常想一個人或和一兩位熟人過", tb: "週末我更常想找一群人一起過" },
+    { a: "E", ta: "路上巧遇熟人，我樂得停下來聊上幾句", tb: "路上巧遇熟人，寒暄兩句就好，不多留" },
     { a: "E", ta: "煩惱時，找人聊一聊最能整理思緒", tb: "煩惱時，自己靜靜想最能整理思緒" },
-    { a: "I", ta: "我的朋友圈小而深，幾個人就足夠", tb: "我的朋友圈廣而活，常有新面孔加進來" },
-    { a: "E", ta: "小組討論時，想到什麼我當場就說", tb: "小組討論時，我常把想法留到會後再私下說" },
-    { a: "I", ta: "聚光燈打過來，我想把它讓給別人", tb: "聚光燈打過來，那正是我的主場" },
-    { a: "E", ta: "遇到新環境，我主動開口認識人", tb: "遇到新環境，我先觀察，等人來搭話" }
+    { a: "I", ta: "認識新朋友，對我是耗能的事", tb: "認識新朋友，對我是充電的事" },
+    { a: "I", ta: "多人討論時，我大多聽，開口的次數不多", tb: "多人討論時，我常是先開口的那個" },
+    { a: "E", ta: "一整天沒和人說話，我會悶得慌", tb: "一整天沒和人說話，我覺得剛剛好" },
+    { a: "E", ta: "認識我的人，很快就知道我在想什麼", tb: "認識我很久的人，也未必知道我在想什麼" },
+    { a: "I", ta: "被介紹給一群陌生人，我需要一段時間熱身", tb: "被介紹給一群陌生人，我很快就能聊開" },
+    { a: "E", ta: "遇到新環境，我主動開口認識人", tb: "遇到新環境，我先觀察，等人來搭話" },
+    { a: "I", ta: "忙了一天，我最想要的是安靜獨處", tb: "忙了一天，我最想要的是找人碰面", pair: "EI-1" }
   ],
-  SN: [ /* 極性序 S,N,S,S,N,N,S,N,S */
-    { a: "S", ta: "我信得過親眼所見、親手做過的", tb: "我著迷於還沒發生、可能會有的" },
-    { a: "N", ta: "讀東西常跳著抓概念，細節之後再補", tb: "讀東西按部就班，細節看仔細才安心" },
-    { a: "S", ta: "描述一件事，我先講具體發生了什麼", tb: "描述一件事，我先講它代表什麼意義" },
-    { a: "S", ta: "照著驗證過的方法做，穩", tb: "老方法先放一邊，我想試新路子" },
-    { a: "N", ta: "討論事情時，我常想「五年後這會變成什麼」", tb: "討論事情時，我常想「下一步具體要做什麼」" },
-    { a: "N", ta: "我常從一件小事聯想到八竿子遠的地方", tb: "我就事論事，聯想太遠容易失焦" },
+  SN: [ /* 極性序 S,N,S,S,N,N,S,N,N,S,N,S */
+    { a: "S", ta: "比起可能會有什麼，我更在意現在確實有什麼", tb: "比起現在確實有什麼，我更在意可能會有什麼" },
+    { a: "N", ta: "讀東西常跳著抓概念，細節之後再補", tb: "讀東西從頭細讀，細節看清才敢說懂" },
+    { a: "S", ta: "描述一件事，我先講具體發生了什麼", tb: "描述一件事，我先講它代表什麼意義", pair: "SN-1" },
+    { a: "S", ta: "做熟悉的事，照原來的方法就好", tb: "做熟悉的事，我總忍不住換個做法" },
+    { a: "N", ta: "討論時，我更容易被整體走向與可能性吸引", tb: "討論時，我更容易被眼前事實與實際情況吸引" },
+    { a: "N", ta: "我常從一件小事聯想到八竿子遠的地方", tb: "我就事論事，很少讓聯想跑遠" },
     { a: "S", ta: "回憶往事，我記得的是畫面、聲音與細節", tb: "回憶往事，我記得的是那件事給我的意義" },
-    { a: "N", ta: "閒聊時，我總想把話題引向背後的道理與模式", tb: "日常瑣事本身就有滋味，不必事事往深處挖" },
-    { a: "S", ta: "「實際」對我是讚美", tb: "「有想像力」對我是讚美" }
+    { a: "N", ta: "閒聊時，我常不自覺聊到背後的道理", tb: "閒聊時，聊眼前的事本身就有滋味" },
+    { a: "N", ta: "一個想法有趣，就算用不上我也樂意琢磨", tb: "一個想法再有趣，用不上我就懶得琢磨" },
+    { a: "S", ta: "若只能得到一種評價，我寧願是「務實可靠」", tb: "若只能得到一種評價，我寧願是「有想像力」" },
+    { a: "N", ta: "看完一部電影，我先想到的是它想說什麼", tb: "看完一部電影，我先想到的是哪幾幕最好看", pair: "SN-1" },
+    { a: "S", ta: "學新東西，我要看到實例才算懂", tb: "學新東西，我先抓原理，例子可有可無" }
   ],
-  TF: [ /* 極性序 T,F,T,F,T,T,F,T,F */
-    { a: "T", ta: "做決定，先看邏輯與利弊", tb: "做決定，先看對人的影響與感受" },
-    { a: "F", ta: "朋友訴苦，我先接住情緒再說", tb: "朋友訴苦，我先幫忙分析怎麼解決" },
+  TF: [ /* 極性序 T,F,T,F,T,T,F,F,T,F,T,F */
+    { a: "T", ta: "做決定，先看邏輯與利弊", tb: "做決定，先看對人的影響與感受", pair: "TF-1" },
+    { a: "F", ta: "朋友訴苦，我最先冒出的是「他一定很難受」", tb: "朋友訴苦，我最先冒出的是「這該怎麼解」" },
     { a: "T", ta: "說實話比顧面子重要，委婉但要說", tb: "顧到對方心情，有些話可以不說" },
-    { a: "F", ta: "團隊裡我在意大家處得好不好", tb: "團隊裡我在意事情做得對不對" },
+    { a: "F", ta: "團隊出狀況，我先擔心關係會不會傷到", tb: "團隊出狀況，我先擔心事情是不是走偏" },
     { a: "T", ta: "好的決定，是換了誰來看都站得住腳", tb: "好的決定，是把每個人的處境都放進來掂量" },
-    { a: "T", ta: "稱讚要有憑有據，我才說得出口", tb: "稱讚是一種溫暖，不必句句都有憑據" },
+    { a: "T", ta: "稱讚要有憑有據，我才說得出口", tb: "稱讚是為了讓人暖，不必句句拿證據" },
     { a: "F", ta: "規則之外，人情也是正當理由", tb: "例外一開，規則就不成規則" },
-    { a: "T", ta: "該喊停的案子，就算夥伴會受傷，我也會喊停", tb: "該喊停的案子，我會為了夥伴再撐一段，找個軟著陸" },
-    { a: "F", ta: "選隊友，合拍優先，能力可以練", tb: "選隊友，能力優先，合不合拍其次" }
+    { a: "F", ta: "被批評時，我更在意對方的口氣", tb: "被批評時，我更在意對方說得對不對" },
+    { a: "T", ta: "該喊停的案子，就算夥伴會受傷我也喊停", tb: "該喊停的案子，我會為夥伴再撐一段找軟著陸" },
+    { a: "F", ta: "選隊友，合拍優先，能力可以練", tb: "選隊友，能力優先，合不合拍其次" },
+    { a: "T", ta: "聽到一個說法，我先找哪裡有漏洞", tb: "聽到一個說法，我先找哪裡可以認同" },
+    { a: "F", ta: "兩個方案難分高下時，我選大家比較能接受的", tb: "兩個方案難分高下時，我選道理上更站得住的", pair: "TF-1" }
   ],
-  JP: [ /* 極性序 J,P,P,J,P,J,J,P,J */
-    { a: "J", ta: "旅行前，行程訂好我才放鬆", tb: "旅行就是要留白，走到哪算到哪" },
-    { a: "P", ta: "死線前的爆發力，是我的超能力", tb: "提前完成、從容交件，才是我的風格" },
+  JP: [ /* 極性序 J,P,P,J,P,J,P,J,J,P,P,J */
+    { a: "J", ta: "出門辦幾件事，我先排好順序再出門", tb: "出門辦幾件事，到了再看，順路就做" },
+    { a: "P", ta: "有期限的事，我常拖到接近期限才火力全開", tb: "有期限的事，我早早開始，遠在期限前完成" },
     { a: "P", ta: "計畫改來改去沒關係，選項多是好事", tb: "定了就別再改，反覆讓人心累" },
-    { a: "J", ta: "待辦清單劃掉一項，快樂似神仙", tb: "清單是參考用的，興致來了先做別的" },
-    { a: "P", ta: "話別說死，留點彈性好辦事", tb: "話說清楚定下來，大家才好做事" },
-    { a: "J", ta: "我的桌面/檔案有一套自己的秩序", tb: "我的桌面/檔案亂中有序，找得到就好" },
-    { a: "J", ta: "難的事先啃掉，心裡才踏實", tb: "簡單的先清，難的等狀態來了一口氣解決" },
-    { a: "P", ta: "事情懸著沒定案，表示選項還開著，挺好", tb: "事情懸著沒定案，我渾身不對勁，想快點拍板" },
-    { a: "J", ta: "臨時變動會打亂我的節奏，好消息也一樣", tb: "臨時變動讓我來勁，像多開了一扇門" }
+    { a: "J", ta: "我靠清單過日子，劃掉一項有踏實感", tb: "清單只是參考，興致來了先做別的" },
+    { a: "P", ta: "我習慣先不把話說死，保留調整空間", tb: "話說清楚定下來，大家才好做事" },
+    { a: "J", ta: "做到一半冒出更有趣的事，我先把手上的做完", tb: "做到一半冒出更有趣的事，我先去看看新的" },
+    { a: "P", ta: "事情懸著沒定案，表示選項還開著，挺好", tb: "事情懸著沒定案，我渾身不對勁，想快點拍板", pair: "JP-1" },
+    { a: "J", ta: "接到任務，我先把步驟與時程排出來", tb: "接到任務，我先動手，邊做邊調整" },
+    { a: "J", ta: "臨時變動會打亂我的節奏，好消息也一樣", tb: "臨時變動讓我來勁，像多開了一扇門" },
+    { a: "P", ta: "買東西時，我常是逛著逛著才決定", tb: "買東西前，我通常已經知道要買什麼" },
+    { a: "P", ta: "一天沒有安排，對我是自由", tb: "一天沒有安排，我會先替它排點什麼" },
+    { a: "J", ta: "聊到一半沒結論，我會想推大家先定下來", tb: "聊到一半沒結論，我覺得先擱著也無妨", pair: "JP-1" }
   ]
 };
 const AX_ORDER = ["EI", "SN", "TF", "JP"];
-const N_AX = Q_AX.EI.length;             // 每軸題數（奇數——永無平手）
+const N_AX = Q_AX.EI.length;             // 每軸題數
 const QUIZ = [];
 for (let r = 0; r < N_AX; r++) for (const ax of AX_ORDER) QUIZ.push(Object.assign({ ax }, Q_AX[ax][r]));
 const AXES = { EI: ["E", "I", "外向", "內向"], SN: ["S", "N", "實感", "直覺"], TF: ["T", "F", "思考", "情感"], JP: ["J", "P", "判斷", "感知"] };
-const GRADE = { 5: "邊界", 6: "清晰", 7: "明顯", 8: "強烈", 9: "一面倒" }; // 勝方票數→偏好強度(9 題制)
+/* 四段強度作答：權重 ±2/±1（正值指向該題 A 選項）；不設中點，避免中間值堆積 */
+const W = { A2: 2, A1: 1, B1: -1, B2: -2 };
+const SCALE = [["A2", "A 很像"], ["A1", "A 稍像"], ["B1", "B 稍像"], ["B2", "B 很像"]];
+/* 偏好指數 PCI = S/(2n) ∈ [-1,1]；|PCI|<0.15 約在一個標準誤內，視為邊界 */
+const gradeOf = (pci) => { const a = Math.abs(pci); return a < 0.15 ? "邊界" : a < 0.35 ? "清晰" : a < 0.60 ? "明顯" : "強烈"; };
 
 /* 十六型速寫（原創文案）:[稱號, 一句話, 光面, 影面, 合拍舞台, 辨析] */
 const TYPES = {
-  ISTJ: ["盡責的石匠", "一磚一瓦，把承諾砌成城牆", "可靠、縝密、說到做到", "太守成，對變動與模糊不耐", "制度、品質、營運——需要「準」的地方", "與 INTJ 分家:ISTJ 信已被驗證的路,INTJ 信推演出來的路;ISTJ 修橋,INTJ 畫未來的橋"],
-  ISFJ: ["守夜的燭台", "安靜地把每個人的杯子續滿", "體貼入微、忠誠、記得所有小事", "不擅拒絕，委屈往肚裡吞", "照護、教育、後勤——需要「穩」的地方", "與 ESFJ 分家:ISFJ 在幕後把事做妥,ESFJ 在場中把人張羅；一個守夜，一個掌燈"],
-  INFJ: ["提燈的先知", "看得見別人心裡未熄的火", "洞察、理想、溫柔而堅定", "完美主義，易燃燒殆盡", "諮商、寫作、願景設計——需要「深」的地方", "與 INFP 分家:INFJ 從人群的圖景出發，會為和諧調整說法;INFP 從內心的原則出發，會為真實拒絕調整"],
-  INTJ: ["棋局的建築師", "十步之外，棋已下完", "戰略、獨立、系統思考", "不耐低效，顯得冷與傲", "策略、研究、架構——需要「遠」的地方", "與 INTP 分家:INTJ 想清楚是為了做，對死線敬畏;INTP 想清楚本身就是目的，對死線好奇"],
-  ISTP: ["冷靜的拆解匠", "先拆開看看，壞的自然會好", "臨危不亂、動手力強、極簡", "疏離，對承諾與流程過敏", "工程、急救、工藝——需要「快狠準」的地方", "與 INTP 分家:ISTP 拆真的機器，手到病除;INTP 拆概念的機器，想通為止"],
-  ISFP: ["林間的畫師", "把日子過成一幅不署名的畫", "審美、溫和、活在當下", "迴避衝突，錯過為自己發聲", "設計、照護、手作——需要「美」的地方", "與 INFP 分家:ISFP 用五感過日子，美在眼前;INFP 用意義過日子，美在心裡"],
-  INFP: ["懷詩的旅人", "口袋裡永遠有一首沒寫完的詩", "理想、共感、忠於價值", "耽於內心劇場，行動遲疑", "創作、公益、療癒——需要「真」的地方", "與 INFJ 分家:INFP 忠於自己的原則，寧折不彎;INFJ 顧全人群的圖景，曲中求全"],
-  INTP: ["思想的鐘錶匠", "把宇宙拆成齒輪，再優雅地裝回去", "分析、原創、求真", "想得深做得少，日常失序", "理論、演算法、寫作——需要「透」的地方", "與 INTJ 分家:INTP 要模型漂亮,INTJ 要結論落地;INTP 的桌面亂中有宇宙,INTJ 的宇宙必須排進行事曆"],
-  ESTP: ["場上的閃電", "球來就打，想是打完的事", "行動、膽識、臨場反應", "衝動，忽略長線與感受", "銷售、談判、救火——需要「衝」的地方", "與 ESTJ 分家:ESTP 見機行事，規則是參考;ESTJ 建立規則，行事有章法"],
-  ESFP: ["宴席的煙火", "有我在，冷場是不存在的", "熱情、感染力、及時行樂", "怕無聊，財務與計畫鬆散", "表演、活動、服務——需要「亮」的地方", "與 ENFP 分家:ESFP 玩眼前這一場，盡興就好;ENFP 玩的是下一個可能，興頭在遠方"],
-  ENFP: ["逐光的風箏", "每個明天都是新大陸", "點子噴發、真誠、帶人起飛", "三分鐘熱度，收尾困難", "企劃、傳播、開創——需要「新」的地方", "與 ENTP 分家:ENFP 為熱愛點火，先問值不值得;ENTP 為好奇點火，先問有不有趣"],
-  ENTP: ["辯場的鍊金師", "唱反調不是抬槓，是煉金", "機敏、辯才、破框思考", "為辯而辯，執行常斷線", "創新、辯護、創業——需要「變」的地方", "與 INTP 分家:ENTP 想法要拿出去交鋒才痛快,INTP 想法在腦內自洽就滿足"],
-  ESTJ: ["執旗的隊長", "隊伍散著，我來排好", "組織、果決、扛責任", "強勢，聽不進柔軟的聲音", "管理、執行、制度——需要「齊」的地方", "與 ENTJ 分家:ESTJ 把今天管好，秩序即勝利;ENTJ 把明天拿下，擴張即秩序"],
-  ESFJ: ["爐邊的主人", "大家都好，我才算好", "熱心、周到、凝聚人群", "太在意評價，易被情勒", "人資、社群、款待——需要「和」的地方", "與 ENFJ 分家:ESFJ 照顧眼前人的冷暖,ENFJ 召喚眾人的方向；一個端茶，一個舉旗"],
-  ENFJ: ["領航的燈塔", "照亮別人時，自己也在發光", "感召、利他、看見潛能", "背太多人的課題，忘了自己", "教學、領導、倡議——需要「光」的地方", "與 INFJ 分家:ENFJ 站上台前點人成火,INFJ 退到燈下看火的形狀"],
-  ENTJ: ["開疆的統帥", "目標既定，山海皆路", "魄力、效率、天生指揮官", "急起來只看目標不看人，身後常留下擦傷", "統御、擴張、變革——需要「贏」的地方", "與 INTJ 分家:ENTJ 要調兵遣將立刻開打,INTJ 要先把沙盤推到無懈可擊"]
+  ISTJ: ["盡責的石匠", "答應過的事，會在說好的那天出現",
+    "交辦的事會照約定時間與規格完成，不必人催；做過的流程記得比誰都細",
+    "把「照規矩」當安全感，遇到沒有前例的狀況會先卡住，並把別人的即興讀成不負責",
+    "需要有人把事情做準、做完整、做得經得起查核的地方",
+    "與 INTJ 分家：ISTJ 信已被驗證的路，INTJ 信推演出來的路；ISTJ 修橋，INTJ 畫未來的橋",
+    "死板——其實是把可靠當承諾，先確認方法能行，再願意改"],
+  ISFJ: ["守夜的燭台", "安靜地把每個人的杯子續滿",
+    "記得同事的忌口與家人的生日這類小事，並在人開口前就把需要備好",
+    "把別人的需要排在自己前面成了習慣，拒絕時會愧疚，累積的委屈常在很久之後才爆",
+    "需要有人長期、穩定地把後方顧好，讓別人放心往前的地方",
+    "與 ESFJ 分家：ISFJ 在幕後把事做妥，ESFJ 在場中把人張羅；一個守夜，一個掌燈",
+    "沒主見——其實是把和諧放在前面，意見留在心裡不代表沒有"],
+  INFJ: ["提燈的先知", "看得見別人心裡未熄的火",
+    "能從幾句話聽出對方沒說出口的處境，並把零散的觀察收成一個長期的判斷",
+    "對人與事的期待都拉得很高，一旦現實對不上，會先把自己燒到空，再突然斷開關係",
+    "需要有人看長遠、顧人心，並把複雜的事說成大家聽得懂的一句話的地方",
+    "與 INFP 分家：INFJ 從人群的圖景出發，為和諧調整說法；INFP 從內心的原則出發，為真實拒絕調整",
+    "神秘或裝深沉——其實是想好了才說，說出來的通常是結論而非過程"],
+  INTJ: ["棋局的建築師", "十步之外，棋已下完",
+    "面對混亂的問題，會先在腦中建好整體架構，再把多餘的步驟一一砍掉",
+    "對自己看穿的事沒耐性重複解釋，容易把別人的猶豫當成不夠聰明，因此少了同盟",
+    "需要有人先看見終局、再倒推路徑，並敢於推翻現行做法的地方",
+    "與 INTP 分家：INTJ 想清楚是為了做，對死線敬畏；INTP 想清楚本身就是目的，對死線好奇",
+    "冷傲——其實是把精力留給要緊的事，對不重要的社交不投資"],
+  ISTP: ["冷靜的拆解匠", "先拆開看看，壞的自然會好",
+    "東西壞了、狀況亂了，會先動手摸清原理再修，臨場處理比多數人穩",
+    "把承諾與流程當束縛，能拖就拖；別人的情緒需要往往沒察覺，回神時人已走遠",
+    "需要有人臨場判斷、親手解決、少開會多動手的地方",
+    "與 INTP 分家：ISTP 拆真的機器，手到病除；INTP 拆概念的機器，想通為止",
+    "冷漠——其實是用行動表達關心，話少不等於不在乎"],
+  ISFP: ["林間的畫師", "把日子過成一幅不署名的畫",
+    "對顏色、聲音、質地的細微差別反應敏銳，用作品與陪伴而非言語表達在乎",
+    "為了不起衝突而把不滿吞下，等到底線被踩才突然抽身，讓對方摸不著頭緒",
+    "需要有人以親手做出來的東西與當下的細心，把體驗做到位的地方",
+    "與 INFP 分家：ISFP 用五感過日子，美在眼前；INFP 用意義過日子，美在心裡",
+    "沒企圖心——其實是在乎的東西很具體，不為別人定義的成功趕路"],
+  INFP: ["懷詩的旅人", "口袋裡永遠有一首沒寫完的詩",
+    "對違背自己價值的事會清楚拒絕，即使代價是失去機會；能替說不出口的人把感受寫出來",
+    "在心裡把事情演練太多遍，真正動手時已耗掉大半力氣，理想與交出來的成品常有落差",
+    "需要有人守住意義、用文字或作品把人心說清楚的地方",
+    "與 INFJ 分家：INFP 忠於自己的原則，寧折不彎；INFJ 顧全人群的圖景，曲中求全",
+    "玻璃心——其實是把價值看得比面子重，觸到底線才會激烈反應"],
+  INTP: ["思想的鐘錶匠", "把宇宙拆成齒輪，再優雅地裝回去",
+    "遇到一個說不通的地方會追到底，願意為了想通而推翻自己昨天的結論",
+    "想清楚之後就失去動手的興趣，帳單、期限與人情往來這類日常事務常被放到最後",
+    "需要有人把複雜的東西想透、找出底層規律，而不急著交差的地方",
+    "與 INTJ 分家：INTP 要模型漂亮，INTJ 要結論落地；一個桌面亂中有宇宙，一個宇宙排進行事曆",
+    "心不在焉——其實是把注意力全給了正在想的問題，不是不理人"],
+  ESTP: ["場上的閃電", "局面一變，我已經動了",
+    "現場一出狀況，會在別人還在討論時先做出可行的一步；讀對方的反應快而準",
+    "動得快就懶得回頭看，長線的後果與別人被忽略的感受，常在事後才變成要收拾的帳",
+    "需要有人臨場應變、在壓力下當機立斷、用行動打開局面的地方",
+    "與 ESTJ 分家：ESTP 見機行事，規則是參考；ESTJ 建立規則，行事有章法",
+    "衝動或不動腦——其實是在做中想，判斷藏在動作裡，不是沒有判斷"],
+  ESFP: ["宴席的爐火", "此時此地，就是全部的舞台",
+    "能在幾分鐘內讓一桌陌生人放下防備；學東西靠動手與觀察，而非讀說明書",
+    "長期規畫與抽象討論會讓你抽離，容易用「先做再說」逃避需要坐下來想的事",
+    "需要有人臨場接住氣氛與人，讓現場的每個人都被看見的地方",
+    "與 ENFP 分家：ESFP 玩眼前這一場，盡興就好；ENFP 玩的是下一個可能，興頭在遠方",
+    "膚淺——其實是以行動與感官理解世界，不是不思考，是不用坐著思考"],
+  ENFP: ["逐光的風箏", "每個明天都是新大陸",
+    "從一件小事能生出好幾個方向，並讓身邊的人真的相信其中一個做得成",
+    "新的可能一出現，舊事就失去吸引力，開頭的熱度常撐不到收尾，把善後留給別人",
+    "需要有人開頭、串連不同的人與點子、把可能說到讓人想跟的地方",
+    "與 ENTP 分家：ENFP 為熱愛點火，先問值不值得；ENTP 為好奇點火，先問有不有趣",
+    "三分鐘熱度——其實是對意義要求很高，一旦確認值得，會撐得比誰都久"],
+  ENTP: ["辯場的鍊金師", "唱反調不是抬槓，是煉金",
+    "聽到任何定論會本能地找反例，常因此發現別人沒看到的第二條路",
+    "辯贏比做成更過癮，點子丟出去就交給別人，執行到一半失去興趣的次數比完成的多",
+    "需要有人打破現有框架、在爭論中找出新做法、不怕唱反調的地方",
+    "與 INTP 分家：ENTP 想法要拿出去交鋒才痛快，INTP 想法在腦內自洽就滿足",
+    "愛抬槓——其實是用反駁測試想法的強度，針對的是論點不是人"],
+  ESTJ: ["執旗的隊長", "隊伍散著，我來排好",
+    "一群人沒方向時，會先把分工、時程與規則說清楚，並確實追到每件事有人負責",
+    "把「有效率」當唯一標準，對慢一拍或情緒化的聲音沒耐性，別人便不再把真話告訴你",
+    "需要有人把混亂變成可運作的秩序，並敢於承擔決定後果的地方",
+    "與 ENTJ 分家：ESTJ 把今天管好，秩序即勝利；ENTJ 把明天拿下，擴張即秩序",
+    "專斷——其實是覺得該有人負責，別人不接，就自己接"],
+  ESFJ: ["爐邊的主人", "先確認每個人都在，事情才算開始",
+    "能察覺誰被冷落並不動聲色地補位，記得別人隨口說過的偏好並在下次用上",
+    "把「大家好不好」當自己的成績單，別人情緒低落會被讀成自己的失職，因此難以拒絕人",
+    "需要有人把散落的人串起來、讓大家願意留下並互相照應的地方",
+    "與 ENFJ 分家：ESFJ 照顧眼前人的冷暖，ENFJ 召喚眾人的方向；一個顧爐火，一個舉火把",
+    "討好——其實是把關係當責任，而不是討賞"],
+  ENFJ: ["領航的燈塔", "照亮別人時，自己也在發光",
+    "能看出一個人還沒發揮的部分，並用對方聽得進去的方式把它說出來、推一把",
+    "別人的課題背了太多，等到自己撐不住才發現沒人知道你也需要幫忙",
+    "需要有人凝聚眾人、把方向說到讓人願意一起走的地方",
+    "與 INFJ 分家：ENFJ 站上台前點人成火，INFJ 退到燈下看火的形狀",
+    "太會說話、不真誠——其實是把說服當照顧，動機多半是想讓人變好"],
+  ENTJ: ["開疆的統帥", "目標既定，山海皆路",
+    "定下目標後會立刻拆成可執行的步驟並調度資源，別人還在猶豫時已經上路",
+    "急起來只看目標不看人，同行的人受傷了自己常是最後知道的，回頭時隊伍已經變薄",
+    "需要有人擔起決策、推動變革、把大目標拆成可執行的路的地方",
+    "與 INTJ 分家：ENTJ 要調兵遣將立刻開打，INTJ 要先把沙盤推到無懈可擊",
+    "霸道——其實是把結果看得比舒服重要，對自己的要求一樣嚴"]
 };
+
+const Q_META = { perAxis: 12, pairs: ["EI-1", "SN-1", "TF-1", "JP-1"] };
 /* 認知功能：四字母底下的引擎 */
 const FN = { Ni: "內傾直覺", Ne: "外傾直覺", Si: "內傾實感", Se: "外傾實感", Ti: "內傾思考", Te: "外傾思考", Fi: "內傾情感", Fe: "外傾情感" };
 const STACK = {
@@ -197,24 +300,33 @@ const GRIP = {
   Fi: "平日運籌帷幄，壓力下情感決堤：突然覺得不被感激，陷入罕見的脆弱與自我懷疑",
   Ti: "平日暖場顧人，壓力下轉向冷酷的自我批判：鑽牛角尖挑自己的錯，變得刻薄"
 };
-const ans = new Array(QUIZ.length).fill(null); // "A" | "B"
+const ans = new Array(QUIZ.length).fill(null); // "A2" | "A1" | "B1" | "B2"
 
 function renderQuiz() {
   const box = $("quiz");
   box.innerHTML = '<div id="quiz-sticky"><i></i></div>';
+  const REST = Math.max(8, Math.round(QUIZ.length / 4));   /* 每四分之一插一段小歇 */
   QUIZ.forEach((it, i) => {
+    if (i > 0 && i % REST === 0) {
+      const r = document.createElement("p");
+      r.className = "quiz-rest"; r.textContent = "歇一口氣。剩 " + (QUIZ.length - i) + " 題。";
+      box.appendChild(r);
+    }
     const d = document.createElement("div");
     d.className = "quiz-item"; d.dataset.i = i;
     d.innerHTML = '<div class="q-no">第 ' + (i + 1) + ' 題</div><div class="q-text">比較像我的是——</div>' +
       '<div class="quiz-opts">' +
-      '<button type="button" class="quiz-opt" data-v="A"><span class="op-tag">A</span>' + it.ta + "</button>" +
-      '<button type="button" class="quiz-opt" data-v="B"><span class="op-tag">B</span>' + it.tb + "</button></div>";
-    d.querySelectorAll(".quiz-opt").forEach(b => b.onclick = () => {
+      '<div class="quiz-opt-text"><span class="op-tag">A</span>' + it.ta + "</div>" +
+      '<div class="quiz-opt-text"><span class="op-tag">B</span>' + it.tb + "</div></div>" +
+      '<div class="quiz-scale" role="radiogroup" aria-label="第 ' + (i + 1) + ' 題">' +
+      SCALE.map(([v, label]) => '<button type="button" class="scale-btn" role="radio" aria-checked="false" data-v="' + v + '">' + label + "</button>").join("") +
+      "</div>";
+    d.querySelectorAll(".scale-btn").forEach(b => b.onclick = () => {
       ans[i] = b.dataset.v;
       d.classList.remove("miss"); d.classList.add("done");
-      d.querySelectorAll(".quiz-opt").forEach(x => x.classList.toggle("sel", x === b));
+      d.querySelectorAll(".scale-btn").forEach(x => { const on = x === b; x.classList.toggle("sel", on); x.setAttribute("aria-checked", on ? "true" : "false"); });
       const n = ans.filter(Boolean).length;
-      $("quiz-prog").textContent = n < QUIZ.length ? "已答 " + n + "/" + QUIZ.length : "答完了——照鏡吧";
+      $("quiz-prog").textContent = n < QUIZ.length ? "已答 " + n + "/" + QUIZ.length : "答完了，照鏡吧";
       document.querySelector("#quiz-sticky i").style.width = (n / QUIZ.length * 100) + "%";
     });
     box.appendChild(d);
@@ -225,18 +337,37 @@ DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prom
 DC.histBind();
 
 function card(t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
-function poleOf(it, a) { const [p1, p2] = AXES[it.ax]; return a === "A" ? it.a : (it.a === p1 ? p2 : p1); }
+function poleOf(it, side) { const [p1, p2] = AXES[it.ax]; return side === "A" ? it.a : (it.a === p1 ? p2 : p1); }
+/* 計分：每軸 S=Σ權重（正向第一極），PCI=S/(2n)；分半（軸內奇偶題）異號一律降為邊界；
+   配對題（同 pair）選出的極不同計一次不一致；A 側比例過高或過低標「順著同一邊作答」 */
 function score() {
-  const cnt = {};
-  QUIZ.forEach((it, i) => { const p = poleOf(it, ans[i]); cnt[p] = (cnt[p] || 0) + 1; });
-  let type = "", axes = [];
+  let type = "", aCount = 0;
+  const axes = [], pairs = {};
   for (const ax of AX_ORDER) {
     const [p1, p2, n1, n2] = AXES[ax];
-    const c1 = cnt[p1] || 0, c2 = cnt[p2] || 0;
-    type += c1 >= c2 ? p1 : p2;                 // 奇數題制，永無平手
-    axes.push({ ax, p1, p2, n1, n2, c1, c2 });
+    let S = 0, odd = 0, even = 0, k = 0;
+    QUIZ.forEach((it, i) => {
+      if (it.ax !== ax) return;
+      const w = W[ans[i]];
+      const toward = it.a === p1 ? w : -w;
+      S += toward; if (k++ % 2) even += toward; else odd += toward;
+      if (ans[i][0] === "A") aCount++;
+      if (it.pair) (pairs[it.pair] = pairs[it.pair] || []).push(poleOf(it, ans[i][0]));
+    });
+    const n = k, pci = S / (2 * n);
+    const splitFlip = odd !== 0 && even !== 0 && Math.sign(odd) !== Math.sign(even);
+    const grade = splitFlip ? "邊界" : gradeOf(pci);
+    const win = S >= 0 ? p1 : p2;
+    const flipBy = Math.max(1, Math.ceil((Math.abs(S) + 1) / 4));   /* 改幾題（很像→很像反向）就翻面 */
+    axes.push({ ax, p1, p2, n1, n2, S, n, pci, grade, win, splitFlip, border: grade === "邊界", flipBy });
+    type += win;
   }
-  return { type, axes };
+  const pairList = Object.keys(pairs).filter(k => pairs[k].length === 2);
+  const incons = pairList.filter(k => pairs[k][0] !== pairs[k][1]).length;
+  const total = QUIZ.length;
+  const lean = aCount >= Math.round(total * 0.83) || aCount <= Math.round(total * 0.17);
+  const cred = incons >= 2 ? "低" : incons === 1 ? "中" : "高";
+  return { type, axes, incons, nPairs: pairList.length, lean, cred, aCount, total };
 }
 $("btn-go").onclick = () => {
   $("go-hint").textContent = "";
@@ -252,53 +383,73 @@ $("btn-go").onclick = () => {
   const R = score();
   const T = TYPES[R.type];
   const st = STACK[R.type];
-  const axisLabel = a => { const leftWin = a.c1 >= a.c2; const w = leftWin ? a.p1 : a.p2, n = leftWin ? a.n1 : a.n2; return w + "(" + n + ") " + Math.max(a.c1, a.c2) + ":" + Math.min(a.c1, a.c2) + "・" + GRADE[Math.max(a.c1, a.c2)]; };
+  const fmtPci = (a) => (a.pci >= 0 ? "+" : "−") + Math.abs(a.pci).toFixed(2);
+  const axisLabel = a => a.win + "（" + (a.win === a.p1 ? a.n1 : a.n2) + "）" + fmtPci(a) + "・" + a.grade;
   const barsH = R.axes.map(a => {
-    const leftWin = a.c1 >= a.c2;
-    const pctL = Math.round(a.c1 / N_AX * 100);
+    const leftWin = a.win === a.p1;
+    const pctL = Math.round((a.S + 2 * a.n) / (4 * a.n) * 100);   /* 全偏第一極=100%，全偏第二極=0% */
     return '<div class="axis-bar"><span class="ab-l"' + (leftWin ? ' style="color:var(--gold-bright)"' : "") + ">" + a.p1 + " " + a.n1 + '</span>' +
-      '<span class="ab-track"><span class="ab-fill" style="width:' + pctL + '%"></span></span>' +
+      '<span class="ab-track"><span class="ab-se" title="±一個標準誤：落在這一帶的差距只是雜訊"></span><span class="ab-fill" style="width:' + pctL + '%"></span></span>' +
       '<span class="ab-r"' + (!leftWin ? ' style="color:var(--gold-bright)"' : "") + ">" + a.n2 + " " + a.p2 + "</span></div>";
   }).join("");
-  /* 邊界軸（僅差一票）→姊妹類型：換一票就是另一面鏡子 */
-  const bd = R.axes.filter(a => Math.abs(a.c1 - a.c2) === 1);
+  /* 邊界軸→姊妹類型：改幾題就是另一面鏡子 */
+  const bd = R.axes.filter(a => a.border);
   const alts = bd.map(a => {
     const t = R.type.split("");
     t[AX_ORDER.indexOf(a.ax)] = (t[AX_ORDER.indexOf(a.ax)] === a.p1) ? a.p2 : a.p1;
-    const k = t.join("");
-    return { ax: a.ax, k };
+    return { ax: a.ax, k: t.join(""), flipBy: a.flipBy };
   });
+  /* 可信度：配對題一致性、順著同一邊作答、分半異號 */
+  const credWhy = [];
+  if (R.nPairs) credWhy.push("同構念配對題 " + R.nPairs + " 組，其中 " + R.incons + " 組答得相反");
+  if (bd.length) credWhy.push("邊界軸 " + bd.length + " 條（" + bd.map(a => a.ax).join("、") + "）");
+  const flips = R.axes.filter(a => a.splitFlip);
+  if (flips.length) credWhy.push("同軸前後半題指向相反：" + flips.map(a => a.ax).join("、"));
+  if (R.lean) credWhy.push("A 側選了 " + R.aCount + "/" + R.total + " 題，疑似順著同一邊作答");
+  const credLevel = R.lean ? "低" : R.cred;
+  const credText = credLevel === "低"
+    ? "這次的鏡子有點花。建議改天、換個心情再照一次，再把結果當真。"
+    : credLevel === "中"
+    ? "大致可信，但邊界軸請當作「兩邊都用得順手」，不要急著站隊。"
+    : "作答前後一致，這面鏡子照得算清楚。";
   const out = [];
-  out.push(card("鏡中之人:" + R.type, T[0],
+  out.push(card("鏡中之人：" + R.type, T[0],
     '<p class="lead">' + T[1] + "</p>" + barsH +
     "<p>" + R.axes.map(axisLabel).join("・") + "</p>" +
-    "<p><b>光面</b>:" + T[2] + "。<br><b>影面</b>:" + T[3] + "。<br><b>合拍舞台</b>:" + T[4] + "。<br><b>辨析</b>:" + T[5] + "。</p>" +
-    '<p style="color:var(--muted)">同軸只差一票(' + Math.ceil(N_AX / 2) + ":" + Math.floor(N_AX / 2) + ')屬於邊界——兩邊你都用得順手，情境會決定你出哪隻手。反過來，一面倒也只是偏好鮮明，不代表另一側的能力缺席——T/F 尤其如此：它量的是決策時誰先發言，不是邏輯或同理的能力值。</p>'));
+    "<p><b>光面</b>：" + T[2] + "。<br><b>影面</b>：" + T[3] + "。<br><b>合拍舞台</b>：" + T[4] + "。<br><b>辨析</b>：" + T[5] + "。" + (T[6] ? "<br><b>常被誤讀成</b>：" + T[6] + "。" : "") + "</p>" +
+    '<p style="color:var(--muted)">偏好指數從 −1 到 +1，正負只代表方向。絕對值小於 0.15 的軸算邊界，兩邊你都用得順手，情境會決定你出哪隻手。指數大也只是偏好鮮明，不代表另一側的能力缺席。T/F 尤其如此：它量的是決策時誰先發言，不是邏輯或同理的能力值。</p>'));
+  out.push(card("這面鏡子有多可信", "可信度：" + credLevel,
+    "<p class=\"lead\">" + credText + "</p>" +
+    (credWhy.length ? "<p>" + credWhy.join("；") + "。</p>" : "<p>配對題答得一致，沒有邊界軸，作答也沒有偏向某一側。</p>") +
+    (bd.length ? "<p>" + bd.map(a => a.ax + " 軸只要改 " + a.flipBy + " 題就會翻面").join("；") + "。</p>" : "")));
   out.push(card("引擎室：認知功能", st.join(" · "),
-    "<p><b>主導</b> " + st[0] + " " + FN[st[0]] + "——你最順手的那隻手，不假思索就在用。<br>" +
-    "<b>輔助</b> " + st[1] + " " + FN[st[1]] + "——副駕駛，替主導補盲區；成熟與否看它。<br>" +
-    "<b>第三</b> " + st[2] + " " + FN[st[2]] + "——中年後漸醒的援軍，刻意練習的好標的。<br>" +
-    "<b>劣勢</b> " + st[3] + " " + FN[st[3]] + "——壓力破口:" + GRIP[st[3]] + "。</p>" +
-    '<p style="color:var(--muted)">成長方向：別急著補劣勢，先把輔助功能養壯——它才是主導的煞車與方向盤。</p>'));
+    "<p><b>主導</b> " + st[0] + " " + FN[st[0]] + "，你最順手的那隻手，不假思索就在用。<br>" +
+    "<b>輔助</b> " + st[1] + " " + FN[st[1]] + "，副駕駛，替主導補盲區；成熟與否看它。<br>" +
+    "<b>第三</b> " + st[2] + " " + FN[st[2]] + "，中年後漸醒的援軍，刻意練習的好標的。<br>" +
+    "<b>劣勢</b> " + st[3] + " " + FN[st[3]] + "，壓力破口：" + GRIP[st[3]] + "。</p>" +
+    '<p style="color:var(--muted)">成長方向：別急著補劣勢，先把輔助功能養壯，它才是主導的煞車與方向盤。功能堆疊與壓力反應是類型圈的詮釋模型，沒有實證研究背書，當作反思的鏡片就好。</p>'));
   if (alts.length) {
     out.push(card("鏡緣的倒影", "sister types",
-      "<p>你有 " + alts.length + " 條軸站在邊界上，以下姊妹類型的鏡子也值得照一照:</p><p>" +
-      alts.map(x => x.ax + " 軸僅差一票 → <b>" + x.k + "</b>(" + TYPES[x.k][0] + "——" + TYPES[x.k][1] + ")").join("<br>") +
+      "<p>你有 " + alts.length + " 條軸站在邊界上，以下姊妹類型的鏡子也值得照一照：</p><p>" +
+      alts.map(x => x.ax + " 軸改 " + x.flipBy + " 題就翻面 → <b>" + x.k + "</b>（" + TYPES[x.k][0] + "，" + TYPES[x.k][1] + "）").join("<br>") +
       "</p><p style='color:var(--muted)'>邊界不是量錯，是你真的兩邊都靈活。</p>"));
   }
   $("out").innerHTML = out.join("");
-  const pr = ["你是一位精通 MBTI、榮格認知功能與人格心理學的顧問。這是我剛完成的測驗結果(" + QUIZ.length + " 題原創題本，每軸 " + N_AX + " 題、二選一)。" + DC.toneHead(), ""];
-  if (q) pr.push("我的問題:" + q, "");
-  pr.push("MBTI 測驗結果:");
-  pr.push("  類型:" + R.type + "(" + T[0] + "——" + T[1] + ")");
-  R.axes.forEach(a => pr.push("  " + a.ax + " 軸:" + a.p1 + "(" + a.n1 + ") " + a.c1 + " 票 vs " + a.p2 + "(" + a.n2 + ") " + a.c2 + " 票——" + GRADE[Math.max(a.c1, a.c2)] + (Math.abs(a.c1 - a.c2) === 1 ? "(邊界，兩側皆可用)" : "")));
-  pr.push("  類型速寫：光面「" + T[2] + "」；影面「" + T[3] + "」；合拍舞台「" + T[4] + "」；辨析:" + T[5]);
-  pr.push("  認知功能堆疊：主導 " + st[0] + "(" + FN[st[0]] + ")、輔助 " + st[1] + "(" + FN[st[1]] + ")、第三 " + st[2] + "(" + FN[st[2]] + ")、劣勢 " + st[3] + "(" + FN[st[3]] + ";壓力反應:" + GRIP[st[3]] + ")");
-  if (alts.length) pr.push("  邊界軸的姊妹類型:" + alts.map(x => x.ax + " 軸僅差一票→" + x.k + "(" + TYPES[x.k][0] + ")").join(";"));
-  pr.push("  逐題作答（我選的那句,[ ]內為該題指向）:");
-  QUIZ.forEach((it, i) => pr.push("    " + (i + 1) + ". [" + poleOf(it, ans[i]) + "] " + (ans[i] === "A" ? it.ta : it.tb)));
-  pr.push("  方法說明：本測驗為二選一自陳、每軸 " + N_AX + " 題，強度為粗略分級而非精確測量；請把類型當假設而非結論。四軸量的都是「偏好的優先序」而非能力——尤其 T/F:F 偏好強不代表邏輯弱,T 偏好強不代表冷漠；若要驗證 T/F,請追問我「當人的利益與該做的事真的衝突時，實際怎麼決策」的具體事例，以事例為準。", "");
-  pr.push("請解讀:1. 這個類型的核心運作方式——請用認知功能堆疊（主導/輔助/第三/劣勢）講，不要只憑四字母泛談。2. 各軸偏好強度的意義——邊界軸請特別說明兩側切換的情境" + (alts.length ? ",並比較我與姊妹類型(" + alts.map(x => x.k).join("、") + ")的辨析，判斷哪面鏡子更貼" : "") + "。3. 從逐題作答找出模式（例如某一側的票是否集中來自特定情境）,指出四字母看不出的細節。4. 光面如何放大、影面與劣勢功能的壓力反應如何馴服（給具體練習）。5. 職涯與關係中的合拍與地雷。6. 提醒:MBTI 是偏好快照不是天花板——哪些情境值得刻意練習非偏好側。" + (q ? "7. 針對我的問題，以此類型視角直答。" : ""));
+  const strengthOf = (v) => (v[1] === "2" ? "很像" : "稍像");
+  const pr = ["你是一位精通 MBTI、榮格認知功能與人格心理學的顧問。這是我剛完成的測驗結果（" + QUIZ.length + " 題原創題本，每軸 " + N_AX + " 題，成對強迫選擇加四段強度）。" + DC.toneHead(), ""];
+  if (credLevel === "低") pr.push("※ 本次作答可信度低（" + credWhy.join("；") + "），請把以下結果當作草稿，多用提問核對。", "");
+  if (q) pr.push("我的問題：" + q, "");
+  pr.push("MBTI 測驗結果：");
+  pr.push("  類型：" + R.type + "（" + T[0] + "，" + T[1] + "）");
+  pr.push("  可信度：" + credLevel + (credWhy.length ? "（" + credWhy.join("；") + "）" : ""));
+  R.axes.forEach(a => pr.push("  " + a.ax + " 軸：偏向 " + a.win + "（" + (a.win === a.p1 ? a.n1 : a.n2) + "），偏好指數 " + fmtPci(a) + "，" + a.grade + (a.border ? "（邊界，兩側皆可用，改 " + a.flipBy + " 題即翻面）" : "")));
+  pr.push("  類型速寫：光面「" + T[2] + "」；影面「" + T[3] + "」；合拍舞台「" + T[4] + "」；辨析：" + T[5] + (T[6] ? "；常被誤讀成：" + T[6] : ""));
+  pr.push("  認知功能堆疊（類型圈詮釋模型，非實證）：主導 " + st[0] + "（" + FN[st[0]] + "）、輔助 " + st[1] + "（" + FN[st[1]] + "）、第三 " + st[2] + "（" + FN[st[2]] + "）、劣勢 " + st[3] + "（" + FN[st[3]] + "；壓力反應：" + GRIP[st[3]] + "）");
+  if (alts.length) pr.push("  邊界軸的姊妹類型：" + alts.map(x => x.ax + " 軸→" + x.k + "（" + TYPES[x.k][0] + "）").join("；"));
+  pr.push("  逐題作答（我選的那句與強度，[ ] 內為該題指向）：");
+  QUIZ.forEach((it, i) => pr.push("    " + (i + 1) + ". [" + poleOf(it, ans[i][0]) + "・" + strengthOf(ans[i]) + "] " + (ans[i][0] === "A" ? it.ta : it.tb)));
+  pr.push("  方法說明：自陳式成對強迫選擇，每軸 " + N_AX + " 題、四段強度加權計分；偏好指數是粗略分級而非精確測量，請把類型當假設而非結論。四軸量的都是「偏好的優先序」而非能力，尤其 T/F：F 偏好強不代表邏輯弱，T 偏好強不代表冷漠；若要驗證 T/F，請追問我「當人的利益與該做的事真的衝突時，實際怎麼決策」的具體事例，以事例為準。", "");
+  pr.push("請解讀：1. 這個類型的核心運作方式，可用認知功能堆疊（主導/輔助/第三/劣勢）講，但請說明那是詮釋模型。2. 各軸偏好強度的意義，邊界軸請特別說明兩側切換的情境" + (alts.length ? "，並比較我與姊妹類型（" + alts.map(x => x.k).join("、") + "）的辨析，判斷哪面鏡子更貼" : "") + "。3. 從逐題作答與強度找出模式（例如「很像」是否集中在特定情境），指出四字母看不出的細節。4. 光面如何放大、影面與劣勢功能的壓力反應如何馴服（給具體練習）。5. 職涯與關係中的合拍與地雷。6. 提醒：MBTI 是偏好快照不是天花板，哪些情境值得刻意練習非偏好側。" + (q ? "7. 針對我的問題，以此類型視角直答。" : ""));
   $("prompt-box").value = pr.join("\n");
   $("prompt-sec").hidden = false;
   $("out").scrollIntoView({ behavior: "smooth" });
@@ -324,19 +475,19 @@ function buildLearn() {
     '<p class="lead-para">四個字母是門牌，認知功能才是屋裡的人。榮格說：感知有實感(S)與直覺(N),判斷有思考(T)與情感(F),各自又分朝外(e)與朝內(i)——共八種功能。每型按固定順序用四個:<b>主導</b>是慣用手，<b>輔助</b>是副駕駛，<b>第三</b>中年漸醒，<b>劣勢</b>是壓力的破口。同是 INTJ 與 ISTJ,只差一個字母，引擎卻整組不同(Ni-Te vs Si-Te)——這就是為什麼「差一個字母」讀起來判若兩人。照完鏡，去結果卡的「引擎室」看你的四缸。</p>');
   h += DC.lcard("十六型一覽", DC.ltable(["類型", "稱號", "一句話", "功能堆疊"], Object.keys(TYPES).map(k => [k, TYPES[k][0], TYPES[k][1], STACK[k].join("·")])));
   h += DC.lcard("MBTI 科學嗎?——誠實說",
-    '<p class="lead-para">學界對 MBTI 有真實的批評：重測可能變型（尤其邊界軸）、把連續的光譜切成二分、預測工作表現的效度有限；人格研究的學術主流是五大人格。這些批評都對。但 MBTI 有一樣東西沒被打倒——它給了普通人一套<b>談論差異而不分高下</b>的語言：內向不是害羞，務實不是無趣。本站的立場：把它當自我反思的鏡子與對話的起點，別當診斷、別當招聘門檻、更別當攻擊別人的標籤。鏡子照人，不釘人。</p>');
+    '<p class="lead-para">學界對 MBTI 有真實的批評：重測可能變型（尤其邊界軸）、把連續的光譜切成二分、預測工作表現的效度有限；人格研究的學術主流是五大人格。這些批評都對。本站題本每軸十二題、四段強度，仍是粗略的自陳工具，結果頁的「可信度」卡會告訴你這次照得清不清楚；認知功能堆疊與壓力反應則是類型圈的詮釋模型，沒有實證研究背書，當鏡片用就好。但 MBTI 有一樣東西沒被打倒——它給了普通人一套<b>談論差異而不分高下</b>的語言：內向不是害羞，務實不是無趣。本站的立場：把它當自我反思的鏡子與對話的起點，別當診斷、別當招聘門檻、更別當攻擊別人的標籤。鏡子照人，不釘人。</p>');
   h += DC.lcard("鏡與命盤的分際",
     '<p class="lead-para">同一屋簷下，八字館、人類圖排的是<b>生辰</b>——不管你怎麼看自己，盤就是那張盤；鏡廳照的是<b>自陳</b>——答案全部來自你對自己的認識，你變，鏡子跟著變。一個是「盤面上的你」，一個是「你以為的你」，兩者對照著看很有趣，但別拿一個去「驗證」另一個——它們量的根本不是同一件事。這也是鏡廳不入 MIX 合參的原因：類型學不是占卜，混著算是對兩邊都不敬。</p>');
-  h += DC.lcard("照鏡的心法", '<p class="lead-para">① 憑直覺答，選「習慣」不選「應該」。② 同軸只差一票是邊界——代表你兩側都靈活，不必急著站隊，姊妹類型的速寫也讀一讀。③ 類型沒有好壞，只有舞台合不合。④ 隔幾年再照一次，鏡子會告訴你，你走了多遠。</p>');
+  h += DC.lcard("照鏡的心法", '<p class="lead-para">① 憑直覺答，選「習慣」不選「應該」；「很像」與「稍像」誠實分，鏡子才照得清。② 偏好指數在 ±0.15 以內是邊界，代表你兩側都靈活，不必急著站隊，姊妹類型的速寫也讀一讀。③ 類型沒有好壞，只有舞台合不合。④ 隔幾年再照一次，鏡子會告訴你，你走了多遠。</p>');
   return h;
 }
 DC.learnInit(buildLearn);
 
-/* 開發測試:?test=mbti(全 A 作答自動照鏡；全 A=ESTJ 為正反向配題的驗證錨) */
+/* 開發測試：?test=mbti（全「A 很像」自動照鏡；A 側極性平衡時每軸 S=0→ESTJ 且四軸邊界，並觸發「順著同一邊作答」警示） */
 (function () {
   const t = new URLSearchParams(location.search).get("test");
   if (!t) return;
-  document.querySelectorAll(".quiz-item").forEach(d => d.querySelector('.quiz-opt[data-v="A"]').click());
+  document.querySelectorAll(".quiz-item").forEach(d => d.querySelector('.scale-btn[data-v="A2"]').click());
   $("q-input").value = "測試提問：這件事會順利嗎？";
   setTimeout(() => { try { $("btn-go").onclick(); document.title = $("prompt-sec").hidden ? "MBTI-TEST-FAIL(hidden):" + $("go-hint").textContent : "MBTI-TEST-OK"; } catch (e) { document.title = "MBTI-TEST-FAIL " + e.message; } }, 60);
 })();

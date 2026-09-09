@@ -75,9 +75,6 @@
     <div class="form-grid" style="margin-top:14px">
       <div class="field full"><label>你的問題</label>
         <input id="q-input" type="text" maxlength="200" placeholder="默想，寫下你想問的事——式占以問立局，建議必填"></div>
-      <div class="field"><label>AI 解讀語氣</label>
-        <select id="tone-select"></select>
-        <input id="tone-custom" type="text" maxlength="40" placeholder="寫下你想要的語氣，例如：像老朋友一樣直說" hidden style="margin-top:6px"></div>
     </div>
     <div class="btn-row">
       <button class="gold-btn" id="btn-go">起 局</button>
@@ -89,6 +86,7 @@
 
   <section class="prompt-sec" id="prompt-sec" hidden>
     <p class="section-label">AI 解讀提示詞</p>
+    <div class="tone-row"><label for="tone-select">建議語氣</label><select id="tone-select"></select><input id="tone-custom" type="text" maxlength="40" placeholder="寫下你想要的語氣，例如：像老朋友一樣直說" hidden></div>
     <textarea class="prompt-box" id="prompt-box" readonly></textarea>
     <div class="btn-row">
       <button class="gold-btn" id="btn-copy">複製提示詞</button>
@@ -129,7 +127,7 @@ const SYS = [
     modes: [
       ["mh-time", "時間起卦", "以起局時刻的年支、農曆月日與時辰起卦——不必報數，時間本身就是卦。"],
       ["mh-num", "報數起卦", "心中默想問題，隨口報兩個數——第一數為上卦，第二數為下卦，加時辰取動爻。"],
-      ["mh-zi", "字占起卦", "把問題寫下來，以字數起卦——古法「字數平分，少者為上卦」，你的問題本身就是卦。"]
+      ["mh-zi", "字占起卦", "把問題寫下來，以字數起卦：十字以內字數為上卦、字數加時為下卦，十一字以上平分、少者為上卦。你的問題本身就是卦。"]
     ] },
   { id: "heluo", name: "河洛理數", sub: "生辰化卦", now: false, birthReq: true,
     hint: "八字化天地之數，天數地數取先天卦，元堂爻變後天卦——你的命是一枚卦。" }
@@ -405,12 +403,13 @@ function meihuaCard(mh, srcDesc, out, pr) {
     '<div class="gua-row">' + guaBox("本卦", mh.upper, mh.lower, mh.mov) + guaBox("互卦", mh.hu.upper, mh.hu.lower, 0) + guaBox("變卦", mh.bian.upper, mh.bian.lower, 0) + "</div>" +
     '<p class="lead">體卦 ' + DC.TRIG[mh.ti] + "(" + DC.TRIG_WX[mh.ti] + ")・用卦 " + DC.TRIG[mh.yong] + "(" + DC.TRIG_WX[mh.yong] + ")</p>" +
     "<p>" + mh.rel + "。</p>" +
-    "<p>互卦「" + mh.hu.name + "」看過程，變卦「" + mh.bian.name + "」看結局。</p>"));
+    "<p>互卦「" + mh.hu.name + "」看過程：" + mh.huRel + "。<br>變卦「" + mh.bian.name + "」看結局：" + mh.bianRel + "。</p>"));
   pr.push("梅花易數(" + srcDesc + "):");
   pr.push("  本卦 " + mh.name + "(" + DC.TRIG[mh.upper] + "上" + DC.TRIG[mh.lower] + "下),動爻第 " + mh.mov + " 爻");
   pr.push("  互卦 " + mh.hu.name + ",變卦 " + mh.bian.name);
-  pr.push("  體卦 " + DC.TRIG[mh.ti] + "屬" + DC.TRIG_WX[mh.ti] + ",用卦 " + DC.TRIG[mh.yong] + "屬" + DC.TRIG_WX[mh.yong] + ";" + mh.rel, "");
-  pr.push("請依梅花易數體用生剋法解讀:1. 體用關係直斷吉凶。2. 互卦看事情過程、變卦看最終走向。3. 卦氣旺衰（以節氣月令參酌）。4. 外應與應期推估。5. 給出明確結論與建議。");
+  pr.push("  體卦 " + DC.TRIG[mh.ti] + "屬" + DC.TRIG_WX[mh.ti] + ",用卦 " + DC.TRIG[mh.yong] + "屬" + DC.TRIG_WX[mh.yong] + ";" + mh.rel);
+  pr.push("  " + mh.huRel + "；" + mh.bianRel, "");
+  pr.push("請依梅花易數體用生剋法解讀:1. 體用關係直斷吉凶。2. 互卦對體的生剋看事情過程、變卦對體的生剋看最終走向。3. 卦氣旺衰（以節氣月令參酌）。4. 外應與應期推估。5. 給出明確結論與建議。");
 }
 function runMeihua(out, pr) {
   const N = readNow();
@@ -423,9 +422,9 @@ function runMeihua(out, pr) {
     if (!q) throw fail("字占需要先寫下你的問題");
     const chars = [...q.replace(/\s/g, "")];
     const hb = DC.hourBranch(N.h);
-    const up = Math.max(1, Math.floor(chars.length / 2)), low = Math.max(1, chars.length - up); // 古法：平分，少者為上卦（取天輕清）——與 MIX 字占同式
-    const mh = DC.meihua(up, low, chars.length + hb + 1);
-    meihuaCard(mh, "字占起卦：問題 " + chars.length + " 字(字數平分，少者為上卦：上卦數" + up + "、下卦數" + low + ",加" + DC.BRANCHES[hb] + "時" + (hb + 1) + "取動爻)", out, pr);
+    const zi = DC.meihuaZi(chars.length, hb);   /* 與 MIX 字占同式：十字以內字數加時，十一字以上平分 */
+    const mh = DC.meihua(zi.up, zi.low, zi.mov);
+    meihuaCard(mh, "字占起卦：問題 " + chars.length + " 字（" + zi.note + "：上卦數" + zi.up + "、下卦數" + zi.low + "，加" + DC.BRANCHES[hb] + "時" + (hb + 1) + "取動爻）", out, pr);
   } else {
     const a = parseInt($("num-a").value), b = parseInt($("num-b").value);
     if (!a || !b) throw fail("請報兩個數");

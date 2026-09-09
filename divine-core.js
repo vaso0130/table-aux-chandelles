@@ -548,22 +548,42 @@ var DC = {};
     const hu = { l: trigOf([lines[1], lines[2], lines[3]]), u: trigOf([lines[2], lines[3], lines[4]]) };
     const tiIsLower = mov > 3; // 動爻在上卦→上為用，下為體
     const ti = tiIsLower ? l : u, yong = tiIsLower ? u : l;
-    const sheng = (a, b) => (DC.WX.indexOf(DC.TRIG_WX[b]) - DC.WX.indexOf(DC.TRIG_WX[a]) + 5) % 5; // a→b 關係
-    const relCode = sheng(yong, ti); // 用對體:0比和 1用生？ 注意方向
-    let rel;
-    const tw = DC.TRIG_WX[ti], yw = DC.TRIG_WX[yong];
     const idx = w => DC.WX.indexOf(w);
-    if (tw === yw) rel = "體用比和，和氣相扶，事多順遂";
-    else if ((idx(yw) + 1) % 5 === idx(tw)) rel = "用生體，得外力相助，吉";
-    else if ((idx(tw) + 1) % 5 === idx(yw)) rel = "體生用，我方付出耗洩，先勞後獲";
-    else if ((idx(yw) + 2) % 5 === idx(tw)) rel = "用剋體，外境相迫，凶，宜避其鋒";
-    else rel = "體剋用，我能制事，先難後易，終可成";
+    /* 任一經卦 x 對體卦的五行關係（《梅花易數・體用總訣》：用生體吉、體生用耗、用剋體凶、體剋用成而遲、比和順） */
+    const relOf = x => {
+      const xw = DC.TRIG_WX[x], tw = DC.TRIG_WX[ti];
+      if (xw === tw) return { code: "比和", text: "比和，和氣相扶，事多順遂" };
+      if ((idx(xw) + 1) % 5 === idx(tw)) return { code: "生體", text: "生體，得外力相助，吉" };
+      if ((idx(tw) + 1) % 5 === idx(xw)) return { code: "洩體", text: "體生之，洩氣耗損，事多費力難成" };
+      if ((idx(xw) + 2) % 5 === idx(tw)) return { code: "剋體", text: "剋體，外境相迫，凶，宜避其鋒" };
+      return { code: "體剋", text: "體剋之，我能制事，事雖成而遲" };
+    };
+    const yr = relOf(yong);
+    const rel = yr.code === "比和" ? "體用比和，和氣相扶，事多順遂"
+      : yr.code === "生體" ? "用生體，得外力相助，吉"
+      : yr.code === "洩體" ? "體生用，洩氣耗損，事多費力難成"
+      : yr.code === "剋體" ? "用剋體，外境相迫，凶，宜避其鋒"
+      : "體剋用，我能制事，事雖成而遲";
+    /* 互卦、變卦各取「用」那一側的經卦與體論生剋：互看過程、變定結局 */
+    const huYong = tiIsLower ? hu.u : hu.l, bianYong = tiIsLower ? u2 : l2;
+    const hr = relOf(huYong), br = relOf(bianYong);
+    const huRel = "互卦用互" + DC.TRIG[huYong] + "屬" + DC.TRIG_WX[huYong] + "，" + hr.text + "（過程）";
+    const bianRel = "變卦" + DC.TRIG[bianYong] + "屬" + DC.TRIG_WX[bianYong] + "，" + br.text + "（結局）";
     return {
       upper: u, lower: l, name: DC.HEX_NAME[u][l],
       hu: { upper: hu.u, lower: hu.l, name: DC.HEX_NAME[hu.u][hu.l] },
       bian: { upper: u2, lower: l2, name: DC.HEX_NAME[u2][l2] },
-      mov, lines, ti, yong, tiIsLower, rel
+      mov, lines, ti, yong, tiIsLower, rel, relCode: yr.code, huRel, huCode: hr.code, bianRel, bianCode: br.code
     };
+  };
+
+  /* 字占取數：古法一至十字以筆畫起卦、十一字以上以字數平分；本站無筆畫表，十字以內改「字數為上卦、字數加時辰為下卦」，
+     讓短問題也能得全八卦（純平分時上卦數 ≤4，只會出乾兌離震）；hb 為時支 0..11 */
+  DC.meihuaZi = function (len, hb) {
+    const h = hb + 1;
+    if (len <= 10) return { up: len, low: len + h, mov: len + len + h + h, note: "十字以內：字數為上卦、字數加時為下卦（筆畫法之簡式）" };
+    const up = Math.floor(len / 2), low = len - up;
+    return { up, low, mov: len + h, note: "十一字以上：字數平分，少者為上卦" };
   };
 
   /* ═══ 生命靈數 ═══ */
