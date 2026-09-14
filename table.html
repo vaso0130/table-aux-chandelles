@@ -1151,7 +1151,7 @@
   </form>
 </dialog>
 
-<script src="cards-data.js?v=2026091401"></script>
+<script src="cards-data.js?v=2026091402"></script>
 <script>
 "use strict";
 
@@ -2627,11 +2627,11 @@ function finishReading() {
       const sig = CARDS.find((c) => c.n === n);
       let s = `<p class="combo">「${sig.zh}」落在第 ${at + 1} 宮（${CARDS[at].zh}宮）——${pron}的處境圍繞著「${CARDS[at].keys.split("・")[0]}」。`;
       /* 空間慣例（ 牌面畫像的視線無關）：同列右側＝尚未走到的未來，左側＝已經走過的過去 */
-      if (deckDef.id === "len" && at >= 32) {
+      if (spread.id === "gt" && at >= 32) {
         s += `<br>${pron}落在底部的命運四牌之中——此席仍是${CARDS[at].zh}宮，但這四張兼為全局結語：${pron}的處境正被「命運」總結著，是${pron}無法左右、必須接受的走向。`;
       } else if (deckDef.id === "gra" || deckDef.id === "kip" || deckDef.id === "sib" || deckDef.id === "len") {
         const row = Math.floor(at / spread.cols), col = at % spread.cols;
-        const rowMax = deckDef.id === "len" ? 32 : spread.count; /* len 底列命運四牌不入同列敘事 */
+        const rowMax = spread.id === "gt" ? 32 : spread.count; /* 8×4 式底列命運四牌不入同列敘事 */
         const past = [], ahead = [];
         for (let k = 0; k < spread.cols; k++) {
           const j = row * spread.cols + k;
@@ -2709,7 +2709,7 @@ function buildAiPrompt() {
     yi: spread.cast ? null
       : spread.id === "yi-tiyong" ? "讀法補充（以牌起卦）：兩張牌只是取數（邵子報數法：卦序數為上下卦數，加時辰數取動爻），請勿解讀兩張牌本身的卦義；依上列本卦、互卦、變卦 體用生剋論之，用生體吉、體生用耗、用剋體凶、體剋用成而遲、比和順。"
       : "讀法補充（牌卦）：抽牌得卦沒有動爻，請以卦辭、彖象 大象為斷，不要擬造爻辭，也不論之卦；各位置只是象徵抽籤的框架，非周易筮法。",
-    len: "讀法補充（時間牌）：騎士＝很快、數日內；三葉草＝短暫、把握當下；船＝數月、遠；樹＝緩慢、一年以上；山＝延遲停滯；棺材＝停止；鐮刀＝突然；鸛鳥＝季節轉換（春）；花束＝春；太陽＝夏或白日；百合＝冬或年長；月亮＝約一個月或夜；戒指＝一年一循環；錨＝長久。問時機時以此類牌為準，牌序數字亦可作日／週之參。",
+    len: "讀法補充（時間牌）：騎士＝很快、數日內；幸運草＝短暫、把握當下；船＝數月、遠；樹＝緩慢、一年以上；山＝延遲停滯；棺材＝停止；鐮刀＝突然；鸛鳥＝季節轉換（春）；花束＝春；太陽＝夏或白日；百合＝冬或年長；月亮＝約一個月或夜；戒指＝一年一循環；錨＝長久。問時機時以此類牌為準，牌序數字亦可作日／週之參。",
     kip: spread.gt ? null : "讀法補充（近遠法）：凡人物牌落陣請讀其四鄰——右＝迎面而來、左＝已成過去、上＝壓在心頭之念、下＝立足之基；鄰牌越近影響越迫。",
     bel: "讀法補充（星體歸屬）：留意各牌星體家族 位置的互動—— 位置同星體者「回垣得令」本義加倍；同家族多張＝該領域主導；火星/土星家族落阻礙課題之位凶而有明確解法；藍卡所落之位受守護、凶象鈍化；三主牌落於何位，何位即全局樞紐。",
     sib: "讀法補充（人物指認）：人物牌請優先讀作具體的人——落阻礙位＝阻你的人、助力位＝貴人、潛藏位＝幕後之人、未來位＝將登場者；逆位人物＝心思不明或立場已轉。",
@@ -2743,12 +2743,12 @@ function buildAiPrompt() {
   }
   if (spread.gt) {
     L.push({
-      len: "排列方式：Grand Tableau 大盤，8×4 加底部置中 4 張（第 33–36 張）。第 n 張牌落在第 n 宮，宮位以傳統 36 張牌的順序命名。方向依大盤慣例（ 牌面畫像的視線無關）：指示牌同列右側的牌是尚未走到的未來，左側是已經走過的過去；同欄上方諸牌是懸在心頭、尚未掌控之念，下方諸牌是踩在腳下、已然掌握之基。",
+      len: `排列方式：Grand Tableau 大盤，${spread.id === "gt9" ? "9×4 平鋪三十六席、無命運四牌（法式／現代排法）" : "8×4 加底部置中 4 張（第 33–36 張）"}。第 n 張牌落在第 n 宮，宮位以傳統 36 張牌的順序命名。方向依大盤慣例（ 牌面畫像的視線無關）：指示牌同列右側的牌是尚未走到的未來，左側是已經走過的過去；同欄上方諸牌是懸在心頭、尚未掌控之念，下方諸牌是踩在腳下、已然掌握之基。`,
       kip: "排列方式：奇卜大盤 6×6 共三十六席。第 n 張牌落在第 n 宮，宮位以奇卜 36 張牌的順序命名。方向依大盤慣例（ 牌面畫像的視線無關）：主要人物同列右側的牌是尚未走到的未來，左側是已經走過的過去；同欄上方是心頭之念、下方是立足之基。",
       gra: "排列方式：Grand Tableau 大版圖，9×6 共五十四席。第 n 張牌落在第 n 宮，宮位以大雷諾曼五十四張牌的順序命名（宮位法沿用小雷諾曼慣例）。方向依大盤慣例（ 牌面畫像的視線無關）：指示牌同列右側的牌是尚未走到的未來，左側的牌是已經走過的過去；同欄上方是所思、下方是所踏。",
       sib: "排列方式：西碧拉全盤 La Tavolata，13×4 共五十二席，四列如四花色。第 n 張牌落在第 n 宮，宮位以西碧拉五十二張牌的順序命名。方向依大盤慣例（ 牌面畫像的視線無關）：情郎／佳人同列右側是尚未走到的未來，左側是已經走過的過去。",
     }[deckDef.id] || "排列方式：Grand Tableau 大盤。第 n 張牌落在第 n 宮，宮位以本牌組牌序命名。");
-    if (deckDef.id === "len") L.push("第 33–36 席仍分別是鑰匙、魚、錨、十字四宮（宮位照讀），但此四張另兼「命運四牌」：由左至右連讀成一句，作全局結語——這是問卜者無法左右、必須接受的走向；請在最後以此四張收束全局。");
+    if (spread.id === "gt") L.push("第 33–36 席仍分別是鑰匙、魚、錨、十字四宮（宮位照讀），但此四張另兼「命運四牌」：由左至右連讀成一句，作全局結語——這是問卜者無法左右、必須接受的走向；請在最後以此四張收束全局。");
     /* 指示牌八鄰組合 轉宮環鏈 */
     const sigDefs = deckDef.id === "len" ? [[28, "男人"], [29, "女人"]]
       : deckDef.id === "kip" ? [[1, "主要人物(男)"], [2, "主要人物(女)"]]
@@ -2763,9 +2763,9 @@ function buildAiPrompt() {
     /* 同欄上思下踏 + 主題牌近遠法 */
     sigDefs.forEach(([n, label]) => {
       const at = drawn.findIndex((c) => c.n === n);
-      if (at < 0 || (deckDef.id === "len" && at >= 32)) return;
+      if (at < 0 || (spread.id === "gt" && at >= 32)) return;
       const col = at % spread.cols, up = [], dn = [];
-      const rowMax = deckDef.id === "len" ? 32 : spread.count;
+      const rowMax = spread.id === "gt" ? 32 : spread.count;
       for (let j = col; j < rowMax && j < drawn.length; j += spread.cols) {
         if (j === at) continue;
         (j < at ? up : dn).push(drawn[j].zh);
@@ -2780,12 +2780,12 @@ function buildAiPrompt() {
       const near = [];
       sigDefs.forEach(([sn, slabel]) => {
         const sigAt = drawn.findIndex((c) => c.n === sn);
-        if (sigAt < 0 || (deckDef.id === "len" && sigAt >= 32)) return;
+        if (sigAt < 0 || (spread.id === "gt" && sigAt >= 32)) return;
         const lines = [];
         themeDefs.forEach(([n, label]) => {
           const at = drawn.findIndex((c) => c.n === n);
           if (at < 0) return;
-          if (deckDef.id === "len" && at >= 32) return;
+          if (spread.id === "gt" && at >= 32) return;
           const d = Math.max(Math.abs(Math.floor(at / spread.cols) - Math.floor(sigAt / spread.cols)), Math.abs(at % spread.cols - sigAt % spread.cols));
           lines.push(`「${label}」距${slabel} ${d} 步（${d <= 1 ? "貼身——正在發生" : d === 2 ? "近旁——正在逼近" : "遠方——影響淡、時間遠"}）`);
         });
@@ -2794,7 +2794,7 @@ function buildAiPrompt() {
       if (near.length) L.push(`近遠法（凶牌越遠越鈍、吉牌越近越甜；請依我的身分擇一為中心）：${near.join("。")}。`);
     }
     if (deckDef.id === "len") {
-      L.push("鏡射與騎士步：以縱軸對稱，第 1↔8、2↔7、3↔6、4↔5 欄互為鏡影；以橫軸對稱，第 1↔4、2↔3 列互為鏡影——鏡影之牌互相補述。四角（第 1、8、25、32 席）合讀為全盤框架。騎士步：自指示牌走西洋棋馬步（隔一格的 L 型，如右 2 上 1），所落之牌為暗中牽動的因素。");
+      L.push(`鏡射與騎士步：以縱軸對稱，${spread.id === "gt9" ? "第 1↔9、2↔8、3↔7、4↔6 欄互為鏡影（第 5 欄為軸）" : "第 1↔8、2↔7、3↔6、4↔5 欄互為鏡影"}；以橫軸對稱，第 1↔4、2↔3 列互為鏡影——鏡影之牌互相補述。四角（${spread.id === "gt9" ? "第 1、9、28、36 席" : "第 1、8、25、32 席"}）合讀為全盤框架。騎士步：自指示牌走西洋棋馬步（隔一格的 L 型，如右 2 上 1），所落之牌為暗中牽動的因素。`);
     }
     L.push("");
     L.push("【轉宮環鏈】（轉宮法：牌落誰家，便追到那家主人的牌——直到落自宮定錨，或回訪成環而止）");
@@ -3402,7 +3402,7 @@ renderDict();
 const elGuideList = $("#guide-list");
 function guideTip(s) {
   const rev = deckDef.reversible ? "此牌組有正逆位：逆位讀作該義受阻、遲滯或走向反面，不必一律當凶。" : "";
-  if (s.gt) return `<b>先讀指示牌落點</b>，看它四周八張牌（右側是尚未走到的未來、左側是已經走過的過去），再依「轉宮環鏈」追你在意的主題牌：某牌落在某家，就跳去讀那一家的牌，串成一條故事線。左右對稱的欄互為鏡影，自指示牌走馬步（隔一格的 L 型）所落之牌是暗中牽動的因素。底部四張各有其宮，另兼命運四牌，連讀作全局結語。${rev}`;
+  if (s.gt) return `<b>先讀指示牌落點</b>，看它四周八張牌（右側是尚未走到的未來、左側是已經走過的過去），再依「轉宮環鏈」追你在意的主題牌：某牌落在某家，就跳去讀那一家的牌，串成一條故事線。左右對稱的欄互為鏡影，自指示牌走馬步（隔一格的 L 型）所落之牌是暗中牽動的因素。${s.id === "gt9" ? "九四式平鋪無命運四牌，第 5 欄為鏡軸。" : "底部四張各有其宮，另兼命運四牌，連讀作全局結語。"}${rev}`;
   if (s.cast) return `<b>先看有無動爻</b>。六爻皆靜以本卦卦辭為斷；有動爻依朱子斷法定主從：一爻動讀該爻爻辭，二爻動以上爻為主，三爻動本卦為貞、之卦為悔兼論，四五爻動改讀之卦不變之爻，六爻皆動讀之卦卦辭（乾坤用九用六）。`;
   if (s.id === "yi-tiyong") return `<b>兩張牌只是取數</b>：第一張卦序為上卦數、第二張為下卦數，加時辰取動爻。動爻所在之卦為用、另一卦為體，看用對體的五行：用生體吉、體生用耗、用剋體凶、體剋用成而遲、比和順。互卦看過程，變卦定結局。`;
   if (deckDef.id === "yi") return `<b>牌卦沒有動爻</b>，以卦辭、大象為斷，不擬爻辭、不論之卦。各位置是象徵抽籤的框架，把每一卦的象放進該位置的問題裡讀。${rev}`;
@@ -3423,7 +3423,7 @@ function renderGuide() {
     if (i === 0) d.open = true;
     const pos = s.positions
       ? `<ol>${s.positions.map((p) => `<li>${p}</li>`).join("")}</ol>`
-      : s.gt ? "<p>三十六席依 8 × 4 排列，各席即雷諾曼宮位；底部另有命運四牌。</p>" : "";
+      : s.gt ? (s.id === "gt9" ? "<p>三十六席依 9 × 4 平鋪，各席即雷諾曼宮位；無命運四牌。</p>" : "<p>三十六席依 8 × 4 排列，各席即雷諾曼宮位；底部另有命運四牌。</p>") : "";
     d.innerHTML = `<summary><span class="g-name">${s.name}</span><span class="g-count">${s.count} 張</span><span class="g-mark" aria-hidden="true"></span></summary>
       <div class="guide-body"><p>${s.desc}</p>${pos}<p class="g-tip">${guideTip(s)}</p></div>`;
     elGuideList.appendChild(d);

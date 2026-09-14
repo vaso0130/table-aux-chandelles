@@ -14,7 +14,7 @@ const LEN_CARDS = [
   { n:1,  zh:"騎士",   latin:"The Rider",    glyph:"🐎", pol:"good", keys:"消息・來訪・速度・行動",
     text:"有消息正在路上——訪客、通知或新的進展即將抵達。事情開始移動，保持敏捷。",
     noun:"一則消息或新的行動", mod:"正快速地朝你而來" },
-  { n:2,  zh:"三葉草", latin:"The Clover",   glyph:"🍀", pol:"good", keys:"幸運・機會・輕盈・及時",
+  { n:2,  zh:"幸運草", latin:"The Clover",   glyph:"🍀", pol:"good", keys:"幸運・機會・輕盈・及時",
     text:"一段小而確實的好運。把握稍縱即逝的機會；不必貪多，剛剛好就是幸運。",
     noun:"一份小小的幸運", mod:"帶來一段小而確實的好運" },
   { n:3,  zh:"船",     latin:"The Ship",     glyph:"⛵", pol:"mid",  keys:"旅行・遠方・貿易・海外之財",
@@ -296,7 +296,7 @@ const LEN_SPREADS = [
   },
   {
     id:"yesno", name:"五卡・是否之秤", count:5, cols:5,
-    desc:"問一個能以是或否回答的問題。五張入秤：吉牌多為「是」，挑戰牌多為「否」，中性牌不計；太陽、鑰匙、三葉草、戒指、星星、狗為強是，棺材、十字、山、雲、老鼠、鐮刀為強否，各以雙倍計；秤桿持平時由中央一張定音。",
+    desc:"問一個能以是或否回答的問題。五張入秤：吉牌多為「是」，挑戰牌多為「否」，中性牌不計；太陽、鑰匙、幸運草、戒指、星星、狗為強是，棺材、十字、山、雲、老鼠、鐮刀為強否，各以雙倍計；秤桿持平時由中央一張定音。",
     positions:["起手","加碼","中央・定音","變數","收束"],
     combos:(d) => {
       const STRONG_YES = new Set([31, 33, 2, 25, 16, 18]), STRONG_NO = new Set([8, 36, 21, 6, 23, 10]);
@@ -343,7 +343,13 @@ const LEN_SPREADS = [
   },
   {
     id:"gt", name:"大盤・Grand Tableau", count:36, cols:8, gt:true,
-    desc:"三十六張全數入陣，8 × 4 加底部命運四牌。含宮位對照。",
+    desc:"三十六張全數入陣，8 × 4 加底部命運四牌（德式常用）。含宮位對照。",
+    positions:null,
+    combos: () => [],
+  },
+  {
+    id:"gt9", name:"大盤・九四式", count:36, cols:9, gt:true,
+    desc:"三十六張全數入陣，9 × 4 平鋪、無命運四牌（法式與現代常用）。含宮位對照；中欄為軸，左右四欄相鏡。",
     positions:null,
     combos: () => [],
   },
