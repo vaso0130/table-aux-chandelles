@@ -1,6 +1,6 @@
 # 燭光牌桌 · La Table aux Chandelles
 
-網頁版占卜殿堂:牌桌館(西方館+東方館共十套牌卡系統)之外,另有占星館、數字館、八字館與 MIX 三術合參。直接用瀏覽器開啟 `index.html` 即可,無需伺服器。
+網頁版占卜殿堂:牌桌館(西方館+東方館共十套牌卡系統)之外,另有占星館、數字館、八字館與 MIX 三術合參。直接用瀏覽器開啟 `index.html`(燭光入口:點燭動畫與九館門廊)即可,無需伺服器;牌桌本身在 `table.html`。
 
 流派差異不再只藏在註腳：西洋/卜卦占星可選整宮或等宮，八字可選晚子或午夜換日，紫微可選年界與三種閏月法，南洋曜日可選午夜或清晨換日；所選規則會寫入 AI 提示詞。完整採用規則與未開放原因見 [`AUDIT.md`](AUDIT.md)。
 
@@ -55,7 +55,8 @@
 
 | 路徑 | 說明 |
 | --- | --- |
-| `index.html` + `cards-data.js` | 牌桌館(儀式引擎)+ 十套牌卡資料與盤面定義(缺檔會明示) |
+| `index.html` | 燭光入口:奇幻風點燭動畫首頁,燭火燃起後展開九館門廊(`?skip=1` 或再次造訪直接跳過動畫;尊重 prefers-reduced-motion) |
+| `table.html` + `cards-data.js` | 牌桌館(儀式引擎,2026-09 自 index.html 獨立)+ 十套牌卡資料與盤面定義(缺檔會明示) |
 | `astro.html`、`bazi.html`、`shi.html`、`nanyang.html`、`kaijuan.html`、`mbti.html`、`mix.html` | 占星館/八字館/式占館/南洋館/開卷館/鏡廳/MIX 合參 |
 | `numbers.html` | 數字館併館告示頁(2026-08 拆館:生命靈數→八字館、梅花+河洛→式占館) |
 | `divine-core.js` → `divine-ui.js` → `divine-lore.js` | 別館三連載:純計算引擎/UI 幫手(城市/語氣/歷史/教學+?selftest)/跨館文庫(DECKS_MINI 由 index?minidump=1 重生) |
@@ -67,4 +68,4 @@
 
 西方館依十九世紀鍍金石版畫式樣重繪(象牙緞紋底、洛可可金框、頂部徽章);東方館為朱紅灑金・工筆重彩式樣(雲紋回紋金框、篆印式徽章)。缺圖時網頁自動退回符號版牌面。
 
-開發測試:`index.html?rwdtest=盤面id`(如 `nine`、`sib-fifteen`、`yi-cast`)自動完成整個牌陣;`index.html?dicttest=牌序&deck=牌組id` 直接打開字典詳細頁;別館 `astro.html?test=盤式id`、`bazi.html?test=命術id或靈數題目id`(如 `blueprint`)、`shi.html?test=式id`(含 `mh-time`/`mh-num`/`hl-gua`)、`nanyang.html?test=術id`、`kaijuan.html?test=yiju|kieu|qs`、`mbti.html?test=mbti`、`mix.html?test=id1,id2,id3` 以樣本資料自動起盤(成功時網頁標題為 *-TEST-OK);各別館 `?learn=1` 直達教學分頁。
+開發測試:`table.html?rwdtest=盤面id`(如 `nine`、`sib-fifteen`、`yi-cast`)自動完成整個牌陣;`table.html?dicttest=牌序&deck=牌組id` 直接打開字典詳細頁;別館 `astro.html?test=盤式id`、`bazi.html?test=命術id或靈數題目id`(如 `blueprint`)、`shi.html?test=式id`(含 `mh-time`/`mh-num`/`hl-gua`)、`nanyang.html?test=術id`、`kaijuan.html?test=yiju|kieu|qs`、`mbti.html?test=mbti`、`mix.html?test=id1,id2,id3` 以樣本資料自動起盤(成功時網頁標題為 *-TEST-OK);各別館 `?learn=1` 直達教學分頁。

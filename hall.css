@@ -81,6 +81,8 @@ h1 {
 .halls-nav a + a { border-left: 1px solid var(--felt-line); }
 .halls-nav a:hover, .halls-nav a:focus-visible { color: var(--ivory); background: rgba(201,164,92,.06); }
 .halls-nav a.here { color: var(--gold-bright); background: rgba(201,164,92,.08); }
+.halls-nav a.home { color: var(--gold-dim); }
+.halls-nav a.home::before { content: "❧ "; font-size: 12px; }
 
 /* ── 起盤/教學 分頁切換 ── */
 .views {

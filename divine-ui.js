@@ -21,7 +21,7 @@ DC.fillCitySelect = function (sel, latEl, lonEl, tzEl) {
   sel.value = 0; latEl.value = DC.CITIES[0][1]; lonEl.value = DC.CITIES[0][2]; tzEl.value = DC.CITIES[0][3];
 };
 
-DC.TONES = ["溫暖但誠實", "直白犀利，不留情面", "溫柔療癒，多些鼓勵", "冷靜理性，條理分析", "詩意神秘，如占卜師低語"]; // ⇄ index.html 牌桌館的語氣選單須與此逐字相同（兩邊共用 dc-tone 鍵）
+DC.TONES = ["溫暖但誠實", "直白犀利，不留情面", "溫柔療癒，多些鼓勵", "冷靜理性，條理分析", "詩意神秘，如占卜師低語"]; //   index.html 牌桌館的語氣選單須與此逐字相同（兩邊共用 dc-tone 鍵）
 DC.toneInit = function (onChange) { // 需要頁面有 #tone-select 與 #tone-custom
   var sel = document.getElementById("tone-select"), cus = document.getElementById("tone-custom");
   if (!sel) return;
