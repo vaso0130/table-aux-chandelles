@@ -174,8 +174,9 @@
     return o;
   }
   /* 搓洗：攤在桌上雙手抹勻——順序全亂，約半數牌轉了頭 */
-  function wash(decks) {
+  function wash(decks, only) {   // only＝只洗某一層（鐘樓館逐組洗）；省略則五層全洗（MIX）
     LAYERS.forEach(L => {
+      if (only && L.id !== only) return;
       const a = decks[L.id];
       for (let k = a.length - 1; k > 0; k--) { const j = DC.rand(k + 1); [a[k], a[j]] = [a[j], a[k]]; }
       a.forEach(c => { if (DC.rand(2)) c.rev = !c.rev; });
@@ -188,6 +189,12 @@
       const k = Math.min(n - 1, Math.max(1, Math.round(n * frac) + DC.rand(3) - 1));
       decks[L.id] = a.slice(k).concat(a.slice(0, k));
     });
+  }
+  /* 鐘樓館逐組切牌：在使用者點的第 k 張處切開（0 起算，k 張以前的翻到底下） */
+  function cutAt(decks, id, k) {
+    const a = decks[id];
+    k = Math.min(a.length - 1, Math.max(1, k));
+    decks[id] = a.slice(k).concat(a.slice(0, k));
   }
   /* 依此刻取牌 */
   function draw(decks, t) {
@@ -240,5 +247,5 @@
     return L;
   }
 
-  window.SHILUN = { LAYERS, CARDS, RULER, SHICHEN, M_KIND, BIRTHSTONE, positionsAt, newDecks, wash, cut, draw, resonance, promptLines, extraNote };
+  window.SHILUN = { LAYERS, CARDS, RULER, SHICHEN, M_KIND, BIRTHSTONE, positionsAt, newDecks, wash, cut, cutAt, draw, resonance, promptLines, extraNote };
 })();

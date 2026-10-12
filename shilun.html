@@ -9,7 +9,7 @@
   :root {
     --felt-950: #0A0915; --felt-900: #0F0D1F; --felt-800: #16132C;
     --felt-700: #201B3D; --felt-line: #352D5C; --muted: #A29CC6;
-    --glass-ruby: #C2364A; --glass-sapphire: #3456C9; --glass-amber: #E2A13B; --glass-emerald: #2F9C6E;
+    --glass-ruby: #C2364A; --glass-sapphire: #3456C9; --glass-amber: #E2A13B; --glass-emerald: #2F9C6E; --glass-violet: #7A4FD0;
   }
   body {
     background:
@@ -19,70 +19,102 @@
       var(--felt-900);
   }
   .glass-rule { height: 4px; margin: 14px auto 0; max-width: 320px; border-radius: 2px;
-    background: linear-gradient(90deg, var(--glass-ruby), var(--glass-amber), var(--glass-emerald), var(--glass-sapphire), #7a4fd0); opacity: .75; }
+    background: linear-gradient(90deg, var(--glass-ruby), var(--glass-amber), var(--glass-emerald), var(--glass-sapphire), var(--glass-violet)); opacity: .75; }
 
-  /* ── 五排牌堆 ── */
-  #deck-rows { margin-top: 18px; display: grid; gap: 12px; }
-  .drow { border: 1px solid var(--felt-line); border-radius: 3px; padding: 8px 10px 10px; background: rgba(10,9,21,.45); }
-  .drow-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); letter-spacing: .08em; margin-bottom: 6px; }
-  .drow-h b { color: var(--gold-bright); font-weight: 600; letter-spacing: .2em; font-size: 14px; }
-  .drow-h .at { margin-left: auto; color: var(--gold); }
-  .dcards { display: flex; flex-wrap: wrap; gap: 3px; }
-  .mc {
-    width: 24px; height: 36px; border-radius: 2px; position: relative;
+  /* ── 五組進度 ── */
+  .steps { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin: 20px 0 0; }
+  .step { font-size: 12.5px; letter-spacing: .15em; padding: 6px 12px; border: 1px solid var(--felt-line); border-radius: 20px; color: var(--muted); transition: all .4s; }
+  .step.on { color: var(--gold-bright); border-color: var(--gold); background: rgba(229,204,143,.08); box-shadow: 0 0 14px rgba(229,204,143,.25); }
+  .step.done { color: var(--ivory-shade); border-color: var(--gold-dim); }
+  .step.done::before { content: "✦ "; color: var(--gold); }
+
+  /* ── 洗牌舞台 ── */
+  #stage { margin-top: 16px; border: 1px solid var(--felt-line); border-radius: 6px; overflow: hidden; position: relative;
+    background: radial-gradient(ellipse at 50% 40%, #241d4a 0%, #120f26 70%); }
+  #stage-head { text-align: center; padding: 16px 12px 0; position: relative; z-index: 3; }
+  #stage-head h3 { margin: 0; color: var(--gold-bright); letter-spacing: .35em; text-indent: .35em; font-size: 20px; }
+  #stage-sub { color: var(--muted); font-size: 13px; letter-spacing: .06em; margin-top: 4px; }
+  #stage-sub b { color: var(--gold-bright); font-weight: 600; }
+  #table { position: relative; height: 380px; transition: height .5s; }
+  /* 彩繪玻璃光束：洗牌時旋轉 */
+  #rays { position: absolute; left: 50%; top: 46%; width: 1300px; height: 1300px; margin: -650px 0 0 -650px; pointer-events: none; opacity: .16; transition: opacity .8s;
+    background: conic-gradient(from 0deg, transparent 0 8deg, rgba(194,54,74,.9) 8deg 14deg, transparent 14deg 38deg, rgba(226,161,59,.9) 38deg 43deg, transparent 43deg 70deg,
+      rgba(47,156,110,.9) 70deg 76deg, transparent 76deg 104deg, rgba(52,86,201,.9) 104deg 111deg, transparent 111deg 140deg, rgba(122,79,208,.9) 140deg 146deg, transparent 146deg 180deg,
+      rgba(194,54,74,.9) 180deg 186deg, transparent 186deg 218deg, rgba(226,161,59,.9) 218deg 223deg, transparent 223deg 250deg, rgba(47,156,110,.9) 250deg 256deg, transparent 256deg 284deg,
+      rgba(52,86,201,.9) 284deg 291deg, transparent 291deg 320deg, rgba(122,79,208,.9) 320deg 326deg, transparent 326deg 360deg);
+    -webkit-mask: radial-gradient(circle, #000 0%, transparent 60%); mask: radial-gradient(circle, #000 0%, transparent 60%); }
+  #stage.washing #rays { opacity: .55; animation: spin 2.4s cubic-bezier(.45,.05,.55,.95); }
+  @keyframes spin { to { transform: rotate(240deg); } }
+  .sc {
+    position: absolute; left: 0; top: 0; width: var(--sw); height: calc(var(--sw) * 1.5); border-radius: calc(var(--sw) * .07);
     background: #241c46 url("cards-shilun/back.jpg") center / cover;
-    box-shadow: 0 1px 2px rgba(0,0,0,.6); transition: transform .35s, box-shadow .35s, opacity .35s;
+    box-shadow: 0 4px 10px rgba(0,0,0,.6), 0 0 0 1px rgba(229,204,143,.25);
+    transition: transform .55s cubic-bezier(.2,.8,.25,1), box-shadow .3s, filter .3s, opacity .4s;
+    cursor: default; will-change: transform;
   }
-  .mc.dim { opacity: .35; }
-  .mc.hit { transform: translateY(-6px) scale(1.25); z-index: 2; opacity: 1;
-    box-shadow: 0 0 0 2px var(--gold-bright), 0 0 14px 4px rgba(229,204,143,.6); }
-  .mc .mc-no { position: absolute; left: 0; right: 0; bottom: -15px; text-align: center; font-size: 10px; color: var(--gold-bright); }
-  @keyframes wash { 0% { transform: none; } 30% { transform: translate(var(--dx), var(--dy)) rotate(var(--rt)); } 100% { transform: none; } }
-  .washing .mc { animation: wash .7s ease-in-out; }
-  @keyframes cutL { 50% { transform: translateX(-10px); opacity: .5; } }
-  @keyframes cutR { 50% { transform: translateX(10px); opacity: .5; } }
-  .cutting .mc.lo { animation: cutL .6s ease-in-out; }
-  .cutting .mc.hi { animation: cutR .6s ease-in-out; }
+  #stage.cutting .sc { cursor: pointer; }
+  #stage.cutting .sc:hover { filter: brightness(1.35); box-shadow: 0 0 0 2px var(--gold-bright), 0 0 16px rgba(229,204,143,.7); }
+  .sc.tick { box-shadow: 0 0 0 2px var(--gold-bright), 0 0 18px 4px rgba(229,204,143,.75); filter: brightness(1.3); }
+  .sc.chosen { box-shadow: 0 0 0 3px var(--gold-bright), 0 0 34px 10px rgba(229,204,143,.85); filter: brightness(1.25); z-index: 500 !important; }
+  .spark { position: absolute; width: 6px; height: 6px; border-radius: 50%; pointer-events: none; z-index: 600;
+    animation: spark 1.1s ease-out forwards; }
+  @keyframes spark { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--sx), var(--sy)) scale(.2); opacity: 0; } }
+  #stage-cap { text-align: center; color: var(--ivory-shade); font-size: 13.5px; min-height: 1.6em; padding: 0 12px 4px; position: relative; z-index: 3; }
+  #stage .btn-row { justify-content: center; margin: 6px 0 18px; position: relative; z-index: 3; }
 
-  /* ── 切牌條 ── */
-  #cutbar-wrap { margin-top: 14px; }
-  #cutbar-wrap[hidden] { display: none; }
-  #cutbar {
-    position: relative; height: 34px; border-radius: 3px; cursor: crosshair;
-    background: repeating-linear-gradient(90deg, #2a2250 0 6px, #33296a 6px 12px);
-    border: 1px solid var(--gold-dim); touch-action: manipulation;
-  }
-  #cutbar::after { content: "點這裡切牌"; position: absolute; inset: 0; display: grid; place-items: center;
-    color: var(--gold-bright); font-size: 13px; letter-spacing: .3em; pointer-events: none; }
-  #cutmark { position: absolute; top: -4px; bottom: -4px; width: 3px; background: var(--gold-bright); box-shadow: 0 0 8px var(--gold-bright); display: none; }
-  #ritual-log { font-size: 13px; color: var(--muted); min-height: 1.5em; margin: 10px 0 0; letter-spacing: .05em; }
+  /* ── 牌陣：五張蓋著，敲鐘才翻 ── */
+  #spread { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin: 26px 0 4px; }
+  .sslot { width: var(--cw); text-align: center; }
+  .sslot .sp { color: var(--gold-bright); letter-spacing: .3em; text-indent: .3em; font-size: 14px; }
+  .sslot .sw { color: var(--muted); font-size: 11.5px; min-height: 1.4em; }
+  .scard { width: var(--cw); height: calc(var(--cw) * 1.5); margin-top: 6px; perspective: 900px; position: relative; border-radius: 8px;
+    border: 1px dashed rgba(229,204,143,.25); }
+  .scard.filled { border-color: transparent; }
+  .scard .flip { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .9s cubic-bezier(.3,.7,.2,1); }
+  .scard.open .flip { transform: rotateY(180deg); }
+  .scard .fc { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 8px 22px rgba(0,0,0,.6), 0 0 22px rgba(110,80,200,.3); }
+  .scard .fc.back { background: #241c46 url("cards-shilun/back.jpg") center / cover; opacity: 0; transition: opacity .3s; }
+  .scard.filled .fc.back { opacity: 1; }
+  .scard .fc.front { transform: rotateY(180deg); background: linear-gradient(160deg, #2b2257, #151030); border: 1px solid var(--gold-dim); }
+  .scard .fc.front img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
+  .scard.rev .fc.front img, .scard.rev .fc.front .fb { transform: rotate(180deg); }
+  .scard .fb { position: absolute; inset: 0; display: grid; place-items: center; color: var(--gold-bright); font-size: 20px; letter-spacing: .2em; }
+  .sslot .sn { margin-top: 8px; color: var(--ivory); font-size: 15px; letter-spacing: .1em; min-height: 1.5em; opacity: 0; transition: opacity .6s; }
+  .sslot .so { font-size: 12px; color: var(--muted); opacity: 0; transition: opacity .6s; }
+  .sslot .so.r { color: #E6A0A8; }
+  .sslot.shown .sn, .sslot.shown .so { opacity: 1; }
+  .fly { position: fixed; z-index: 1000; border-radius: 8px; background: #241c46 url("cards-shilun/back.jpg") center / cover;
+    box-shadow: 0 0 30px 8px rgba(229,204,143,.6); transition: all .8s cubic-bezier(.3,.7,.2,1); pointer-events: none; }
+  /* 敲鐘：光環擴散 */
+  #bell { display: flex; justify-content: center; margin: 18px 0 0; }
+  #bell[hidden] { display: none; }
+  #btn-bell { position: relative; font-size: 17px; padding: 14px 44px; }
+  .ring { position: fixed; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; pointer-events: none; z-index: 900;
+    border: 2px solid rgba(229,204,143,.8); animation: ring 1.6s ease-out forwards; }
+  @keyframes ring { to { transform: scale(40); opacity: 0; } }
+  @keyframes shake { 0%,100% { transform: none; } 20% { transform: rotate(-1.2deg); } 40% { transform: rotate(1.1deg); } 60% { transform: rotate(-.7deg); } 80% { transform: rotate(.4deg); } }
+  #spread.shake { animation: shake .7s ease-in-out; }
 
-  /* ── 牌陣 ── */
-  .sl-spread { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin: 18px 0 6px; }
-  .sl-slot { width: 150px; text-align: center; }
-  .sl-pos { color: var(--gold-bright); letter-spacing: .3em; text-indent: .3em; font-size: 14px; }
-  .sl-why { color: var(--muted); font-size: 11.5px; margin-bottom: 6px; }
-  .sl-card {
-    width: 150px; height: 224px; border-radius: 6px; overflow: hidden; position: relative;
-    background: linear-gradient(160deg, #2b2257, #151030); border: 1px solid var(--gold-dim);
-    box-shadow: 0 6px 18px rgba(0,0,0,.55), 0 0 18px rgba(110,80,200,.25);
-  }
-  .sl-card img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
-  .sl-card.rev img, .sl-card.rev .sl-fb { transform: rotate(180deg); }
-  .sl-fb { position: absolute; inset: 0; display: grid; place-items: center; color: var(--gold-bright); font-size: 22px; letter-spacing: .2em; }
-  .sl-name { margin-top: 6px; color: var(--ivory); font-size: 15px; letter-spacing: .1em; }
-  .sl-ori { font-size: 12px; color: var(--muted); }
-  .sl-ori.r { color: #E6A0A8; }
-  @keyframes flipIn { 0% { transform: rotateY(90deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
-  .sl-slot { animation: flipIn .55s ease-out both; }
   .sl-meaning { margin: 6px 0 0; }
   .sl-meaning dt { color: var(--gold-bright); margin-top: 12px; letter-spacing: .08em; }
   .sl-meaning dd { margin: 3px 0 0; color: var(--ivory-shade); }
   .sl-reso li { margin: 4px 0; color: var(--ivory-shade); }
+  /* 歷史紀錄用的牌陣縮圖 */
+  .sl-mini { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  .sl-mini figure { margin: 0; width: 96px; text-align: center; font-size: 12px; color: var(--ivory-shade); }
+  .sl-mini img { width: 96px; height: 144px; object-fit: cover; border-radius: 5px; border: 1px solid var(--gold-dim); display: block; }
+  .sl-mini .rv img { transform: rotate(180deg); }
+
+  :root { --cw: 150px; }
   @media (max-width: 640px) {
-    .sl-slot, .sl-card { width: 104px; } .sl-card { height: 155px; }
-    .sl-spread { gap: 10px; }
-    .mc { width: 18px; height: 27px; }
+    :root { --cw: 100px; }
+    #spread { gap: 10px; }
+    #stage-head h3 { font-size: 17px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sc, .scard .flip, .fly { transition-duration: .01s !important; }
+    #stage.washing #rays { animation: none; }
   }
 
   /* 教學圖鑑 */
@@ -123,7 +155,7 @@
 
   <section class="panel" id="panel">
     <h2>時輪占</h2>
-    <span class="hint">五層牌堆攤在桌上。默想你的問題，親手搓洗、切牌——之後敲鐘，月、日、星期、時辰、分鐘會各自指向一張牌。</span>
+    <span class="hint">五組牌依序上桌。每一組都由你親手搓洗、切牌，再由此刻的時間指出要取哪一張——取出的牌先蓋著，五張到齊，敲鐘才翻開。</span>
     <div class="form-grid" style="margin-top:14px">
       <div class="field full"><label for="q-input">你的問題</label>
         <input id="q-input" type="text" maxlength="200" placeholder="默想，寫下你想問的事"></div>
@@ -134,15 +166,23 @@
       <div class="field"><label for="w-time">時間</label><input id="w-time" type="time"></div>
     </div>
 
-    <div id="deck-rows"></div>
-    <div id="cutbar-wrap" hidden><div id="cutbar" role="button" tabindex="0" aria-label="切牌條：點選切牌的位置"><div id="cutmark"></div></div></div>
-    <p id="ritual-log" aria-live="polite"></p>
+    <div class="steps" id="steps"></div>
+    <div id="stage">
+      <div id="rays"></div>
+      <div id="stage-head"><h3 id="stage-title"></h3><div id="stage-sub"></div></div>
+      <div id="table"></div>
+      <p id="stage-cap" aria-live="polite"></p>
+      <div class="btn-row">
+        <button class="gold-btn" id="btn-wash">搓 洗</button>
+        <button class="ghost-btn" id="btn-cut" disabled>切 牌</button>
+        <button class="gold-btn" id="btn-draw" disabled>取 牌</button>
+      </div>
+    </div>
 
-    <div class="btn-row">
-      <button class="gold-btn" id="btn-wash">搓 洗</button>
-      <button class="ghost-btn" id="btn-cut" disabled>切 牌</button>
-      <button class="gold-btn" id="btn-go" disabled>敲 鐘</button>
-      <button class="ghost-btn" id="btn-reset" hidden>重新洗牌</button>
+    <div id="spread"></div>
+    <div id="bell" hidden><button class="gold-btn" id="btn-bell">敲 鐘</button></div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="ghost-btn" id="btn-reset" hidden>重新開始</button>
       <span class="hint" id="go-hint"></span>
     </div>
   </section>
@@ -167,27 +207,29 @@
 
   <p class="footnote">
     時輪占為本站原創：星座 12、寶石 31、七曜 7、象徵 12、萬象 60，共 122 張。<br>
-    搓洗與切牌皆以 <b>crypto</b> 真隨機運算，取位依起占時刻。此樓無神——敲鐘的，是你。
+    搓洗與切牌皆以 <b>crypto</b> 真隨機運算，取位依起占時刻（第一次搓洗時鎖定）。此樓無神——敲鐘的，是你。
   </p>
 </div>
 
 <script src="divine-core.js?v=2026091402"></script>
 <script src="divine-ui.js?v=2026091402"></script>
 <script src="divine-lore.js?v=2026091402"></script>
-<script src="shilun-data.js?v=2026101201"></script>
+<script src="shilun-data.js?v=2026101202"></script>
 <script>
 const $ = id => document.getElementById(id);
 const S = window.SHILUN;
-const SIZES = { z: "依月份", g: "依日期", d: "依星期", h: "依時辰", m: "依分鐘" };
+const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const sleep = ms => new Promise(r => setTimeout(r, RM ? Math.min(ms, 30) : ms));
+const BY = { z: "依月份", g: "依日期", d: "依星期", h: "依時辰", m: "依分鐘" };
 
-/* ═══ 起占時刻 ═══ */
+/* ═══ 起占時刻（第一次搓洗時鎖定） ═══ */
 function setNowFields() {
   const n = new Date();
   $("w-date").value = n.getFullYear() + "-" + DC.pad2(n.getMonth() + 1) + "-" + DC.pad2(n.getDate());
   $("w-time").value = DC.pad2(n.getHours()) + ":" + DC.pad2(n.getMinutes());
 }
 setNowFields();
-setInterval(() => { if ($("n-follow").checked) setNowFields(); }, 1000);
+setInterval(() => { if ($("n-follow").checked && !lockedT) setNowFields(); }, 1000);
 ["w-date", "w-time"].forEach(id => $(id).addEventListener("input", () => { $("n-follow").checked = false; }));
 $("n-follow").addEventListener("change", () => { if ($("n-follow").checked) setNowFields(); });
 function nowT() {
@@ -195,87 +237,233 @@ function nowT() {
   if (dv && tv) { const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number); return { y, m, d, h, mi, tz: 8 }; }
   const n = new Date(); return { y: n.getFullYear(), m: n.getMonth() + 1, d: n.getDate(), h: n.getHours(), mi: n.getMinutes(), tz: 8 };
 }
+function lockTime() {
+  if (lockedT) return;
+  lockedT = nowT(); P = S.positionsAt(lockedT);
+  ["w-date", "w-time", "n-follow"].forEach(id => $(id).disabled = true);
+  stageText();
+}
 
-/* ═══ 牌堆與儀式 ═══ */
-let decks, washes = 0, cutDone = false, busy = false;
-function renderRows(hits) {
-  $("deck-rows").innerHTML = S.LAYERS.map(L => {
-    const n = decks[L.id].length, at = hits && hits[L.id];
-    return '<div class="drow"><div class="drow-h"><b>' + L.name + "</b>" + n + " 張・" + SIZES[L.id] + "取位・牌位「" + L.pos + "」" +
-      (at ? '<span class="at">' + hits.why[L.id] + " → 第 " + at + " 張</span>" : "") + '</div><div class="dcards" data-l="' + L.id + '">' +
-      decks[L.id].map((_, i) => '<div class="mc' + (at ? (i + 1 === at ? " hit" : " dim") : "") + '">' + (at && i + 1 === at ? '<span class="mc-no">' + at + "</span>" : "") + "</div>").join("") +
-      "</div></div>";
-  }).join("");
+/* ═══ 狀態 ═══ */
+let decks, li = 0, lockedT = null, P = null, washes = 0, cutDone = false, busy = false, drawnN = 0, revealed = false;
+const L = () => S.LAYERS[li];
+
+/* ═══ 舞台幾何 ═══ */
+let els = [], geo = null;
+function measure(n) {
+  const W = $("table").clientWidth || 900, mob = W < 560;
+  const sw = mob ? 50 : (n > 40 ? 74 : 90), sh = sw * 1.5;
+  const span = Math.min(104, 16 + n * 2.6) * Math.PI / 180;
+  const R = Math.min(2600, (W / 2 - sw * .75) / Math.sin(span / 2));
+  const drop = R * (1 - Math.cos(span / 2));
+  const top = 34, H = Math.max(mob ? 250 : 330, top + drop + sh + 40);
+  return { W, H, sw, sh, span, R, top, cx: W / 2, cy: top + sh / 2 + Math.min(drop, 90) + 40 };
 }
-function resetRitual() {
-  decks = S.newDecks(); washes = 0; cutDone = false; busy = false;
-  renderRows(null);
-  $("btn-wash").disabled = false; $("btn-wash").hidden = false;
-  $("btn-cut").disabled = true; $("btn-cut").hidden = false;
-  $("btn-go").disabled = true; $("btn-go").hidden = false;
-  $("btn-reset").hidden = true;
-  $("cutbar-wrap").hidden = true; $("cutmark").style.display = "none";
-  $("ritual-log").textContent = "牌堆已攤開，五層皆正面朝下。先默想問題，再雙手搓洗。";
-  $("go-hint").textContent = "";
+function setT(el, x, y, rot, delay, z) {
+  el.style.transitionDelay = (RM ? 0 : delay || 0) + "ms";
+  el.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) rotate(" + (rot || 0).toFixed(1) + "deg)";
+  if (z != null) el.style.zIndex = z;
 }
-function animateRows(cls, ms, cb) {
-  const box = $("deck-rows");
-  box.querySelectorAll(".mc").forEach(el => {
-    el.style.setProperty("--dx", (DC.rand(17) - 8) + "px");
-    el.style.setProperty("--dy", (DC.rand(13) - 6) + "px");
-    el.style.setProperty("--rt", (DC.rand(41) - 20) + "deg");
-  });
-  box.classList.remove(cls); void box.offsetWidth; box.classList.add(cls);
-  setTimeout(() => { box.classList.remove(cls); cb && cb(); }, ms);
+function fanPos(i, n) {
+  const g = geo, th = n === 1 ? 0 : -g.span / 2 + g.span * i / (n - 1);
+  return [g.cx + g.R * Math.sin(th) - g.sw / 2, g.top + g.R * (1 - Math.cos(th)), th * 180 / Math.PI];
 }
-$("btn-wash").onclick = () => {
-  if (busy) return; busy = true;
-  S.wash(decks); washes++;
-  animateRows("washing", 720, () => {
-    busy = false;
-    $("ritual-log").textContent = "已搓洗 " + washes + " 回。" + (washes < 3 ? "想多洗幾回也行；" : "") + "覺得洗夠了，就切牌。";
-    if (!cutDone) $("btn-cut").disabled = false;
-  });
+function layoutFan(stagger) { els.forEach((el, i) => { const [x, y, r] = fanPos(i, els.length); setT(el, x, y, r, (stagger || 0) * i, i + 1); }); }
+function pilePos(el, i, dx) { setT(el, geo.cx - geo.sw / 2 + (dx || 0) + (DC.rand(7) - 3), geo.cy - geo.sh / 2 + (DC.rand(7) - 3) - i * .25, DC.rand(13) - 6, 0, i + 1); }
+
+/* 上桌：一組牌從空中落成一疊，再攤成扇形 */
+async function dealLayer() {
+  const n = S.CARDS[L().id].length;
+  geo = measure(n);
+  const tb = $("table"); tb.innerHTML = ""; tb.style.height = geo.H + "px";
+  tb.style.setProperty("--sw", geo.sw + "px");
+  els = [];
+  for (let i = 0; i < n; i++) {
+    const el = document.createElement("div"); el.className = "sc"; el.dataset.i = i;
+    el.style.transition = "none";
+    setT(el, geo.cx - geo.sw / 2, -geo.sh - 40, DC.rand(41) - 20, 0, i + 1);
+    el.addEventListener("click", () => onCardClick(i));
+    tb.appendChild(el); els.push(el);
+  }
+  void tb.offsetWidth;
+  els.forEach((el, i) => { el.style.transition = ""; el.style.transitionDelay = (RM ? 0 : i * 8) + "ms"; pilePos(el, i); });
+  await sleep(500 + n * 8);
+  layoutFan(RM ? 0 : 10);
+  await sleep(600 + n * 10);
+}
+function stageText() {
+  const lay = L(), n = S.CARDS[lay.id].length;
+  $("stage-title").textContent = "第" + "一二三四五"[li] + "組・" + lay.name;
+  $("stage-sub").innerHTML = n + " 張・牌位「" + lay.pos + "」・" + BY[lay.id] + "取位" +
+    (P ? "——此刻 <b>" + P.why[lay.id] + "</b>，取左起第 <b>" + P[lay.id] + "</b> 張" : "（第一次搓洗時鎖定起占時刻）");
+}
+function renderSteps() {
+  $("steps").innerHTML = S.LAYERS.map((x, i) => '<span class="step' + (i < li || (i === li && drawnN > li) ? " done" : i === li ? " on" : "") + '">' + x.name + "</span>").join("");
+}
+function sparks(n) {
+  const tb = $("table"), cols = ["#C2364A", "#E2A13B", "#2F9C6E", "#3456C9", "#7A4FD0", "#E5CC8F"];
+  for (let k = 0; k < n; k++) {
+    const s = document.createElement("span"); s.className = "spark";
+    const a = Math.random() * Math.PI * 2, d = 80 + Math.random() * 220;
+    s.style.left = geo.cx + "px"; s.style.top = geo.cy + "px";
+    s.style.background = cols[k % cols.length]; s.style.boxShadow = "0 0 8px " + cols[k % cols.length];
+    s.style.setProperty("--sx", Math.cos(a) * d + "px"); s.style.setProperty("--sy", Math.sin(a) * d * .7 + "px");
+    tb.appendChild(s); setTimeout(() => s.remove(), 1200);
+  }
+}
+
+/* ═══ 搓洗：聚疊 → 光環旋舞 → 分兩疊交錯 → 重新攤開 ═══ */
+$("btn-wash").onclick = async () => {
+  if (busy) return; busy = true; lockTime();
+  $("stage").classList.remove("cutting");
+  S.wash(decks, L().id); washes++;
+  const n = els.length, st = $("stage");
+  st.classList.remove("washing"); void st.offsetWidth; st.classList.add("washing");
+  $("stage-cap").textContent = "搓洗中……";
+  els.forEach((el, i) => { el.style.transitionDelay = (RM ? 0 : i * 4) + "ms"; pilePos(el, i); });
+  await sleep(380 + n * 4);
+  const rx = Math.min(geo.W * .36, 300), ry = Math.max(20, Math.min(110, (geo.H - geo.sh) / 2 - 24)), ryc = geo.H / 2;
+  for (let k = 0; k < 3; k++) {
+    els.forEach((el, i) => {
+      const a = (i / n) * Math.PI * 2 + k * 2.1;
+      setT(el, geo.cx - geo.sw / 2 + rx * Math.cos(a), ryc - geo.sh / 2 + ry * Math.sin(a), a * 57.3 + 90, i * 3, Math.round(500 + 100 * Math.sin(a)));
+    });
+    if (k === 1) sparks(28);
+    await sleep(430);
+  }
+  els.forEach((el, i) => { const left = i % 2 === 0; setT(el, geo.cx - geo.sw / 2 + (left ? -1 : 1) * Math.min(150, geo.W * .2), geo.cy - geo.sh / 2 - i * .3, left ? -8 : 8, 0, i + 1); });
+  await sleep(420);
+  els.forEach((el, i) => { el.style.transitionDelay = (RM ? 0 : i * 9) + "ms"; pilePos(el, i); });
+  await sleep(420 + n * 9);
+  layoutFan(RM ? 0 : 8);
+  sparks(18);
+  await sleep(550 + n * 8);
+  st.classList.remove("washing");
+  $("stage-cap").textContent = "已搓洗 " + washes + " 回。想再洗就再按；洗夠了可以切牌（點「切牌」後，點扇中任一張），或直接取牌。";
+  $("btn-cut").disabled = cutDone; $("btn-draw").disabled = false;
+  busy = false;
 };
+
+/* ═══ 切牌：點扇中一張，從那裡切開，下疊翻上 ═══ */
 $("btn-cut").onclick = () => {
-  $("cutbar-wrap").hidden = false;
-  $("ritual-log").textContent = "在切牌條上點一下，憑直覺選切開的位置——五層同在那裡切開，下疊翻到上面。";
+  if (busy) return;
+  $("stage").classList.add("cutting");
+  $("stage-cap").textContent = "憑直覺，點扇中任一張牌——牌堆就從那裡切開。";
 };
-function doCut(frac) {
-  if (busy) return; busy = true;
-  frac = Math.min(.95, Math.max(.05, frac));
-  $("cutmark").style.left = (frac * 100) + "%"; $("cutmark").style.display = "block";
-  S.LAYERS.forEach(L => {
-    const k = Math.round(decks[L.id].length * frac);
-    document.querySelectorAll('.dcards[data-l="' + L.id + '"] .mc').forEach((el, i) => el.classList.add(i < k ? "lo" : "hi"));
-  });
-  S.cut(decks, frac);
-  animateRows("cutting", 640, () => {
-    busy = false; cutDone = true;
-    renderRows(null);
-    $("btn-cut").disabled = true; $("btn-wash").disabled = true;
-    $("btn-go").disabled = false;
-    $("ritual-log").textContent = "已在約 " + Math.round(frac * 100) + "% 處切牌。牌已定——敲鐘吧。";
-  });
+async function onCardClick(i) {
+  if (busy || !$("stage").classList.contains("cutting")) return;
+  busy = true; $("stage").classList.remove("cutting");
+  const k = Math.min(els.length - 1, Math.max(1, i));
+  const off = Math.min(170, geo.W * .22);
+  els.forEach((el, j) => setT(el, geo.cx - geo.sw / 2 + (j < k ? -off : off), geo.cy - geo.sh / 2 + (j < k ? 26 : -26) - j * .3, j < k ? -6 : 6, 0, j + 1));
+  await sleep(560);
+  els.forEach((el, j) => setT(el, geo.cx - geo.sw / 2 + (j < k ? off : -off), geo.cy - geo.sh / 2 + (j < k ? -10 : 10) - j * .3, j < k ? 5 : -5, j < k ? 0 : 60, j < k ? j + 300 : j + 1));
+  await sleep(640);
+  S.cutAt(decks, L().id, k); cutDone = true;
+  els.forEach((el, j) => { el.style.transitionDelay = "0ms"; pilePos(el, j); });
+  await sleep(420);
+  layoutFan(RM ? 0 : 6);
+  await sleep(500 + els.length * 6);
+  $("btn-cut").disabled = true;
+  $("stage-cap").textContent = "已在左起第 " + k + " 張處切牌。牌已定——取牌吧。";
+  busy = false;
 }
-$("cutbar").addEventListener("click", e => { const r = $("cutbar").getBoundingClientRect(); doCut((e.clientX - r.left) / r.width); });
-$("cutbar").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); doCut(.5); } });
 
-/* ═══ 敲鐘取牌 ═══ */
+/* ═══ 取牌：從左數到第 N 張，飛到牌陣蓋著放 ═══ */
+$("btn-draw").onclick = async () => {
+  if (busy) return; busy = true; lockTime();
+  $("stage").classList.remove("cutting");
+  ["btn-wash", "btn-cut", "btn-draw"].forEach(id => $(id).disabled = true);
+  const lay = L(), at = P[lay.id], step = Math.max(14, Math.min(110, 1300 / at));
+  $("stage-cap").textContent = P.why[lay.id] + "——從左數起……";
+  for (let i = 0; i < at; i++) {
+    els[i].classList.add("tick");
+    if (i > 0) els[i - 1].classList.remove("tick");
+    await sleep(step);
+  }
+  const el = els[at - 1];
+  el.classList.remove("tick"); el.classList.add("chosen");
+  const [x, y, r] = fanPos(at - 1, els.length);
+  setT(el, x, y - geo.sh * .35, 0, 0, 500);
+  $("stage-cap").textContent = "第 " + at + " 張。";
+  await sleep(650);
+  const slot = $("spread").children[li].querySelector(".scard");
+  const a = el.getBoundingClientRect(), b = slot.getBoundingClientRect();
+  const f = document.createElement("div"); f.className = "fly";
+  Object.assign(f.style, { left: a.left + "px", top: a.top + "px", width: a.width + "px", height: a.height + "px", transition: "none" });
+  document.body.appendChild(f); el.style.opacity = "0";
+  void f.offsetWidth; f.style.transition = "";
+  Object.assign(f.style, { left: b.left + "px", top: b.top + "px", width: b.width + "px", height: b.height + "px" });
+  await sleep(850);
+  f.remove(); slot.classList.add("filled");
+  $("spread").children[li].querySelector(".sw").textContent = P.why[lay.id] + "・第 " + at + " 張";
+  drawnN++;
+  els.forEach((e, i) => { if (e !== el) { e.style.transitionDelay = (RM ? 0 : i * 5) + "ms"; e.style.opacity = "0"; e.style.transform += " translateY(-60px)"; } });
+  await sleep(400 + els.length * 5);
+  if (li < S.LAYERS.length - 1) {
+    li++; washes = 0; cutDone = false; renderSteps(); stageText();
+    $("stage-cap").textContent = "下一組上桌。";
+    await dealLayer();
+    $("stage-cap").textContent = "先搓洗這一組。";
+    $("btn-wash").disabled = false;
+  } else {
+    renderSteps();
+    $("table").innerHTML = ""; $("table").style.height = "60px";
+    $("stage-title").textContent = "五組已取齊";
+    $("stage-sub").textContent = "五張牌都蓋在下方。準備好了，就敲鐘。";
+    $("stage-cap").textContent = "";
+    $("stage").querySelector(".btn-row").hidden = true;
+    $("bell").hidden = false;
+  }
+  busy = false;
+};
+
+/* ═══ 敲鐘：光環擴散，五張依序翻開 ═══ */
 let lastR = null;
-function cardFig(c, i) {
-  return '<div class="sl-slot" style="animation-delay:' + (i * .18) + 's"><div class="sl-pos">' + c.layer.pos + '</div><div class="sl-why">' + c.layer.name + "・" + c.why + "第 " + c.at + " 張</div>" +
-    '<div class="sl-card' + (c.rev ? " rev" : "") + '"><div class="sl-fb">' + c.zh + '</div><img src="' + c.img + '" alt="' + c.zh + '" onerror="this.remove()"></div>' +
-    '<div class="sl-name">' + c.zh + '</div><div class="sl-ori' + (c.rev ? " r" : "") + '">' + (c.rev ? "逆位" : "正位") + "・" + c.keys + "</div></div>";
+function buildSlots() {
+  $("spread").innerHTML = S.LAYERS.map(lay =>
+    '<div class="sslot"><div class="sp">' + lay.pos + '</div><div class="sw"></div><div class="scard"><div class="flip"><div class="fc back"></div><div class="fc front"></div></div></div>' +
+    '<div class="sn"></div><div class="so"></div></div>').join("");
 }
+function fillFaces(R) {
+  R.cards.forEach((c, i) => {
+    const s = $("spread").children[i], sc = s.querySelector(".scard");
+    sc.classList.toggle("rev", c.rev);
+    sc.querySelector(".fc.front").innerHTML = '<div class="fb">' + c.zh + '</div><img src="' + c.img + '" alt="' + c.zh + '" onerror="this.remove()">';
+    s.querySelector(".sn").textContent = c.zh;
+    const so = s.querySelector(".so"); so.textContent = (c.rev ? "逆位" : "正位") + "・" + c.keys; so.classList.toggle("r", c.rev);
+  });
+}
+async function reveal() {
+  if (revealed) return; revealed = true;
+  $("bell").hidden = true;
+  const R = S.draw(decks, lockedT); lastR = R;
+  fillFaces(R);
+  for (let k = 0; k < 3; k++) { const r = document.createElement("div"); r.className = "ring"; r.style.animationDelay = k * .28 + "s"; document.body.appendChild(r); setTimeout(() => r.remove(), 2400); }
+  $("spread").classList.add("shake"); setTimeout(() => $("spread").classList.remove("shake"), 800);
+  await sleep(500);
+  for (let i = 0; i < R.cards.length; i++) {
+    const s = $("spread").children[i];
+    s.querySelector(".scard").classList.add("open");
+    setTimeout(() => s.classList.add("shown"), 500);
+    await sleep(420);
+  }
+  await sleep(1800);   /* 讓翻好的牌陣停一會兒，再出牌義（出牌義時頁面會捲下去） */
+  finish(R);
+}
+$("btn-bell").onclick = reveal;
+
 function renderOut(R) {
   const reso = S.resonance(R);
   $("out").innerHTML =
-    '<div class="result-card"><h3>時輪五象<span class="en">' + R.t.y + "-" + DC.pad2(R.t.m) + "-" + DC.pad2(R.t.d) + " " + DC.pad2(R.t.h) + ":" + DC.pad2(R.t.mi) + "</span></h3>" +
-    '<div class="sl-spread">' + R.cards.map(cardFig).join("") + "</div></div>" +
-    '<div class="result-card"><h3>牌義</h3><dl class="sl-meaning">' + R.cards.map(c =>
-      "<dt>" + c.layer.pos + "・" + c.zh + (c.rev ? "（逆位）" : "（正位）") + S.extraNote(c) + "</dt><dd>" + (c.rev ? c.rv : c.up) + '<br><span style="color:var(--muted);font-size:12.5px">' + c.layer.pos + "：" + c.layer.posDesc + "</span></dd>").join("") + "</dl></div>" +
+    '<div class="result-card"><h3>牌義<span class="en">' + R.t.y + "-" + DC.pad2(R.t.m) + "-" + DC.pad2(R.t.d) + " " + DC.pad2(R.t.h) + ":" + DC.pad2(R.t.mi) + "</span></h3>" +
+    '<dl class="sl-meaning">' + R.cards.map(c =>
+      "<dt>" + c.layer.pos + "・" + c.zh + (c.rev ? "（逆位）" : "（正位）") + S.extraNote(c) + "</dt><dd>" + (c.rev ? c.rv : c.up) + '<br><span style="color:var(--muted);font-size:12.5px">' + c.layer.pos + "（" + c.why + "第 " + c.at + " 張）：" + c.layer.posDesc + "</span></dd>").join("") + "</dl></div>" +
     '<div class="result-card"><h3>共鳴</h3><ul class="sl-reso">' + reso.map(x => "<li>" + x + "</li>").join("") + "</ul></div>";
+}
+function miniSpread(R) {
+  return '<div class="result-card"><h3>時輪五象</h3><div class="sl-mini">' + R.cards.map(c =>
+    '<figure class="' + (c.rev ? "rv" : "") + '"><img src="' + c.img + '" alt="' + c.zh + '"><figcaption>' + c.layer.pos + "・" + c.zh + (c.rev ? "（逆）" : "") + "</figcaption></figure>").join("") + "</div></div>";
 }
 function buildPrompt(R) {
   const q = $("q-input").value.trim();
@@ -291,52 +479,63 @@ function buildPrompt(R) {
   if (!q) pr.push("", "我的問題：〔請把你想問的事寫在這裡〕");
   return pr.join("\n");
 }
-$("btn-go").onclick = () => {
-  if (busy || !cutDone) return;
-  const t = nowT();
-  const R = S.draw(decks, t); lastR = R;
-  renderRows(R.P);
-  $("btn-go").hidden = true; $("btn-wash").hidden = true; $("btn-cut").hidden = true;
-  $("cutbar-wrap").hidden = true; $("btn-reset").hidden = false;
-  $("ritual-log").textContent = "鐘響——" + R.cards.map(c => c.why + "指向" + c.layer.name + "第 " + c.at + " 張").join("、") + "。";
+function finish(R) {
   renderOut(R);
   $("prompt-box").value = buildPrompt(R);
   $("prompt-sec").hidden = false;
-  DC.histSave("鐘樓館", "時輪占・" + R.cards.map(c => c.zh + (c.rev ? "逆" : "")).join("/"), $("q-input").value.trim(), $("out").innerHTML, $("prompt-box").value);
-};
-$("btn-reset").onclick = () => { $("out").innerHTML = ""; $("prompt-sec").hidden = true; resetRitual(); };
+  $("btn-reset").hidden = false;
+  DC.histSave("鐘樓館", "時輪占・" + R.cards.map(c => c.zh + (c.rev ? "逆" : "")).join("/"), $("q-input").value.trim(),
+    miniSpread(R) + $("out").innerHTML, $("prompt-box").value);
+}
+
+async function resetAll() {
+  decks = S.newDecks(); li = 0; lockedT = null; P = null; washes = 0; cutDone = false; busy = false; drawnN = 0; revealed = false;
+  ["w-date", "w-time", "n-follow"].forEach(id => $(id).disabled = false);
+  if ($("n-follow").checked) setNowFields();
+  $("out").innerHTML = ""; $("prompt-sec").hidden = true; $("btn-reset").hidden = true; $("bell").hidden = true;
+  buildSlots(); renderSteps(); stageText();
+  $("stage").querySelector(".btn-row").hidden = false;
+  ["btn-wash", "btn-cut", "btn-draw"].forEach(id => $(id).disabled = true);
+  $("stage-cap").textContent = "第一組上桌。";
+  busy = true; await dealLayer(); busy = false;
+  $("stage-cap").textContent = "默想你的問題，先搓洗這一組。";
+  $("btn-wash").disabled = false;
+}
+$("btn-reset").onclick = resetAll;
 $("btn-copy").onclick = async () => {
   try { await navigator.clipboard.writeText($("prompt-box").value); }
   catch (e) { $("prompt-box").select(); document.execCommand("copy"); }
   $("copy-ok").hidden = false; setTimeout(() => $("copy-ok").hidden = true, 2500);
 };
-resetRitual();
+window.addEventListener("resize", () => { if (!busy && els.length && els[0].isConnected) { geo = measure(els.length); $("table").style.height = geo.H + "px"; $("table").style.setProperty("--sw", geo.sw + "px"); layoutFan(0); } });
 DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣：「[^」]*」/, "語氣：「" + DC.toneValue() + "」"); });
 DC.histBind();
+const testMode = new URLSearchParams(location.search).get("test") === "shilun";
+if (!testMode) resetAll();
 
 /* ═══ 入門教學 ═══ */
 function buildLearn() {
   let h = "";
-  h += DC.lcard("時輪占是什麼", '<p class="lead-para">時輪占是本站原創的牌占。它把「此刻」拆成五個刻度——<b>月、日、星期、時辰、分鐘</b>——每個刻度各管一副小牌。你親手搓洗、切牌，決定了「哪張牌躺在哪個位置」；敲鐘那一刻的時間，決定了「去哪個位置拿牌」。人與時，各出一半力。</p>');
-  h += DC.lcard("取位規則", DC.ltable(["層", "張數", "怎麼取位", "牌位", "看什麼"], S.LAYERS.map(L => [L.name, S.CARDS[L.id].length + " 張",
-    { z: "幾月就取左起第幾張", g: "幾號就取第幾張（31 號才用得到第 31 張）", d: "日曜第 1 張，星期一取第 2 張…星期六取第 7 張", h: "子時（23–1 點）第 1 張…亥時第 12 張", m: "幾分取第幾張，整點（0 分）取第 60 張" }[L.id], L.pos, L.posDesc])) +
-    '<p class="lead-para">正逆位：搓洗時牌在桌上抹動，約有一半會轉了頭。逆位不等於壞，它多半是「這股力氣卡住了、過頭了，或轉向內在」。</p>');
+  h += DC.lcard("時輪占是什麼", '<p class="lead-para">時輪占是本站原創的牌占。它把「此刻」拆成五個刻度——<b>月、日、星期、時辰、分鐘</b>——每個刻度各管一組牌。五組依序上桌，你親手搓洗、切牌，決定了「哪張牌躺在哪個位置」；此刻的時間，決定了「去哪個位置拿牌」。人與時，各出一半力。取出的牌先蓋著，五張到齊敲鐘才翻開。</p>');
+  h += DC.lcard("取位規則", DC.ltable(["組", "張數", "怎麼取位", "牌位", "看什麼"], S.LAYERS.map(x => [x.name, S.CARDS[x.id].length + " 張",
+    { z: "幾月就取左起第幾張", g: "幾號就取第幾張（31 號才用得到第 31 張）", d: "日曜第 1 張，星期一取第 2 張…星期六取第 7 張", h: "子時（23–1 點）第 1 張…亥時第 12 張", m: "幾分取第幾張，整點（0 分）取第 60 張" }[x.id], x.pos, x.posDesc])) +
+    '<p class="lead-para">起占時刻在你第一次搓洗時鎖定，五組都用同一刻取位，不會因為洗到一半跨了分鐘而前後不一。正逆位：搓洗時牌在桌上抹動，約有一半會轉了頭。逆位不等於壞，它多半是「這股力氣卡住了、過頭了，或轉向內在」。</p>');
   h += DC.lcard("共鳴：值得多看一眼的巧合", DC.ltable(["名稱", "條件", "意思"], [
-    ["歸位", "某層抽到的牌，編號恰好等於取位的位置（例如 10 月抽到摩羯，正是第 10 張）", "此層之意加倍，像鐘聲剛好敲在它身上"],
+    ["歸位", "某組抽到的牌，編號恰好等於取位的位置（例如 10 月抽到摩羯，正是第 10 張）", "此組之意加倍，像鐘聲剛好敲在它身上"],
     ["天日相應", "星座的古典守護星，正是當天的七曜（例如天秤配金曜）", "大環境的風向和今天的做法同聲"],
     ["誕生石應月", "抽到的寶石正好是起占月份的誕生石", "內在的力量此月特別可靠"],
     ["日曜逢烈日", "七曜抽到日曜、象徵抽到烈日", "光明之力雙重，宜公開、宜表態"]]));
   h += DC.lcard("怎麼讀：五張牌是一句話", '<p class="lead-para">先看<b>主題</b>（象徵），知道這件事的核心；再看<b>天時</b>（星座）知道外面的風向、<b>心石</b>（寶石）知道你手上有什麼力量、<b>日用</b>（七曜）知道該用什麼方式動；最後<b>應象</b>（萬象）是最具體的那條線索——一件東西、一種動物、一個人。器物多半指方法與工具，動物指本能與性格，人物指某個人或你該扮演的角色。</p>');
-  S.LAYERS.forEach(L => { h += DC.lcard(L.name + "圖鑑（" + S.CARDS[L.id].length + " 張）", '<div id="lb-' + L.id + '"></div>'); });
+  S.LAYERS.forEach(x => { h += DC.lcard(x.name + "圖鑑（" + S.CARDS[x.id].length + " 張）", '<div id="lb-' + x.id + '"></div>'); });
   return h;
 }
 function bindLearn() {
   const brs = {};
-  S.LAYERS.forEach(L => {
-    brs[L.id] = DC.browser($("lb-" + L.id),
-      S.CARDS[L.id].map((c, i) => ({ no: "第 " + (i + 1) + " 張", t: c[1], s: c[2].split("・")[0] })),
-      i => { const c = S.CARDS[L.id][i], fake = { layer: L, n: i + 1 };
-        return '<div class="lb-detail"><img src="cards-shilun/' + c[0] + '.jpg" alt="' + c[1] + '" onerror="this.remove()"><div class="txt"><h3 style="color:var(--gold-bright);margin:0">' + L.name + "第 " + (i + 1) + " 張・" + c[1] + S.extraNote(fake) + "</h3>" +
+  S.LAYERS.forEach(x => {
+    brs[x.id] = DC.browser($("lb-" + x.id),
+      S.CARDS[x.id].map((c, i) => ({ no: "第 " + (i + 1) + " 張", t: c[1], s: c[2].split("・")[0] })),
+      i => { const c = S.CARDS[x.id][i], fake = { layer: x, n: i + 1 };
+        return '<div class="lb-detail"><img src="cards-shilun/' + c[0] + '.jpg" alt="' + c[1] + '" onerror="this.remove()"><div class="txt"><h3 style="color:var(--gold-bright);margin:0">' + x.name + "第 " + (i + 1) + " 張・" + c[1] + S.extraNote(fake) + "</h3>" +
           '<p style="color:var(--muted)">' + c[2] + "</p><p><b>正位</b>　" + c[3] + "</p><p><b>逆位</b>　" + c[4] + "</p></div></div>"; });
   });
   const m = location.search.match(/peek=([zgdhm])-(\d+)/);
@@ -344,16 +543,18 @@ function bindLearn() {
 }
 DC.learnInit(buildLearn, bindLearn);
 
-/* 開發測試：?test=shilun（自動搓洗三回、切牌、敲鐘） */
+/* 開發測試：?test=shilun（略過動畫：五組各搓洗兩回、切牌、取牌、敲鐘） */
 (function () {
-  const t = new URLSearchParams(location.search).get("test");
-  if (t !== "shilun") return;
+  if (!testMode) return;
   $("q-input").value = "測試提問：這件事會順利嗎？";
   setTimeout(() => {
     try {
-      S.wash(decks); S.wash(decks); S.wash(decks); washes = 3;
-      S.cut(decks, .4); cutDone = true;
-      $("btn-go").onclick();
+      decks = S.newDecks(); buildSlots(); lockTime();
+      S.LAYERS.forEach(x => { S.wash(decks, x.id); S.wash(decks, x.id); S.cutAt(decks, x.id, 5); });
+      const R = S.draw(decks, lockedT); lastR = R;
+      fillFaces(R);
+      [...$("spread").children].forEach(s => { s.querySelector(".scard").classList.add("filled", "open"); s.classList.add("shown"); });
+      finish(R);
       document.title = $("prompt-sec").hidden ? "SL-TEST-FAIL(hidden)" : "SL-TEST-OK";
       const d = document.createElement("div"); d.id = "pr-dump"; d.hidden = true; d.textContent = $("prompt-box").value; document.body.appendChild(d);
     } catch (e) { document.title = "SL-TEST-FAIL " + e.message; }
