@@ -308,16 +308,30 @@ DC.renderPanImage = function (cb) {
     "background", "background-color", "color", "opacity",
     "font-family", "font-size", "font-weight", "font-style", "line-height",
     "letter-spacing", "text-indent", "text-align", "white-space", "writing-mode",
-    "text-shadow", "vertical-align", "overflow", "position"];
+    "text-shadow", "vertical-align", "overflow", "position", "transform", "object-fit"];
   function inlineStyles(src, dst) {
     if (src.nodeType !== 1) return;
     var cs = getComputedStyle(src);
     for (var i = 0; i < PROPS.length; i++) dst.style.setProperty(PROPS[i], cs.getPropertyValue(PROPS[i]));
     for (var k = 0; k < src.children.length; k++) inlineStyles(src.children[k], dst.children[k]);
   }
-  var W = Math.max(560, Math.min(out.scrollWidth || 760, 1200));
+  var W = Math.max(560, Math.min((out.scrollWidth || 760) + 48, 1248));   /* +48＝外框左右內距，否則內容溢出邊框 */
   var clone = out.cloneNode(true);
   inlineStyles(out, clone);
+  /* 牌面圖：foreignObject 裡不會去抓外部圖檔，先轉成內嵌 data URL
+     （以檔案直接開啟時瀏覽器不准讀圖，該張略過、仍保留其餘內容） */
+  var srcImgs = out.querySelectorAll("img"), dstImgs = clone.querySelectorAll("img");
+  for (var m = 0; m < srcImgs.length; m++) {
+    var si = srcImgs[m];
+    if (!si.complete || !si.naturalWidth) { dstImgs[m].removeAttribute("src"); continue; }
+    try {
+      var ic = document.createElement("canvas");
+      ic.width = Math.min(si.naturalWidth, 400); ic.height = Math.round(si.naturalHeight * ic.width / si.naturalWidth);
+      ic.getContext("2d").drawImage(si, 0, 0, ic.width, ic.height);
+      dstImgs[m].setAttribute("src", ic.toDataURL("image/jpeg", .88));
+      dstImgs[m].style.height = getComputedStyle(si).height;   /* 只固定圖片高度；區塊高度留給內容撐開 */
+    } catch (e) { dstImgs[m].removeAttribute("src"); }
+  }
   var titleEl = document.querySelector("h1");
   var d = new Date();
   var when = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
@@ -334,7 +348,7 @@ DC.renderPanImage = function (cb) {
   foot.textContent = "── 燭 光 牌 桌 ・ La Table aux Chandelles ──";
   holder.appendChild(head); holder.appendChild(sub); holder.appendChild(clone); holder.appendChild(foot);
   document.body.appendChild(holder);
-  var H = holder.scrollHeight;
+  var H = Math.ceil(holder.scrollHeight * 1.06) + 30;   /* 圖內改用後備字型、字高略大，預留餘裕免落款疊字 */
   /* 量完高度後改回常規定位——否則序列化進 SVG 後內容被畫到 -99999px 外 */
   holder.style.position = "static"; holder.style.left = "auto"; holder.style.top = "auto";
   var xml;

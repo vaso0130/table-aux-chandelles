@@ -2977,11 +2977,12 @@ $("#btn-share").addEventListener("click", async () => {
   }
 });
 
-function drawSpreadImage() {
+function drawSpreadImage(imgs) {   /* imgs：{牌序 n → 已載入的 Image}；有圖就畫牌面圖，否則畫符號版 */
   if (!CanvasRenderingContext2D.prototype.roundRect)
     CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h) { this.rect(x, y, w, h); return this; };
   const GOLD = "#C9A45C", GOLDB = "#E4C989", IVORY = "#E8DCC2", MUTED = "#9A8C70", FELT = "#0D140F", CARDBG = "#131E16";
-  const CW = 128, CH = 192, GAP = 18, PAD = 44, LABEL_H = 34;
+  const withImg = !!(imgs && Object.keys(imgs).length);
+  const CW = withImg ? 150 : 128, CH = withImg ? 224 : 192, GAP = 18, PAD = 44, LABEL_H = withImg ? 52 : 34;
   /* 槽位幾何：沿用盤面定義(place/gt 底四/預設網格;span2 以半格計) */
   const cells = [];
   for (let i = 0; i < drawn.length; i++) {
@@ -3025,7 +3026,12 @@ function drawSpreadImage() {
     g.beginPath(); g.roundRect(x, y, CW, CH, 9); g.fill(); g.stroke();
     g.strokeStyle = "rgba(201,164,92,.4)"; g.lineWidth = .8;
     g.beginPath(); g.roundRect(x + 6, y + 6, CW - 12, CH - 12, 6); g.stroke();
-    if (c.ch) {   /* 象棋：木紋圓棋 */
+    const im = imgs && imgs[c.n];
+    if (im) {   /* 牌面圖：圓角裁切，逆位隨外層旋轉一併倒置 */
+      g.save(); g.beginPath(); g.roundRect(x, y, CW, CH, 9); g.clip();
+      g.drawImage(im, x, y, CW, CH); g.restore();
+      g.strokeStyle = GOLD; g.lineWidth = 1.4; g.beginPath(); g.roundRect(x, y, CW, CH, 9); g.stroke();
+    } else if (c.ch) {   /* 象棋：木紋圓棋 */
       const cx = x + CW / 2, cy = y + CH / 2 - 14, r = CW * .3;
       g.fillStyle = "#E9C98F"; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
       g.strokeStyle = c.red ? "#A8302A" : "#2A2420"; g.lineWidth = 2;
@@ -3036,23 +3042,43 @@ function drawSpreadImage() {
       g.fillStyle = IVORY; g.font = `44px ${serif}`;
       g.fillText(c.glyph, x + CW / 2, y + CH / 2 - 8);
     }
-    g.fillStyle = GOLDB; g.font = `700 17px ${serif}`;
-    g.fillText(c.zh.length > 6 ? c.zh.slice(0, 6) : c.zh, x + CW / 2, y + CH - 40);
-    g.fillStyle = MUTED; g.font = `10px ${serif}`;
-    g.textAlign = "left"; g.fillText(c.pks || `№${c.n}`, x + 10, y + 20); g.textAlign = "center";
+    if (!im) {
+      g.fillStyle = GOLDB; g.font = `700 17px ${serif}`;
+      g.fillText(c.zh.length > 6 ? c.zh.slice(0, 6) : c.zh, x + CW / 2, y + CH - 40);
+      g.fillStyle = MUTED; g.font = `10px ${serif}`;
+      g.textAlign = "left"; g.fillText(c.pks || `№${c.n}`, x + 10, y + 20); g.textAlign = "center";
+    }
     g.restore();
-    if (rev) { g.fillStyle = "#C97B6B"; g.font = `11px ${serif}`; g.fillText("⟲ 逆位", x + CW / 2, y + CH - 18); }
+    if (im) {   /* 有圖時牌名寫在牌下 */
+      g.fillStyle = GOLDB; g.font = `700 15px ${serif}`;
+      g.fillText((c.zh.length > 8 ? c.zh.slice(0, 8) : c.zh) + (rev ? "（逆）" : ""), x + CW / 2, y + CH + 20, CW + GAP);
+    } else if (rev) { g.fillStyle = "#C97B6B"; g.font = `11px ${serif}`; g.fillText("⟲ 逆位", x + CW / 2, y + CH - 18); }
     g.fillStyle = MUTED; g.font = `11.5px ${serif}`;
     const pn = posName(i).replace(/（.*?）/g, "");
-    g.fillText(pn.length > 12 ? pn.slice(0, 12) + "…" : pn, x + CW / 2, y + CH + 20, CW + GAP);
+    g.fillText(pn.length > 12 ? pn.slice(0, 12) + "…" : pn, x + CW / 2, y + CH + (im ? 38 : 20), CW + GAP);
   });
   g.fillStyle = "rgba(201,164,92,.7)"; g.font = `12px ${serif}`;
   g.fillText("── 燭 光 牌 桌 ・ La Table aux Chandelles ──", W / 2, H - 26);
   return cv;
 }
-$("#btn-download").addEventListener("click", () => {
+/* 載入抽到的牌面圖（失敗的略過，該張退回符號版） */
+function loadDrawnImages() {
+  const imgs = {};
+  return Promise.all(drawn.filter((c) => c.img).map((c) => new Promise((res) => {
+    const im = new Image();
+    im.onload = () => { imgs[c.n] = im; res(); };
+    im.onerror = () => res();
+    im.src = c.img;
+  }))).then(() => imgs);
+}
+$("#btn-download").addEventListener("click", async () => {
   if (!drawn.length) { say("先抽完牌，再下載盤面。"); return; }
-  const cv = drawSpreadImage();
+  let cv = drawSpreadImage(await loadDrawnImages()), note = "";
+  try { cv.toDataURL("image/png").slice(0, 1); }
+  catch (e) {   /* 直接以檔案開啟網頁時，瀏覽器不准把圖片寫進畫布——退回符號版 */
+    cv = drawSpreadImage(); note = "這個瀏覽器在「直接開檔案」時不准把牌面圖畫進下載圖，這次先給你文字版；用網址（例如 GitHub Pages）開啟就會有完整牌面。";
+  }
+  if (note) say(note);
   cv.toBlob((blob) => {
     if (!blob) { say("這個瀏覽器做不出盤面圖。可改用「分享文字」，或直接截圖。"); return; }
     const a = document.createElement("a");
@@ -3552,7 +3578,8 @@ if (location.search.includes("rwdtest")) {
         try {
           const cv = drawSpreadImage();
           d.textContent += "\n[IMG " + cv.width + "x" + cv.height + "]";
-          if (location.search.includes("imgdump")) { document.body.innerHTML = ""; document.body.style.background = "#000"; document.body.appendChild(cv); } /* 視覺驗證用 */
+          if (location.search.includes("imgdump")) /* 視覺驗證用：與下載按鈕同法，先載牌面圖再畫 */
+            loadDrawnImages().then((imgs) => { const c2 = drawSpreadImage(imgs); document.body.innerHTML = ""; document.body.style.background = "#000"; document.body.appendChild(c2); });
         } catch (e) { d.textContent += "\n[IMG-ERR " + e.message + "]"; }
         document.body.appendChild(d);
       }, 2500);

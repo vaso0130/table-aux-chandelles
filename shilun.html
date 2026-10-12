@@ -212,7 +212,7 @@
 </div>
 
 <script src="divine-core.js?v=2026091402"></script>
-<script src="divine-ui.js?v=2026091402"></script>
+<script src="divine-ui.js?v=2026101201"></script>
 <script src="divine-lore.js?v=2026091402"></script>
 <script src="shilun-data.js?v=2026101202"></script>
 <script>
@@ -455,7 +455,7 @@ $("btn-bell").onclick = reveal;
 
 function renderOut(R) {
   const reso = S.resonance(R);
-  $("out").innerHTML =
+  $("out").innerHTML = miniSpread(R) +
     '<div class="result-card"><h3>牌義<span class="en">' + R.t.y + "-" + DC.pad2(R.t.m) + "-" + DC.pad2(R.t.d) + " " + DC.pad2(R.t.h) + ":" + DC.pad2(R.t.mi) + "</span></h3>" +
     '<dl class="sl-meaning">' + R.cards.map(c =>
       "<dt>" + c.layer.pos + "・" + c.zh + (c.rev ? "（逆位）" : "（正位）") + S.extraNote(c) + "</dt><dd>" + (c.rev ? c.rv : c.up) + '<br><span style="color:var(--muted);font-size:12.5px">' + c.layer.pos + "（" + c.why + "第 " + c.at + " 張）：" + c.layer.posDesc + "</span></dd>").join("") + "</dl></div>" +
@@ -485,7 +485,7 @@ function finish(R) {
   $("prompt-sec").hidden = false;
   $("btn-reset").hidden = false;
   DC.histSave("鐘樓館", "時輪占・" + R.cards.map(c => c.zh + (c.rev ? "逆" : "")).join("/"), $("q-input").value.trim(),
-    miniSpread(R) + $("out").innerHTML, $("prompt-box").value);
+    $("out").innerHTML, $("prompt-box").value);
 }
 
 async function resetAll() {
