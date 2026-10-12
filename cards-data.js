@@ -2371,9 +2371,28 @@ const DECKS = [
     back:"cards-dongtarot/back.jpg" },
   /* 靈籤已遷居開卷館(kaijuan.html);資料保留於此以支援舊占卜歷史重看 */
 ];
-/* ── 六牌陣・全景：各牌組通用盤面（易經以擲卦為本體，不加） ── */
+/* ── 象棋占卜：棋子資料與組合判讀在 xq-data.js（MIX 共用），須先於本檔載入 ── */
+if (typeof XQ !== "undefined") {
+  const xqCombos = (d) => XQ.analyze(d).map((t) => ({ label: "棋局", text: t }));
+  DECKS.push({ id:"xq", hall:"east", name:"象棋占卜", short:"象棋卦 · 32 子",
+    title:"象棋占卜",
+    sub:"三十二顆棋子蓋在桌上——翻開哪一顆，命運就走到哪一步。",
+    cards: XQ.CARDS, reversible:false, preload:false, back:"",
+    spreads: [
+      { id:"xq-gate", name:"五顆開門卦", count:5, cols:3,
+        desc:"中間主位看本體，四角依右上、左上、左下、右下讀起承轉收——台灣民間最常見的象棋卦。",
+        positions: XQ.POS, hints: XQ.HINTS, place: XQ.PLACE, combos: xqCombos },
+      { id:"xq-one", name:"一子問事", count:1, cols:1,
+        desc:"默想一件事，翻一顆棋：紅為明、為可，黑為暗、為緩，再看兵種定細節。",
+        positions:["此事"], combos: () => [] },
+      { id:"xq-three", name:"三子・天地人", count:3, cols:3,
+        desc:"天看時勢、人看自己、地看根基——三顆棋一次看三層。",
+        positions:["天・時勢","人・自身","地・根基"], combos: xqCombos },
+    ] });
+}
+/* ── 六牌陣・全景：各牌組通用盤面（易經以擲卦為本體、象棋以開門卦為本體，不加） ── */
 DECKS.forEach((d) => {
-  if (d.id === "yi") return;
+  if (d.id === "yi" || d.id === "xq") return;
   const hasNoun = d.id === "len" || d.id === "gra";
   d.spreads.push({
     id: "six-" + d.id, name: "六牌陣・全景", count: 6, cols: 3,

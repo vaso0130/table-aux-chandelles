@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <title>燭光 · La Lumière des Chandelles</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="燭光——點一支蠟燭，走進九館：牌桌、占星、八字、式占、南洋、開卷、鏡廳與三術合參。">
+<meta name="description" content="燭光——點一支蠟燭，走進十館：牌桌、占星、八字、式占、南洋、開卷、鐘樓、鏡廳與三術合參。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Noto+Serif+TC:wght@500;700&display=swap">
@@ -232,10 +232,10 @@
   }
   .subtitle small { display: block; color: var(--muted); font-size: 13px; letter-spacing: .1em; margin-top: 6px; }
 
-  /* 九館門廊 */
+  /* 十館門廊（九扇門，3×3） */
   .halls {
     list-style: none; margin: 46px 0 0; padding: 0;
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
     width: 100%; max-width: 980px;
   }
   .halls li { animation-delay: calc(var(--t-flame) + 2.1s + var(--i) * .13s); }
@@ -326,6 +326,7 @@
 
   @media (max-width: 860px) {
     .halls { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .halls li:last-child { grid-column: 1 / -1; }   /* 九扇門排兩欄，末扇橫跨免落單 */
     .corner { width: 84px; height: 84px; }
   }
   @media (max-width: 420px) {
@@ -397,15 +398,15 @@
     <p class="eyebrow reveal">La Lumière des Chandelles</p>
     <h1 class="reveal">燭光</h1>
     <div class="plate-line reveal"><span>占 卜 殿 堂</span></div>
-    <p class="subtitle reveal">燭已點好。<br>九館各燃一盞，照你尚未聽見的答案。
+    <p class="subtitle reveal">燭已點好。<br>十館各燃一盞，照你尚未聽見的答案。
       <small>僅供靜心與娛樂，不代醫療、法律與財務之斷。</small></p>
   </header>
 
-  <ul class="halls" aria-label="九館門廊">
+  <ul class="halls" aria-label="十館門廊">
     <li class="reveal" style="--i:0"><a class="door prime" href="table.html">
       <span class="glyph" aria-hidden="true">❖</span>
       <span class="name">牌桌館</span><span class="fr">La Table aux Chandelles</span>
-      <span class="desc">雷諾曼、西碧拉、貝林、奇卜、盧恩、易經、紫微、東方塔羅——十套牌，真洗真切</span></a></li>
+      <span class="desc">雷諾曼、西碧拉、貝林、奇卜、盧恩、易經、紫微、東方塔羅、象棋——十一術，真洗真切</span></a></li>
     <li class="reveal" style="--i:1"><a class="door" href="astro.html">
       <span class="glyph" aria-hidden="true">☾</span>
       <span class="name">占星館</span><span class="fr">燭光星壇</span>
@@ -426,11 +427,15 @@
       <span class="glyph" aria-hidden="true">❦</span>
       <span class="name">開卷館</span><span class="fr">燭光卷樓</span>
       <span class="desc">燭光一句、翹傳、靈籤——開卷即答</span></a></li>
-    <li class="reveal" style="--i:6"><a class="door" href="mbti.html">
+    <li class="reveal" style="--i:6"><a class="door" href="shilun.html">
+      <span class="glyph" aria-hidden="true">✥</span>
+      <span class="name">鐘樓館</span><span class="fr">燭光鐘樓</span>
+      <span class="desc">時輪占——你洗牌切牌，月日星期時分替你取牌</span></a></li>
+    <li class="reveal" style="--i:7"><a class="door" href="mbti.html">
       <span class="glyph" aria-hidden="true">◐</span>
       <span class="name">鏡廳</span><span class="fr">燭光鏡廳</span>
       <span class="desc">MBTI 十六型人格——照見偏好，不算命</span></a></li>
-    <li class="reveal" style="--i:7"><a class="door" href="mix.html">
+    <li class="reveal" style="--i:8"><a class="door" href="mix.html">
       <span class="glyph" aria-hidden="true">⁂</span>
       <span class="name">MIX 合參</span><span class="fr">燭光合參</span>
       <span class="desc">任選三術同問一事，合議作答</span></a></li>
@@ -478,7 +483,7 @@
     return;
   }
 
-  /* 點燭：火星落下，燭火燃起，光暈漫開，銘版與九館逐一浮現 */
+  /* 點燭：火星落下，燭火燃起，光暈漫開，銘版與十館逐一浮現 */
   const tFlame = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--t-flame")) * 1000 || 1100;
   const litTimer = setTimeout(() => body.classList.add("lit"), tFlame);
   const doneTimer = setTimeout(() => { body.classList.add("done"); try { sessionStorage.setItem("dc-lit", "1"); } catch (e) {} }, tFlame + 4200);

@@ -20,6 +20,13 @@
   .presets { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
   #pick-count { text-align: center; color: var(--muted); font-size: 13px; margin-top: 14px; }
   #pick-count b { color: var(--gold-bright); font-size: 16px; }
+  /* 時輪占：MIX 內也要親手搓洗、切牌 */
+  #sl-cutbar { position: relative; height: 30px; margin-top: 10px; border-radius: 3px; cursor: crosshair;
+    background: repeating-linear-gradient(90deg, #1d2a24 0 6px, #24352d 6px 12px); border: 1px solid var(--gold-dim); }
+  #sl-cutbar::after { content: "點這裡切牌"; position: absolute; inset: 0; display: grid; place-items: center; color: var(--gold-bright); font-size: 12.5px; letter-spacing: .3em; pointer-events: none; }
+  #sl-cutbar[hidden] { display: none; }
+  #sl-mark { position: absolute; top: -3px; bottom: -3px; width: 3px; background: var(--gold-bright); display: none; }
+  #sl-status { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
 </style>
 
 <div class="wrap">
@@ -33,12 +40,13 @@
 
   <nav class="halls-nav">
     <a title="回到燭光入口" href="index.html" class="home">燭光</a>
-    <a title="牌卡占卜：雷諾曼、塔羅等十套牌" href="table.html">牌桌館</a>
+    <a title="牌卡占卜：雷諾曼、塔羅、象棋等十一術" href="table.html">牌桌館</a>
     <a title="西洋/印度/卜卦占星與宿曜" href="astro.html">占星館</a>
     <a title="八字、紫微、九星、唐四柱、人類圖、生命靈數——看生辰" href="bazi.html">八字館</a>
     <a title="奇門、六壬、太乙、梅花、河洛——問此刻與時機" href="shi.html">式占館</a>
     <a title="緬甸八曜、爪哇威頓、泰國佛日" href="nanyang.html">南洋館</a>
     <a title="一句、翹傳、靈籤——開卷即答" href="kaijuan.html">開卷館</a>
+    <a title="時輪占——依此刻自動取牌的原創牌占" href="shilun.html">鐘樓館</a>
     <a title="MBTI 十六型人格測驗——照見偏好" href="mbti.html">鏡廳</a>
     <a title="任選三術同問一事，合議作答" href="mix.html" class="here">MIX 三術合參</a>
   </nav>
@@ -95,6 +103,15 @@
           <div class="note">奇門/六壬以該日干支入局為用神；靈數流年流日、南洋值曜/威頓以該日論</div></div>
       </div>
     </div>
+    <div id="form-shilun" hidden>
+      <p class="fieldset-label">時輪占・親手洗牌</p>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="ghost-btn" id="sl-wash" type="button">搓 洗</button>
+        <button class="ghost-btn" id="sl-cut" type="button" disabled>切 牌</button>
+      </div>
+      <div id="sl-cutbar" hidden role="button" tabindex="0" aria-label="切牌條：點選切牌的位置"><div id="sl-mark"></div></div>
+      <p id="sl-status">五層 122 張牌已攤在桌上。默想問題，先搓洗，再切牌；起盤時依上方起局時刻自動取牌。</p>
+    </div>
     <div class="form-grid" style="margin-top:14px">
       <div class="field full"><label>你的問題（三術共用）</label>
         <input id="q-input" type="text" maxlength="200" placeholder="一個問題，三套語言來答——寫下它"></div>
@@ -124,7 +141,7 @@
   </section>
 
   <p class="footnote">
-    牌卡快抽為 <b>crypto</b> 真隨機、僅取牌名（完整儀式請回各館）;星曆與干支皆為真實計算。<br>
+    牌卡快抽為 <b>crypto</b> 真隨機、僅取牌名（完整儀式請回各館）;時輪占在此也由你親手搓洗、切牌;星曆與干支皆為真實計算。<br>
     合參之義：三術同聲則信之，三術相左則深思——命運不怕被多問幾次。
   </p>
 </div>
@@ -132,6 +149,8 @@
 <script src="divine-core.js?v=2026091402"></script>
 <script src="divine-ui.js?v=2026091402"></script>
 <script src="divine-lore.js?v=2026091402"></script>
+<script src="xq-data.js?v=2026101201"></script>
+<script src="shilun-data.js?v=2026101201"></script>
 <script>
 const $ = id => document.getElementById(id);
 const q3 = () => $("q-input").value.trim();
@@ -161,7 +180,10 @@ const POOL = [
   { g: "牌卡快抽（六張）", items: [
     ["c-len", "雷諾曼", ""], ["c-sib", "西碧拉", ""], ["c-bel", "貝林神諭", ""], ["c-kip", "奇卜", ""],
     ["c-gra", "大雷諾曼", ""], ["c-run", "盧恩符文", ""], ["c-zw", "紫微星曜", ""], ["c-dt", "東方塔羅", ""],
-    ["c-esp", "西班牙牌", ""], ["c-yi", "易經（擲卦）", ""]
+    ["c-esp", "西班牙牌", ""], ["c-yi", "易經（擲卦）", ""], ["c-xq", "象棋占卜（開門卦）", ""]
+  ]},
+  { g: "鐘樓（原創）", items: [
+    ["c-shilun", "時輪占（親手洗牌）", ""]
   ]}
 ];
 const PRESETS = [
@@ -209,6 +231,7 @@ function syncForm() {
   const needLoc = picked.some(id => ALL.find(x => x[0] === id)[2] === "loc");
   $("form-birth").hidden = !needBirth;
   $("form-loc").hidden = !needLoc;
+  $("form-shilun").hidden = !picked.includes("c-shilun");
 }
 renderPool();
 DC.fillCitySelect($("b-city"), $("b-lat"), $("b-lon"), $("b-tz"));
@@ -538,6 +561,48 @@ function drawCards(deckId, deckName) {
 for (const [id, dk, nm] of [["c-len", "len", "雷諾曼"], ["c-sib", "sib", "西碧拉"], ["c-bel", "bel", "貝林神諭"], ["c-kip", "kip", "奇卜"],
   ["c-gra", "gra", "大雷諾曼"], ["c-run", "run", "盧恩符文"], ["c-zw", "zw", "紫微星曜"], ["c-dt", "dt", "東方塔羅"], ["c-esp", "esp", "西班牙牌"]])
   GEN[id] = () => drawCards(dk, nm);
+/* 象棋占卜：32 子蓋棋洗勻翻五顆開門卦（同牌桌館讀法，xq-data.js） */
+GEN["c-xq"] = () => {
+  const a = XQ.CARDS.slice();
+  for (let k = a.length - 1; k > 0; k--) { const j = DC.rand(k + 1); [a[k], a[j]] = [a[j], a[k]]; }
+  const ps = a.slice(0, 5);
+  return { title: "象棋占卜・五顆開門卦",
+    html: "<p>" + ps.map((p, i) => '<span class="badge' + (p.red ? "" : " dim") + '">' + XQ.POS[i].split("・")[0] + ":" + p.name + "</span>").join(" ") + "</p>",
+    lines: ["象棋占卜（台灣民間象棋卦，32 子蓋棋 crypto 洗勻翻五顆；中為主位，四角依右上起、左上承、左下轉、右下收；紅為陽為明、黑為陰為暗）：",
+      ...ps.map((p, i) => "  " + XQ.POS[i] + ":" + p.name + "(" + p.keys + "," + XQ.POL_ZH[p.pol] + ")——" + p.text),
+      "  棋局:" + XQ.analyze(ps).join(";")] };
+};
+/* 時輪占：MIX 也保留親手搓洗、切牌（shilun-data.js），起盤時依起局時刻取位 */
+let slDecks = SHILUN.newDecks(), slWash = 0, slCut = false;
+function slReset() {
+  slDecks = SHILUN.newDecks(); slWash = 0; slCut = false;
+  $("sl-wash").disabled = false; $("sl-cut").disabled = true;
+  $("sl-cutbar").hidden = true; $("sl-mark").style.display = "none";
+  $("sl-status").textContent = "五層 122 張牌已攤在桌上。默想問題，先搓洗，再切牌；起盤時依上方起局時刻自動取牌。";
+}
+$("sl-wash").onclick = () => {
+  SHILUN.wash(slDecks); slWash++;
+  $("sl-cut").disabled = false;
+  $("sl-status").textContent = "已搓洗 " + slWash + " 回。洗夠了就切牌。";
+};
+$("sl-cut").onclick = () => { $("sl-cutbar").hidden = false; $("sl-status").textContent = "在切牌條上點一下，憑直覺選切開的位置。"; };
+function slDoCut(frac) {
+  frac = Math.min(.95, Math.max(.05, frac));
+  SHILUN.cut(slDecks, frac); slCut = true;
+  $("sl-mark").style.left = (frac * 100) + "%"; $("sl-mark").style.display = "block";
+  $("sl-wash").disabled = true; $("sl-cut").disabled = true;
+  $("sl-status").textContent = "已搓洗 " + slWash + " 回、在約 " + Math.round(frac * 100) + "% 處切牌。牌已定——按下方「三術合參」，鐘聲取牌。";
+}
+$("sl-cutbar").addEventListener("click", e => { const r = $("sl-cutbar").getBoundingClientRect(); slDoCut((e.clientX - r.left) / r.width); });
+$("sl-cutbar").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); slDoCut(.5); } });
+GEN["c-shilun"] = () => {
+  if (!slCut) throw fail("時輪占要先親手搓洗、切牌（表單裡的「時輪占・親手洗牌」）");
+  const n = nowT();
+  const R = SHILUN.draw(slDecks, { y: n.y, m: n.m, d: n.d, h: n.h, mi: n.mi, tz: nowTz() });
+  return { title: "時輪占",
+    html: "<p>" + R.cards.map(c => '<span class="badge' + (c.rev ? " red" : "") + '">' + c.layer.pos + ":" + c.zh + (c.rev ? "(逆)" : "") + "</span>").join(" ") + "</p>",
+    lines: SHILUN.promptLines(R, true) };
+};
 GEN["y-maha"] = () => {
   const B = birth();
   const idx = DC.bur8Index(B.y, B.m, B.d, B.h);
@@ -684,6 +749,7 @@ $("btn-go").onclick = () => {
   pr.push("6. 最後用一句話總結——如果三位老師只能留一句話給我。");
   $("prompt-box").value = pr.join("\n");
   $("prompt-sec").hidden = false;
+  if (picked.includes("c-shilun")) slReset();   /* 時輪占每次合參都要重新洗切 */
   DC.histSave("合參", sections.map(g => g.title).join("×"), q, $("out").innerHTML, $("prompt-box").value);
 };
 $("btn-copy").onclick = async () => {
@@ -720,6 +786,7 @@ DC.learnInit(buildLearn);
   $("q-input").value = "測試提問：這件事會順利嗎？";
   setTimeout(() => {
     try {
+      if (picked.includes("c-shilun")) { $("sl-wash").onclick(); $("sl-wash").onclick(); slDoCut(.4); }
       $("btn-go").onclick();
       document.title = $("prompt-sec").hidden ? "MIX-TEST-FAIL(hidden):" + $("go-hint").textContent : "MIX-TEST-OK";
       const d = document.createElement("div");

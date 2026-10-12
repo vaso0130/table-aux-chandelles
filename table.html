@@ -444,7 +444,7 @@
   }
   .card3d.spotlit .cface.front { box-shadow: inset 0 0 0 3px var(--ivory), inset 0 0 0 4px rgba(138,114,69,.55), 0 0 0 2px var(--gold), 0 0 24px rgba(201,164,92,.45); }
 
-  /* 逆位牌：牌面圖 圖騰倒轉，文字銘牌保持可讀 */
+  /* 逆位牌：牌面圖與圖騰倒轉，文字銘牌保持可讀 */
   .card3d.rev .cface.front .c-art,
   .card3d.rev .cface.front .c-img { transform: rotate(180deg); }
 
@@ -522,7 +522,7 @@
   .cast-row .yao-note.moving { color: var(--red); }
   .cast-row.placeholder { opacity: .25; }
 
-  /* ── 洗牌 切牌儀式 ───────────────────────── */
+  /* ── 洗牌與切牌儀式 ───────────────────────── */
   #stack-wrap { display: flex; justify-content: center; align-items: center; padding: 22px 0 8px; min-height: 200px; }
   #stack { position: relative; width: 116px; height: 174px; }
   .stack-card {
@@ -680,7 +680,7 @@
   /* 首訪導引 */
   .first-guide { text-align: center; font-size: 13px; color: var(--muted); margin: 4px auto 0; max-width: 620px; letter-spacing: .04em; }
   .first-guide a { color: var(--gold-bright); text-decoration: none; border-bottom: 1px dotted var(--gold-dim); }
-  /* 盤面分組小標 「上次」徽章 */
+  /* 盤面分組小標與「上次」徽章 */
   .spreads .hall-label.spread-group { margin: 16px 0 4px; }
   .s-last { font-size: 11px; color: var(--gold-bright); border: 1px solid var(--gold-dim); border-radius: 3px; padding: 1px 6px; margin-left: 8px; letter-spacing: .15em; vertical-align: 2px; }
   #ai-links { display: inline-flex; gap: 10px; }
@@ -719,6 +719,31 @@
     border-color: rgba(201,164,92,.55);
   }
   body.has-back .cface.back::after { content: none; }
+
+  /* ── 象棋占卜：木紋圓棋（無牌面圖，CSS 繪製）── */
+  .xqp {
+    display: inline-grid; place-items: center; vertical-align: middle;
+    width: 1.9em; height: 1.9em; border-radius: 50%;
+    font-weight: 700; font-size: 1em; line-height: 1;
+    background: radial-gradient(circle at 35% 30%, #F6DFAE, #E2BC7C 55%, #C9995A);
+    box-shadow: inset 0 0 0 .1em #E9CF9C, inset 0 0 0 .16em currentColor, inset 0 0 0 .22em #E9CF9C, 0 .08em .18em rgba(0,0,0,.45);
+    filter: none;
+  }
+  .xqp.r { color: #A8302A; }
+  .xqp.b { color: #2A2420; }
+  .cface.front .c-art:has(.xqp), .e-glyph:has(.xqp), .tip-glyph:has(.xqp) { filter: none; }
+  .cface.front .c-art .xqp { font-size: calc(var(--cw) * .3); }
+  .dc-glyph .xqp, .dd-glyph .xqp { font-size: 30px; }
+  /* 蓋棋：牌背改木紋，中央壓一枚空白棋 */
+  body[data-deck="xq"] .fan-card, body[data-deck="xq"] .stack-card,
+  body[data-deck="xq"] .fly-card, body[data-deck="xq"] .cface.back, body[data-deck="xq"] #draw-pile {
+    background:
+      radial-gradient(circle at 50% 50%, #D9AE6C 0 26%, #B98A4C 27% 29%, transparent 30%),
+      repeating-linear-gradient(100deg, rgba(90,52,20,.18) 0 2px, transparent 2px 7px),
+      linear-gradient(160deg, #8A5A2B, #5E3A18);
+    border-color: rgba(233,201,143,.5);
+  }
+  body[data-deck="xq"] .cface.back::after { content: "棋"; color: #6B3E16; font-size: calc(var(--cw) * .2); opacity: .8; text-shadow: none; }
 
   /* ── 解讀帳冊（象牙紙） ────────────────────── */
   #reading { display: none; margin-top: 48px; }
@@ -921,7 +946,7 @@
     font-size: 12.5px; letter-spacing: .12em; line-height: 1.9; margin-top: 64px;
   }
 
-  /* ── 紙面對話框：取代瀏覽器原生 alert/confirm， 帳冊同紙 ── */
+  /* ── 紙面對話框：取代瀏覽器原生 alert/confirm，與帳冊同紙 ── */
   dialog.note {
     background: linear-gradient(170deg, var(--ivory), var(--ivory-shade)); color: var(--ink);
     border: 1px solid var(--gold-dim); border-radius: 4px;
@@ -954,12 +979,13 @@
 
   <nav class="halls-nav" aria-label="館別導覽">
     <a title="回到燭光入口" href="index.html" class="home">燭光</a>
-    <a title="牌卡占卜：雷諾曼、塔羅等十套牌" href="table.html" class="here">牌桌館</a>
-    <a title="西洋/印度/卜卦占星 宿曜" href="astro.html">占星館</a>
+    <a title="牌卡占卜：雷諾曼、塔羅、象棋等十一術" href="table.html" class="here">牌桌館</a>
+    <a title="西洋/印度/卜卦占星與宿曜" href="astro.html">占星館</a>
     <a title="八字、紫微、九星、唐四柱、人類圖、生命靈數——看生辰" href="bazi.html">八字館</a>
-    <a title="奇門、六壬、太乙、梅花、河洛——問此刻 時機" href="shi.html">式占館</a>
+    <a title="奇門、六壬、太乙、梅花、河洛——問此刻與時機" href="shi.html">式占館</a>
     <a title="緬甸八曜、爪哇威頓、泰國佛日" href="nanyang.html">南洋館</a>
     <a title="一句、翹傳、靈籤——開卷即答" href="kaijuan.html">開卷館</a>
+    <a title="時輪占——依此刻自動取牌的原創牌占" href="shilun.html">鐘樓館</a>
     <a title="MBTI 十六型人格測驗——照見偏好" href="mbti.html">鏡廳</a>
     <a title="任選三術同問一事，合議作答" href="mix.html">MIX 三術合參</a>
   </nav>
@@ -1138,7 +1164,7 @@
     <div id="guide-list"></div>
   </section>
 
-  <footer>燭光牌桌 La Table aux Chandelles<br>牌面依十九世紀式樣重繪，牌序由你的手決定。僅供靜心 娛樂。</footer>
+  <footer>燭光牌桌 La Table aux Chandelles<br>牌面依十九世紀式樣重繪，牌序由你的手決定。僅供靜心與娛樂。</footer>
 </div>
 
 <dialog id="note" class="note" aria-labelledby="note-text">
@@ -1151,13 +1177,14 @@
   </form>
 </dialog>
 
-<script src="cards-data.js?v=2026091402"></script>
+<script src="xq-data.js?v=2026101201"></script>
+<script src="cards-data.js?v=2026101201"></script>
 <script>
 "use strict";
 
 /* 牌卡資料外置於 cards-data.js——缺檔即明示（整包複製時勿漏檔） */
 if (typeof LEN_CARDS === "undefined" || typeof DECKS === "undefined") {
-  document.body.innerHTML = "<p style='padding:40px;font-size:18px;color:#E8DCC2'>缺少 cards-data.js——請確認它  index.html 在同一資料夾。</p>";
+  document.body.innerHTML = "<p style='padding:40px;font-size:18px;color:#E8DCC2'>缺少 cards-data.js——請確認它與 index.html 在同一資料夾。</p>";
   throw new Error("cards-data.js missing");
 }
 
@@ -1181,6 +1208,7 @@ function say(msg, opts = {}) {
 
 const HALLS = [["west","西方館"], ["east","東方館"]];
 let deckDef = DECKS[0];
+document.body.dataset.deck = deckDef.id;
 let CARDS = deckDef.cards;      /* 目前牌組的牌（其餘程式一律讀這兩個） */
 let SPREADS = deckDef.spreads;
 
@@ -1188,7 +1216,7 @@ let SPREADS = deckDef.spreads;
 let spread = null;     // 當前盤面
 let deck = [];         // 目前牌序（索引指向 CARDS；由使用者親手洗切）
 let drawn = [];        // 已抽出的牌（依槽位順序）
-let drawnRev = [];     //   drawn 對應的正逆位（true＝逆位；僅正逆位牌組使用）
+let drawnRev = [];     // 與 drawn 對應的正逆位（true＝逆位；僅正逆位牌組使用）
 let target = 0;        // 本輪需抽的張數（補牌後會增加）
 let phase = "ritual";  // ritual（洗切牌）→ draw（抽牌）
 let shuffleCount = 0, cutCount = 0, ritualBusy = false;
@@ -1210,7 +1238,7 @@ const elPileCount = $("#pile-count"), btnMode = $("#btn-mode"), elScrollHint = $
 const elSlotsScroll = $("#slots-scroll");
 let drawMode = "pile";   /* pile=命運牌堆（預設） / fan=攤牌親挑 */
 
-/* 橫捲 affordance:內容比容器寬才加漸層遮罩 提示；滾輪可橫捲 */
+/* 橫捲 affordance:內容比容器寬才加漸層遮罩與提示；滾輪可橫捲 */
 function refreshScrollables() {
   [elSlotsScroll, elFanScroll].forEach((el) => {
     el.classList.toggle("can-scroll", el.scrollWidth > el.clientWidth + 4);
@@ -1307,6 +1335,7 @@ function selectDeck(d) {
   if (deckDef === d) return;
   if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
   deckDef = d;
+  document.body.dataset.deck = d.id;
   CARDS = d.cards;
   SPREADS = d.spreads;
   $("#q-input").value = "";
@@ -1377,7 +1406,7 @@ function preloadCards() {
   if (!deckDef.preload || deckDef.preloaded) return;
   deckDef.preloaded = true;
   /* 洗切牌的空檔預載全部牌面，翻牌時圖已在快取 */
-  CARDS.forEach((c) => { const i = new Image(); i.src = c.img; });
+  CARDS.forEach((c) => { if (c.img) { const i = new Image(); i.src = c.img; } });
 }
 
 function selectSpread(s, btn) {
@@ -1404,7 +1433,7 @@ function resetTable() {
   shuffleCount = 0; cutCount = 0; ritualBusy = false;
   $("#spread-title").textContent = spread.name;
   $("#spread-hint").textContent = spread.cast
-    ? (spread.method === "yarrow" ? "分二、掛一、揲四、歸奇，三變成一爻。十八變之後，動爻 之卦自現。" : "三枚銅錢擲六次起卦。擲出動爻，之卦自現。")
+    ? (spread.method === "yarrow" ? "分二、掛一、揲四、歸奇，三變成一爻。十八變之後，動爻與之卦自現。" : "三枚銅錢擲六次起卦。擲出動爻，之卦自現。")
     : spread.qiu
     ? "上香默稟、請筊、搖籤——連三聖筊定籤；陰筊三至，今日不取。"
     : spread.sig
@@ -1499,6 +1528,7 @@ const INVOCATIONS = {
   esp: (q) => `四十張古牌，金杯劍棒。今問：${q}——請以古伊比利的直白，賜我一句準話。`,
   zw:  (q) => `斗數眾星，各安其垣。今以 ${q} 叩問——願星曜借牌現身，明示吉凶。`,
   dt:  (q) => `四象環列，青龍白虎朱雀玄武。今問：${q}——願陰陽有應，卦象有靈。`,
+  xq:  (q) => `楚河漢界，三十二子蓋棋待翻。今問：${q}——願紅黑分明，一步一步，走給我看。`,
 };
 const elInv = $("#invocation"), elInvText = $("#inv-text"), elInvHead = $("#inv-head");
 function updateInvocation() {
@@ -1518,7 +1548,7 @@ elInvHead.addEventListener("click", () => {
   try { localStorage.setItem("lenormand-inv-fold", folded ? "1" : "0"); } catch (e) {}
 });
 
-/* ── 洗牌 切牌儀式 ───────────────────────── */
+/* ── 洗牌與切牌儀式 ───────────────────────── */
 function buildStack() {
   elStack.innerHTML = "";
   for (let i = 0; i < 12; i++) {
@@ -2087,7 +2117,7 @@ function simQ(a, b) {
   const norm = (s) => String(s || "").toLowerCase()
     .replace(/[\s。，、？！?!.,;:「」『』()（）…~〜-]/g, "")
     .replace(/[嗎呢啊吧了的呀喔哦欸捏嘛還再又就以我你妳個筆份]/g, "")
-    .replace(/[跟 ]/g, "和").replace(/[會可]/g, "能");
+    .replace(/[跟與]/g, "和").replace(/[會可]/g, "能");
   a = norm(a); b = norm(b);
   if (!a && !b) return 1;
   if (!a || !b) return 0;
@@ -2185,7 +2215,7 @@ function drawTop() {
 }
 elDrawPile.addEventListener("click", drawTop);
 
-/* 位置名稱（含大盤宮位 補牌） */
+/* 位置名稱（含大盤宮位與補牌） */
 function posName(i) {
   if (i >= spread.count) return spread.extend.labels[i - spread.count];
   if (spread.sig && sigPicked !== null && i === 0) return "指示牌・中心（事先指定）";
@@ -2313,7 +2343,7 @@ elExtend.addEventListener("click", () => {
   updateCaption();
 });
 
-/* ── 發牌 翻面 ───────────────────────────── */
+/* ── 發牌與翻面 ───────────────────────────── */
 function placeCard(cardIdx, forcedRev) {
   const slotIdx = drawn.length;
   const card = CARDS[cardIdx];
@@ -2368,8 +2398,8 @@ function placeCard(cardIdx, forcedRev) {
     clearTimeout(failsafe);
     reveal();
   });
-  img.src = card.img;
-  front.appendChild(img);
+  if (card.img) { img.src = card.img; front.appendChild(img); }
+  else { clearTimeout(failsafe); reveal(); }   /* 象棋：棋子以 CSS 繪製，無圖 */
 
   /* 牌義跟著牌走：滑過顯示、點按切換（觸控）、聚焦亦可（鍵盤/讀屏） */
   c3.classList.add("clickable");
@@ -2480,10 +2510,10 @@ function belFamilyNote(card, slotIdx) {
     : `<br><em>${fam}家族客居${p}之位——以「${card.keys.split("・")[0]}」回應${p}的領域，客隨主便。</em>`;
   const hard = fam === "火星" || fam === "土星";
   if (/阻礙|課題|考驗|潛流|障礙/.test(pos)) return hard
-    ? `<br><em>${fam}家族落在陰影之位——${fam === "火星" ? "阻力是正面的衝突：可以迎戰，別背對它" : "阻力是時間 消磨：急攻無益，以耐力取勝"}。</em>`
+    ? `<br><em>${fam}家族落在陰影之位——${fam === "火星" ? "阻力是正面的衝突：可以迎戰，別背對它" : "阻力是時間與消磨：急攻無益，以耐力取勝"}。</em>`
     : `<br><em>${fam}家族客居陰影之位——阻礙裡藏著「${card.keys.split("・")[0]}」的線索，未必是敵。</em>`;
   if (/助力|支持|貴人|解答/.test(pos)) return hard
-    ? `<br><em>${fam}家族坐助力之位——幫你的力量帶著鋒芒 紀律：嚴師、諍友，或一場不得不的磨練。</em>`
+    ? `<br><em>${fam}家族坐助力之位——幫你的力量帶著鋒芒與紀律：嚴師、諍友，或一場不得不的磨練。</em>`
     : `<br><em>${fam}家族坐助力之位——順風；讓「${card.keys.split("・")[0]}」為你使力。</em>`;
   return "";
 }
@@ -2491,7 +2521,7 @@ function belFamilyNote(card, slotIdx) {
 const ZW_GONG_SPECIAL = {
   "擎羊|財帛":"刀口上的財——入廟是競爭搶下的業績，落陷是破財傷本，防紛爭損耗。",
   "化忌|夫妻":"情之所執——這段關係正是你放不下的課題；先認清虧欠，再談進退。",
-  "貪狼|夫妻":"桃花入夫妻——入廟是情趣 魅力，落陷防多角糾纏。",
+  "貪狼|夫妻":"桃花入夫妻——入廟是情趣與魅力，落陷防多角糾纏。",
   "祿存|田宅":"祿入田宅——置產積蓄皆宜；落陷防守財傷了家中和氣。",
   "天馬|遷移":"馬入遷移，動得其所——出行外派皆利；落陷防奔波無功。",
   "化祿|祿":"四化歸位，祿上加祿——財緣全開，大膽擴張。",
@@ -2603,9 +2633,8 @@ function finishReading() {
   if (combos.length) {
     const block = document.createElement("div");
     block.className = "combo-block";
-    block.innerHTML = `<div class="cb-title">牌   牌 之 間</div>` + combos.map((c) => `
-      <p class="combo"><b>${c.a.zh}</b><span class="arrow">✦</span><b>${c.b.zh}</b>
-      　<small style="color:var(--ink-soft)">${c.label}</small><br>${c.text}</p>`).join("");
+    block.innerHTML = `<div class="cb-title">牌 與 牌 之 間</div>` + combos.map((c) => `
+      <p class="combo">${c.a ? `<b>${c.a.zh}</b><span class="arrow">✦</span><b>${c.b.zh}</b>　` : ""}<small style="color:var(--ink-soft)">${c.label}</small><br>${c.text}</p>`).join("");
     elCombos.appendChild(block);
   }
 
@@ -2613,7 +2642,7 @@ function finishReading() {
   if (prox.length) {
     const block = document.createElement("div");
     block.className = "combo-block";
-    block.innerHTML = `<div class="cb-title">近 遠 法 ・ 人 物   鄰 牌</div>` + prox.join("");
+    block.innerHTML = `<div class="cb-title">近 遠 法 ・ 人 物 與 鄰 牌</div>` + prox.join("");
     elCombos.appendChild(block);
   }
 
@@ -2626,7 +2655,7 @@ function finishReading() {
       const at = drawn.findIndex((c) => c.n === n);
       const sig = CARDS.find((c) => c.n === n);
       let s = `<p class="combo">「${sig.zh}」落在第 ${at + 1} 宮（${CARDS[at].zh}宮）——${pron}的處境圍繞著「${CARDS[at].keys.split("・")[0]}」。`;
-      /* 空間慣例（ 牌面畫像的視線無關）：同列右側＝尚未走到的未來，左側＝已經走過的過去 */
+      /* 空間慣例（與牌面畫像的視線無關）：同列右側＝尚未走到的未來，左側＝已經走過的過去 */
       if (spread.id === "gt" && at >= 32) {
         s += `<br>${pron}落在底部的命運四牌之中——此席仍是${CARDS[at].zh}宮，但這四張兼為全局結語：${pron}的處境正被「命運」總結著，是${pron}無法左右、必須接受的走向。`;
       } else if (deckDef.id === "gra" || deckDef.id === "kip" || deckDef.id === "sib" || deckDef.id === "len") {
@@ -2649,7 +2678,7 @@ function finishReading() {
     const block = document.createElement("div");
     block.className = "combo-block";
     block.innerHTML = `<div class="cb-title">指 示 牌 落 點</div>${rows}
-      <p class="combo" style="color:var(--ink-soft)">讀${deckDef.id === "gra" ? "大版圖" : "大盤"}時，以你的指示牌為中心：周圍八張牌是眼下的處境；依大盤慣例（ 畫像視線無關），其右側是尚未走到的未來，左側是已經走過的過去。</p>`;
+      <p class="combo" style="color:var(--ink-soft)">讀${deckDef.id === "gra" ? "大版圖" : "大盤"}時，以你的指示牌為中心：周圍八張牌是眼下的處境；依大盤慣例（與畫像視線無關），其右側是尚未走到的未來，左側是已經走過的過去。</p>`;
     elCombos.appendChild(block);
   }
 
@@ -2664,10 +2693,10 @@ function buildAiPrompt() {
     const g = YI_CARDS[c.gua - 1];
     const q0 = $("#q-input").value.trim();
     return [
-      "你是一位深諳廟宇籤詩的解籤人，擅長從籤詩、等第、詩意、典故，以及干支五行 卦象推衍問事者的處境。請以繁體中文為我解籤。",
+      "你是一位深諳廟宇籤詩的解籤人，擅長從籤詩、等第、詩意、典故，以及干支五行與卦象推衍問事者的處境。請以繁體中文為我解籤。",
       "",
       `【靈籤】第${cnNum(c.n)}籤・${c.grade}——「${c.zh}」`,
-      `干支：${c.gz}籤，屬${c.wx}——利${c.wxs}，宜其${c.wxd}（可據此參酌時令 方位）。`,
+      `干支：${c.gz}籤，屬${c.wx}——利${c.wxs}，宜其${c.wxd}（可據此參酌時令與方位）。`,
       `卦象：第${g.n}卦「${g.zh}」（${g.keys}）——${g.text}`,
       "籤詩：",
       ...c.poem.map((l) => `　${l}`),
@@ -2678,9 +2707,9 @@ function buildAiPrompt() {
       ...(qiuLog.length ? [`求籤經過：${qiuLog.join("；")}。（本桌無神，筊以機緣為斷）`] : []),
       "",
       "【請提供】",
-      "1. 籤詩逐句釋義 整體詩意（白話可為底本，請再深入）",
-      "2. 等第 典故如何映照我的處境",
-      "3. 以卦象 干支五行輔斷：卦義 籤詩相參，時令方位可供擇時參考",
+      "1. 籤詩逐句釋義與整體詩意（白話可為底本，請再深入）",
+      "2. 等第與典故如何映照我的處境",
+      "3. 以卦象與干支五行輔斷：卦義與籤詩相參，時令方位可供擇時參考",
       "4. 就我所問之事的具體推斷（可參考分項）",
       `5. 給問事者的具體建議（${currentTone()}）`,
       "",
@@ -2689,16 +2718,17 @@ function buildAiPrompt() {
   }
   const L = [];
   L.push({
-    len:"你是一位經驗豐富的雷諾曼（Petit Lenormand）占卜解讀師，熟悉牌義、位置意義 牌 牌之間的組合技法。請以繁體中文為我解讀以下牌陣。",
-    sib:"你是一位經驗豐富的義大利西碧拉（Vera Sibilla Italiana）占卜解讀師，熟悉五十二張牌的牌義、正逆位差異、位置意義 牌 牌之間的組合技法。請以繁體中文為我解讀以下牌陣。",
-    bel:"你是一位經驗豐富的貝林神諭卡（L'Oracle Belline）占卜解讀師，熟悉五十三張牌、七星體家族的象徵、正逆位差異 位置意義。請以繁體中文為我解讀以下牌陣。",
-    kip:"你是一位經驗豐富的奇卜牌（Kipperkarten）占卜解讀師，熟悉三十六張牌的人物 情境語彙、方向 距離的讀法。請以繁體中文為我解讀以下牌陣。",
-    gra:"你是一位經驗豐富的大雷諾曼（Grand Jeu de Mlle Lenormand）占卜解讀師，熟悉五十四張牌的撲克對應、神話系列象徵 位置意義。請以繁體中文為我解讀以下牌陣。",
-    run:"你是一位經驗豐富的盧恩符文（Elder Futhark）占卜師，熟悉二十四符文的正逆位（merkstave）意涵 符文間的呼應。請以繁體中文為我解讀以下符陣。",
-    yi:"你是一位精通周易的占卜解讀者，熟悉六十四卦的卦辭、象傳 義理，能將卦義落實到現代處境。請以繁體中文為我解讀以下卦陣。",
-    zw:"你是一位經驗豐富的紫微斗數老師，熟悉十四主星、六吉六煞、四化 諸雜曜的星情，以及廟旺落陷的差異。請以繁體中文為我解讀以下星陣（正位視為入廟得力，逆位視為落陷失輝）。",
+    len:"你是一位經驗豐富的雷諾曼（Petit Lenormand）占卜解讀師，熟悉牌義、位置意義與牌與牌之間的組合技法。請以繁體中文為我解讀以下牌陣。",
+    sib:"你是一位經驗豐富的義大利西碧拉（Vera Sibilla Italiana）占卜解讀師，熟悉五十二張牌的牌義、正逆位差異、位置意義與牌與牌之間的組合技法。請以繁體中文為我解讀以下牌陣。",
+    bel:"你是一位經驗豐富的貝林神諭卡（L'Oracle Belline）占卜解讀師，熟悉五十三張牌、七星體家族的象徵、正逆位差異與位置意義。請以繁體中文為我解讀以下牌陣。",
+    kip:"你是一位經驗豐富的奇卜牌（Kipperkarten）占卜解讀師，熟悉三十六張牌的人物與情境語彙、方向與距離的讀法。請以繁體中文為我解讀以下牌陣。",
+    gra:"你是一位經驗豐富的大雷諾曼（Grand Jeu de Mlle Lenormand）占卜解讀師，熟悉五十四張牌的撲克對應、神話系列象徵與位置意義。請以繁體中文為我解讀以下牌陣。",
+    run:"你是一位經驗豐富的盧恩符文（Elder Futhark）占卜師，熟悉二十四符文的正逆位（merkstave）意涵與符文間的呼應。請以繁體中文為我解讀以下符陣。",
+    yi:"你是一位精通周易的占卜解讀者，熟悉六十四卦的卦辭、象傳與義理，能將卦義落實到現代處境。請以繁體中文為我解讀以下卦陣。",
+    zw:"你是一位經驗豐富的紫微斗數老師，熟悉十四主星、六吉六煞、四化與諸雜曜的星情，以及廟旺落陷的差異。請以繁體中文為我解讀以下星陣（正位視為入廟得力，逆位視為落陷失輝）。",
     dt:"你是一位經驗豐富的塔羅解讀師，眼前是一副以華夏意象重詮的東方塔羅（四象為花色：青龍財帛、朱雀行動、白虎思辨、玄武情感），結構對應標準塔羅。請以繁體中文為我解讀以下牌陣。",
-    esp:"你是一位承襲西班牙 拉丁美洲民間紙牌占卜（cartomancia con baraja española）的解讀師，熟悉四十張牌的花色語彙、人頭牌的人物指認 同數成對的傳統斷法。請以繁體中文為我解讀以下牌陣。",
+    xq:"你是一位熟悉台灣民間象棋卦（象棋占卜）的解讀師，懂得以紅黑陰陽、將士象車馬炮兵的兵種象意、成組棋型與起承轉收的位置來斷事。請以繁體中文為我解讀以下棋局。",
+    esp:"你是一位承襲西班牙與拉丁美洲民間紙牌占卜（cartomancia con baraja española）的解讀師，熟悉四十張牌的花色語彙、人頭牌的人物指認與同數成對的傳統斷法。請以繁體中文為我解讀以下牌陣。",
   }[deckDef.id]);
   if (deckDef.reversible) {
     const norevs = CARDS.filter((c) => c.norev).map((c) => `「${c.zh}」`).join("、");
@@ -2707,15 +2737,16 @@ function buildAiPrompt() {
   /* 各牌組體系讀法總綱 */
   const DECK_TIPS = {
     yi: spread.cast ? null
-      : spread.id === "yi-tiyong" ? "讀法補充（以牌起卦）：兩張牌只是取數（邵子報數法：卦序數為上下卦數，加時辰數取動爻），請勿解讀兩張牌本身的卦義；依上列本卦、互卦、變卦 體用生剋論之，用生體吉、體生用耗、用剋體凶、體剋用成而遲、比和順。"
-      : "讀法補充（牌卦）：抽牌得卦沒有動爻，請以卦辭、彖象 大象為斷，不要擬造爻辭，也不論之卦；各位置只是象徵抽籤的框架，非周易筮法。",
+      : spread.id === "yi-tiyong" ? "讀法補充（以牌起卦）：兩張牌只是取數（邵子報數法：卦序數為上下卦數，加時辰數取動爻），請勿解讀兩張牌本身的卦義；依上列本卦、互卦、變卦與體用生剋論之，用生體吉、體生用耗、用剋體凶、體剋用成而遲、比和順。"
+      : "讀法補充（牌卦）：抽牌得卦沒有動爻，請以卦辭、彖象與大象為斷，不要擬造爻辭，也不論之卦；各位置只是象徵抽籤的框架，非周易筮法。",
     len: "讀法補充（時間牌）：騎士＝很快、數日內；幸運草＝短暫、把握當下；船＝數月、遠；樹＝緩慢、一年以上；山＝延遲停滯；棺材＝停止；鐮刀＝突然；鸛鳥＝季節轉換（春）；花束＝春；太陽＝夏或白日；百合＝冬或年長；月亮＝約一個月或夜；戒指＝一年一循環；錨＝長久。問時機時以此類牌為準，牌序數字亦可作日／週之參。",
     kip: spread.gt ? null : "讀法補充（近遠法）：凡人物牌落陣請讀其四鄰——右＝迎面而來、左＝已成過去、上＝壓在心頭之念、下＝立足之基；鄰牌越近影響越迫。",
-    bel: "讀法補充（星體歸屬）：留意各牌星體家族 位置的互動—— 位置同星體者「回垣得令」本義加倍；同家族多張＝該領域主導；火星/土星家族落阻礙課題之位凶而有明確解法；藍卡所落之位受守護、凶象鈍化；三主牌落於何位，何位即全局樞紐。",
+    bel: "讀法補充（星體歸屬）：留意各牌星體家族與位置的互動——與位置同星體者「回垣得令」本義加倍；同家族多張＝該領域主導；火星/土星家族落阻礙課題之位凶而有明確解法；藍卡所落之位受守護、凶象鈍化；三主牌落於何位，何位即全局樞紐。",
     sib: "讀法補充（人物指認）：人物牌請優先讀作具體的人——落阻礙位＝阻你的人、助力位＝貴人、潛藏位＝幕後之人、未來位＝將登場者；逆位人物＝心思不明或立場已轉。",
     run: "讀法補充（三族）：符文分三族——弗雷族(1-8)司生計豐饒、海姆達爾族(9-16)司變局考驗、提爾族(17-24)司人事天命；某族過半即為本問重心。正逆同形之符所言為常數，非一時之運。",
     dt: "讀法補充（四象生剋）：小牌兼讀四象五行——木生火、火生土、土生金、金生水、水生木；同象得位氣旺、相生得助、相剋受制；大牌不拘五行、權重最重。",
-    esp: "讀法補充（花色 人物）：人頭牌請逐一指認為問卜者身邊的真實人物（sota＝晚輩或消息、caballo＝在路上的人事、rey＝拍板者；花色定領域）；同數成對依傳統斷法；並統計四花色多寡定全局基調（金幣論財、聖杯論情、寶劍論非、棍杖論勞）。",
+    esp: "讀法補充（花色與人物）：人頭牌請逐一指認為問卜者身邊的真實人物（sota＝晚輩或消息、caballo＝在路上的人事、rey＝拍板者；花色定領域）；同數成對依傳統斷法；並統計四花色多寡定全局基調（金幣論財、聖杯論情、寶劍論非、棍杖論勞）。",
+    xq: "讀法補充（象棋卦）：紅為陽、為明、為主動，黑為陰、為暗、為被動；民間有「男問看紅、女問看黑」之說——若我提到自己的性別，請以該色為己方、另一色為對方來讀，否則以紅為明面、黑為暗處。兵種象意：將帥＝主事者、仕士＝貼身之人、相象＝家宅守成、車＝主力強勢、馬＝奔波轉折、炮包＝借力或口舌、兵卒＝小事與眾人。同色將士象、車馬炮各成一組，是有力的棋型。棋子不分正逆。",
     gra: "讀法補充（神話五系列）：每張牌屬一系列——同系列多張相鄰或成列，請串成該神話的一段情節（金羊毛＝求取、特洛伊＝攻守、煉金＝轉化、時序＝時機、意外＝變數）。",
   };
   if (DECK_TIPS[deckDef.id]) L.push(DECK_TIPS[deckDef.id]);
@@ -2728,7 +2759,7 @@ function buildAiPrompt() {
     const sc = [0, 0, 0, 0]; drawn.forEach((c) => sc[Math.floor((c.n - 1) / 10)]++);
     const mx = Math.max(sc[0], sc[1], sc[2], sc[3]);
     if (mx >= Math.ceil(drawn.length / 3)) {
-      const verdicts = ["金幣過秤：此問終究是錢的事。", "聖杯滿桌：感情 人情是底色。", "寶劍林立：是非當道，先避其鋒。", "棍杖成林：一切要靠做，空想無益。"];
+      const verdicts = ["金幣過秤：此問終究是錢的事。", "聖杯滿桌：感情與人情是底色。", "寶劍林立：是非當道，先避其鋒。", "棍杖成林：一切要靠做，空想無益。"];
       L.push(`花色盤點：${["金幣", "聖杯", "寶劍", "棍杖"].map((s, i) => s + sc[i]).join("、")}——${verdicts[sc.indexOf(mx)]}`);
     }
   }
@@ -2744,12 +2775,12 @@ function buildAiPrompt() {
   if (spread.gt) {
     L.push({
       len: `排列方式：Grand Tableau 大盤，${spread.id === "gt9" ? "9×4 平鋪三十六席、無命運四牌（法式／現代排法）" : "8×4 加底部置中 4 張（第 33–36 張）"}。第 n 張牌落在第 n 宮，宮位以傳統 36 張牌的順序命名。方向依大盤慣例（ 牌面畫像的視線無關）：指示牌同列右側的牌是尚未走到的未來，左側是已經走過的過去；同欄上方諸牌是懸在心頭、尚未掌控之念，下方諸牌是踩在腳下、已然掌握之基。`,
-      kip: "排列方式：奇卜大盤 6×6 共三十六席。第 n 張牌落在第 n 宮，宮位以奇卜 36 張牌的順序命名。方向依大盤慣例（ 牌面畫像的視線無關）：主要人物同列右側的牌是尚未走到的未來，左側是已經走過的過去；同欄上方是心頭之念、下方是立足之基。",
-      gra: "排列方式：Grand Tableau 大版圖，9×6 共五十四席。第 n 張牌落在第 n 宮，宮位以大雷諾曼五十四張牌的順序命名（宮位法沿用小雷諾曼慣例）。方向依大盤慣例（ 牌面畫像的視線無關）：指示牌同列右側的牌是尚未走到的未來，左側的牌是已經走過的過去；同欄上方是所思、下方是所踏。",
-      sib: "排列方式：西碧拉全盤 La Tavolata，13×4 共五十二席，四列如四花色。第 n 張牌落在第 n 宮，宮位以西碧拉五十二張牌的順序命名。方向依大盤慣例（ 牌面畫像的視線無關）：情郎／佳人同列右側是尚未走到的未來，左側是已經走過的過去。",
+      kip: "排列方式：奇卜大盤 6×6 共三十六席。第 n 張牌落在第 n 宮，宮位以奇卜 36 張牌的順序命名。方向依大盤慣例（與牌面畫像的視線無關）：主要人物同列右側的牌是尚未走到的未來，左側是已經走過的過去；同欄上方是心頭之念、下方是立足之基。",
+      gra: "排列方式：Grand Tableau 大版圖，9×6 共五十四席。第 n 張牌落在第 n 宮，宮位以大雷諾曼五十四張牌的順序命名（宮位法沿用小雷諾曼慣例）。方向依大盤慣例（與牌面畫像的視線無關）：指示牌同列右側的牌是尚未走到的未來，左側的牌是已經走過的過去；同欄上方是所思、下方是所踏。",
+      sib: "排列方式：西碧拉全盤 La Tavolata，13×4 共五十二席，四列如四花色。第 n 張牌落在第 n 宮，宮位以西碧拉五十二張牌的順序命名。方向依大盤慣例（與牌面畫像的視線無關）：情郎／佳人同列右側是尚未走到的未來，左側是已經走過的過去。",
     }[deckDef.id] || "排列方式：Grand Tableau 大盤。第 n 張牌落在第 n 宮，宮位以本牌組牌序命名。");
     if (spread.id === "gt") L.push("第 33–36 席仍分別是鑰匙、魚、錨、十字四宮（宮位照讀），但此四張另兼「命運四牌」：由左至右連讀成一句，作全局結語——這是問卜者無法左右、必須接受的走向；請在最後以此四張收束全局。");
-    /* 指示牌八鄰組合 轉宮環鏈 */
+    /* 指示牌八鄰組合與轉宮環鏈 */
     const sigDefs = deckDef.id === "len" ? [[28, "男人"], [29, "女人"]]
       : deckDef.id === "kip" ? [[1, "主要人物(男)"], [2, "主要人物(女)"]]
       : deckDef.id === "sib" ? [[11, "情郎"], [12, "佳人"]]
@@ -2842,20 +2873,20 @@ function buildAiPrompt() {
     const myth = deckDef.id === "gra" && c.myth ? `・${c.myth[0]}系列` : "";
     L.push(deckDef.reversible
       ? `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（${c.pk}，${c.norev ? "不分正逆位" : drawnRev[i] ? "逆位" : "正位"}）〔${polMark(c)}〕— 關鍵詞：${c.keys}`
-      : `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（№${c.n}，${{ len: "撲克對應 ", gra: "撲克對應 ", yi: "卦序 ", kip: "牌號 ", esp: "花色點數 " }[deckDef.id] || ""}${c.pk}${myth}）〔${polMark(c)}〕— 關鍵詞：${c.keys}`);
-    if ((deckDef.id === "gra" || deckDef.id === "zw" || deckDef.id === "dt") && !spread.gt)
+      : `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（№${c.n}，${{ len: "撲克對應 ", gra: "撲克對應 ", yi: "卦序 ", kip: "牌號 ", esp: "花色點數 ", xq: "" }[deckDef.id] || ""}${c.pk}${myth}）〔${polMark(c)}〕— 關鍵詞：${c.keys}`);
+    if ((deckDef.id === "gra" || deckDef.id === "zw" || deckDef.id === "dt" || deckDef.id === "xq") && !spread.gt)
       L.push(`   牌義：${drawnRev[i] && c.rtext ? c.rtext : c.text}`);
   });
   const cb = spread.combos(drawn.slice(0, spread.count));
   if (cb.length) {
     L.push("");
-    L.push("【牌 牌之間】（已依組合語法成句，請以此為底深化）");
-    cb.forEach((c) => L.push(`- ${c.a.zh} ✦ ${c.b.zh}（${c.label}）：${c.text}`));
+    L.push("【牌與牌之間】（已依組合語法成句，請以此為底深化）");
+    cb.forEach((c) => L.push(c.a ? `- ${c.a.zh} ✦ ${c.b.zh}（${c.label}）：${c.text}` : `- ${c.label}：${c.text}`));
     if (deckDef.id === "len" || deckDef.id === "gra") L.push("組合文法：前牌為名詞、後牌為修飾——可依此自行擴讀其他相鄰牌。");
   }
   L.push("");
   L.push("【請提供】");
-  L.push("1. 整體牌陣的基調 核心訊息");
+  L.push("1. 整體牌陣的基調與核心訊息");
   L.push("2. 逐一位置的解讀（牌義結合位置意義）");
   L.push("3. 相鄰或相關牌之間的組合意義");
   if (spread.gt) {
@@ -2875,7 +2906,7 @@ function buildAiPrompt() {
 }
 
 /* ── 建議語氣（可調整並記住） ─────────────── */
-const TONE_KEY = "dc-tone", TONE_CUSTOM_KEY = "dc-tone-custom"; //  別館共用同一組鍵(divine-core toneInit)
+const TONE_KEY = "dc-tone", TONE_CUSTOM_KEY = "dc-tone-custom"; // 與別館共用同一組鍵(divine-core toneInit)
 try { /* 一次性遷移舊鍵 */
   if (!localStorage.getItem("dc-tone") && localStorage.getItem("lenormand-tone")) {
     localStorage.setItem("dc-tone", localStorage.getItem("lenormand-tone"));
@@ -2931,7 +2962,7 @@ $("#btn-ai").addEventListener("click", async () => {
 
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideTip(); });
 
-/* ── 分享 下載 ─────────────────────────────
+/* ── 分享與下載 ─────────────────────────────
    下載盤面圖：純 canvas 手繪符號版(file:// 下引入牌圖會污染畫布，故以
    金框+圖徽+牌名重繪，可離線匯出);分享文字:navigator.share/剪貼簿。 */
 function buildShareText() {
@@ -3004,8 +3035,17 @@ function drawSpreadImage() {
     g.beginPath(); g.roundRect(x, y, CW, CH, 9); g.fill(); g.stroke();
     g.strokeStyle = "rgba(201,164,92,.4)"; g.lineWidth = .8;
     g.beginPath(); g.roundRect(x + 6, y + 6, CW - 12, CH - 12, 6); g.stroke();
-    g.fillStyle = IVORY; g.font = `44px ${serif}`;
-    g.fillText(c.glyph, x + CW / 2, y + CH / 2 - 8);
+    if (c.ch) {   /* 象棋：木紋圓棋 */
+      const cx = x + CW / 2, cy = y + CH / 2 - 14, r = CW * .3;
+      g.fillStyle = "#E9C98F"; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = c.red ? "#A8302A" : "#2A2420"; g.lineWidth = 2;
+      g.beginPath(); g.arc(cx, cy, r - 5, 0, Math.PI * 2); g.stroke();
+      g.fillStyle = c.red ? "#A8302A" : "#2A2420"; g.font = `700 ${Math.round(r * 1.1)}px ${serif}`;
+      g.fillText(c.ch, cx, cy + r * .38);
+    } else {
+      g.fillStyle = IVORY; g.font = `44px ${serif}`;
+      g.fillText(c.glyph, x + CW / 2, y + CH / 2 - 8);
+    }
     g.fillStyle = GOLDB; g.font = `700 17px ${serif}`;
     g.fillText(c.zh.length > 6 ? c.zh.slice(0, 6) : c.zh, x + CW / 2, y + CH - 40);
     g.fillStyle = MUTED; g.font = `10px ${serif}`;
@@ -3193,7 +3233,7 @@ $("#btn-hist-clear").addEventListener("click", () => {
   renderHistory();
 });
 
-/* 重看：把紀錄還原到牌桌 解讀帳冊（不重新保存） */
+/* 重看：把紀錄還原到牌桌與解讀帳冊（不重新保存） */
 function replayReading(rec) {
   if (rec.deck === "qs") { say("靈籤已經搬到開卷館。這筆舊紀錄在這裡重看不了，請到開卷館重新求籤。"); return; }
   const dk = DECKS.find((x) => x.id === (rec.deck || "len"));
@@ -3257,12 +3297,12 @@ renderHistory();
 /* ── 牌義字典 ─────────────────────────────── */
 const elDictGrid = $("#dict-grid"), elDictDetail = $("#dict-detail");
 
-/* 八種常見位置的讀法：依牌的關鍵詞 吉凶組句 */
+/* 八種常見位置的讀法：依牌的關鍵詞與吉凶組句 */
 function dictPosLines(c) {
   const K = c.keys.split("・");
   const last = deckDef.id === "yi" ? (K[1] || K[0]) : K[K.length - 1]; /* 易經末詞常為卦辭截語，改取次詞 */
   const isLen = deckDef.id === "len";
-  const unit = { yi: "這一卦", run: "這枚符文", zw: "這顆星" }[deckDef.id] || "這張牌";
+  const unit = { yi: "這一卦", run: "這枚符文", zw: "這顆星", xq: "這顆棋" }[deckDef.id] || "這張牌";
   const isPerson = /當事人|指示牌/.test(c.keys) || (deckDef.id === "sib" && SIB_PERSONS[c.n]);
   const rows = [
     ["過去・根源", isLen
@@ -3276,7 +3316,7 @@ function dictPosLines(c) {
       : `事情正往「${K[0]}」的方向移動——提前把自己安排到對的位置。`],
     ["核心・課題", `此局的軸心是「${c.zh}」——一切繞著「${K[0]}」打轉，避開它就讀不懂這個局。`],
     ["意識・目標", `檯面上，你追求的是「${K[0]}」。確認這真的是你要的，而不只是習慣。`],
-    ["潛藏・根基", `檯面下真正作用的，是「${last}」 「${K[0]}」的暗流——它不說話，但它做決定。`],
+    ["潛藏・根基", `檯面下真正作用的，是「${last}」與「${K[0]}」的暗流——它不說話，但它做決定。`],
     ["建議・指引", isPerson
       ? `這個位置由一個「人」佔據——事情的關鍵不在事，在他／她；先確認這個人的意向。`
       : c.pol === "good"
@@ -3285,7 +3325,7 @@ function dictPosLines(c) {
       ? `把「${K[0]}」當作警訊：預作準備、及早止損，別跟它硬碰。`
       : `「${K[0]}」本身無吉凶——分寸的拿捏，就是${unit}給你的功課。`],
     ["結果・落點", isPerson
-      ? `結局繫於此人的動向—— 其算事，不如懂人。`
+      ? `結局繫於此人的動向——與其算事，不如懂人。`
       : c.pol === "good"
       ? `結局傾向順遂，以「${K[0]}」圓滿收尾。`
       : c.pol === "bad"
@@ -3316,14 +3356,14 @@ function renderDict() {
     const b = document.createElement("button");
     b.className = "dict-card";
     b.innerHTML = `
-      <img class="dc-img" loading="lazy" alt="" src="${c.img}">
+      <img class="dc-img" loading="lazy" alt="" src="${c.img || ""}">
       <div class="dc-name">${c.zh}</div>
       <div class="dc-sub">${c.pks || "№ " + c.n}</div>`;
     const img = b.querySelector("img");
     img.addEventListener("error", () => {
       const g = document.createElement("div");
       g.className = "dc-glyph";
-      g.textContent = c.glyph;
+      g.innerHTML = c.glyph;   /* 牌組靜態資料；象棋的 glyph 是棋子標記 */
       img.replaceWith(g);
     });
     b.addEventListener("click", () => showDictCard(i));
@@ -3370,7 +3410,7 @@ function showDictCard(i) {
     : [c.pks, c.pk].filter(Boolean).join(" ・ ") || `№ ${c.n}`;
   elDictDetail.innerHTML = `
     <div class="dict-head">
-      <img class="dd-img" alt="" src="${c.img}">
+      <img class="dd-img" alt="" src="${c.img || ""}">
       <div class="dd-meta">
         <div class="e-pos">${deckDef.name} ・ ${corr}</div>
         <div class="e-name" style="font-size:24px">${c.zh} <small style="color:var(--ink-soft);font-weight:400">${c.latin}</small></div>
@@ -3389,7 +3429,7 @@ function showDictCard(i) {
   img.addEventListener("error", () => {
     const g = document.createElement("div");
     g.className = "dd-glyph";
-    g.textContent = c.glyph;
+    g.innerHTML = c.glyph;
     img.replaceWith(g);
   });
   elDictDetail.hidden = false;
@@ -3398,7 +3438,7 @@ function showDictCard(i) {
 
 renderDict();
 
-/* ── 盤面讀法：目前牌組的每個盤面，位置＋讀法要領（教學， 字典並列） ── */
+/* ── 盤面讀法：目前牌組的每個盤面，位置＋讀法要領（教學，與字典並列） ── */
 const elGuideList = $("#guide-list");
 function guideTip(s) {
   const rev = deckDef.reversible ? "此牌組有正逆位：逆位讀作該義受阻、遲滯或走向反面，不必一律當凶。" : "";
@@ -3408,7 +3448,9 @@ function guideTip(s) {
   if (deckDef.id === "yi") return `<b>牌卦沒有動爻</b>，以卦辭、大象為斷，不擬爻辭、不論之卦。各位置是象徵抽籤的框架，把每一卦的象放進該位置的問題裡讀。${rev}`;
   if (s.id === "houses") return `<b>每宮一張</b>，以牌義對應該宮的人生領域；先看命宮（自我）、財帛、夫妻、官祿四宮，再看其餘。同一張牌落不同宮，說的是不同層面。${rev}`;
   if (s.sig) return `<b>指示牌代表這一問的主體</b>，置於中央。先讀 它相鄰的牌：左為來路、右為去向、上為所思（懸於心頭）、下為所踏（已在掌握）；再看左右鏡影與對角。不指定而全洗入抽，指示牌自然落陣的位置本身就是訊息。${rev}`;
-  if (s.qiu) return `<b>連三聖筊定籤</b>，笑筊退籤重稟，陰筊三至今日不取。籤詩讀四句本文，再看籤解 各事項；干支五行 配卦是輔助，不是主斷。`;
+  if (s.qiu) return `<b>連三聖筊定籤</b>，笑筊退籤重稟，陰筊三至今日不取。籤詩讀四句本文，再看籤解與各事項；干支五行與配卦是輔助，不是主斷。`;
+  if (s.id === "xq-gate") return `<b>先看主位那顆的紅黑</b>，定全局明暗；再看紅黑多寡、有沒有王見王（帥將同現）或成組（同色將士象、車馬炮）。最後依右上起、左上承、左下轉、右下收，把四角讀成一段過程——收位的顏色，就是結局的顏色。`;
+  if (deckDef.id === "xq") return `<b>先看紅黑</b>：紅為明、為主動，黑為暗、為被動；再看兵種——將帥主事、仕士近身、相象守家、車是主力、馬主奔波、炮包借力或口舌、兵卒是小事與眾人。`;
   if (s.count === 1) return `<b>一張牌一句話</b>。先讀關鍵詞，再把牌義放進你的問題裡。今日指引不必求全，記一句就夠。${rev}`;
   if (s.count <= 3) return `<b>先各讀一張</b>，再把相鄰兩張連成一句：前牌為主詞，後牌為修飾。三張讀出一條線，中央那張是重心。${rev}`;
   if (s.count >= 9) return `<b>先掃全局</b>：吉牌多還是挑戰牌多，人物牌落在哪。再依位置逐張讀，最後讀相鄰組合；同欄上下可讀「所思／所踏」。${rev}`;
@@ -3532,7 +3574,7 @@ if (location.search.includes("rwdtest")) {
 if (location.search.includes("selftest")) {
   const out = [];
   const t = (name, cond, detail) => out.push((cond ? "✓ " : "✗ ") + name + (detail ? " → " + detail : ""));
-  const MC = { len: 36, sib: 52, bel: 53, kip: 36, gra: 54, run: 24, esp: 40, yi: 64, zw: 36, dt: 78 };
+  const MC = { len: 36, sib: 52, bel: 53, kip: 36, gra: 54, run: 24, esp: 40, yi: 64, zw: 36, dt: 78, xq: 32 };
   DECKS.forEach((d) => {
     t(`${d.id} 張數`, d.cards.length === MC[d.id], `${d.cards.length}≠${MC[d.id]}`);
     const badC = d.cards.filter((c, i) => !(c.n === i + 1 && c.zh && c.keys && c.text && ["good", "bad", "mid"].includes(c.pol) && (!d.reversible || c.rtext || c.norev)));

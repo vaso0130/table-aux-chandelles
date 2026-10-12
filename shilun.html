@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="zh-Hant">
+<title>燭光鐘樓 · 鐘樓館</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="hall.css?v=2026091402">
+<style>
+  /* ── 鐘樓配色：彩繪玻璃的夜，靛紫底 ── */
+  :root {
+    --felt-950: #0A0915; --felt-900: #0F0D1F; --felt-800: #16132C;
+    --felt-700: #201B3D; --felt-line: #352D5C; --muted: #A29CC6;
+    --glass-ruby: #C2364A; --glass-sapphire: #3456C9; --glass-amber: #E2A13B; --glass-emerald: #2F9C6E;
+  }
+  body {
+    background:
+      radial-gradient(900px 520px at 50% -8%, rgba(110,80,200,.20), transparent 62%),
+      radial-gradient(700px 500px at 10% 110%, rgba(194,54,74,.08), transparent 60%),
+      radial-gradient(700px 500px at 92% 105%, rgba(52,86,201,.10), transparent 60%),
+      var(--felt-900);
+  }
+  .glass-rule { height: 4px; margin: 14px auto 0; max-width: 320px; border-radius: 2px;
+    background: linear-gradient(90deg, var(--glass-ruby), var(--glass-amber), var(--glass-emerald), var(--glass-sapphire), #7a4fd0); opacity: .75; }
+
+  /* ── 五排牌堆 ── */
+  #deck-rows { margin-top: 18px; display: grid; gap: 12px; }
+  .drow { border: 1px solid var(--felt-line); border-radius: 3px; padding: 8px 10px 10px; background: rgba(10,9,21,.45); }
+  .drow-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); letter-spacing: .08em; margin-bottom: 6px; }
+  .drow-h b { color: var(--gold-bright); font-weight: 600; letter-spacing: .2em; font-size: 14px; }
+  .drow-h .at { margin-left: auto; color: var(--gold); }
+  .dcards { display: flex; flex-wrap: wrap; gap: 3px; }
+  .mc {
+    width: 24px; height: 36px; border-radius: 2px; position: relative;
+    background: #241c46 url("cards-shilun/back.jpg") center / cover;
+    box-shadow: 0 1px 2px rgba(0,0,0,.6); transition: transform .35s, box-shadow .35s, opacity .35s;
+  }
+  .mc.dim { opacity: .35; }
+  .mc.hit { transform: translateY(-6px) scale(1.25); z-index: 2; opacity: 1;
+    box-shadow: 0 0 0 2px var(--gold-bright), 0 0 14px 4px rgba(229,204,143,.6); }
+  .mc .mc-no { position: absolute; left: 0; right: 0; bottom: -15px; text-align: center; font-size: 10px; color: var(--gold-bright); }
+  @keyframes wash { 0% { transform: none; } 30% { transform: translate(var(--dx), var(--dy)) rotate(var(--rt)); } 100% { transform: none; } }
+  .washing .mc { animation: wash .7s ease-in-out; }
+  @keyframes cutL { 50% { transform: translateX(-10px); opacity: .5; } }
+  @keyframes cutR { 50% { transform: translateX(10px); opacity: .5; } }
+  .cutting .mc.lo { animation: cutL .6s ease-in-out; }
+  .cutting .mc.hi { animation: cutR .6s ease-in-out; }
+
+  /* ── 切牌條 ── */
+  #cutbar-wrap { margin-top: 14px; }
+  #cutbar-wrap[hidden] { display: none; }
+  #cutbar {
+    position: relative; height: 34px; border-radius: 3px; cursor: crosshair;
+    background: repeating-linear-gradient(90deg, #2a2250 0 6px, #33296a 6px 12px);
+    border: 1px solid var(--gold-dim); touch-action: manipulation;
+  }
+  #cutbar::after { content: "點這裡切牌"; position: absolute; inset: 0; display: grid; place-items: center;
+    color: var(--gold-bright); font-size: 13px; letter-spacing: .3em; pointer-events: none; }
+  #cutmark { position: absolute; top: -4px; bottom: -4px; width: 3px; background: var(--gold-bright); box-shadow: 0 0 8px var(--gold-bright); display: none; }
+  #ritual-log { font-size: 13px; color: var(--muted); min-height: 1.5em; margin: 10px 0 0; letter-spacing: .05em; }
+
+  /* ── 牌陣 ── */
+  .sl-spread { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin: 18px 0 6px; }
+  .sl-slot { width: 150px; text-align: center; }
+  .sl-pos { color: var(--gold-bright); letter-spacing: .3em; text-indent: .3em; font-size: 14px; }
+  .sl-why { color: var(--muted); font-size: 11.5px; margin-bottom: 6px; }
+  .sl-card {
+    width: 150px; height: 224px; border-radius: 6px; overflow: hidden; position: relative;
+    background: linear-gradient(160deg, #2b2257, #151030); border: 1px solid var(--gold-dim);
+    box-shadow: 0 6px 18px rgba(0,0,0,.55), 0 0 18px rgba(110,80,200,.25);
+  }
+  .sl-card img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
+  .sl-card.rev img, .sl-card.rev .sl-fb { transform: rotate(180deg); }
+  .sl-fb { position: absolute; inset: 0; display: grid; place-items: center; color: var(--gold-bright); font-size: 22px; letter-spacing: .2em; }
+  .sl-name { margin-top: 6px; color: var(--ivory); font-size: 15px; letter-spacing: .1em; }
+  .sl-ori { font-size: 12px; color: var(--muted); }
+  .sl-ori.r { color: #E6A0A8; }
+  @keyframes flipIn { 0% { transform: rotateY(90deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+  .sl-slot { animation: flipIn .55s ease-out both; }
+  .sl-meaning { margin: 6px 0 0; }
+  .sl-meaning dt { color: var(--gold-bright); margin-top: 12px; letter-spacing: .08em; }
+  .sl-meaning dd { margin: 3px 0 0; color: var(--ivory-shade); }
+  .sl-reso li { margin: 4px 0; color: var(--ivory-shade); }
+  @media (max-width: 640px) {
+    .sl-slot, .sl-card { width: 104px; } .sl-card { height: 155px; }
+    .sl-spread { gap: 10px; }
+    .mc { width: 18px; height: 27px; }
+  }
+
+  /* 教學圖鑑 */
+  .lb-detail { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; text-align: left; }
+  .lb-detail img { width: 200px; border-radius: 6px; border: 1px solid var(--gold-dim); }
+  .lb-detail .txt { flex: 1 1 260px; max-width: 460px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="plate">
+      <p class="eyebrow">La Tour de l'Horloge</p>
+      <h1>燭光鐘樓</h1>
+      <p class="subtitle">月、日、星期、時辰、分鐘——你只管洗牌切牌，鐘聲替你取牌。</p>
+      <div class="glass-rule"></div>
+    </div>
+  </header>
+
+  <nav class="halls-nav">
+    <a title="回到燭光入口" href="index.html" class="home">燭光</a>
+    <a title="牌卡占卜：雷諾曼、塔羅、象棋等十一術" href="table.html">牌桌館</a>
+    <a title="西洋/印度/卜卦占星與宿曜" href="astro.html">占星館</a>
+    <a title="八字、紫微、九星、唐四柱、人類圖、生命靈數——看生辰" href="bazi.html">八字館</a>
+    <a title="奇門、六壬、太乙、梅花、河洛——問此刻與時機" href="shi.html">式占館</a>
+    <a title="緬甸八曜、爪哇威頓、泰國佛日" href="nanyang.html">南洋館</a>
+    <a title="一句、翹傳、靈籤——開卷即答" href="kaijuan.html">開卷館</a>
+    <a title="時輪占——依此刻自動取牌的原創牌占" href="shilun.html" class="here">鐘樓館</a>
+    <a title="MBTI 十六型人格測驗——照見偏好" href="mbti.html">鏡廳</a>
+    <a title="任選三術同問一事，合議作答" href="mix.html">MIX 三術合參</a>
+  </nav>
+
+  <nav class="views" id="views" aria-label="頁面切換">
+    <button class="view-btn active" data-view="divine">時輪占</button>
+    <button class="view-btn" data-view="learn">入門教學</button>
+  </nav>
+
+  <section id="view-learn"></section>
+
+  <section class="panel" id="panel">
+    <h2>時輪占</h2>
+    <span class="hint">五層牌堆攤在桌上。默想你的問題，親手搓洗、切牌——之後敲鐘，月、日、星期、時辰、分鐘會各自指向一張牌。</span>
+    <div class="form-grid" style="margin-top:14px">
+      <div class="field full"><label for="q-input">你的問題</label>
+        <input id="q-input" type="text" maxlength="200" placeholder="默想，寫下你想問的事"></div>
+    </div>
+    <p class="fieldset-label">起占時刻<label class="follow-now"><input type="checkbox" id="n-follow" checked><span class="live-dot"></span>跟隨此刻</label></p>
+    <div class="form-grid">
+      <div class="field"><label for="w-date">日期</label><input id="w-date" type="date"></div>
+      <div class="field"><label for="w-time">時間</label><input id="w-time" type="time"></div>
+    </div>
+
+    <div id="deck-rows"></div>
+    <div id="cutbar-wrap" hidden><div id="cutbar" role="button" tabindex="0" aria-label="切牌條：點選切牌的位置"><div id="cutmark"></div></div></div>
+    <p id="ritual-log" aria-live="polite"></p>
+
+    <div class="btn-row">
+      <button class="gold-btn" id="btn-wash">搓 洗</button>
+      <button class="ghost-btn" id="btn-cut" disabled>切 牌</button>
+      <button class="gold-btn" id="btn-go" disabled>敲 鐘</button>
+      <button class="ghost-btn" id="btn-reset" hidden>重新洗牌</button>
+      <span class="hint" id="go-hint"></span>
+    </div>
+  </section>
+
+  <section id="out"></section>
+
+  <section class="prompt-sec" id="prompt-sec" hidden>
+    <p class="section-label">AI 解讀提示詞</p>
+    <div class="tone-row"><label for="tone-select">建議語氣</label><select id="tone-select"></select><input id="tone-custom" type="text" maxlength="40" placeholder="寫下你想要的語氣，例如：像老朋友一樣直說" hidden></div>
+    <textarea class="prompt-box" id="prompt-box" readonly></textarea>
+    <div class="btn-row">
+      <button class="gold-btn" id="btn-copy">複製提示詞</button>
+      <span class="copy-ok" id="copy-ok" hidden>已複製。貼給你信任的 AI 就行。</span>
+    </div>
+  </section>
+
+  <section id="hist-sec">
+    <p class="section-label">占卜歷史</p>
+    <div id="hist-list"></div>
+    <div class="btn-row" style="justify-content:center"><button class="ghost-btn" id="hist-clear">清空歷史</button></div>
+  </section>
+
+  <p class="footnote">
+    時輪占為本站原創：星座 12、寶石 31、七曜 7、象徵 12、萬象 60，共 122 張。<br>
+    搓洗與切牌皆以 <b>crypto</b> 真隨機運算，取位依起占時刻。此樓無神——敲鐘的，是你。
+  </p>
+</div>
+
+<script src="divine-core.js?v=2026091402"></script>
+<script src="divine-ui.js?v=2026091402"></script>
+<script src="divine-lore.js?v=2026091402"></script>
+<script src="shilun-data.js?v=2026101201"></script>
+<script>
+const $ = id => document.getElementById(id);
+const S = window.SHILUN;
+const SIZES = { z: "依月份", g: "依日期", d: "依星期", h: "依時辰", m: "依分鐘" };
+
+/* ═══ 起占時刻 ═══ */
+function setNowFields() {
+  const n = new Date();
+  $("w-date").value = n.getFullYear() + "-" + DC.pad2(n.getMonth() + 1) + "-" + DC.pad2(n.getDate());
+  $("w-time").value = DC.pad2(n.getHours()) + ":" + DC.pad2(n.getMinutes());
+}
+setNowFields();
+setInterval(() => { if ($("n-follow").checked) setNowFields(); }, 1000);
+["w-date", "w-time"].forEach(id => $(id).addEventListener("input", () => { $("n-follow").checked = false; }));
+$("n-follow").addEventListener("change", () => { if ($("n-follow").checked) setNowFields(); });
+function nowT() {
+  const dv = $("w-date").value, tv = $("w-time").value;
+  if (dv && tv) { const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number); return { y, m, d, h, mi, tz: 8 }; }
+  const n = new Date(); return { y: n.getFullYear(), m: n.getMonth() + 1, d: n.getDate(), h: n.getHours(), mi: n.getMinutes(), tz: 8 };
+}
+
+/* ═══ 牌堆與儀式 ═══ */
+let decks, washes = 0, cutDone = false, busy = false;
+function renderRows(hits) {
+  $("deck-rows").innerHTML = S.LAYERS.map(L => {
+    const n = decks[L.id].length, at = hits && hits[L.id];
+    return '<div class="drow"><div class="drow-h"><b>' + L.name + "</b>" + n + " 張・" + SIZES[L.id] + "取位・牌位「" + L.pos + "」" +
+      (at ? '<span class="at">' + hits.why[L.id] + " → 第 " + at + " 張</span>" : "") + '</div><div class="dcards" data-l="' + L.id + '">' +
+      decks[L.id].map((_, i) => '<div class="mc' + (at ? (i + 1 === at ? " hit" : " dim") : "") + '">' + (at && i + 1 === at ? '<span class="mc-no">' + at + "</span>" : "") + "</div>").join("") +
+      "</div></div>";
+  }).join("");
+}
+function resetRitual() {
+  decks = S.newDecks(); washes = 0; cutDone = false; busy = false;
+  renderRows(null);
+  $("btn-wash").disabled = false; $("btn-wash").hidden = false;
+  $("btn-cut").disabled = true; $("btn-cut").hidden = false;
+  $("btn-go").disabled = true; $("btn-go").hidden = false;
+  $("btn-reset").hidden = true;
+  $("cutbar-wrap").hidden = true; $("cutmark").style.display = "none";
+  $("ritual-log").textContent = "牌堆已攤開，五層皆正面朝下。先默想問題，再雙手搓洗。";
+  $("go-hint").textContent = "";
+}
+function animateRows(cls, ms, cb) {
+  const box = $("deck-rows");
+  box.querySelectorAll(".mc").forEach(el => {
+    el.style.setProperty("--dx", (DC.rand(17) - 8) + "px");
+    el.style.setProperty("--dy", (DC.rand(13) - 6) + "px");
+    el.style.setProperty("--rt", (DC.rand(41) - 20) + "deg");
+  });
+  box.classList.remove(cls); void box.offsetWidth; box.classList.add(cls);
+  setTimeout(() => { box.classList.remove(cls); cb && cb(); }, ms);
+}
+$("btn-wash").onclick = () => {
+  if (busy) return; busy = true;
+  S.wash(decks); washes++;
+  animateRows("washing", 720, () => {
+    busy = false;
+    $("ritual-log").textContent = "已搓洗 " + washes + " 回。" + (washes < 3 ? "想多洗幾回也行；" : "") + "覺得洗夠了，就切牌。";
+    if (!cutDone) $("btn-cut").disabled = false;
+  });
+};
+$("btn-cut").onclick = () => {
+  $("cutbar-wrap").hidden = false;
+  $("ritual-log").textContent = "在切牌條上點一下，憑直覺選切開的位置——五層同在那裡切開，下疊翻到上面。";
+};
+function doCut(frac) {
+  if (busy) return; busy = true;
+  frac = Math.min(.95, Math.max(.05, frac));
+  $("cutmark").style.left = (frac * 100) + "%"; $("cutmark").style.display = "block";
+  S.LAYERS.forEach(L => {
+    const k = Math.round(decks[L.id].length * frac);
+    document.querySelectorAll('.dcards[data-l="' + L.id + '"] .mc').forEach((el, i) => el.classList.add(i < k ? "lo" : "hi"));
+  });
+  S.cut(decks, frac);
+  animateRows("cutting", 640, () => {
+    busy = false; cutDone = true;
+    renderRows(null);
+    $("btn-cut").disabled = true; $("btn-wash").disabled = true;
+    $("btn-go").disabled = false;
+    $("ritual-log").textContent = "已在約 " + Math.round(frac * 100) + "% 處切牌。牌已定——敲鐘吧。";
+  });
+}
+$("cutbar").addEventListener("click", e => { const r = $("cutbar").getBoundingClientRect(); doCut((e.clientX - r.left) / r.width); });
+$("cutbar").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); doCut(.5); } });
+
+/* ═══ 敲鐘取牌 ═══ */
+let lastR = null;
+function cardFig(c, i) {
+  return '<div class="sl-slot" style="animation-delay:' + (i * .18) + 's"><div class="sl-pos">' + c.layer.pos + '</div><div class="sl-why">' + c.layer.name + "・" + c.why + "第 " + c.at + " 張</div>" +
+    '<div class="sl-card' + (c.rev ? " rev" : "") + '"><div class="sl-fb">' + c.zh + '</div><img src="' + c.img + '" alt="' + c.zh + '" onerror="this.remove()"></div>' +
+    '<div class="sl-name">' + c.zh + '</div><div class="sl-ori' + (c.rev ? " r" : "") + '">' + (c.rev ? "逆位" : "正位") + "・" + c.keys + "</div></div>";
+}
+function renderOut(R) {
+  const reso = S.resonance(R);
+  $("out").innerHTML =
+    '<div class="result-card"><h3>時輪五象<span class="en">' + R.t.y + "-" + DC.pad2(R.t.m) + "-" + DC.pad2(R.t.d) + " " + DC.pad2(R.t.h) + ":" + DC.pad2(R.t.mi) + "</span></h3>" +
+    '<div class="sl-spread">' + R.cards.map(cardFig).join("") + "</div></div>" +
+    '<div class="result-card"><h3>牌義</h3><dl class="sl-meaning">' + R.cards.map(c =>
+      "<dt>" + c.layer.pos + "・" + c.zh + (c.rev ? "（逆位）" : "（正位）") + S.extraNote(c) + "</dt><dd>" + (c.rev ? c.rv : c.up) + '<br><span style="color:var(--muted);font-size:12.5px">' + c.layer.pos + "：" + c.layer.posDesc + "</span></dd>").join("") + "</dl></div>" +
+    '<div class="result-card"><h3>共鳴</h3><ul class="sl-reso">' + reso.map(x => "<li>" + x + "</li>").join("") + "</ul></div>";
+}
+function buildPrompt(R) {
+  const q = $("q-input").value.trim();
+  const pr = ["你是一位擅長象徵解讀的占卜顧問。以下是一套原創牌占「時輪占」的牌面，請把五張牌當成一句完整的話來讀。" + DC.toneHead(), ""];
+  if (q) pr.push("我的問題：" + q, "");
+  pr.push(...S.promptLines(R, true), "");
+  pr.push("【請提供】",
+    "1. 逐張解讀：每張牌在它牌位上的意思（天時看大環境、心石看內在、日用看做法、主題看核心、應象看具體線索），正逆位要分清楚。",
+    "2. 串成一句話：依「天時 → 心石 → 日用 → 主題 → 應象」把五張牌串成一段完整的敘事，回答我的問題。",
+    "3. 共鳴：若有「歸位」「天日相應」「誕生石應月」等巧合，說明它強化了什麼。",
+    "4. 給出明確傾向（順／平／阻）與一到三個具體可做的行動。",
+    "5. 應象牌若是人物或動物，說說它可能對應我身邊哪一類人或哪種處境。");
+  if (!q) pr.push("", "我的問題：〔請把你想問的事寫在這裡〕");
+  return pr.join("\n");
+}
+$("btn-go").onclick = () => {
+  if (busy || !cutDone) return;
+  const t = nowT();
+  const R = S.draw(decks, t); lastR = R;
+  renderRows(R.P);
+  $("btn-go").hidden = true; $("btn-wash").hidden = true; $("btn-cut").hidden = true;
+  $("cutbar-wrap").hidden = true; $("btn-reset").hidden = false;
+  $("ritual-log").textContent = "鐘響——" + R.cards.map(c => c.why + "指向" + c.layer.name + "第 " + c.at + " 張").join("、") + "。";
+  renderOut(R);
+  $("prompt-box").value = buildPrompt(R);
+  $("prompt-sec").hidden = false;
+  DC.histSave("鐘樓館", "時輪占・" + R.cards.map(c => c.zh + (c.rev ? "逆" : "")).join("/"), $("q-input").value.trim(), $("out").innerHTML, $("prompt-box").value);
+};
+$("btn-reset").onclick = () => { $("out").innerHTML = ""; $("prompt-sec").hidden = true; resetRitual(); };
+$("btn-copy").onclick = async () => {
+  try { await navigator.clipboard.writeText($("prompt-box").value); }
+  catch (e) { $("prompt-box").select(); document.execCommand("copy"); }
+  $("copy-ok").hidden = false; setTimeout(() => $("copy-ok").hidden = true, 2500);
+};
+resetRitual();
+DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣：「[^」]*」/, "語氣：「" + DC.toneValue() + "」"); });
+DC.histBind();
+
+/* ═══ 入門教學 ═══ */
+function buildLearn() {
+  let h = "";
+  h += DC.lcard("時輪占是什麼", '<p class="lead-para">時輪占是本站原創的牌占。它把「此刻」拆成五個刻度——<b>月、日、星期、時辰、分鐘</b>——每個刻度各管一副小牌。你親手搓洗、切牌，決定了「哪張牌躺在哪個位置」；敲鐘那一刻的時間，決定了「去哪個位置拿牌」。人與時，各出一半力。</p>');
+  h += DC.lcard("取位規則", DC.ltable(["層", "張數", "怎麼取位", "牌位", "看什麼"], S.LAYERS.map(L => [L.name, S.CARDS[L.id].length + " 張",
+    { z: "幾月就取左起第幾張", g: "幾號就取第幾張（31 號才用得到第 31 張）", d: "日曜第 1 張，星期一取第 2 張…星期六取第 7 張", h: "子時（23–1 點）第 1 張…亥時第 12 張", m: "幾分取第幾張，整點（0 分）取第 60 張" }[L.id], L.pos, L.posDesc])) +
+    '<p class="lead-para">正逆位：搓洗時牌在桌上抹動，約有一半會轉了頭。逆位不等於壞，它多半是「這股力氣卡住了、過頭了，或轉向內在」。</p>');
+  h += DC.lcard("共鳴：值得多看一眼的巧合", DC.ltable(["名稱", "條件", "意思"], [
+    ["歸位", "某層抽到的牌，編號恰好等於取位的位置（例如 10 月抽到摩羯，正是第 10 張）", "此層之意加倍，像鐘聲剛好敲在它身上"],
+    ["天日相應", "星座的古典守護星，正是當天的七曜（例如天秤配金曜）", "大環境的風向和今天的做法同聲"],
+    ["誕生石應月", "抽到的寶石正好是起占月份的誕生石", "內在的力量此月特別可靠"],
+    ["日曜逢烈日", "七曜抽到日曜、象徵抽到烈日", "光明之力雙重，宜公開、宜表態"]]));
+  h += DC.lcard("怎麼讀：五張牌是一句話", '<p class="lead-para">先看<b>主題</b>（象徵），知道這件事的核心；再看<b>天時</b>（星座）知道外面的風向、<b>心石</b>（寶石）知道你手上有什麼力量、<b>日用</b>（七曜）知道該用什麼方式動；最後<b>應象</b>（萬象）是最具體的那條線索——一件東西、一種動物、一個人。器物多半指方法與工具，動物指本能與性格，人物指某個人或你該扮演的角色。</p>');
+  S.LAYERS.forEach(L => { h += DC.lcard(L.name + "圖鑑（" + S.CARDS[L.id].length + " 張）", '<div id="lb-' + L.id + '"></div>'); });
+  return h;
+}
+function bindLearn() {
+  const brs = {};
+  S.LAYERS.forEach(L => {
+    brs[L.id] = DC.browser($("lb-" + L.id),
+      S.CARDS[L.id].map((c, i) => ({ no: "第 " + (i + 1) + " 張", t: c[1], s: c[2].split("・")[0] })),
+      i => { const c = S.CARDS[L.id][i], fake = { layer: L, n: i + 1 };
+        return '<div class="lb-detail"><img src="cards-shilun/' + c[0] + '.jpg" alt="' + c[1] + '" onerror="this.remove()"><div class="txt"><h3 style="color:var(--gold-bright);margin:0">' + L.name + "第 " + (i + 1) + " 張・" + c[1] + S.extraNote(fake) + "</h3>" +
+          '<p style="color:var(--muted)">' + c[2] + "</p><p><b>正位</b>　" + c[3] + "</p><p><b>逆位</b>　" + c[4] + "</p></div></div>"; });
+  });
+  const m = location.search.match(/peek=([zgdhm])-(\d+)/);
+  if (m && brs[m[1]]) brs[m[1]].open(+m[2] - 1);
+}
+DC.learnInit(buildLearn, bindLearn);
+
+/* 開發測試：?test=shilun（自動搓洗三回、切牌、敲鐘） */
+(function () {
+  const t = new URLSearchParams(location.search).get("test");
+  if (t !== "shilun") return;
+  $("q-input").value = "測試提問：這件事會順利嗎？";
+  setTimeout(() => {
+    try {
+      S.wash(decks); S.wash(decks); S.wash(decks); washes = 3;
+      S.cut(decks, .4); cutDone = true;
+      $("btn-go").onclick();
+      document.title = $("prompt-sec").hidden ? "SL-TEST-FAIL(hidden)" : "SL-TEST-OK";
+      const d = document.createElement("div"); d.id = "pr-dump"; d.hidden = true; d.textContent = $("prompt-box").value; document.body.appendChild(d);
+    } catch (e) { document.title = "SL-TEST-FAIL " + e.message; }
+  }, 60);
+})();
+</script>
+</html>
