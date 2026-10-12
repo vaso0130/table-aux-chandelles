@@ -21,6 +21,9 @@
   ];
   const KIND_ZH = { king: "將帥", guard: "仕士", elephant: "相象", chariot: "車", horse: "馬", cannon: "炮包", soldier: "兵卒" };
 
+  /* 牌面圖：東方館工筆人物（tools/generate-xq-cards.ps1）；紅相=宰相、黑象=戰象，紅炮=銅砲、黑包=拋石機 */
+  const IMG = { king: ["r-king", "b-general"], guard: ["r-guard", "b-guard"], elephant: ["r-minister", "b-elephant"], chariot: ["r-chariot", "b-chariot"],
+    horse: ["r-horse", "b-horse"], cannon: ["r-cannon", "b-catapult"], soldier: ["r-soldier", "b-soldier"] };
   const glyph = (red, ch) => '<span class="xqp ' + (red ? "r" : "b") + '">' + ch + "</span>";
   const CARDS = [];
   [true, false].forEach(red => KINDS.forEach(k => {
@@ -29,6 +32,7 @@
       zh: (red ? "紅" : "黑") + (red ? k[1] : k[2]), name: (red ? "紅" : "黑") + (red ? k[1] : k[2]),
       latin: (red ? "紅方・" : "黑方・") + KIND_ZH[k[0]],
       keys: red ? k[4] : k[7], text: red ? k[5] : k[8], pol: red ? k[6] : k[9],
+      img: "cards-xq/" + IMG[k[0]][red ? 0 : 1] + ".jpg",
       glyph: glyph(red, red ? k[1] : k[2]), pks: red ? "紅方" : "黑方", pk: red ? "紅方・陽・明" : "黑方・陰・暗"
     });
   }));

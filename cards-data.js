@@ -2377,7 +2377,7 @@ if (typeof XQ !== "undefined") {
   DECKS.push({ id:"xq", hall:"east", name:"象棋占卜", short:"象棋卦 · 32 子",
     title:"象棋占卜",
     sub:"三十二顆棋子蓋在桌上——翻開哪一顆，命運就走到哪一步。",
-    cards: XQ.CARDS, reversible:false, preload:false, back:"",
+    cards: XQ.CARDS, reversible:false, preload:true, back:"cards-xq/back.jpg",
     spreads: [
       { id:"xq-gate", name:"五顆開門卦", count:5, cols:3,
         desc:"中間主位看本體，四角依右上、左上、左下、右下讀起承轉收——台灣民間最常見的象棋卦。",

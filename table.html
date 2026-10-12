@@ -734,16 +734,6 @@
   .cface.front .c-art:has(.xqp), .e-glyph:has(.xqp), .tip-glyph:has(.xqp) { filter: none; }
   .cface.front .c-art .xqp { font-size: calc(var(--cw) * .3); }
   .dc-glyph .xqp, .dd-glyph .xqp { font-size: 30px; }
-  /* 蓋棋：牌背改木紋，中央壓一枚空白棋 */
-  body[data-deck="xq"] .fan-card, body[data-deck="xq"] .stack-card,
-  body[data-deck="xq"] .fly-card, body[data-deck="xq"] .cface.back, body[data-deck="xq"] #draw-pile {
-    background:
-      radial-gradient(circle at 50% 50%, #D9AE6C 0 26%, #B98A4C 27% 29%, transparent 30%),
-      repeating-linear-gradient(100deg, rgba(90,52,20,.18) 0 2px, transparent 2px 7px),
-      linear-gradient(160deg, #8A5A2B, #5E3A18);
-    border-color: rgba(233,201,143,.5);
-  }
-  body[data-deck="xq"] .cface.back::after { content: "棋"; color: #6B3E16; font-size: calc(var(--cw) * .2); opacity: .8; text-shadow: none; }
 
   /* ── 解讀帳冊（象牙紙） ────────────────────── */
   #reading { display: none; margin-top: 48px; }
@@ -1177,8 +1167,8 @@
   </form>
 </dialog>
 
-<script src="xq-data.js?v=2026101201"></script>
-<script src="cards-data.js?v=2026101201"></script>
+<script src="xq-data.js?v=2026101202"></script>
+<script src="cards-data.js?v=2026101202"></script>
 <script>
 "use strict";
 
