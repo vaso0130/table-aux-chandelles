@@ -3275,9 +3275,13 @@ function replayReading(rec) {
     $("#spread-hint").textContent = castInfo.moving && castInfo.moving.length
       ? `當時動爻:${castInfo.moving.map((i) => YAO_NAMES[i]).join("、")}`
       : "當時六爻皆靜";
-    /* 與 finishCast 同：六爻皆靜只有本卦一張，否則重看會一直等之卦而解讀不完成 */
-    target = castInfo.zhi ? 2 : 1;
-    if (!castInfo.zhi) {
+  }
+  if (spread.cast) {
+    /* 與 finishCast 同：六爻皆靜只有本卦一張，否則重看會一直等之卦而解讀不完成
+       （紀錄缺起卦資料時，以實存張數為準） */
+    const still = castInfo ? !castInfo.zhi : rec.cards.length < 2;
+    target = still ? 1 : 2;
+    if (still) {
       const zhiLabel = elSlots.querySelector('.slot[data-idx="1"] .pos-label');
       if (zhiLabel) zhiLabel.textContent = "之卦・無（六爻皆靜）";
     }
