@@ -110,7 +110,7 @@
         <button class="ghost-btn" id="sl-cut" type="button" disabled>切 牌</button>
       </div>
       <div id="sl-cutbar" hidden role="button" tabindex="0" aria-label="切牌條：點選切牌的位置"><div id="sl-mark"></div></div>
-      <p id="sl-status">五層 122 張牌已攤在桌上。默想問題，先搓洗，再切牌；起盤時依上方起局時刻自動取牌。</p>
+      <p id="sl-status">六層 132 張牌已攤在桌上。默想問題，先搓洗，再切牌；起盤時依上方起局時刻自動取牌。</p>
     </div>
     <div class="form-grid" style="margin-top:14px">
       <div class="field full"><label>你的問題（三術共用）</label>
@@ -150,7 +150,7 @@
 <script src="divine-ui.js?v=2026101201"></script>
 <script src="divine-lore.js?v=2026091402"></script>
 <script src="xq-data.js?v=2026101202"></script>
-<script src="shilun-data.js?v=2026101201"></script>
+<script src="shilun-data.js?v=2026101901"></script>
 <script>
 const $ = id => document.getElementById(id);
 const q3 = () => $("q-input").value.trim();
@@ -578,7 +578,7 @@ function slReset() {
   slDecks = SHILUN.newDecks(); slWash = 0; slCut = false;
   $("sl-wash").disabled = false; $("sl-cut").disabled = true;
   $("sl-cutbar").hidden = true; $("sl-mark").style.display = "none";
-  $("sl-status").textContent = "五層 122 張牌已攤在桌上。默想問題，先搓洗，再切牌；起盤時依上方起局時刻自動取牌。";
+  $("sl-status").textContent = "六層 132 張牌已攤在桌上。默想問題，先搓洗，再切牌；起盤時依上方起局時刻自動取牌。";
 }
 $("sl-wash").onclick = () => {
   SHILUN.wash(slDecks); slWash++;

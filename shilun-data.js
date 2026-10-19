@@ -1,9 +1,12 @@
-/* 時輪占（鐘樓館原創）：五層 122 張，使用者只洗牌切牌，系統依此刻自動取位。
- * 星座 12（幾月取左起第幾張）→ 寶石 31（幾號）→ 七曜 7（日曜為首）→ 象徵 12（時辰，子時第一）→ 萬象 60（幾分，0 分=第 60 張）。
+/* 時輪占（鐘樓館原創）：六層 132 張，使用者只洗牌切牌，系統依此刻自動取位。
+ * 十干 10（西元年天干，甲為第一：尾數 4 甲 … 3 癸）→ 星座 12（幾月取左起第幾張）→ 寶石 31（幾號）→ 七曜 7（日曜為首）
+ * → 象徵 12（時辰，子時第一）→ 萬象 60（幾分，0 分=第 60 張）。
  * 牌：[檔名, 牌名, 關鍵詞, 正位, 逆位, 吉凶 +/-/0]；鐘樓館與 MIX 共用（需先載 divine-core.js，用 DC.rand/DC.hourBranch/DC.pad2）。
- * 日期層原為月相 30 張，生圖畫不準盈虧方向，2026-10-12 擁有者改為寶石 31 張。 */
+ * 日期層原為月相 30 張，生圖畫不準盈虧方向，2026-10-12 擁有者改為寶石 31 張；十干層 2026-10-19 加。
+ * 年取西元曆年（1/1 換年），不用立春——此術全依國曆刻度。 */
 (function () {
   const LAYERS = [
+    { id: "y", name: "十干", by: "年份", pos: "流年", posDesc: "這一年的大運底色、整段時間要面對的課題" },
     { id: "z", name: "星座", by: "月份", pos: "天時", posDesc: "這段時期的大氣候、外在環境的風向" },
     { id: "g", name: "寶石", by: "日期", pos: "心石", posDesc: "你此刻的內在狀態，以及可以倚靠的那股力量" },
     { id: "d", name: "七曜", by: "星期", pos: "日用", posDesc: "眼下該用什麼方式行動、用什麼力氣做事" },
@@ -12,6 +15,18 @@
   ];
 
   const CARDS = {
+    y: [
+      ["y01-jia", "甲木", "參天・正直・開拓", "像一棵直往上長的大樹：這一年適合立定方向、開創新局，挺直腰桿做事，根扎得深就長得高。", "大樹太直易折：剛愎自用、不肯彎腰，或衝得太快而根基不穩；也可能想長卻被壓著長不上去。", "+"],
+      ["y02-yi", "乙木", "柔韌・攀附・人和", "藤蔓懂得借力：這一年靠人脈、合作與柔軟身段往上爬，順勢而為比硬闖更快。", "依附過頭失了自己，或纏得太緊讓人喘不過氣；也小心風一吹就倒，立場搖擺。", "+"],
+      ["y03-bing", "丙火", "光明・熱烈・顯揚", "太陽當空：這一年名聲、曝光、熱情都旺，適合站上台前、大方表現，照亮別人也照亮自己。", "烈日灼人：鋒芒太盛、脾氣火爆，或燒得太猛後繼無力；光太亮也會把缺點照得一清二楚。", "+"],
+      ["y04-ding", "丁火", "燭照・細膩・心光", "一盞燈火不大卻溫暖：這一年適合用心經營小而深的事，學習、思考、陪伴，一點光就能照路。", "燈火搖曳：心思太重、多愁善感，或為小事耗盡心力；護住火苗，別讓風吹熄。", "0"],
+      ["y05-wu", "戊土", "厚重・誠信・屏障", "大山屹立：這一年宜穩、宜守信、宜做大家的靠山，厚積實力，別人自然信賴你。", "山太重就動不了：固執、遲緩、錯過時機；也可能扛了太多別人的責任。", "0"],
+      ["y06-ji", "己土", "滋養・包容・耕耘", "田園養人：這一年適合照顧、培育、累積，耕耘的事會慢慢有收成，家庭與身體也宜調養。", "田地泥濘：瑣事纏身、包容過頭沒了界線，或心思太雜而什麼都種不好。", "+"],
+      ["y07-geng", "庚金", "果決・變革・肅殺", "利斧開山：這一年該斬就斬、該改就改，果斷與魄力會替你劈開一條路。", "斧鋒傷人：衝突、硬碰硬、說話太衝；或是外在的變故讓你不得不面對切割。", "0"],
+      ["y08-xin", "辛金", "精緻・價值・淬鍊", "首飾經過千錘百鍊才精美：這一年講求品質與專業，打磨自己，價值會被看見。", "太在意面子與完美，或玉石未琢就急著示人；也小心被小事刺傷。", "+"],
+      ["y09-ren", "壬水", "奔流・智謀・遠志", "大江入海：這一年格局放大、眼界放遠，適合遠行、流動、做大事，聰明才智有用武之地。", "水勢氾濫：計畫太多、心收不住，或被情勢沖著走；也提醒別讓聰明變成算計。", "+"],
+      ["y10-gui", "癸水", "潤澤・靈感・醞釀", "細雨無聲潤物：這一年適合在幕後醞釀、默默滋養，直覺和靈感特別靈，小小的累積會長成大事。", "陰雨綿綿：情緒低落、想太多、遲遲不見天晴；先曬曬太陽，別悶在心裡。", "0"]
+    ],
     z: [
       ["z01-aries", "牡羊", "開創・衝勁・直率", "這段時期適合率先出手，衝勁本身就是運氣；先做再修，比等萬全準備更好。", "急躁、衝動誤事；火氣上來容易跟人硬碰硬，先數到十再開口。", "+"],
       ["z02-taurus", "金牛", "穩定・累積・享受", "慢慢來反而快，財務、身體、資源都適合打底；守住已有的，價值會自己長出來。", "固執不肯變，或被舒適圈綁住；也提醒別為了安全感過度囤積或花錢。", "+"],
@@ -153,15 +168,20 @@
   const RULER = [3, 6, 4, 2, 1, 4, 6, 3, 5, 7, 7, 5];          // 星座古典守護星 → 七曜序（1 日 2 月 3 火 4 水 5 木 6 金 7 土）
   const M_KIND = n => n <= 20 ? "器物" : n <= 40 ? "動物" : "人物";
   const BIRTHSTONE = [null, [14], [6], [16], [1], [4], [5, 13], [2], [17, 29], [3], [18, 23], [15, 7], [12, 30]]; // 各月誕生石 → 寶石序
+  const GAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+  const GAN_WX = n => ["木", "火", "土", "金", "水"][(n - 1) >> 1];   // 十干序 1~10 → 五行
+  const DAY_WX = [null, null, null, "火", "水", "木", "金", "土"];    // 七曜序 → 五行（日月不論）
+  const SHENG = { 木: "火", 火: "土", 土: "金", 金: "水", 水: "木" }, KE = { 木: "土", 土: "水", 水: "火", 火: "金", 金: "木" };
+  const ganIdx = y => ((y - 4) % 10 + 10) % 10;                       // 西元年 → 天干 0 起（尾數 4 為甲）
 
   /* 此刻各層取第幾張（1 起算） */
   function positionsAt(t) {
    const wd = new Date(Date.UTC(t.y, t.m - 1, t.d)).getUTCDay();
-    const hb = DC.hourBranch(t.h);
+    const hb = DC.hourBranch(t.h), gi = ganIdx(t.y);
     return {
-      z: t.m, g: t.d, d: wd + 1, h: hb + 1, m: t.mi === 0 ? 60 : t.mi,
+      y: gi + 1, z: t.m, g: t.d, d: wd + 1, h: hb + 1, m: t.mi === 0 ? 60 : t.mi,
       why: {
-        z: t.m + "月", g: t.d + "號", d: "星期" + DAY_ZH[wd],
+        y: t.y + "年（" + GAN[gi] + "年）", z: t.m + "月", g: t.d + "號", d: "星期" + DAY_ZH[wd],
         h: SHICHEN[hb] + "時", m: t.mi + "分" + (t.mi === 0 ? "（整點）" : "")
       }
     };
@@ -174,7 +194,7 @@
     return o;
   }
   /* 搓洗：攤在桌上雙手抹勻——順序全亂，約半數牌轉了頭 */
-  function wash(decks, only) {   // only＝只洗某一層（鐘樓館逐組洗）；省略則五層全洗（MIX）
+  function wash(decks, only) {   // only＝只洗某一層（鐘樓館逐組洗）；省略則六層全洗（MIX）
     LAYERS.forEach(L => {
       if (only && L.id !== only) return;
       const a = decks[L.id];
@@ -197,25 +217,50 @@
     decks[id] = a.slice(k).concat(a.slice(0, k));
   }
   /* 依此刻取牌 */
+  function cardOf(L, P, n, rev) {
+    const raw = CARDS[L.id][n - 1];
+    return { layer: L, at: P[L.id], why: P.why[L.id], n, rev,
+      slug: raw[0], zh: raw[1], keys: raw[2], up: raw[3], rv: raw[4], pol: raw[5], img: "cards-shilun/" + raw[0] + ".jpg" };
+  }
   function draw(decks, t) {
     const P = positionsAt(t);
-    const res = LAYERS.map(L => {
-      const at = P[L.id], c = decks[L.id][at - 1], raw = CARDS[L.id][c.i];
-      return { layer: L, at, why: P.why[L.id], n: c.i + 1, rev: c.rev,
-        slug: raw[0], zh: raw[1], keys: raw[2], up: raw[3], rv: raw[4], pol: raw[5], img: "cards-shilun/" + raw[0] + ".jpg" };
-    });
+    const res = LAYERS.map(L => { const c = decks[L.id][P[L.id] - 1]; return cardOf(L, P, c.i + 1, c.rev); });
     return { cards: res, t, P };
+  }
+  /* 舊紀錄（2026-10-19 前只有五層、沒有十干）：從紀錄標題「時輪占・摩羯/鑽石逆/…」與提示詞裡的起占時刻還原五張，
+   * 供鐘樓館補抽流年。還原不了回傳 null。 */
+  function parseOld(rec) {
+    if (!rec || rec.page !== "鐘樓館") return null;
+    const m = String(rec.title).match(/^時輪占・(.+)$/), tm = String(rec.prompt).match(/起占時刻 (\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d)/);
+    if (!m || !tm) return null;
+    const parts = m[1].split("/"), old = LAYERS.slice(1);
+    if (parts.length !== old.length) return null;
+    const t = { y: +tm[1], m: +tm[2], d: +tm[3], h: +tm[4], mi: +tm[5], tz: 8 }, P = positionsAt(t);
+    const cards = [];
+    for (let k = 0; k < old.length; k++) {
+      const rev = /逆$/.test(parts[k]), zh = parts[k].replace(/逆$/, ""), n = CARDS[old[k].id].findIndex(c => c[1] === zh) + 1;
+      if (!n) return null;
+      cards.push(cardOf(old[k], P, n, rev));
+    }
+    return { t, P, cards };
   }
 
   /* 共鳴：純規則可判的才列 */
   function resonance(R) {
-    const [z, g, d, h, m] = R.cards, out = [];
+    const [y, z, g, d, h] = R.cards, out = [];
     R.cards.forEach(c => { if (c.n === c.at) out.push("「" + c.zh + "」歸位——" + c.layer.name + "第 " + c.at + " 張恰好落在第 " + c.at + " 位（約 1/" + CARDS[c.layer.id].length + " 的巧合），此層之意加倍"); });
+    if (y.n === 3 && d.n === 1) out.push("丙火逢日曜——流年之陽與今日之陽同照，宜光明正大、宜站上台前");
+    const yw = GAN_WX(y.n), dw = DAY_WX[d.n];
+    if (dw) out.push(yw === dw ? "干曜同氣——流年「" + y.zh + "」與日用「" + d.zh + "」同屬" + yw + "，一年的課題就落在今天的做法上" :
+      SHENG[yw] === dw ? "年生日——流年" + yw + "生日用" + dw + "，大運在背後推你，今天的行動有底氣" :
+      SHENG[dw] === yw ? "日生年——日用" + dw + "生流年" + yw + "，今天做的事會回頭滋養整年的運" :
+      KE[yw] === dw ? "年剋日——流年" + yw + "剋日用" + dw + "，大環境壓著今天的做法，宜順勢調整" :
+      "日剋年——日用" + dw + "剋流年" + yw + "，今天的做法和這一年的底色相抗，是突破也是消耗");
     if (RULER[z.n - 1] === d.n) out.push("天日相應——" + z.zh + "座的守護星正是" + d.zh + "，天時與日用同聲，這段時期的風向就是今天的做法");
     if (BIRTHSTONE[R.t.m].includes(g.n)) out.push("誕生石應月——" + g.zh + "正是 " + R.t.m + " 月的誕生石，此月之氣灌注心石，內在力量特別可靠");
     if (d.n === 1 && h.n === 7) out.push("日曜逢烈日——光明之力雙重，宜公開、宜表態");
     const revs = R.cards.filter(c => c.rev).length;
-    out.push("正逆：五張中逆位 " + revs + " 張" + (revs >= 4 ? "——多處受阻或向內翻轉，先處理卡住的地方" : revs === 0 ? "——五張全正，氣脈通順" : revs >= 3 ? "——阻力偏多，宜緩不宜急" : "——大體順行，逆位處是要留意的關節"));
+    out.push("正逆：六張中逆位 " + revs + " 張" + (revs >= 5 ? "——多處受阻或向內翻轉，先處理卡住的地方" : revs === 0 ? "——六張全正，氣脈通順" : revs >= 3 ? "——阻力偏多，宜緩不宜急" : "——大體順行，逆位處是要留意的關節"));
     const good = R.cards.filter(c => (c.pol === "+" && !c.rev)).length, bad = R.cards.filter(c => c.pol === "-" || (c.pol === "+" && c.rev)).length;
     out.push("吉凶粗估：明顯順象 " + good + "、需留意 " + bad + "（牌性與正逆合看，僅供參考）");
     return out;
@@ -226,6 +271,7 @@
       "——" + c.keys + "。" + (c.rev ? c.rv : c.up);
   }
   function extraNote(c) {
+    if (c.layer.id === "y") return "（" + GAN[c.n - 1] + "干，" + (c.n % 2 ? "陽" : "陰") + GAN_WX(c.n) + "）";
     if (c.layer.id === "z") return "（" + SIGN_EL[(c.n - 1) % 4] + "象，守護星" + CARDS.d[RULER[c.n - 1] - 1][1] + "）";
     if (c.layer.id === "g") { const ms = BIRTHSTONE.map((a, i) => a && a.includes(c.n) ? i : 0).filter(Boolean); return ms.length ? "（" + ms[0] + " 月誕生石）" : ""; }
     if (c.layer.id === "h") return "（本屬" + SHICHEN[c.n - 1] + "時，五行屬" + SHI_WX[c.n - 1] + "）";
@@ -237,15 +283,15 @@
   function promptLines(R, full) {
     const t = R.t, ts = t.y + "-" + DC.pad2(t.m) + "-" + DC.pad2(t.d) + " " + DC.pad2(t.h) + ":" + DC.pad2(t.mi);
     const L = [];
-    L.push("時輪占（燭光牌桌鐘樓館原創牌占，五層共 122 張；問卜者親手搓洗、切牌，系統依起占時刻 " + ts + " 自動於各層取位）：");
+    L.push("時輪占（燭光牌桌鐘樓館原創牌占，六層共 132 張；問卜者親手搓洗、切牌，系統依起占時刻 " + ts + " 自動於各層取位）：");
     if (full) {
-      L.push("  取位規則：星座層依月份取左起第幾張、寶石層依日期（幾號）、七曜層依星期（日曜為第一張）、象徵層依時辰（子時第一）、萬象層依分鐘（整點取第 60 張）。哪張牌落在該位置由洗牌決定；正逆位由搓洗時牌是否轉頭決定。");
-      L.push("  五個牌位：" + LAYERS.map(x => x.pos + "（" + x.name + "）＝" + x.posDesc).join("；") + "。");
+      L.push("  取位規則：十干層依西元年的天干（甲為第一張，尾數 4 為甲、3 為癸）、星座層依月份取左起第幾張、寶石層依日期（幾號）、七曜層依星期（日曜為第一張）、象徵層依時辰（子時第一）、萬象層依分鐘（整點取第 60 張）。哪張牌落在該位置由洗牌決定；正逆位由搓洗時牌是否轉頭決定。");
+      L.push("  六個牌位：" + LAYERS.map(x => x.pos + "（" + x.name + "）＝" + x.posDesc).join("；") + "。");
     }
     R.cards.forEach(c => L.push("  " + cardLine(c) + extraNote(c)));
     L.push("  共鳴與統計：" + resonance(R).join("；") + "。");
     return L;
   }
 
-  window.SHILUN = { LAYERS, CARDS, RULER, SHICHEN, M_KIND, BIRTHSTONE, positionsAt, newDecks, wash, cut, cutAt, draw, resonance, promptLines, extraNote };
+  window.SHILUN = { LAYERS, CARDS, RULER, SHICHEN, M_KIND, BIRTHSTONE, GAN, GAN_WX, positionsAt, newDecks, wash, cut, cutAt, draw, parseOld, resonance, promptLines, extraNote };
 })();

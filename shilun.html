@@ -21,7 +21,7 @@
   .glass-rule { height: 4px; margin: 14px auto 0; max-width: 320px; border-radius: 2px;
     background: linear-gradient(90deg, var(--glass-ruby), var(--glass-amber), var(--glass-emerald), var(--glass-sapphire), var(--glass-violet)); opacity: .75; }
 
-  /* ── 五組進度 ── */
+  /* ── 六組進度 ── */
   .steps { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin: 20px 0 0; }
   .step { font-size: 12.5px; letter-spacing: .15em; padding: 6px 12px; border: 1px solid var(--felt-line); border-radius: 20px; color: var(--muted); transition: all .4s; }
   .step.on { color: var(--gold-bright); border-color: var(--gold); background: rgba(229,204,143,.08); box-shadow: 0 0 14px rgba(229,204,143,.25); }
@@ -62,7 +62,7 @@
   #stage-cap { text-align: center; color: var(--ivory-shade); font-size: 13.5px; min-height: 1.6em; padding: 0 12px 4px; position: relative; z-index: 3; }
   #stage .btn-row { justify-content: center; margin: 6px 0 18px; position: relative; z-index: 3; }
 
-  /* ── 牌陣：五張蓋著，敲鐘才翻 ── */
+  /* ── 牌陣：六張蓋著，敲鐘才翻 ── */
   #spread { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin: 26px 0 4px; }
   .sslot { width: var(--cw); text-align: center; }
   .sslot .sp { color: var(--gold-bright); letter-spacing: .3em; text-indent: .3em; font-size: 14px; }
@@ -106,7 +106,7 @@
   .sl-mini img { width: 96px; height: 144px; object-fit: cover; border-radius: 5px; border: 1px solid var(--gold-dim); display: block; }
   .sl-mini .rv img { transform: rotate(180deg); }
 
-  :root { --cw: 150px; }
+  :root { --cw: 128px; }
   @media (max-width: 640px) {
     :root { --cw: 100px; }
     #spread { gap: 10px; }
@@ -128,7 +128,7 @@
     <div class="plate">
       <p class="eyebrow">La Tour de l'Horloge</p>
       <h1>燭光鐘樓</h1>
-      <p class="subtitle">月、日、星期、時辰、分鐘——你只管洗牌切牌，鐘聲替你取牌。</p>
+      <p class="subtitle">年、月、日、星期、時辰、分鐘——你只管洗牌切牌，鐘聲替你取牌。</p>
       <div class="glass-rule"></div>
     </div>
   </header>
@@ -155,7 +155,7 @@
 
   <section class="panel" id="panel">
     <h2>時輪占</h2>
-    <span class="hint">五組牌依序上桌。每一組都由你親手搓洗、切牌，再由此刻的時間指出要取哪一張——取出的牌先蓋著，五張到齊，敲鐘才翻開。</span>
+    <span class="hint">六組牌依序上桌。每一組都由你親手搓洗、切牌，再由此刻的時間指出要取哪一張——取出的牌先蓋著，六張到齊，敲鐘才翻開。</span>
     <div class="form-grid" style="margin-top:14px">
       <div class="field full"><label for="q-input">你的問題</label>
         <input id="q-input" type="text" maxlength="200" placeholder="默想，寫下你想問的事"></div>
@@ -206,21 +206,21 @@
   </section>
 
   <p class="footnote">
-    時輪占為本站原創：星座 12、寶石 31、七曜 7、象徵 12、萬象 60，共 122 張。<br>
+    時輪占為本站原創：十干 10、星座 12、寶石 31、七曜 7、象徵 12、萬象 60，共 132 張。<br>
     搓洗與切牌皆以 <b>crypto</b> 真隨機運算，取位依起占時刻（第一次搓洗時鎖定）。此樓無神——敲鐘的，是你。
   </p>
 </div>
 
 <script src="divine-core.js?v=2026091402"></script>
-<script src="divine-ui.js?v=2026101201"></script>
+<script src="divine-ui.js?v=2026101901"></script>
 <script src="divine-lore.js?v=2026091402"></script>
-<script src="shilun-data.js?v=2026101202"></script>
+<script src="shilun-data.js?v=2026101901"></script>
 <script>
 const $ = id => document.getElementById(id);
 const S = window.SHILUN;
 const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const sleep = ms => new Promise(r => setTimeout(r, RM ? Math.min(ms, 30) : ms));
-const BY = { z: "依月份", g: "依日期", d: "依星期", h: "依時辰", m: "依分鐘" };
+const BY = { y: "依年份", z: "依月份", g: "依日期", d: "依星期", h: "依時辰", m: "依分鐘" };
 
 /* ═══ 起占時刻（第一次搓洗時鎖定） ═══ */
 function setNowFields() {
@@ -239,13 +239,15 @@ function nowT() {
 }
 function lockTime() {
   if (lockedT) return;
-  lockedT = nowT(); P = S.positionsAt(lockedT);
+  lockedT = patch ? patch.t : nowT(); P = S.positionsAt(lockedT);
+  if (patch) { $("w-date").value = lockedT.y + "-" + DC.pad2(lockedT.m) + "-" + DC.pad2(lockedT.d); $("w-time").value = DC.pad2(lockedT.h) + ":" + DC.pad2(lockedT.mi); }
   ["w-date", "w-time", "n-follow"].forEach(id => $(id).disabled = true);
   stageText();
 }
 
 /* ═══ 狀態 ═══ */
 let decks, li = 0, lockedT = null, P = null, washes = 0, cutDone = false, busy = false, drawnN = 0, revealed = false;
+let patch = null;   /* 補抽流年：{ rec, t, cards（舊紀錄的五張） }，只洗切抽十干這一組 */
 const L = () => S.LAYERS[li];
 
 /* ═══ 舞台幾何 ═══ */
@@ -293,12 +295,12 @@ async function dealLayer() {
 }
 function stageText() {
   const lay = L(), n = S.CARDS[lay.id].length;
-  $("stage-title").textContent = "第" + "一二三四五"[li] + "組・" + lay.name;
+  $("stage-title").textContent = "第" + "一二三四五六"[li] + "組・" + lay.name;
   $("stage-sub").innerHTML = n + " 張・牌位「" + lay.pos + "」・" + BY[lay.id] + "取位" +
-    (P ? "——此刻 <b>" + P.why[lay.id] + "</b>，取左起第 <b>" + P[lay.id] + "</b> 張" : "（第一次搓洗時鎖定起占時刻）");
+    (P ? (patch ? "——原起占時刻 <b>" : "——此刻 <b>") + P.why[lay.id] + "</b>，取左起第 <b>" + P[lay.id] + "</b> 張" : "（第一次搓洗時鎖定起占時刻）");
 }
 function renderSteps() {
-  $("steps").innerHTML = S.LAYERS.map((x, i) => '<span class="step' + (i < li || (i === li && drawnN > li) ? " done" : i === li ? " on" : "") + '">' + x.name + "</span>").join("");
+  $("steps").innerHTML = S.LAYERS.map((x, i) => '<span class="step' + (i < li || (patch && i > 0) || (i === li && drawnN > li) ? " done" : i === li ? " on" : "") + '">' + x.name + "</span>").join("");
 }
 function sparks(n) {
   const tb = $("table"), cols = ["#C2364A", "#E2A13B", "#2F9C6E", "#3456C9", "#7A4FD0", "#E5CC8F"];
@@ -400,7 +402,7 @@ $("btn-draw").onclick = async () => {
   drawnN++;
   els.forEach((e, i) => { if (e !== el) { e.style.transitionDelay = (RM ? 0 : i * 5) + "ms"; e.style.opacity = "0"; e.style.transform += " translateY(-60px)"; } });
   await sleep(400 + els.length * 5);
-  if (li < S.LAYERS.length - 1) {
+  if (!patch && li < S.LAYERS.length - 1) {
     li++; washes = 0; cutDone = false; renderSteps(); stageText();
     $("stage-cap").textContent = "下一組上桌。";
     await dealLayer();
@@ -409,8 +411,8 @@ $("btn-draw").onclick = async () => {
   } else {
     renderSteps();
     $("table").innerHTML = ""; $("table").style.height = "60px";
-    $("stage-title").textContent = "五組已取齊";
-    $("stage-sub").textContent = "五張牌都蓋在下方。準備好了，就敲鐘。";
+    $("stage-title").textContent = patch ? "流年已補抽" : "六組已取齊";
+    $("stage-sub").textContent = patch ? "流年牌蓋在最左邊。準備好了，就敲鐘。" : "六張牌都蓋在下方。準備好了，就敲鐘。";
     $("stage-cap").textContent = "";
     $("stage").querySelector(".btn-row").hidden = true;
     $("bell").hidden = false;
@@ -418,7 +420,7 @@ $("btn-draw").onclick = async () => {
   busy = false;
 };
 
-/* ═══ 敲鐘：光環擴散，五張依序翻開 ═══ */
+/* ═══ 敲鐘：光環擴散，六張依序翻開 ═══ */
 let lastR = null;
 function buildSlots() {
   $("spread").innerHTML = S.LAYERS.map(lay =>
@@ -427,6 +429,7 @@ function buildSlots() {
 }
 function fillFaces(R) {
   R.cards.forEach((c, i) => {
+    if (!c) return;
     const s = $("spread").children[i], sc = s.querySelector(".scard");
     sc.classList.toggle("rev", c.rev);
     sc.querySelector(".fc.front").innerHTML = '<div class="fb">' + c.zh + '</div><img src="' + c.img + '" alt="' + c.zh + '" onerror="this.remove()">';
@@ -437,7 +440,7 @@ function fillFaces(R) {
 async function reveal() {
   if (revealed) return; revealed = true;
   $("bell").hidden = true;
-  const R = S.draw(decks, lockedT); lastR = R;
+  const D = S.draw(decks, lockedT), R = patch ? { t: lockedT, P, cards: [D.cards[0], ...patch.cards] } : D; lastR = R;
   fillFaces(R);
   for (let k = 0; k < 3; k++) { const r = document.createElement("div"); r.className = "ring"; r.style.animationDelay = k * .28 + "s"; document.body.appendChild(r); setTimeout(() => r.remove(), 2400); }
   $("spread").classList.add("shake"); setTimeout(() => $("spread").classList.remove("shake"), 800);
@@ -462,18 +465,18 @@ function renderOut(R) {
     '<div class="result-card"><h3>共鳴</h3><ul class="sl-reso">' + reso.map(x => "<li>" + x + "</li>").join("") + "</ul></div>";
 }
 function miniSpread(R) {
-  return '<div class="result-card"><h3>時輪五象</h3><div class="sl-mini">' + R.cards.map(c =>
+  return '<div class="result-card"><h3>時輪六象</h3><div class="sl-mini">' + R.cards.map(c =>
     '<figure class="' + (c.rev ? "rv" : "") + '"><img src="' + c.img + '" alt="' + c.zh + '"><figcaption>' + c.layer.pos + "・" + c.zh + (c.rev ? "（逆）" : "") + "</figcaption></figure>").join("") + "</div></div>";
 }
 function buildPrompt(R) {
   const q = $("q-input").value.trim();
-  const pr = ["你是一位擅長象徵解讀的占卜顧問。以下是一套原創牌占「時輪占」的牌面，請把五張牌當成一句完整的話來讀。" + DC.toneHead(), ""];
+  const pr = ["你是一位擅長象徵解讀的占卜顧問。以下是一套原創牌占「時輪占」的牌面，請把六張牌當成一句完整的話來讀。" + DC.toneHead(), ""];
   if (q) pr.push("我的問題：" + q, "");
   pr.push(...S.promptLines(R, true), "");
   pr.push("【請提供】",
-    "1. 逐張解讀：每張牌在它牌位上的意思（天時看大環境、心石看內在、日用看做法、主題看核心、應象看具體線索），正逆位要分清楚。",
-    "2. 串成一句話：依「天時 → 心石 → 日用 → 主題 → 應象」把五張牌串成一段完整的敘事，回答我的問題。",
-    "3. 共鳴：若有「歸位」「天日相應」「誕生石應月」等巧合，說明它強化了什麼。",
+    "1. 逐張解讀：每張牌在它牌位上的意思（流年看這一年的底色、天時看這段時期的大環境、心石看內在、日用看做法、主題看核心、應象看具體線索），正逆位要分清楚。",
+    "2. 串成一句話：依「流年 → 天時 → 心石 → 日用 → 主題 → 應象」把六張牌串成一段完整的敘事，回答我的問題。",
+    "3. 共鳴：若有「歸位」「干曜同氣／生剋」「天日相應」「誕生石應月」等巧合，說明它強化了什麼。",
     "4. 給出明確傾向（順／平／阻）與一到三個具體可做的行動。",
     "5. 應象牌若是人物或動物，說說它可能對應我身邊哪一類人或哪種處境。");
   if (!q) pr.push("", "我的問題：〔請把你想問的事寫在這裡〕");
@@ -484,12 +487,19 @@ function finish(R) {
   $("prompt-box").value = buildPrompt(R);
   $("prompt-sec").hidden = false;
   $("btn-reset").hidden = false;
-  DC.histSave("鐘樓館", "時輪占・" + R.cards.map(c => c.zh + (c.rev ? "逆" : "")).join("/"), $("q-input").value.trim(),
+  const title = "時輪占・" + R.cards.map(c => c.zh + (c.rev ? "逆" : "")).join("/");
+  if (patch) {   /* 補抽：改寫原紀錄，保留原本的問題與時間 */
+    const d = new Date();
+    $("out").insertAdjacentHTML("afterbegin", '<p class="hint" style="text-align:center">流年牌為 ' + d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate() + " 補抽；其餘五張是原本的牌。</p>");
+    DC.histUpdate(patch.rec.t, { title, html: $("out").innerHTML, prompt: $("prompt-box").value });
+    return;
+  }
+  DC.histSave("鐘樓館", title, $("q-input").value.trim(),
     $("out").innerHTML, $("prompt-box").value);
 }
 
 async function resetAll() {
-  decks = S.newDecks(); li = 0; lockedT = null; P = null; washes = 0; cutDone = false; busy = false; drawnN = 0; revealed = false;
+  decks = S.newDecks(); li = 0; lockedT = null; P = null; washes = 0; cutDone = false; busy = false; drawnN = 0; revealed = false; patch = null;
   ["w-date", "w-time", "n-follow"].forEach(id => $(id).disabled = false);
   if ($("n-follow").checked) setNowFields();
   $("out").innerHTML = ""; $("prompt-sec").hidden = true; $("btn-reset").hidden = true; $("bell").hidden = true;
@@ -502,6 +512,23 @@ async function resetAll() {
   $("btn-wash").disabled = false;
 }
 $("btn-reset").onclick = resetAll;
+
+/* ═══ 補抽流年：十干層加入前（2026-10-19）的舊紀錄只有五張，讓使用者照原起占時刻補洗、補抽十干 ═══ */
+async function startPatch(rec) {
+  if (busy) return;
+  const old = S.parseOld(rec);
+  if (!old) return;
+  await resetAll();
+  patch = { rec, t: old.t, cards: old.cards };
+  $("q-input").value = rec.q || "";
+  lockTime(); renderSteps(); stageText();
+  fillFaces({ cards: [null, ...old.cards] });
+  [...$("spread").children].slice(1).forEach(s => { s.querySelector(".scard").classList.add("filled", "open"); s.classList.add("shown"); });
+  [...$("spread").children].slice(1).forEach((s, k) => { s.querySelector(".sw").textContent = old.cards[k].why + "・第 " + old.cards[k].at + " 張"; });
+  $("stage-cap").textContent = "補抽流年：照原起占時刻 " + old.t.y + "/" + old.t.m + "/" + old.t.d + "（" + S.GAN[(old.t.y - 4) % 10] + "年）取牌。先搓洗這一組。";
+  $("panel").scrollIntoView({ behavior: "smooth" });
+}
+DC.histHook = r => S.parseOld(r) ? { label: "補抽流年", run: startPatch } : null;
 $("btn-copy").onclick = async () => {
   try { await navigator.clipboard.writeText($("prompt-box").value); }
   catch (e) { $("prompt-box").select(); document.execCommand("copy"); }
@@ -515,17 +542,19 @@ if (!testMode) resetAll();
 
 /* ═══ 入門教學 ═══ */
 function buildLearn() {
-  let h = "";
-  h += DC.lcard("時輪占是什麼", '<p class="lead-para">時輪占是本站原創的牌占。它把「此刻」拆成五個刻度——<b>月、日、星期、時辰、分鐘</b>——每個刻度各管一組牌。五組依序上桌，你親手搓洗、切牌，決定了「哪張牌躺在哪個位置」；此刻的時間，決定了「去哪個位置拿牌」。人與時，各出一半力。取出的牌先蓋著，五張到齊敲鐘才翻開。</p>');
+  let h = "", thisY = new Date().getFullYear();
+  h += DC.lcard("時輪占是什麼", '<p class="lead-para">時輪占是本站原創的牌占。它把「此刻」拆成六個刻度——<b>年、月、日、星期、時辰、分鐘</b>——每個刻度各管一組牌。六組依序上桌，你親手搓洗、切牌，決定了「哪張牌躺在哪個位置」；此刻的時間，決定了「去哪個位置拿牌」。人與時，各出一半力。取出的牌先蓋著，六張到齊敲鐘才翻開。</p>');
   h += DC.lcard("取位規則", DC.ltable(["組", "張數", "怎麼取位", "牌位", "看什麼"], S.LAYERS.map(x => [x.name, S.CARDS[x.id].length + " 張",
-    { z: "幾月就取左起第幾張", g: "幾號就取第幾張（31 號才用得到第 31 張）", d: "日曜第 1 張，星期一取第 2 張…星期六取第 7 張", h: "子時（23–1 點）第 1 張…亥時第 12 張", m: "幾分取第幾張，整點（0 分）取第 60 張" }[x.id], x.pos, x.posDesc])) +
-    '<p class="lead-para">起占時刻在你第一次搓洗時鎖定，五組都用同一刻取位，不會因為洗到一半跨了分鐘而前後不一。正逆位：搓洗時牌在桌上抹動，約有一半會轉了頭。逆位不等於壞，它多半是「這股力氣卡住了、過頭了，或轉向內在」。</p>');
+    { y: "看西元年的天干：尾數 4 為甲（第 1 張）、5 乙、6 丙……3 為癸（第 10 張）；今年 " + thisY + " 是" + S.GAN[(thisY - 4) % 10] + "年，取第 " + ((thisY - 4) % 10 + 1) + " 張", z: "幾月就取左起第幾張", g: "幾號就取第幾張（31 號才用得到第 31 張）", d: "日曜第 1 張，星期一取第 2 張…星期六取第 7 張", h: "子時（23–1 點）第 1 張…亥時第 12 張", m: "幾分取第幾張，整點（0 分）取第 60 張" }[x.id], x.pos, x.posDesc])) +
+    '<p class="lead-para">起占時刻在你第一次搓洗時鎖定，六組都用同一刻取位，不會因為洗到一半跨了分鐘而前後不一。正逆位：搓洗時牌在桌上抹動，約有一半會轉了頭。逆位不等於壞，它多半是「這股力氣卡住了、過頭了，或轉向內在」。</p>');
   h += DC.lcard("共鳴：值得多看一眼的巧合", DC.ltable(["名稱", "條件", "意思"], [
     ["歸位", "某組抽到的牌，編號恰好等於取位的位置（例如 10 月抽到摩羯，正是第 10 張）", "此組之意加倍，像鐘聲剛好敲在它身上"],
+    ["干曜同氣／生剋", "流年天干的五行和七曜的五行（火、水、木、金、土曜；日月不論）相同、相生或相剋", "一年的底色和今天的做法是同聲、互相推動，還是互相拉扯"],
+    ["丙火逢日曜", "十干抽到丙火、七曜抽到日曜", "流年之陽與今日之陽同照，宜站上台前"],
     ["天日相應", "星座的古典守護星，正是當天的七曜（例如天秤配金曜）", "大環境的風向和今天的做法同聲"],
     ["誕生石應月", "抽到的寶石正好是起占月份的誕生石", "內在的力量此月特別可靠"],
     ["日曜逢烈日", "七曜抽到日曜、象徵抽到烈日", "光明之力雙重，宜公開、宜表態"]]));
-  h += DC.lcard("怎麼讀：五張牌是一句話", '<p class="lead-para">先看<b>主題</b>（象徵），知道這件事的核心；再看<b>天時</b>（星座）知道外面的風向、<b>心石</b>（寶石）知道你手上有什麼力量、<b>日用</b>（七曜）知道該用什麼方式動；最後<b>應象</b>（萬象）是最具體的那條線索——一件東西、一種動物、一個人。器物多半指方法與工具，動物指本能與性格，人物指某個人或你該扮演的角色。</p>');
+  h += DC.lcard("怎麼讀：六張牌是一句話", '<p class="lead-para">先看<b>主題</b>（象徵），知道這件事的核心；再看<b>流年</b>（十干）知道這一年的底色、<b>天時</b>（星座）知道外面的風向、<b>心石</b>（寶石）知道你手上有什麼力量、<b>日用</b>（七曜）知道該用什麼方式動；最後<b>應象</b>（萬象）是最具體的那條線索——一件東西、一種動物、一個人。器物多半指方法與工具，動物指本能與性格，人物指某個人或你該扮演的角色。</p>');
   S.LAYERS.forEach(x => { h += DC.lcard(x.name + "圖鑑（" + S.CARDS[x.id].length + " 張）", '<div id="lb-' + x.id + '"></div>'); });
   return h;
 }
@@ -538,12 +567,12 @@ function bindLearn() {
         return '<div class="lb-detail"><img src="cards-shilun/' + c[0] + '.jpg" alt="' + c[1] + '" onerror="this.remove()"><div class="txt"><h3 style="color:var(--gold-bright);margin:0">' + x.name + "第 " + (i + 1) + " 張・" + c[1] + S.extraNote(fake) + "</h3>" +
           '<p style="color:var(--muted)">' + c[2] + "</p><p><b>正位</b>　" + c[3] + "</p><p><b>逆位</b>　" + c[4] + "</p></div></div>"; });
   });
-  const m = location.search.match(/peek=([zgdhm])-(\d+)/);
+  const m = location.search.match(/peek=([yzgdhm])-(\d+)/);
   if (m && brs[m[1]]) brs[m[1]].open(+m[2] - 1);
 }
 DC.learnInit(buildLearn, bindLearn);
 
-/* 開發測試：?test=shilun（略過動畫：五組各搓洗兩回、切牌、取牌、敲鐘） */
+/* 開發測試：?test=shilun（略過動畫：六組各搓洗兩回、切牌、取牌、敲鐘） */
 (function () {
   if (!testMode) return;
   $("q-input").value = "測試提問：這件事會順利嗎？";

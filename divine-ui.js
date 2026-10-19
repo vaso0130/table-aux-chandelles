@@ -129,7 +129,10 @@ DC.histBind = function () { // 跨館共用歷史(需 #hist-list/#hist-clear/#ou
       };
       var bd = document.createElement("button"); bd.className = "ghost-btn"; bd.textContent = "刪除";
       bd.onclick = function () { var a = all(); a.splice(i, 1); save(a); render(); };
-      act.appendChild(bv); act.appendChild(bd);
+      act.appendChild(bv);
+      var ex = DC.histHook && DC.histHook(r);   /* 各館可替舊紀錄加一顆按鈕（鐘樓館：補抽流年） */
+      if (ex) { var be = document.createElement("button"); be.className = "gold-btn"; be.textContent = ex.label; be.onclick = function () { ex.run(r); }; act.appendChild(be); }
+      act.appendChild(bd);
       div.appendChild(info); div.appendChild(act);
       list.appendChild(div);
     });
@@ -152,6 +155,12 @@ DC.histBind = function () { // 跨館共用歷史(需 #hist-list/#hist-clear/#ou
     while (a.length > 30) a.pop();
     save(a); render();
   };
+  DC.histUpdate = function (t, patch) {   /* 依建立時間 t 改寫一筆紀錄（不動時間與排序） */
+    var a = all();
+    a.forEach(function (r) { if (r.t === t) for (var k in patch) r[k] = patch[k]; });
+    save(a); render();
+  };
+  DC.histRender = render;
   render();
 };
 DC.histSave = function () {}; // histBind 前的安全預設
