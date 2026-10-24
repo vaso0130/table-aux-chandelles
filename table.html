@@ -2033,28 +2033,42 @@ function stalkLine() {
 }
 const elStalks = $("#stalks"), elStalkNote = $("#stalk-note");
 function buildStalks() {
-  if (elStalks.children.length) return;
+  if (elStalks.children.length) { [...elStalks.children].forEach((s) => { s.className = "stalk"; }); elStalkNote.textContent = "　"; return; }
   for (let i = 0; i < 49; i++) { const s = document.createElement("i"); s.className = "stalk"; elStalks.appendChild(s); }
 }
-/* 揲蓍動畫：三變各演一次「分二、掛一」，扐數逐變報出，最後全數歸攏 */
+/* 揲蓍動畫：三變各演「分二、掛一、揲四、歸奇」。每變只揲手中餘策（49 → 44/40 → …），
+   左右分法依本變扐數反推（左策、右策去掛一後各四揲之餘，餘零作四），掛一併入扐數（朱子：五、九、四、八皆含掛一）；
+   三變扐出之策留在一旁，最後餘策（36/32/28/24）÷4 即爻數 */
 function animateStalks(lu) {
   const stalks = [...elStalks.children];
   const CN = { 4: "四", 5: "五", 8: "八", 9: "九" };
+  const NUM = { 24: "二十四", 28: "二十八", 32: "三十二", 36: "三十六" };
   const names = ["初變", "再變", "三變"];
-  const reset = () => stalks.forEach((s) => { s.className = "stalk"; });
+  const rem = (n) => n % 4 || 4;
+  let live = stalks.slice();
+  stalks.forEach((s) => { s.className = "stalk"; });
   const step = (k) => {
-    reset();
-    const cut = 18 + Math.floor(rand01() * 14);   /* 分二：左右各若干 */
-    stalks.forEach((s, i) => { if (i < cut) s.classList.add("left"); else s.classList.add("right"); });
-    setTimeout(() => stalks[cut].classList.add("hang"), 180);   /* 掛一 */
+    const n = live.length;
+    const ok = [];
+    for (let L = Math.floor(n * 0.35); L <= Math.ceil(n * 0.65); L++) if (rem(L) + rem(n - L - 1) + 1 === lu[k]) ok.push(L);
+    const L = ok[Math.floor(rand01() * ok.length)];   /* 分二 */
+    stalks.forEach((s) => { if (!live.includes(s)) s.className = "stalk aside"; });
+    live.forEach((s, i) => { s.className = "stalk " + (i < L ? "left" : "right"); });
+    const hang = live[L];
+    setTimeout(() => hang.classList.add("hang"), 180);   /* 掛一：取自右策 */
+    const taken = [hang, ...live.slice(L - rem(L), L), ...live.slice(n - rem(n - L - 1))];   /* 歸奇於扐 */
+    live = live.filter((s) => !taken.includes(s));
     setTimeout(() => {
       elStalkNote.innerHTML = names.slice(0, k + 1).map((nm, j) => `${nm}<b>${CN[lu[j]]}</b>`).join("　");
-      for (let i = 0; i < lu[k]; i++) stalks[stalks.length - 1 - i - k * 9].classList.add("aside");   /* 歸奇於扐 */
+      taken.forEach((s) => { if (s !== hang) s.className = "stalk aside"; });
     }, 420);
   };
   elStalkNote.textContent = "　";
   step(0); setTimeout(() => step(1), 480); setTimeout(() => step(2), 960);
-  setTimeout(reset, 1400);
+  setTimeout(() => {   /* 餘策歸攏，四揲得爻 */
+    stalks.forEach((s) => { s.className = live.includes(s) ? "stalk" : "stalk aside"; });
+    elStalkNote.innerHTML += `　餘${NUM[live.length]}策得<b>${{ 6: "六", 7: "七", 8: "八", 9: "九" }[live.length / 4]}</b>`;
+  }, 1400);
 }
 function throwOnce() {
   const yarrow = spread.method === "yarrow";
