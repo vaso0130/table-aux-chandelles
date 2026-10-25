@@ -1983,6 +1983,16 @@ function yiDerived(info) {
     zhiHu: info.zhi ? huOf(bits.map((b, i) => (info.moving.includes(i) ? 1 - b : b))) : null,
   };
 }
+/* 朱子變占表（《易學啟蒙・考變占》卦變圖）：三爻變的二十卦依變爻位置由下而上的字典序排列
+   （乾：否漸旅咸渙未濟困蠱井恆／益噬嗑隨賁既濟豐損節歸妹泰），前十卦即變爻含初爻者，主貞；後十卦主悔 */
+function zhuRank(moving) {
+  let r = 0;
+  for (let a = 0; a < 6; a++) for (let b = a + 1; b < 6; b++) for (let c = b + 1; c < 6; c++) {
+    r++;
+    if (a === moving[0] && b === moving[1] && c === moving[2]) return { rank: r, zhen: r <= 10 };
+  }
+  return null;
+}
 
 function renderCastLines() {
   elCastLines.innerHTML = "";
@@ -2116,7 +2126,8 @@ function finishCast() {
   castInfo = { lines: castLines.map((l) => l.v), moving, ben, zhi, method: spread.method || "coins" };
   target = zhi ? 2 : 1;
   $("#cast-caption").textContent = zhi
-    ? `得「${yiShort(ben)}之${yiShort(zhi)}」。動爻：${moving.map((i) => YAO_NAMES[i]).join("、")}。本卦為貞，之卦為悔。`
+    ? `得「${yiShort(ben)}之${yiShort(zhi)}」。動爻：${moving.map((i) => YAO_NAMES[i]).join("、")}。本卦為貞，之卦為悔。${moving.length === 3
+      ? `三爻變，依朱子變占表居第 ${zhuRank(moving).rank} 卦，${zhuRank(moving).zhen ? "前十卦主貞" : "後十卦主悔"}。` : ""}`
     : `得「${yiShort(ben)}」，六爻皆靜，以本卦卦辭為斷。`;
   if (!zhi) {
     /* 六爻皆靜：之卦格明確標示，不留懸念 */
@@ -2800,7 +2811,7 @@ function buildAiPrompt() {
   if (spread.gong) L.push("宮位讀法：入廟之星在該宮得力（煞星則煞為我用）；落陷之星示該宮的破口（吉星則助力打折）。");
   if (spread.wx) L.push("四象生剋讀法：同象得位氣旺；位生牌得助；牌生位洩秀；位剋牌受制；牌剋位犯衝；大牌不拘五行、權重最重。");
   L.push("");
-  L.push(`【盤面】${spread.name}（共 ${drawn.length} 張）`);
+  L.push(`【盤面】${spread.name}（共 ${drawn.length} ${deckDef.id === "xq" ? "顆" : "張"}）`);
   if (!spread.gt && spread.desc) L.push(`陣形說明：${spread.desc.split("。")[0]}。`);
   if (spread.hints) {
     L.push("【位置意涵】");
@@ -2889,7 +2900,13 @@ function buildAiPrompt() {
       "六爻皆靜：以本卦卦辭為斷，參其大象；內卦為貞、外卦為悔。",
       "一爻動：專以本卦動爻之爻辭為斷。",
       "二爻動：以本卦二動爻之爻辭為斷，而以居上之爻為主。",
-      "三爻動：占本卦及之卦之彖辭，本卦為貞、之卦為悔；依朱子變占表，六十四卦之前十卦主貞、後十卦主悔。請兼論兩卦，以貞悔次序敘之。",
+      (() => {
+        if (castInfo.moving.length !== 3) return "";
+        const z = zhuRank(castInfo.moving);
+        return `三爻動：占本卦及之卦之彖辭，本卦為貞、之卦為悔。依朱子變占表，三爻變之二十卦中，變爻含初爻者為前十卦主貞、餘為後十卦主悔；此占之卦居第 ${z.rank} 卦，屬${z.zhen
+          ? `前十卦，主貞：以本卦「${yiShort(castInfo.ben)}」彖辭為主、之卦「${yiShort(castInfo.zhi)}」彖辭為輔`
+          : `後十卦，主悔：以之卦「${yiShort(castInfo.zhi)}」彖辭為主、本卦「${yiShort(castInfo.ben)}」彖辭為輔`}。請兼論兩卦，以貞悔次序敘之。`;
+      })(),
       "四爻動：以之卦中二不變爻之爻辭為斷，而以居下之爻為主。",
       "五爻動：以之卦中唯一不變爻之爻辭為斷。",
       "六爻皆動：乾坤二卦以用九、用六之辭為斷，餘卦以之卦卦辭為斷。",
@@ -2902,20 +2919,25 @@ function buildAiPrompt() {
       : ""}點到即可，以本卦動爻為主。`);
   }
   L.push("");
-  L.push("【抽牌結果】（依抽出順序；✦吉／✧挑戰／◦中性）");
+  L.push(deckDef.id === "xq"
+    ? "【翻棋結果】（依翻出順序；✦吉／✧挑戰／◦中性——此吉凶以紅為己方而定，若以黑為己方請反看）"
+    : "【抽牌結果】（依抽出順序；✦吉／✧挑戰／◦中性）");
   const polMark = (c) => ({ good: "✦吉", bad: "✧挑戰", mid: "◦中性" }[c.pol]);
   drawn.forEach((c, i) => {
     const myth = deckDef.id === "gra" && c.myth ? `・${c.myth[0]}系列` : "";
     L.push(deckDef.reversible
       ? `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（${c.pk}，${c.norev ? "不分正逆位" : drawnRev[i] ? "逆位" : "正位"}）〔${polMark(c)}〕— 關鍵詞：${c.keys}`
+      : deckDef.id === "xq" ? `${i + 1}. ${posName(i)}：${c.zh}（${c.latin.split("・")[1]}，${c.pk}）〔${polMark(c)}〕— 關鍵詞：${c.keys}`
       : `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（№${c.n}，${{ len: "撲克對應 ", gra: "撲克對應 ", yi: "卦序 ", kip: "牌號 ", esp: "花色點數 ", xq: "" }[deckDef.id] || ""}${c.pk}${myth}）〔${polMark(c)}〕— 關鍵詞：${c.keys}`);
     if ((deckDef.id === "gra" || deckDef.id === "zw" || deckDef.id === "dt" || deckDef.id === "xq") && !spread.gt)
-      L.push(`   牌義：${drawnRev[i] && c.rtext ? c.rtext : c.text}`);
+      L.push(`   ${deckDef.id === "xq" ? "棋義" : "牌義"}：${drawnRev[i] && c.rtext ? c.rtext : c.text}`);
   });
   const cb = spread.combos(drawn.slice(0, spread.count));
   if (cb.length) {
     L.push("");
-    L.push("【牌與牌之間】（已依組合語法成句，請以此為底深化）");
+    L.push(deckDef.id === "xq"
+      ? "【棋局判讀】（依民間棋型規則判出，以紅為己方而論；若以黑為己方，我方／對方、吉凶請對調。請以此為底深化）"
+      : "【牌與牌之間】（已依組合語法成句，請以此為底深化）");
     cb.forEach((c) => L.push(c.a ? `- ${c.a.zh} ✦ ${c.b.zh}（${c.label}）：${c.text}` : `- ${c.label}：${c.text}`));
     if (deckDef.id === "len" || deckDef.id === "gra") L.push("組合文法：前牌為名詞、後牌為修飾——可依此自行擴讀其他相鄰牌。");
   }
@@ -2923,6 +2945,8 @@ function buildAiPrompt() {
   L.push("【請提供】");
   if (deckDef.id === "yi") {
     yiRequests().forEach((t, i) => L.push(`${i + 1}. ${t}`));
+  } else if (deckDef.id === "xq") {
+    xqRequests().forEach((t, i) => L.push(`${i + 1}. ${t}`));
   } else {
     L.push("1. 整體牌陣的基調與核心訊息");
     L.push("2. 逐一位置的解讀（牌義結合位置意義）");
@@ -2954,7 +2978,7 @@ function yiRequests() {
       `主斷——六爻皆靜：以${bz}卦辭為斷，參彖傳與大象；內卦為貞（我方、現況），外卦為悔（對方、後勢）`,
       `主斷——一爻動：以${bz}${YAO_NAMES[castInfo.moving[0]]}之爻辭為斷，兼看此爻的時位（當位與否、與應爻比爻的關係）`,
       `主斷——二爻動：兩動爻之爻辭皆解，以居上的${YAO_NAMES[castInfo.moving[1]]}為主`,
-      `主斷——三爻動：兼論${bz}與${zz}的卦辭（彖辭），本卦為貞、之卦為悔，以貞悔次序敘之`,
+      m === 3 && `主斷——三爻動：兼論${bz}與${zz}的卦辭（彖辭），依朱子變占表此占${zhuRank(castInfo.moving).zhen ? `主貞，以${bz}為主` : `主悔，以${zz}為主`}，以貞悔次序敘之`,
       `主斷——四爻動：以${zz}中二不變爻之爻辭為斷，以居下之爻為主`,
       `主斷——五爻動：以${zz}中唯一不變爻之爻辭為斷`,
       castInfo.ben === 1 ? "主斷——六爻皆動：以乾卦「用九：見群龍无首，吉」為斷"
@@ -2982,6 +3006,32 @@ function yiRequests() {
     "整體卦象的基調：各卦卦辭與大象合觀，點出核心訊息",
     "逐一位置的解讀：卦辭、大象結合位置意義（象徵抽籤，無動爻，不論爻辭與之卦）",
     "卦與卦之間的關聯：上下卦的重疊或對反、卦序先後、互錯綜相連之處",
+    advice,
+  ];
+}
+
+/* 象棋卦的【請提供】：以紅黑、兵種、棋型與位置（起承轉收／天人地）斷事，不套牌陣的「相鄰牌組合」模板 */
+function xqRequests() {
+  const side = "先定己方顏色：我若提到性別，依「男問看紅、女問看黑」；未提則以紅為明面、黑為暗處";
+  const advice = `給問卜者的具體建議（${currentTone()}）`;
+  if (spread.id === "xq-gate") return [
+    `${side}；再看主位（本體）的顏色與兵種，以及紅黑多寡，定全局基調`,
+    "逐位解讀：主位與起、承、轉、收四角，各以兵種象意結合位置意涵",
+    "棋型：上列【棋局判讀】的王見王、成組、雙車雙馬雙炮、兵卒多寡如何互相印證",
+    "起承轉收串讀：把四角讀成一段連貫的過程，收位的顏色就是結局的顏色",
+    "就我所問之事的斷語：可否、順逆與時機",
+    advice,
+  ];
+  if (spread.id === "xq-three") return [
+    `${side}；再看三顆的紅黑多寡，定基調`,
+    "天（時勢）、人（自身）、地（根基）逐層解讀：兵種象意結合層次",
+    "三層之間的呼應或衝突：時勢是否助我、自身是否站得住根基",
+    "就我所問之事的斷語",
+    advice,
+  ];
+  return [
+    `${side}；紅為明、為可，黑為暗、為緩——此事可否、快慢`,
+    "兵種象意落到所問之事：是誰、什麼力量在主導",
     advice,
   ];
 }
