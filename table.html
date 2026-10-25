@@ -771,6 +771,7 @@
   .combo-block { border-top: 1px double rgba(138,114,69,.5); margin-top: 8px; padding-top: 20px; }
   .combo-block .cb-title { font-size: 12px; letter-spacing: .3em; color: var(--gold-dim); margin-bottom: 12px; }
   .combo { margin: 0 0 12px; font-size: 15px; max-width: 62ch; }
+  .combo .yi-glyph { font-size: 22px; line-height: 1; margin-right: 8px; vertical-align: -3px; color: var(--gold-dim); }
   .combo b { font-weight: 600; letter-spacing: .06em; }
   .combo .arrow { color: var(--gold-dim); padding: 0 6px; }
   /* 生成牌面圖：載入成功時的版式 */
@@ -1971,6 +1972,17 @@ function yiShort(n) {
   const zh = YI_CARDS[n - 1].zh;
   return zh.includes("為") ? zh[0] : zh.slice(2);
 }
+/* 卦之三變與之卦之互：互取二至五爻，錯為六爻皆反，綜為上下顛倒；有動爻時另取之卦之互 */
+function yiDerived(info) {
+  const bits = info.lines.map((v) => (v === 7 || v === 9 ? 1 : 0));
+  const huOf = (x) => hexNum([x[1], x[2], x[3], x[2], x[3], x[4]]);
+  return {
+    hu: huOf(bits),
+    cuo: hexNum(bits.map((b) => 1 - b)),
+    zong: hexNum(bits.slice().reverse()),
+    zhiHu: info.zhi ? huOf(bits.map((b, i) => (info.moving.includes(i) ? 1 - b : b))) : null,
+  };
+}
 
 function renderCastLines() {
   elCastLines.innerHTML = "";
@@ -2650,6 +2662,24 @@ function finishReading() {
     elCombos.appendChild(block);
   }
 
+  if (spread.cast && castInfo) {
+    /* 卦之三變與之卦之互：與提示詞同源，輔參，以本卦動爻為主 */
+    const d = yiDerived(castInfo);
+    const rows = [
+      [d.hu, "互卦", "本卦二至五爻交互而成，事中隱伏之情"],
+      [d.cuo, "錯卦（旁通）", "六爻陰陽皆反，立場全反之鑑"],
+      [d.zong, "綜卦（反對）", "本卦上下顛倒，對方眼中之局"],
+    ];
+    if (d.zhiHu) rows.push([d.zhiHu, "之卦之互", `之卦「${yiShort(castInfo.zhi)}」二至五爻交互而成，趨向中暗藏之機`]);
+    const block = document.createElement("div");
+    block.className = "combo-block";
+    block.innerHTML = `<div class="cb-title">卦 之 三 變 ・ 輔 參</div>` + rows.map(([n, label, note]) => {
+      const c = YI_CARDS[n - 1];
+      return `<p class="combo"><span class="yi-glyph">${c.glyph}</span><b>${label}・${c.zh}</b>　<small style="color:var(--ink-soft)">${note}</small><br>${c.keys}——${c.text}</p>`;
+    }).join("") + `<p class="combo" style="color:var(--ink-soft)">以上點到即可，仍以本卦、之卦與動爻為主。</p>`;
+    elCombos.appendChild(block);
+  }
+
   if (spread.gt) {
     /* 指示牌：雷諾曼男人28／女人29，西碧拉情郎11／佳人12，大雷諾曼問卜者1／2，奇卜主要人物1／2 */
     const sigs = deckDef.id === "len" ? [[28, "他"], [29, "她"]]
@@ -2864,13 +2894,9 @@ function buildAiPrompt() {
     ];
     L.push(`斷法指引（朱子古法）：${ZHU[castInfo.moving.length]}請依此規則定主從，不必逐爻平均著墨。`);
     /* 互錯綜：本卦之推導（有動爻時另附之卦之互），輔參不另起陣 */
-    const bits = castInfo.lines.map((v) => (v === 7 || v === 9 ? 1 : 0));
-    const huOf = (x) => hexNum([x[1], x[2], x[3], x[2], x[3], x[4]]);
-    const hu = huOf(bits);
-    const cuo = hexNum(bits.map((b) => 1 - b));
-    const zong = hexNum(bits.slice().reverse());
+    const { hu, cuo, zong, zhiHu } = yiDerived(castInfo);
     L.push(`卦之三變（輔參）：互卦「${yiShort(hu)}」，事中隱伏之情；錯卦（旁通）「${yiShort(cuo)}」，立場全反之鑑；綜卦（反對）「${yiShort(zong)}」，對方眼中之局。${castInfo.zhi
-      ? `之卦之互「${yiShort(huOf(bits.map((b, i) => (castInfo.moving.includes(i) ? 1 - b : b))))}」，趨向中暗藏之機。`
+      ? `之卦之互「${yiShort(zhiHu)}」，趨向中暗藏之機。`
       : ""}點到即可，以本卦動爻為主。`);
   }
   L.push("");
