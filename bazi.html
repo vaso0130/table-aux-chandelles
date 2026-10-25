@@ -64,6 +64,8 @@
         <div class="field" id="f-zwleap"><label>紫微閏月法</label>
           <select id="b-zwleap"><option value="split">折半法（十六日起作下月）</option><option value="same">全月作本月</option><option value="next">全月作下月</option></select>
           <div class="note">只在閏月出生時影響安星月份。</div></div>
+        <div class="field" id="f-school"><label>解讀流派</label><select id="b-school"></select>
+          <div class="note" id="school-note">選了會寫進 AI 提示詞；各派說明見入門教學「盤面讀法」</div></div>
         <div class="field" id="f-target" hidden><label>指定日期（選填）</label><input id="t-date" type="date">
           <div class="note">流年/流月/流日以此日計——想算下個月某日，填那一天；留空即今日</div></div>
       </div>
@@ -105,7 +107,7 @@
 <script src="divine-core.js?v=2026102505"></script>
 <script src="divine-ui.js?v=2026102505"></script>
 <script src="divine-lore.js?v=2026091402"></script>
-<script src="bazi-learn.js?v=2026102502"></script>
+<script src="bazi-learn.js?v=2026102503"></script>
 <script>
 const $ = id => document.getElementById(id);
 
@@ -158,12 +160,29 @@ function updateForm() {
   const isNum = sysId === "lifenum", isHd = sysId === "humand";
   $("modes-label").hidden = !s.modes; $("modes").hidden = !s.modes;
   if (s.modes) { if (!s.modes.some(m => m[0] === modeId)) modeId = s.modes[0][0]; renderModes(); }
+  renderSchool();
   $("f-time").hidden = isNum; $("f-gender").hidden = isNum || isHd; $("f-zwyear").hidden = sysId !== "ziwei"; $("f-zwleap").hidden = sysId !== "ziwei"; $("f-dayboundary").hidden = isNum || isHd || sysId === "ziwei" || sysId === "dangsaju"; $("f-target").hidden = !isNum;
   const m = s.modes ? s.modes.find(x => x[0] === modeId) : null;
   $("p-title").textContent = s.name + (m ? "・" + m[1] : "");
   $("p-hint").textContent = m ? m[2] : s.hint;
   $("out").innerHTML = ""; $("prompt-sec").hidden = true;
 }
+/* 解讀流派：八字、紫微各記各的選擇（清單在 bazi-learn.js 的 BAZI_SCHOOLS） */
+const SCHOOL_KEY = (id) => "dc-bazi-school-" + id;
+function renderSchool() {
+  const list = BAZI_SCHOOLS[sysId];
+  $("f-school").hidden = !list;
+  if (!list) return;
+  let v = ""; try { v = localStorage.getItem(SCHOOL_KEY(sysId)) || ""; } catch (e) {}
+  $("b-school").innerHTML = list.map((x) => '<option value="' + x[0] + '">' + x[1] + (x[0] ? "" : "（綜合常見讀法）") + "</option>").join("");
+  $("b-school").value = list.some((x) => x[0] === v) ? v : "";
+  $("school-note").textContent = (list.find((x) => x[0] === $("b-school").value) || list[0])[2];
+}
+$("b-school").addEventListener("change", () => {
+  try { localStorage.setItem(SCHOOL_KEY(sysId), $("b-school").value); } catch (e) {}
+  $("school-note").textContent = BAZI_SCHOOLS[sysId].find((x) => x[0] === $("b-school").value)[2];
+});
+const schoolLine = () => { const x = (BAZI_SCHOOLS[sysId] || []).find((s) => s[0] && s[0] === $("b-school").value); return x ? x[3] + "下列要點若與此派方法不合，請依此派的取捨調整；與他派結論不同處可簡述差異。" : ""; };
 renderSys(); updateForm();
 DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣：「[^」]*」/, "語氣：「" + DC.toneValue() + "」"); });
 DC.histBind("八字館");
@@ -224,6 +243,7 @@ function runBazi(out, pr) {
   pr.push("  五行:" + Object.entries(cnt).map(([k, v]) => k + "×" + v).join(" ") + ";空亡 " + bz.kong.join("") + (ss.length ? ";神煞:" + ss.join(";") : ""));
   pr.push("  換日法:" + (B.dayBoundary === "midnight" ? "午夜 00:00 換日" : "晚子初 23:00 換日") + "。請依此日柱解讀，不要自行改換日法。");
   pr.push("  大運(" + dy.startAge.toFixed(1) + " 歲起," + (dy.fwd ? "順" : "逆") + "行):" + dy.list.map(d => Math.round(d.fromAge) + "歲 " + d.gz).join("、"), "");
+  if (schoolLine()) pr.push("解讀流派:" + schoolLine());
   pr.push("請以子平法解讀:1. 日主強弱與格局（月令得氣、通根透干）。2. 用神喜忌。3. 十神配置的性格與六親。4. 大運走勢——各步大運的有利條件與需留意之處。5. 結合流年" + new Date().getFullYear() + "的提醒。6. 若我有提問，以命盤直答。");
 }
 
@@ -276,6 +296,7 @@ function runZiwei(out, pr) {
     pr.push("  " + P.palace + "(" + DC.STEMS[P.stem] + DC.BRANCHES[b2] + (P.isShen ? ",身宮" : "") + "):主星[" + (P.stars.join(" ") || "無") + "] 吉[" + (P.good.join(" ") || "—") + "] 煞[" + (P.bad.join(" ") || "—") + "]" + (P.hua.length ? " 四化[" + P.hua.join(" ") + "]" : "") + " 大限" + P.daxian);
   }
   if (lun.isLeap) pr.push("  閏月安星:" + ({ split: "折半法（初一至十五作本月、十六日起作下月）", same: "全月作本月", next: "全月作下月" }[leapRule]) + "；本盤按" + zwMonth + "月安星。請沿用此法，並在比較其他命盤時先確認規則相同。");
+  if (schoolLine()) pr.push("", "解讀流派:" + schoolLine());
   pr.push("", "請解讀:1. 命宮主星組合與命格總論。2. 身宮所在的人生重心。3. 四化祿權科忌落宮的吉凶樞紐。4. 財帛/官祿/夫妻三宮詳論。5. 現行大限與未來十年。");
 }
 
