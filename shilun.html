@@ -215,6 +215,7 @@
 <script src="divine-ui.js?v=2026102505"></script>
 <script src="divine-lore.js?v=2026091402"></script>
 <script src="shilun-data.js?v=2026102503"></script>
+<script src="shilun-learn.js?v=2026102501"></script>
 <script>
 const $ = id => document.getElementById(id);
 const S = window.SHILUN;
@@ -448,17 +449,29 @@ async function reveal() {
 }
 $("btn-bell").onclick = reveal;
 
+/* 結果裡的詞連到入門教學的字典（DC.bookLink）；牌的 key 是「層名・牌名」，只包顯示用的 HTML，不動提示詞 */
+const BL = DC.bookLink;
+const cardLink = c => BL("shilun", c.layer.name + "・" + c.zh, c.zh);
+const RESO_KEY = { 干曜同氣: "干曜", 年生日: "干曜", 日生年: "干曜", 年剋日: "干曜", 日剋年: "干曜", 丙火逢日曜: "丙火逢日曜", 天日相應: "天日相應", 誕生石應月: "誕生石應月", 日曜逢烈日: "日曜逢烈日" };
+function resoLink(x) {
+  if (/^「[^」]+」歸位——/.test(x)) return x.replace("」歸位——", "」" + BL("shilun", "歸位") + "——");
+  let m = x.match(/^([^——：]+)——/);
+  if (m && RESO_KEY[m[1]]) return BL("shilun", RESO_KEY[m[1]], m[1]) + x.slice(m[1].length);
+  m = x.match(/^(正逆|吉凶粗估)：/);
+  if (m) return BL("shilun", m[1] === "正逆" ? "正逆統計" : "吉凶粗估", m[1]) + x.slice(m[1].length);
+  return x;
+}
 function renderOut(R) {
   const reso = S.resonance(R);
   $("out").innerHTML = miniSpread(R) +
     '<div class="result-card"><h3>牌義<span class="en">' + R.t.y + "-" + DC.pad2(R.t.m) + "-" + DC.pad2(R.t.d) + " " + DC.pad2(R.t.h) + ":" + DC.pad2(R.t.mi) + "</span></h3>" +
     '<dl class="sl-meaning">' + R.cards.map(c =>
-      "<dt>" + c.layer.pos + "・" + c.zh + (c.rev ? "（逆位）" : "（正位）") + S.extraNote(c) + "</dt><dd>" + (c.rev ? c.rv : c.up) + '<br><span style="color:var(--muted);font-size:12.5px">' + c.layer.pos + "（" + c.why + "第 " + c.at + " 張）：" + c.layer.posDesc + "</span></dd>").join("") + "</dl></div>" +
-    '<div class="result-card"><h3>共鳴</h3><ul class="sl-reso">' + reso.map(x => "<li>" + x + "</li>").join("") + "</ul></div>";
+      "<dt>" + BL("shilun", c.layer.pos) + "・" + cardLink(c) + "（" + BL("shilun", c.rev ? "逆位" : "正位") + "）" + S.extraNote(c) + "</dt><dd>" + (c.rev ? c.rv : c.up) + '<br><span style="color:var(--muted);font-size:12.5px">' + c.layer.pos + "（" + c.why + "第 " + c.at + " 張）：" + c.layer.posDesc + "</span></dd>").join("") + "</dl></div>" +
+    '<div class="result-card"><h3>共鳴</h3><ul class="sl-reso">' + reso.map(x => "<li>" + resoLink(x) + "</li>").join("") + "</ul></div>";
 }
 function miniSpread(R) {
   return '<div class="result-card"><h3>時輪六象</h3><div class="sl-mini">' + R.cards.map(c =>
-    '<figure class="' + (c.rev ? "rv" : "") + '"><img src="' + c.img + '" alt="' + c.zh + '"><figcaption>' + c.layer.pos + "・" + c.zh + (c.rev ? "（逆）" : "") + "</figcaption></figure>").join("") + "</div></div>";
+    '<figure class="' + (c.rev ? "rv" : "") + '"><img src="' + c.img + '" alt="' + c.zh + '"><figcaption>' + BL("shilun", c.layer.pos) + "・" + cardLink(c) + (c.rev ? "（" + BL("shilun", "逆位", "逆") + "）" : "") + "</figcaption></figure>").join("") + "</div></div>";
 }
 function buildPrompt(R) {
   const q = $("q-input").value.trim();
@@ -482,7 +495,7 @@ function finish(R) {
   const title = "時輪占・" + R.cards.map(c => c.zh + (c.rev ? "逆" : "")).join("/");
   if (patch) {   /* 補抽：改寫原紀錄，保留原本的問題與時間 */
     const d = new Date();
-    $("out").insertAdjacentHTML("afterbegin", '<p class="hint" style="text-align:center">流年牌為 ' + d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate() + " 補抽；其餘五張是原本的牌。</p>");
+    $("out").insertAdjacentHTML("afterbegin", '<p class="hint" style="text-align:center">流年牌為 ' + d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate() + " " + BL("shilun", "補抽流年", "補抽") + "；其餘五張是原本的牌。</p>");
     DC.histUpdate(patch.rec.t, { title, html: $("out").innerHTML, prompt: $("prompt-box").value });
     return;
   }
@@ -532,37 +545,16 @@ DC.histBind("鐘樓館");
 const testMode = new URLSearchParams(location.search).get("test") === "shilun";
 if (!testMode) resetAll();
 
-/* ═══ 入門教學 ═══ */
-function buildLearn() {
-  let h = "", thisY = new Date().getFullYear();
-  h += DC.lcard("時輪占是什麼", '<p class="lead-para">時輪占是本站原創的牌占。它把「此刻」拆成六個刻度——<b>年、月、日、星期、時辰、分鐘</b>——每個刻度各管一組牌。六組依序上桌，你親手搓洗、切牌，決定了「哪張牌躺在哪個位置」；此刻的時間，決定了「去哪個位置拿牌」。人與時，各出一半力。取出的牌先蓋著，六張到齊敲鐘才翻開。</p>');
-  h += DC.lcard("取位規則", DC.ltable(["組", "張數", "怎麼取位", "牌位", "看什麼"], S.LAYERS.map(x => [x.name, S.CARDS[x.id].length + " 張",
-    { y: "看西元年的天干：尾數 4 為甲（第 1 張）、5 乙、6 丙……3 為癸（第 10 張）；今年 " + thisY + " 是" + S.GAN[(thisY - 4) % 10] + "年，取第 " + ((thisY - 4) % 10 + 1) + " 張", z: "幾月就取左起第幾張", g: "幾號就取第幾張（31 號才用得到第 31 張）", d: "日曜第 1 張，星期一取第 2 張…星期六取第 7 張", h: "子時（23–1 點）第 1 張…亥時第 12 張", m: "幾分取第幾張，整點（0 分）取第 60 張" }[x.id], x.pos, x.posDesc])) +
-    '<p class="lead-para">起占時刻在你第一次搓洗時鎖定，六組都用同一刻取位，不會因為洗到一半跨了分鐘而前後不一。正逆位：搓洗時牌在桌上抹動，約有一半會轉了頭。逆位不等於壞，它多半是「這股力氣卡住了、過頭了，或轉向內在」。</p>');
-  h += DC.lcard("共鳴：值得多看一眼的巧合", DC.ltable(["名稱", "條件", "意思"], [
-    ["歸位", "某組抽到的牌，編號恰好等於取位的位置（例如 10 月抽到摩羯，正是第 10 張）", "此組之意加倍，像鐘聲剛好敲在它身上"],
-    ["干曜同氣／生剋", "流年天干的五行和七曜的五行（火、水、木、金、土曜；日月不論）相同、相生或相剋", "一年的底色和今天的做法是同聲、互相推動，還是互相拉扯"],
-    ["丙火逢日曜", "十干抽到丙火、七曜抽到日曜", "流年之陽與今日之陽同照，宜站上台前"],
-    ["天日相應", "星座的古典守護星，正是當天的七曜（例如天秤配金曜）", "大環境的風向和今天的做法同聲"],
-    ["誕生石應月", "抽到的寶石正好是起占月份的誕生石", "內在的力量此月特別可靠"],
-    ["日曜逢烈日", "七曜抽到日曜、象徵抽到烈日", "光明之力雙重，宜公開、宜表態"]]));
-  h += DC.lcard("怎麼讀：六張牌是一句話", '<p class="lead-para">先看<b>主題</b>（象徵），知道這件事的核心；再看<b>流年</b>（十干）知道這一年的底色、<b>天時</b>（星座）知道外面的風向、<b>心石</b>（寶石）知道你手上有什麼力量、<b>日用</b>（七曜）知道該用什麼方式動；最後<b>應象</b>（萬象）是最具體的那條線索——一件東西、一種動物、一個人。器物多半指方法與工具，動物指本能與性格，人物指某個人或你該扮演的角色。</p>');
-  S.LAYERS.forEach(x => { h += DC.lcard(x.name + "圖鑑（" + S.CARDS[x.id].length + " 張）", '<div id="lb-' + x.id + '"></div>'); });
-  return h;
-}
-function bindLearn() {
-  const brs = {};
-  S.LAYERS.forEach(x => {
-    brs[x.id] = DC.browser($("lb-" + x.id),
-      S.CARDS[x.id].map((c, i) => ({ no: "第 " + (i + 1) + " 張", t: c[1], s: c[2].split("・")[0] })),
-      i => { const c = S.CARDS[x.id][i], fake = { layer: x, n: i + 1 };
-        return '<div class="lb-detail"><img src="cards-shilun/' + c[0] + '.jpg" alt="' + c[1] + '" onerror="this.remove()"><div class="txt"><h3 style="color:var(--gold-bright);margin:0">' + x.name + "第 " + (i + 1) + " 張・" + c[1] + S.extraNote(fake) + "</h3>" +
-          '<p style="color:var(--muted)">' + c[2] + "</p><p><b>正位</b>　" + c[3] + "</p><p><b>逆位</b>　" + c[4] + "</p></div></div>"; });
-  });
-  const m = location.search.match(/peek=([yzgdhm])-(\d+)/);
-  if (m && brs[m[1]]) brs[m[1]].open(+m[2] - 1);
-}
-DC.learnInit(buildLearn, bindLearn);
+/* ═══ 入門教學：符號字典＋盤面讀法（內容在 shilun-learn.js） ═══
+   ?peek=y-3（層代號＋原始牌序）直接打開那張牌的字典條目 */
+let book = null;
+const peekM = location.search.match(/peek=([yzgdhm])-(\d+)/);
+DC.learnInit(() => '<div id="learn-book"></div>', (learn) => {
+  book = DC.learnBook(learn.querySelector("#learn-book"), shilunBook());
+  book.show("shilun");
+  if (peekM) { const lay = S.LAYERS.find(x => x.id === peekM[1]), c = S.CARDS[peekM[1]][+peekM[2] - 1]; if (c) book.open("shilun", lay.name + "・" + c[1]); }
+});
+if (peekM && !/[?&]learn=1/.test(location.search)) { const t = document.querySelector('.view-btn[data-view="learn"]'); if (t) t.click(); }
 
 /* 開發測試：?test=shilun（略過動畫：六組各搓洗兩回、切牌、取牌、敲鐘） */
 (function () {
