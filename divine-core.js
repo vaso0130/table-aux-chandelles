@@ -771,6 +771,9 @@ var DC = {};
   };
 
   /* ═══ 奇門遁甲（時家轉盤，拆補定元）═══ */
+  DC.QM_STAR = ["", "天蓬", "天芮", "天沖", "天輔", "天禽", "天心", "天柱", "天任", "天英"]; // 依本宮（洛書數）1..9
+  DC.QM_DOOR = ["", "休門", "死門", "傷門", "杜門", "", "開門", "驚門", "生門", "景門"]; // 依本宮；中五無門
+  DC.QM_GODS = ["值符", "螣蛇", "太陰", "六合", "白虎", "玄武", "九地", "九天"]; // 八神排佈次序
   DC.qimen = function (y, m, d, h, mi, tz) {
     const bz = DC.bazi(y, m, d, h, mi, tz);
     const lam = bz.sunLon;
@@ -794,8 +797,7 @@ var DC = {};
     const yiChar = ["戊", "己", "庚", "辛", "壬", "癸"][xun];
     const xunName = "甲" + DC.BRANCHES[(12 - 2 * xun) % 12] + yiChar;
     const palaceOf = ch => { for (let p = 1; p <= 9; p++) if (dipan[p] === ch) return p; return 5; };
-    const STAR = ["", "天蓬", "天芮", "天沖", "天輔", "天禽", "天心", "天柱", "天任", "天英"];
-    const DOOR = ["", "休門", "死門", "傷門", "杜門", "", "開門", "驚門", "生門", "景門"];
+    const STAR = DC.QM_STAR, DOOR = DC.QM_DOOR;
     let fuGong = palaceOf(yiChar); // 直符宮（地盤）
     const fuStar = STAR[fuGong], fuDoor = fuGong === 5 ? DOOR[2] : DOOR[fuGong];
     const tgChar = hS === 0 ? yiChar : DC.STEMS[hS];
@@ -824,7 +826,7 @@ var DC = {};
       doors[to] = fuGong === 5 && from === 2 ? DOOR[2] : DOOR[from];
     }
     // 八神
-    const GODS = ["值符", "螣蛇", "太陰", "六合", "白虎", "玄武", "九地", "九天"];
+    const GODS = DC.QM_GODS;
     const gods = {};
     for (let i = 0; i < 8; i++) {
       const p = RING[(ri(tp) + (yang ? i : -i) % 8 + 8) % 8];
@@ -844,6 +846,7 @@ var DC = {};
   DC.GONG_NAME = ["", "坎一宮(北)", "坤二宮（西南）", "震三宮(東)", "巽四宮（東南）", "中五宮", "乾六宮（西北）", "兌七宮(西)", "艮八宮（東北）", "離九宮(南)"];
 
   /* ═══ 大六壬 ═══ */
+  DC.LR_JIANG = ["貴人", "螣蛇", "朱雀", "六合", "勾陳", "青龍", "天空", "白虎", "太常", "玄武", "太陰", "天后"]; // 十二天將，自貴人起
   DC.liuren = function (dayIdx, hb, sunLonNow) {
     const dS = dayIdx % 10, dB = dayIdx % 12;
     const signIdx = Math.floor(rev(sunLonNow) / 30);
@@ -953,7 +956,7 @@ var DC = {};
     const gui = isDay ? GUI[0] : GUI[1];
     const guiDi = ((gui - o) % 12 + 12) % 12;
     const shun = [11, 0, 1, 2, 3, 4].includes(guiDi);
-    const JIANG12 = ["貴人", "螣蛇", "朱雀", "六合", "勾陳", "青龍", "天空", "白虎", "太常", "玄武", "太陰", "天后"];
+    const JIANG12 = DC.LR_JIANG;
     const jiangOf = b => {
       const p = ((b - o) % 12 + 12) % 12;
       const idx = shun ? ((p - guiDi) % 12 + 12) % 12 : ((guiDi - p) % 12 + 12) % 12;

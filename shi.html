@@ -109,9 +109,10 @@
   </p>
 </div>
 
-<script src="divine-core.js?v=2026102504"></script>
+<script src="divine-core.js?v=2026102505"></script>
 <script src="divine-ui.js?v=2026102505"></script>
 <script src="divine-lore.js?v=2026091402"></script>
+<script src="shi-learn.js?v=2026102501"></script>
 <script>
 const $ = id => document.getElementById(id);
 
@@ -135,6 +136,9 @@ const SYS = [
     hint: "八字化天地之數，天數地數取先天卦，元堂爻變後天卦——你的命是一枚卦。" }
 ];
 let sysId = "qimen", modeId = "mh-time";
+let book = null;
+const BL = DC.bookLink;
+const B12 = DC.BRANCHES;
 const SCHOOL_NOTE = {
   qimen: "本頁固定採時家轉盤、拆補定元。置閏、飛盤等法需要另一套完整排盤，未混入本盤。",
   liuren: "本頁採月將加時與九宗門；涉害依《課經》取法。不同傳承的晝夜貴人分界可能不同。",
@@ -150,7 +154,7 @@ function renderSys() {
     const b = document.createElement("button");
     b.className = "sys-btn" + (s.id === sysId ? " active" : "");
     b.innerHTML = '<span class="d-name">' + s.name + '</span><span class="d-sub">' + s.sub + '</span>';
-    b.onclick = () => { sysId = s.id; updateForm(); renderSys(); };
+    b.onclick = () => { sysId = s.id; updateForm(); renderSys(); if (book) book.show(sysId); };
     $("sys").appendChild(b);
   });
 }
@@ -227,28 +231,33 @@ function runQimen(out, pr) {
   const N = readNow();
   const q = $("q-input").value.trim();
   const qm = DC.qimen(N.y, N.m, N.d, N.h, N.mi, N.tz);
+  const QL = (k, l) => BL("qimen", k, l);
+  const qStar = st => st ? (st === "天芮禽" ? QL("天禽", st) : QL(st)) : "";
+  const qStem = st => st ? [...st].map(c => QL(c)).join("") : "";
+  const qG = p => QL(DC.GONG_NAME[p]);
   const cellHtml = p => {
     const t = qm.tianpan[p], d = qm.doors[p], g = qm.gods[p];
-    if (p === 5) return '<div class="cell"><span class="g-name">中五宮</span><span class="g-sub">地盤 ' + qm.dipan[5] + '</span><br><span class="g-mut">寄坤二宮</span></div>';
-    return '<div class="cell' + (p === qm.tp ? " hl" : "") + '"><span class="g-name">' + DC.GONG_NAME[p] + '</span>' +
-      '<span class="g-mut">' + (g || "") + '</span><br>' +
-      '<span class="g-main">' + (t ? t.star + " " + t.stem : "") + "</span><br>" +
-      '<span class="g-sub">' + (d || "") + " / 地盤" + qm.dipan[p] + "</span>" +
-      (p === qm.tp ? '<br><span class="g-mut" style="color:var(--gold-bright)">時干落宮</span>' : "") +
-      (p === qm.dayGongTian ? '<br><span class="g-mut">日干（天盤）</span>' : "") + "</div>";
+    if (p === 5) return '<div class="cell"><span class="g-name">' + qG(5) + '</span><span class="g-sub">' + QL("天盤地盤", "地盤") + " " + qStem(qm.dipan[5]) + '</span><br><span class="g-mut">寄坤二宮</span></div>';
+    return '<div class="cell' + (p === qm.tp ? " hl" : "") + '"><span class="g-name">' + qG(p) + '</span>' +
+      '<span class="g-mut">' + (g ? QL(g) : "") + '</span><br>' +
+      '<span class="g-main">' + (t ? qStar(t.star) + " " + qStem(t.stem) : "") + "</span><br>" +
+      '<span class="g-sub">' + (d ? QL(d) : "") + " / 地盤" + qStem(qm.dipan[p]) + "</span>" +
+      (p === qm.tp ? '<br><span class="g-mut" style="color:var(--gold-bright)">' + QL("時干落宮") + '</span>' : "") +
+      (p === qm.dayGongTian ? '<br><span class="g-mut">' + QL("日干", "日干（天盤）") + '</span>' : "") + "</div>";
   };
-  out.push(DC.card("奇門遁甲・時盤", qm.juName + "・" + qm.term + "・" + N.str,
-    '<div class="kv"><span><b>四柱</b>' + qm.bz.pillars.map(p => p.gz).join(" ") + "</span><span><b>旬首</b>" + qm.xunName + "</span><span><b>直符</b>" + qm.fuStar + "</span><span><b>直使</b>" + qm.fuDoor + "</span></div>" +
+  out.push(DC.card("奇門遁甲・時盤", QL("遁局", qm.juName) + "・" + QL("節氣", qm.term) + "・" + N.str,
+    '<div class="kv"><span><b>' + QL("四柱") + "</b>" + qm.bz.pillars.map(p => p.gz).join(" ") + "</span><span><b>" + QL("旬首") + "</b>" + qm.xunName + "</span><span><b>" + QL("直符") + "</b>" + qStar(qm.fuStar) + "</span><span><b>" + QL("直使") + "</b>" + QL(qm.fuDoor) + "</span></div>" +
     '<div class="grid9">' + [4, 9, 2, 3, 5, 7, 8, 1, 6].map(cellHtml).join("") + "</div>" +
-    "<p>吉門（開休生）所在:" + [1, 2, 3, 4, 6, 7, 8, 9].filter(p => ["開門", "休門", "生門"].includes(qm.doors[p])).map(p => qm.doors[p] + "在" + DC.GONG_NAME[p]).join("、") + "。</p>"));
+    "<p>" + QL("吉門") + "（開休生）所在:" + [1, 2, 3, 4, 6, 7, 8, 9].filter(p => ["開門", "休門", "生門"].includes(qm.doors[p])).map(p => QL(qm.doors[p]) + "在" + qG(p)).join("、") + "。</p>"));
   const ob = readBirthOpt(qm.bz);
   const yGongOf = () => { const r = DC.qimenNianming(qm, ob.bb.year); return { g: r.ganGong, ch: r.ch }; }; // 年命收斂於 core(與 MIX 同源)
   if (ob) {
     const np = DC.BR_PALACE[ob.mingB], t = qm.tianpan[np];
     const yg = yGongOf(), ty2 = qm.tianpan[yg.g];
-    out.push(DC.card("問測人年命", ob.mingGz + "年生・虛歲 " + ob.xusui,
-      "<p>年干" + yg.ch + "落天盤<b style='color:var(--gold-bright)'>" + DC.GONG_NAME[yg.g] + "</b>(主流年干落宮法)——" + (qm.gods[yg.g] || "") + "・" + (ty2 ? ty2.star : "") + "・" + (qm.doors[yg.g] || "") + "。</p>" +
-      "<p>另年支" + DC.BRANCHES[ob.mingB] + "寄" + DC.GONG_NAME[np] + "(支寄宮法)——該宮:" + (qm.gods[np] || "") + "・" + (t ? t.star + "・天盤" + t.stem : "") + "・" + (qm.doors[np] || "") + "・地盤" + qm.dipan[np] + "。年命宮之吉凶，直接應在問測人本身；兩法可相參。</p>"));
+    const qL = x => x ? QL(x) : "";
+    out.push(DC.card("問測人" + QL("年命"), ob.mingGz + "年生・虛歲 " + ob.xusui,
+      "<p>年干" + qStem(yg.ch) + "落天盤<b style='color:var(--gold-bright)'>" + qG(yg.g) + "</b>(主流年干落宮法)——" + qL(qm.gods[yg.g]) + "・" + (ty2 ? qStar(ty2.star) : "") + "・" + qL(qm.doors[yg.g]) + "。</p>" +
+      "<p>另年支" + DC.BRANCHES[ob.mingB] + "寄" + qG(np) + "(支寄宮法)——該宮:" + qL(qm.gods[np]) + "・" + (t ? qStar(t.star) + "・天盤" + qStem(t.stem) : "") + "・" + qL(qm.doors[np]) + "・地盤" + qStem(qm.dipan[np]) + "。年命宮之吉凶，直接應在問測人本身；兩法可相參。</p>"));
   }
   pr.push("奇門遁甲時家轉盤(" + N.str + ",UTC+" + N.tz + "):");
   pr.push("  " + qm.juName + ",節氣 " + qm.term + ",四柱 " + qm.bz.pillars.map(p => p.gz).join(" ") + ",旬首 " + qm.xunName);
@@ -262,9 +271,10 @@ function runQimen(out, pr) {
     const ys = DC.qimenDayYongshen(qm, td.y, td.m, td.d, N.tz);
     const yiX = ys.yi, tG = ys.tG, dG = ys.dG, bG = ys.bG;
     const tt = qm.tianpan[tG];
-    out.push(DC.card("時間用神・所問之日", td.str + "(" + td.gz + "日)",
-      "<p>該日日干" + DC.STEMS[td.s] + (td.s === 0 ? "(甲遁，以其旬儀" + yiX + "代)" : "") + "落於天盤<b style='color:var(--gold-bright)'>" + DC.GONG_NAME[tG] + "</b>——" + (qm.gods[tG] || "") + "・" + (tt ? tt.star : "") + "・" + (qm.doors[tG] || "") + ";地盤在" + DC.GONG_NAME[dG] + "。</p>" +
-      "<p>該日日支" + DC.BRANCHES[td.b] + "寄" + DC.GONG_NAME[bG] + "——" + (qm.gods[bG] || "") + "・" + (qm.tianpan[bG] ? qm.tianpan[bG].star : "") + "・" + (qm.doors[bG] || "") + "。以此二宮之星門神組合與旺衰，論該日行事吉凶——此即古法「以問時之局，斷所問之日」。</p>"));
+    const qL = x => x ? QL(x) : "";
+    out.push(DC.card(QL("時間用神") + "・所問之日", td.str + "(" + td.gz + "日)",
+      "<p>該日日干" + DC.STEMS[td.s] + (td.s === 0 ? "(甲遁，以其旬儀" + qStem(yiX) + "代)" : "") + "落於天盤<b style='color:var(--gold-bright)'>" + qG(tG) + "</b>——" + qL(qm.gods[tG]) + "・" + (tt ? qStar(tt.star) : "") + "・" + qL(qm.doors[tG]) + ";地盤在" + qG(dG) + "。</p>" +
+      "<p>該日日支" + DC.BRANCHES[td.b] + "寄" + qG(bG) + "——" + qL(qm.gods[bG]) + "・" + (qm.tianpan[bG] ? qStar(qm.tianpan[bG].star) : "") + "・" + qL(qm.doors[bG]) + "。以此二宮之星門神組合與旺衰，論該日行事吉凶——此即古法「以問時之局，斷所問之日」。</p>"));
     pr.push("  時間用神(所問之日 " + td.str + "," + td.gz + "日):日干" + DC.STEMS[td.s] + (td.s === 0 ? "(以旬儀" + yiX + "代)" : "") + "落天盤" + DC.GONG_NAME[tG] + "(" + (qm.gods[tG] || "") + "・" + (tt ? tt.star : "") + "・" + (qm.doors[tG] || "") + "),地盤" + DC.GONG_NAME[dG] + ";日支" + DC.BRANCHES[td.b] + "寄" + DC.GONG_NAME[bG]);
   }
   pr.push("  中五宮地盤 " + qm.dipan[5] + "(寄坤二)");
@@ -284,27 +294,29 @@ function runLiuren(out, pr) {
   const bz = DC.bazi(N.y, N.m, N.d, N.h, N.mi, N.tz);
   const jdN = DC.jd(N.y, N.m, N.d, N.h, N.mi, N.tz);
   const lr = DC.liuren(bz.dIdx, bz.hB, DC.sunLon(jdN));
-  out.push(DC.card("大六壬・課式", bz.pillars[2].gz + "日 " + DC.BRANCHES[bz.hB] + "時・月將" + lr.jiangZh + "・" + (lr.isDay ? "晝貴" : "夜貴"),
-    '<div class="kv"><span><b>課體</b>' + lr.keti + "</span><span><b>貴人</b>" + lr.gui + "(" + (lr.shun ? "順" : "逆") + "佈)</span></div>" +
-    '<div class="tbl-scroll"><table class="data"><tr><th></th><th>四課</th><th>三課</th><th>二課</th><th>一課</th></tr>' +
-    "<tr><td>天將</td>" + [3, 2, 1, 0].map(i => "<td>" + lr.lessons[i].jiang + "</td>").join("") + "</tr>" +
-    '<tr><td>上神</td>' + [3, 2, 1, 0].map(i => '<td class="hl">' + lr.lessons[i].up + "</td>").join("") + "</tr>" +
-    "<tr><td>下</td>" + [3, 2, 1, 0].map(i => "<td>" + lr.lessons[i].low + "</td>").join("") + "</tr></table></div>" +
-    '<div class="tbl-scroll"><table class="data"><tr><th>三傳</th><th>支神</th><th>遁干</th><th>天將</th><th>六親</th></tr>' +
-    ["初傳", "中傳", "末傳"].map((t, i) => "<tr><td>" + t + '</td><td class="hl">' + lr.chuan[i].zh + "</td><td>" + lr.chuan[i].dun + "</td><td>" + lr.chuan[i].jiang + "</td><td>" + lr.chuan[i].qin + "</td></tr>").join("") + "</table></div>" +
-    '<p>天盤（子起順時針）:' + lr.tianpan.join("・") + "</p>"));
+  const LL = (k, l) => BL("liuren", k, l);
+  const lB = x => B12.includes(x) ? LL(x) : x;   /* 四課「下」一課是日干，不連 */
+  out.push(DC.card("大六壬・課式", bz.pillars[2].gz + "日 " + DC.BRANCHES[bz.hB] + "時・" + LL("月將") + LL(lr.jiangZh) + "・" + LL("晝夜貴人", lr.isDay ? "晝貴" : "夜貴"),
+    '<div class="kv"><span><b>課體</b>' + LL(lr.keti.replace(/[（(].*$/, ""), lr.keti) + "</span><span><b>" + LL("貴人") + "</b>" + LL(lr.gui) + "(" + LL("貴人順逆", lr.shun ? "順" : "逆") + "佈)</span></div>" +
+    '<div class="tbl-scroll"><table class="data"><tr><th></th><th>' + LL("四課") + "</th><th>三課</th><th>二課</th><th>一課</th></tr>" +
+    "<tr><td>天將</td>" + [3, 2, 1, 0].map(i => "<td>" + LL(lr.lessons[i].jiang) + "</td>").join("") + "</tr>" +
+    '<tr><td>' + LL("上神") + '</td>' + [3, 2, 1, 0].map(i => '<td class="hl">' + LL(lr.lessons[i].up) + "</td>").join("") + "</tr>" +
+    "<tr><td>下</td>" + [3, 2, 1, 0].map(i => "<td>" + lB(lr.lessons[i].low) + "</td>").join("") + "</tr></table></div>" +
+    '<div class="tbl-scroll"><table class="data"><tr><th>' + LL("三傳") + "</th><th>支神</th><th>" + LL("遁干") + "</th><th>天將</th><th>六親</th></tr>" +
+    ["初傳", "中傳", "末傳"].map((t, i) => "<tr><td>" + LL(t) + '</td><td class="hl">' + LL(lr.chuan[i].zh) + "</td><td>" + (lr.chuan[i].dun === "空亡" ? LL("空亡") : lr.chuan[i].dun) + "</td><td>" + LL(lr.chuan[i].jiang) + "</td><td>" + LL(lr.chuan[i].qin) + "</td></tr>").join("") + "</table></div>" +
+    '<p>' + LL("天盤地盤", "天盤") + '（子起順時針）:' + lr.tianpan.map(x => LL(x)).join("・") + "</p>"));
   const ob = readBirthOpt(bz);
   if (ob) {
     const mUp = lr.up(ob.mingB), xUp = lr.up(ob.xn.b);
-    out.push(DC.card("本命與行年", ob.mingGz + "年生・虛歲 " + ob.xusui,
-      "<p>本命" + DC.BRANCHES[ob.mingB] + ",上神" + DC.BRANCHES[mUp] + "(" + lr.jiangOf(mUp) + ")——本命上神看此人一生底氣與此問中的自身狀態。</p>" +
-      "<p>行年" + ob.xn.gz + "(" + (ob.male ? "男起丙寅順行" : "女起壬申逆行") + "),上神" + DC.BRANCHES[xUp] + "(" + lr.jiangOf(xUp) + ")——行年上神看今年的際遇方向。</p>"));
+    out.push(DC.card(LL("本命") + "與" + LL("行年"), ob.mingGz + "年生・虛歲 " + ob.xusui,
+      "<p>本命" + LL(DC.BRANCHES[ob.mingB]) + ",上神" + LL(DC.BRANCHES[mUp]) + "(" + LL(lr.jiangOf(mUp)) + ")——本命上神看此人一生底氣與此問中的自身狀態。</p>" +
+      "<p>行年" + ob.xn.gz + "(" + (ob.male ? "男起丙寅順行" : "女起壬申逆行") + "),上神" + LL(DC.BRANCHES[xUp]) + "(" + LL(lr.jiangOf(xUp)) + ")——行年上神看今年的際遇方向。</p>"));
   }
   const td = readTargetDay();
   if (td) { // 視日辰上神：所問之日的日支在天盤的上神
     const dUp = lr.up(td.b);
-    out.push(DC.card("所問之日・日辰上神", td.str + "(" + td.gz + "日)",
-      "<p>該日日支<b>" + DC.BRANCHES[td.b] + "</b>,今課天盤上神為<b style='color:var(--gold-bright)'>" + DC.BRANCHES[dUp] + "</b>,乘<b>" + lr.jiangOf(dUp) + "</b>——古法「視其日之上神」：上神生扶日辰、天將吉者，其日吉；剋戰刑害、凶將乘之者，其日不利。</p>"));
+    out.push(DC.card("所問之日・" + LL("日辰上神"), td.str + "(" + td.gz + "日)",
+      "<p>該日日支<b>" + LL(DC.BRANCHES[td.b]) + "</b>,今課天盤上神為<b style='color:var(--gold-bright)'>" + LL(DC.BRANCHES[dUp]) + "</b>,乘<b>" + LL(lr.jiangOf(dUp)) + "</b>——古法「視其日之上神」：上神生扶日辰、天將吉者，其日吉；剋戰刑害、凶將乘之者，其日不利。</p>"));
   }
   pr.push("大六壬課式(" + N.str + ",UTC+" + N.tz + "):");
   pr.push("  " + bz.pillars[2].gz + "日" + DC.BRANCHES[bz.hB] + "時，月將" + lr.jiangZh + "(太陽過宮),晝夜:" + (lr.isDay ? "晝" : "夜") + "貴" + lr.gui + (lr.shun ? "順" : "逆") + "佈");
@@ -328,12 +340,13 @@ function taiyiNowYear() { // 今歲以立春換歲（與命法生年同制；古
 }
 function runTaiyi(out, pr) {
   const ty = DC.taiyi(taiyiNowYear());
+  const TL = (k, l) => BL("taiyi", k, l);
   out.push(DC.card("歲計太乙（簡式）", "太乙統宗・積年",
-    '<div class="kv"><span><b>本年</b>' + ty.gz + "年</span><span><b>太乙積年</b>" + ty.jiNian.toLocaleString() + "</span><span><b>七十二局</b>第 " + ty.ju + " 局</span></div>" +
-    '<p class="lead">太乙今在' + ty.gongName + ",居宮第 " + ty.yearIn + " 年（三年一徙）</p>" +
+    '<div class="kv"><span><b>本年</b>' + ty.gz + "年</span><span><b>" + TL("太乙積年") + "</b>" + ty.jiNian.toLocaleString() + "</span><span><b>" + TL("七十二局") + "</b>第 " + ty.ju + " 局</span></div>" +
+    '<p class="lead">' + TL("太乙") + "今在" + TL(ty.gongName) + ",居宮第 " + ty.yearIn + " 年（" + TL("三年一徙") + "）</p>" +
     '<div class="grid9">' + DC.TAIYI_GRID.map(g =>
-      '<div class="cell' + (g === ty.gong ? " hl" : "") + '"><span class="g-name">' + DC.TAIYI_GONG[g] + '</span><span class="g-main">' + (g === ty.gong ? "太乙" : "&nbsp;") + "</span></div>").join("") + "</div>" +
-    "<p>太乙為天帝之神，所在之宮主當年氣運焦點；所理之分野、所會之星門定主客勝負。此為歲計簡式起例，主客算與天目文昌之詳排，交由 AI 依《太乙統宗》推演。</p>" +
+      '<div class="cell' + (g === ty.gong ? " hl" : "") + '"><span class="g-name">' + TL(DC.TAIYI_GONG[g]) + '</span><span class="g-main">' + (g === ty.gong ? "太乙" : "&nbsp;") + "</span></div>").join("") + "</div>" +
+    "<p>太乙為天帝之神，所在之宮主當年氣運焦點；所理之分野、所會之星門定" + TL("主客") + "勝負。此為歲計簡式起例，主客算與天目文昌之詳排，交由 AI 依《太乙統宗》推演。</p>" +
     "<p style='color:var(--muted)'>※ 歲計論的是<b>天下大勢與年景</b>(古為帝王兵家之學),不論個人吉凶——想問自己，請改用「太乙命法」。</p>"));
   pr.push("太乙神數・歲計（簡式起例）:");
   pr.push("  本年 " + ty.gz + " 年（立春換歲；古法另有冬至歲首之說）,太乙積年 " + ty.jiNian + "(太乙統宗法)");
@@ -354,44 +367,49 @@ function runTaiyiMing(out, pr) {
   const tyN = DC.taiyi(nowY);
   const xusui = nowY - bb.year + 1;
   const same = tm.gong === tyN.gong;
-  const jStr = j => j ? "大將在" + j.daPos + "(" + j.da + "宮)、參將在" + j.canPos : "臨太乙宮，算不得行";
+  const ML = (k, l) => BL("taiyiming", k, l);
+  const plain = (k, l) => (l == null ? k : l);   /* 提示詞用：同一句不加連結 */
+  const jStr = (j, L = ML) => j ? L("大將・參將", "大將") + "在" + j.daPos + "(" + j.da + "宮)、" + L("大將・參將", "參將") + "在" + j.canPos : "臨太乙宮，算不得行";
   out.push(DC.card("人道命法・日計三數", "以生日入式（楊景磐《太乙通解》系）",
-    '<div class="kv"><span><b>本命年柱</b>' + bb.pillars[0].gz + "(" + DC.nayin(yIdx) + ")</span><span><b>天數</b>" + tm.tian + "</span><span><b>地數（入局）</b>" + tm.di + "</span><span><b>人數</b>" + tm.ren + "</span><span><b>受氣</b>" + tm.shouqi + "</span></div>" +
-    '<p class="lead">日計陽遁第 ' + tm.ju + " 局——太乙在<b>" + tm.gongName + "</b>,文昌（天目）臨" + tm.wenchang.name + "(" + tm.wenchang.pos + "),計神在" + tm.jishen.zh + ",始擊（客目）臨" + tm.shiji.name + "(" + tm.shiji.pos + ")</p>" +
+    '<div class="kv"><span><b>本命年柱</b>' + bb.pillars[0].gz + "(" + DC.nayin(yIdx) + ")</span><span><b>" + ML("三數", "天數") + "</b>" + tm.tian + "</span><span><b>" + ML("三數", "地數（入局）") + "</b>" + tm.di + "</span><span><b>" + ML("三數", "人數") + "</b>" + tm.ren + "</span><span><b>" + ML("受氣") + "</b>" + tm.shouqi + "</span></div>" +
+    '<p class="lead">日計陽遁第 ' + tm.ju + " " + ML("局") + "——" + ML("本命太乙", "太乙") + "在<b>" + ML(tm.gongName) + "</b>," + ML("文昌") + "（天目）臨" + ML(tm.wenchang.name) + "(" + tm.wenchang.pos + ")," + ML("計神") + "在" + tm.jishen.zh + "," + ML("始擊") + "（客目）臨" + ML(tm.shiji.name) + "(" + tm.shiji.pos + ")</p>" +
     '<div class="grid9">' + DC.TAIYI_GRID.map(g =>
-      '<div class="cell' + (g === tm.gong || g === tyN.gong ? " hl" : "") + '"><span class="g-name">' + DC.TAIYI_GONG[g] + '</span><span class="g-main">' +
+      '<div class="cell' + (g === tm.gong || g === tyN.gong ? " hl" : "") + '"><span class="g-name">' + ML(DC.TAIYI_GONG[g]) + '</span><span class="g-main">' +
       [g === tm.gong ? "本命太乙" : "", g === tyN.gong ? "今歲" : ""].filter(Boolean).join("・") + "</span></div>").join("") + "</div>" +
-    "<p>主算 " + tm.zhuSuan + "——" + jStr(tm.zhuJiang) + ";客算 " + tm.keSuan + "——" + jStr(tm.keJiang) + "。命宮在<b>" + tm.mingZh + "</b>(" + (tm.fwd ? "陽男陰女順" : "陰男陽女逆") + "布，月支加年支數至時支),自命宮" + (tm.fwd ? "順" : "逆") + "排兄弟、妻妾、子孫、財帛、田宅、官祿、奴僕、疾厄、福德、相貌、父母十一宮。</p>" +
-    "<p>今歲(" + tyN.gz + "年)歲計太乙在" + tyN.gongName + (same ? "——<b>回臨本命太乙宮</b>,大數交會之年，吉凶皆重" : ",與本命宮相參看今歲著力點") + "。你今虛歲 " + xusui + "。</p>"));
+    "<p>" + ML("主客算", "主算") + " " + tm.zhuSuan + "——" + jStr(tm.zhuJiang) + ";" + ML("主客算", "客算") + " " + tm.keSuan + "——" + jStr(tm.keJiang) + "。" + ML("命宮") + "在<b>" + tm.mingZh + "</b>(" + (tm.fwd ? "陽男陰女順" : "陰男陽女逆") + "布，月支加年支數至時支),自命宮" + (tm.fwd ? "順" : "逆") + "排兄弟、妻妾、子孫、財帛、田宅、官祿、奴僕、疾厄、福德、相貌、父母十一宮。</p>" +
+    "<p>" + ML("今歲") + "(" + tyN.gz + "年)歲計太乙在" + ML(tyN.gongName) + (same ? "——<b>回臨本命太乙宮</b>,大數交會之年，吉凶皆重" : ",與本命宮相參看今歲著力點") + "。你今虛歲 " + xusui + "。</p>"));
   pr.push("太乙人道命法（日計論命，楊景磐《太乙通解》系起例）:");
   pr.push("  命主生於 " + dv + " " + tv + "(" + (male ? "男" : "女") + "),年柱 " + bb.pillars[0].gz + "(納音" + DC.nayin(yIdx) + "),今虛歲 " + xusui);
   pr.push("  日計積日以太乙祖數×歲實365.2425、冬至定元推得（冬至日干支已錨定校正）:天數 " + tm.tian + "、地數 " + tm.di + "(即入局數)、人數 " + tm.ren + ";受氣干支 " + tm.shouqi);
   pr.push("  日計陽遁第 " + tm.ju + " 局：太乙在" + tm.gongName + "(太乙九宮：乾一離二艮三震四兌六坤七坎八巽九，三日一徙不入中五)");
   pr.push("  文昌（天目）臨十六神之" + tm.wenchang.name + "(" + tm.wenchang.pos + "位);計神在" + tm.jishen.zh + "(自寅逆數至人數);始擊（客目）臨" + tm.shiji.name + "(" + tm.shiji.pos + "位)");
-  pr.push("  主算 " + tm.zhuSuan + "(" + jStr(tm.zhuJiang) + ");客算 " + tm.keSuan + "(" + jStr(tm.keJiang) + ")");
+  pr.push("  主算 " + tm.zhuSuan + "(" + jStr(tm.zhuJiang, plain) + ");客算 " + tm.keSuan + "(" + jStr(tm.keJiang, plain) + ")");
   pr.push("  命宮" + tm.mingZh + "(" + (tm.fwd ? "陽男陰女順布" : "陰男陽女逆布") + "),十一宮自命宮" + (tm.fwd ? "順" : "逆") + "排");
   pr.push("  今歲(" + tyN.gz + "年)歲計：第 " + tyN.ju + " 局，太乙在" + tyN.gongName + (same ? "(回臨本命宮)" : ""), "");
   pr.push("請依太乙人道命法推演:1. 天地人三數之稟（數中無十為無天、無五為無地、無一為無人之類格局）與受氣干支" + tm.shouqi + "之氣稟。2. 本命太乙宮" + tm.gongName + "與文昌、始擊、計神向背論一生格局、才性與功名。3. 主客算" + tm.zhuSuan + "/" + tm.keSuan + "之數理（得三才數與否、陰陽數）與大小將落宮吉凶。4. 命宮" + tm.mingZh + "起十二宮，論各宮臨十六神之向背。5. 今歲太乙在" + tyN.gongName + "與本命相參論今年吉凶著力點" + (same ? "(回臨本命宮，請特別細論)" : "") + "。6. 身宮與君基臣基民基三基、五福諸神本盤未列，請依《太乙統宗》自行補排並言明；若貴派命例天數與本盤差±360,以局數為準。");
 }
 
 /* ── 梅花易數（自數字館遷入）── */
-function guaBox(title, upper, lower, movLine) {
+function guaBox(title, upper, lower, movLine, sys) {
+  const GL = (k, l) => sys ? BL(sys, k, l) : (l == null ? k : l);
   const lines = DC.TRIG_LINES[lower].concat(DC.TRIG_LINES[upper]);
   let h = '<div class="gua-box"><div class="g-title">' + title + '</div><div class="gua-lines">';
   lines.forEach((yin1, i) => {
     h += '<div class="yao' + (movLine === i + 1 ? " moving" : "") + '">' +
       (yin1 ? '<i class="solid"></i>' : '<i class="half"></i><i class="half"></i>') + "</div>";
   });
-  h += '</div><div class="g-name">' + DC.HEX_NAME[upper][lower] + '</div><div class="g-sub">' +
-    DC.TRIG_SYM[upper] + DC.TRIG[upper] + "上・" + DC.TRIG_SYM[lower] + DC.TRIG[lower] + "下" + (movLine ? "・動爻第" + movLine + "爻" : "") + "</div></div>";
+  h += '</div><div class="g-name">' + GL(DC.HEX_NAME[upper][lower]) + '</div><div class="g-sub">' +
+    DC.TRIG_SYM[upper] + GL(DC.TRIG[upper]) + "上・" + DC.TRIG_SYM[lower] + GL(DC.TRIG[lower]) + "下" + (movLine ? "・" + (sys === "heluo" ? GL("元堂") : sys ? GL("動爻") : "動爻") + "第" + movLine + "爻" : "") + "</div></div>";
   return h;
 }
 function meihuaCard(mh, srcDesc, out, pr) {
+  const HL = (k, l) => BL("meihua", k, l);
+  const REL_KEY = { "比和": "體用比和", "生體": "用生體", "洩體": "體生用", "剋體": "用剋體", "體剋": "體剋用" };
   out.push(DC.card("梅花易數起卦", srcDesc,
-    '<div class="gua-row">' + guaBox("本卦", mh.upper, mh.lower, mh.mov) + guaBox("互卦", mh.hu.upper, mh.hu.lower, 0) + guaBox("變卦", mh.bian.upper, mh.bian.lower, 0) + "</div>" +
-    '<p class="lead">體卦 ' + DC.TRIG[mh.ti] + "(" + DC.TRIG_WX[mh.ti] + ")・用卦 " + DC.TRIG[mh.yong] + "(" + DC.TRIG_WX[mh.yong] + ")</p>" +
-    "<p>" + mh.rel + "。</p>" +
-    "<p>互卦「" + mh.hu.name + "」看過程：" + mh.huRel + "。<br>變卦「" + mh.bian.name + "」看結局：" + mh.bianRel + "。</p>"));
+    '<div class="gua-row">' + guaBox(HL("本卦"), mh.upper, mh.lower, mh.mov, "meihua") + guaBox(HL("互卦"), mh.hu.upper, mh.hu.lower, 0, "meihua") + guaBox(HL("變卦"), mh.bian.upper, mh.bian.lower, 0, "meihua") + "</div>" +
+    '<p class="lead">' + HL("體卦") + " " + HL(DC.TRIG[mh.ti]) + "(" + DC.TRIG_WX[mh.ti] + ")・" + HL("用卦") + " " + HL(DC.TRIG[mh.yong]) + "(" + DC.TRIG_WX[mh.yong] + ")</p>" +
+    "<p>" + HL(REL_KEY[mh.relCode], mh.rel) + "。</p>" +
+    "<p>互卦「" + HL(mh.hu.name) + "」看過程：" + mh.huRel + "（" + HL(REL_KEY[mh.huCode]) + "）。<br>變卦「" + HL(mh.bian.name) + "」看結局：" + mh.bianRel + "（" + HL(REL_KEY[mh.bianCode]) + "）。</p>"));
   pr.push("梅花易數(" + srcDesc + "):");
   pr.push("  本卦 " + mh.name + "(" + DC.TRIG[mh.upper] + "上" + DC.TRIG[mh.lower] + "下),動爻第 " + mh.mov + " 爻");
   pr.push("  互卦 " + mh.hu.name + ",變卦 " + mh.bian.name);
@@ -430,13 +448,14 @@ function runHeluo(out, pr) {
   const male = $("b-gender").value === "m";
   const bz = DC.bazi(y, m, d, h, mi, DC.numOr($("b-tz").value, 8));
   const hl = DC.heluo(bz, male);
+  const XL = (k, l) => BL("heluo", k, l);
   out.push(DC.card("八字化數", "天地之數",
     '<div class="pillars">' + bz.pillars.map(p => '<div class="pillar"><span class="p-tag">' + p.tag + '</span><span class="p-char">' + p.gz + "</span></div>").join("") + "</div>" +
-    '<p class="lead">天數 ' + hl.tian + "(去廿五餘 " + hl.tianRest + ")・地數 " + hl.di + "(去三十餘 " + hl.diRest + ")</p>" +
-    "<p>天干依納甲洛書數、地支依河圖生成數（一支一奇一偶）化為:" + hl.nums.join("、") + "——奇數之和為天數、偶數之和為地數，天滿二十五去之、地滿三十去之，餘數依洛書配後天卦（一坎二坤三震四巽六乾七兌八艮九離，五寄宮）。</p>"));
+    '<p class="lead">' + XL("天數") + " " + hl.tian + "(去廿五餘 " + hl.tianRest + ")・" + XL("地數") + " " + hl.di + "(去三十餘 " + hl.diRest + ")</p>" +
+    "<p>天干依" + XL("甲", "納甲洛書數") + "、地支依" + XL("子", "河圖生成數") + "（一支一奇一偶）化為:" + hl.nums.join("、") + "——奇數之和為天數、偶數之和為地數，天滿二十五去之、地滿三十去之，餘數依" + XL("洛書配卦", "洛書配後天卦") + "（一坎二坤三震四巽六乾七兌八艮九離，" + XL("五寄宮") + "）。</p>"));
   out.push(DC.card("先天卦與後天卦", "河洛起例",
-    '<div class="gua-row">' + guaBox("先天卦（前半生）", hl.xiantian.upper, hl.xiantian.lower, hl.yuantang) + guaBox("後天卦（後半生）", hl.houtian.upper, hl.houtian.lower, 0) + "</div>" +
-    "<p>" + (hl.tianUp ? "陽男陰女，天卦居上" : "陰男陽女，地卦居上") + ";元堂在第 " + hl.yuantang + " 爻（依《起元堂詩》陽時數陽爻、陰時數陰爻）。先天卦主前半生格局，元堂爻變、上下卦互換而成後天卦，主後半生走向。</p>"));
+    '<div class="gua-row">' + guaBox(XL("先天卦") + "（前半生）", hl.xiantian.upper, hl.xiantian.lower, hl.yuantang, "heluo") + guaBox(XL("後天卦") + "（後半生）", hl.houtian.upper, hl.houtian.lower, 0, "heluo") + "</div>" +
+    "<p>" + XL("天地卦", hl.tianUp ? "陽男陰女，天卦居上" : "陰男陽女，地卦居上") + ";" + XL("元堂") + "在第 " + hl.yuantang + " 爻（依《起元堂詩》陽時數陽爻、陰時數陰爻）。先天卦主前半生格局，元堂爻變、上下卦互換而成後天卦，主後半生走向。</p>"));
   pr.push("河洛理數:");
   pr.push("  四柱:" + bz.pillars.map(p => p.gz).join(" ") + "(" + (male ? "男" : "女") + "命，生於 " + dv + " " + tv + ")");
   pr.push("  化數（干納甲洛書數、支河圖生成數）:" + hl.nums.join("、") + ";天數 " + hl.tian + " 去廿五餘 " + hl.tianRest + ",地數 " + hl.di + " 去三十餘 " + hl.diRest + ";" + (hl.tianUp ? "陽男陰女天卦上" : "陰男陽女地卦上"));
@@ -468,40 +487,11 @@ $("btn-copy").onclick = async () => {
   $("copy-ok").hidden = false; setTimeout(() => $("copy-ok").hidden = true, 2500);
 };
 
-/* ── 入門教學 ── */
-function buildLearn() {
-  const DOOR8 = [["開門", "大吉", "開創、求官、見貴、出行"], ["休門", "吉", "休養、和事、求財、婚聘"], ["生門", "大吉", "生意、財利、營造、種養"],
-    ["傷門", "凶", "捕獵、討債、競技（用其鋒）"], ["杜門", "小凶", "隱匿、避難、守密"], ["景門", "中平", "文書、考試、獻策，防血光"],
-    ["死門", "大凶", "弔喪、行刑，百事不宜"], ["驚門", "凶", "官司、口舌、驚恐"]];
-  const STAR9 = [["天蓬", "水賊之星——膽略與風險，宜暗攻不宜明取"], ["天芮", "病星——宜學習交友，忌醫病興造"],
-    ["天沖", "戰神——征伐直進，宜出兵報仇"], ["天輔", "文曲——文教考試，大吉之星"], ["天禽", "中正——持重端方，百事可為"],
-    ["天心", "天醫——醫藥謀略，將相之星"], ["天柱", "破壞——宜守不宜攻，藏形之星"], ["天任", "富星——厚重田土，遷官進職"],
-    ["天英", "血光——性烈而華，華而欠實，宜文不宜武"]];
-  const GOD8 = [["值符", "元帥之神，百事之主，所到之處百惡消散"], ["螣蛇", "虛驚怪異，文書纏繞"], ["太陰", "陰佑暗助，適合密謀"],
-    ["六合", "婚姻合作，交易中人"], ["白虎", "兇猛剛烈，道路血光（天盤又作勾陳）"], ["玄武", "盜賊曖昧，陰謀失物（天盤又作朱雀）"],
-    ["九地", "堅牢伏藏，宜守宜屯"], ["九天", "威揚高舉，宜攻宜遠行"]];
-  const JIANG12 = [["貴人", "尊長貴助，逢之百事可解"], ["螣蛇", "驚憂虛火，怪夢纏繞"], ["朱雀", "文書口舌，信息是非"], ["六合", "和合婚媒，交易成就"],
-    ["勾陳", "田土爭訟，糾纏拘留"], ["青龍", "喜氣財帛，酒食婚慶"], ["天空", "虛詐不實，徒勞空亡"], ["白虎", "道路凶喪，疾病刀兵"],
-    ["太常", "衣冠宴飲，平和之神"], ["玄武", "盜失曖昧，陰私小人"], ["太陰", "蔽匿陰私，暗中之助"], ["天后", "婦女恩澤，陰柔之護"]];
-  let h = "";
-  h += DC.lcard("三式：古代的決策系統", '<p class="lead-para">太乙、奇門、六壬並稱「三式」——「式」是那種可以轉的占盤。古語說<b>太乙測天、奇門測地、六壬測人</b>:太乙推國運大勢，奇門管方位與行動（兵家最愛）,六壬斷人事吉凶（民間問事第一式）。三式共同的靈魂:<b>不用你的生辰，用「提問這一刻」起盤</b>——問題誕生的時刻，自帶答案的密碼。</p>');
-  h += DC.lcard("奇門遁甲・八門", DC.ltable(["門", "吉凶", "用途"], DOOR8));
-  h += DC.lcard("奇門遁甲・九星與八神", DC.ltable(["九星", "性情"], STAR9) + DC.ltable(["八神", "意義"], GOD8) +
-    '<p class="lead-para">讀盤口訣:<b>日干是我、時干是事</b>。找到自己落的宮，看那一宮湊出的「神+星+門+干」組合吉不吉、旺不旺——吉門（開休生）所在的方位，就是行動的方向。</p>');
-  h += DC.lcard("大六壬・課式結構", '<p class="lead-para">六壬以<b>月將加時</b>轉出天地盤，再從日干支立<b>四課</b>(我方兩課、彼方兩課),依「賊剋」等九宗門取出<b>三傳</b>——初傳是因、中傳是過程、末傳是果。一句話：四課看人我，三傳看劇情。</p>' +
-    DC.ltable(["十二天將", "意義"], JIANG12));
-  h += DC.lcard("太乙・命法與歲計", '<p class="lead-para">太乙以「積年」（上古至今的年數）推太乙神所在之宮，三年一徙、廿四年一周。<b>太乙命法</b>以你的生年入式，看本命太乙宮定一生格局——個人問太乙用這個；<b>歲計</b>推的是天下大勢與年景，古為帝王兵家之學，看熱鬧可以，別拿來問自己。</p>');
-  /* 梅花與河洛（自數字館遷入） */
-  const GUA8 = [["乾 ☰", "天", "首領、剛健、父、圓物"], ["兌 ☱", "澤", "口舌、喜悅、少女、毀折"], ["離 ☲", "火", "文明、眼目、中女、文書"],
-    ["震 ☳", "雷", "奮動、驚起、長男、行動"], ["巽 ☴", "風", "進退、傳播、長女、繩直"], ["坎 ☵", "水", "險陷、智慧、中男、暗流"],
-    ["艮 ☶", "山", "止靜、阻隔、少男、門徑"], ["坤 ☷", "地", "柔順、承載、母、方物"]];
-  h += DC.lcard("梅花易數・八卦速記", DC.ltable(["卦", "象", "象意"], GUA8) +
-    '<p class="lead-para">邵雍說「數生象，象生器」——梅花把「時刻」化成卦，也能把「報數」與「問題的字數」化成卦（字占古法：字數平分，少者為上卦，取天輕清）。時間起卦：年支數+農曆月+日=上卦（除 8 取餘）,再加時辰數=下卦，總數除 6 取餘為動爻。<b>體卦</b>是自己（不含動爻那半）,<b>用卦</b>是事情（含動爻那半）。斷法一句訣:<b>用生體吉、體剋用可成、體用比和順、體生用洩耗、用剋體凶</b>。互卦看過程，變卦看結局。</p>');
-  h += DC.lcard("河洛理數・生辰化卦", '<p class="lead-para">八字每個字依納甲洛書數與河圖生成數化為數，奇數之和為<b>天數</b>、偶數之和為<b>地數</b>,各取卦而成先天卦（前半生）;再以時辰定<b>元堂爻</b>,一爻變而得後天卦（後半生）。你的命，是一枚會翻面的卦。三式問此刻，河洛問生辰——同在此閣，各答各的題。</p>');
-  h += DC.lcard("式占的正確心法", '<p class="lead-para">① 一事一問，問題越具體，盤越誠實。② 同一件事別連問——第一盤就是答案，再問是跟自己討價還價。③ 想擇日：取消「跟隨此刻」，填未來時刻起局，看那一刻的天時利不利你。④ 盤給的是天時與形勢，腳還是自己的。</p>');
-  return h;
-}
-DC.learnInit(buildLearn);
+/* ── 入門教學：符號字典＋盤面讀法（內容在 shi-learn.js；式學與起局頁同步） ── */
+DC.learnInit(() => '<div id="learn-book"></div>', (learn) => {
+  book = DC.learnBook(learn.querySelector("#learn-book"), shiBook(), (id) => { sysId = id; updateForm(); renderSys(); });
+  book.show(sysId);
+});
 
 /* 開發測試:?test=sysId(梅花/河洛沿用數字館 id:mh-time/mh-num/hl-gua) */
 (function () {

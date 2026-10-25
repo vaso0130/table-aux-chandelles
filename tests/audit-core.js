@@ -114,6 +114,11 @@ assert.deepEqual([guan.month, guan.dayGZ, guan.kong, guan.guaShen, guan.shen[0]]
 const sui = DC.najia([7, 8, 8, 7, 7, 8], 2026, 10, 25, 11, 3, 8);
 assert.equal(njRows(sui), "妻財丁未土應 官鬼丁酉金 父母丁亥水/伏子孫庚午 妻財庚辰土世 兄弟庚寅木 父母庚子水");
 
+// 式占館教學書的星門神將須與排盤用的名稱表一致（任一邊改名即報錯）。
+const shiLearn = fs.readFileSync("shi-learn.js", "utf8");
+for (const name of [...DC.QM_STAR, ...DC.QM_DOOR, ...DC.QM_GODS, ...DC.LR_JIANG].filter(Boolean))
+  assert.ok(shiLearn.includes('["' + name + '"'), "shi-learn.js 缺「" + name + "」的解說");
+
 // 同題比對（牌桌館與各館共用）。
 assert.equal(DC.simQ("", ""), 1);
 assert.ok(DC.simQ("他會不會回來", "他還會回來嗎") >= DC.SIMQ_TH);
