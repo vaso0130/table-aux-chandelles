@@ -2863,12 +2863,15 @@ function buildAiPrompt() {
       "六爻皆動：乾坤二卦以用九、用六之辭為斷，餘卦以之卦卦辭為斷。",
     ];
     L.push(`斷法指引（朱子古法）：${ZHU[castInfo.moving.length]}請依此規則定主從，不必逐爻平均著墨。`);
-    /* 互錯綜：本卦之推導，輔參不另起陣 */
+    /* 互錯綜：本卦之推導（有動爻時另附之卦之互），輔參不另起陣 */
     const bits = castInfo.lines.map((v) => (v === 7 || v === 9 ? 1 : 0));
-    const hu = hexNum([bits[1], bits[2], bits[3], bits[2], bits[3], bits[4]]);
+    const huOf = (x) => hexNum([x[1], x[2], x[3], x[2], x[3], x[4]]);
+    const hu = huOf(bits);
     const cuo = hexNum(bits.map((b) => 1 - b));
     const zong = hexNum(bits.slice().reverse());
-    L.push(`卦之三變（輔參）：互卦「${yiShort(hu)}」，事中隱伏之情；錯卦（旁通）「${yiShort(cuo)}」，立場全反之鑑；綜卦（反對）「${yiShort(zong)}」，對方眼中之局。點到即可，以本卦動爻為主。`);
+    L.push(`卦之三變（輔參）：互卦「${yiShort(hu)}」，事中隱伏之情；錯卦（旁通）「${yiShort(cuo)}」，立場全反之鑑；綜卦（反對）「${yiShort(zong)}」，對方眼中之局。${castInfo.zhi
+      ? `之卦之互「${yiShort(huOf(bits.map((b, i) => (castInfo.moving.includes(i) ? 1 - b : b))))}」，趨向中暗藏之機。`
+      : ""}點到即可，以本卦動爻為主。`);
   }
   L.push("");
   L.push("【抽牌結果】（依抽出順序；✦吉／✧挑戰／◦中性）");
