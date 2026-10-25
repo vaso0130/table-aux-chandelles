@@ -475,6 +475,7 @@ table.data td.red { color: #E8A08F; }
 .guide-body .g-tip b { color: var(--gold); }
 .book-link { color: inherit; text-decoration: underline dotted rgba(201,164,92,.6); text-underline-offset: 3px; cursor: help; }
 .book-link:hover, .book-link:focus-visible { color: var(--gold-bright); text-decoration-color: var(--gold); }
+.qslip .book-link { text-underline-position: left; }   /* 直排籤紙：底線畫在字的左側 */
 .book-sys { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 22px 0 0; }
 .book-sys button { font-family: inherit; background: var(--felt-950); border: 1px solid var(--felt-line); border-radius: 2px; color: var(--ivory-shade); padding: 8px 14px; font-size: 14px; letter-spacing: .1em; cursor: pointer; }
 .book-sys button.on { border-color: var(--gold); color: var(--gold-bright); background: rgba(201,164,92,.1); }

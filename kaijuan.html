@@ -3,7 +3,7 @@
 <title>燭光卷樓 · 開卷館</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="hall.css?v=2026102502">
+<link rel="stylesheet" href="hall.css?v=2026102503">
 <style>
   /* ── 擲筊（自牌桌館移植） ── */
   #qiu { text-align: center; }
@@ -67,7 +67,7 @@
   .qs-grade {
     color: #f3e5c2; background: var(--qred); border-radius: 2px;
     padding: 10px 3px; font-size: 15px; letter-spacing: .35em; align-self: flex-start;
-    height: max-content; box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    height: calc(2.7em + 20px); /* 等第皆兩字；直排下 max-content 在 Chromium 只量到一字，會截字 */ box-shadow: 0 1px 4px rgba(0,0,0,.3);
   }
   .qs-gz { font-size: 11px; color: #8a5a28; letter-spacing: .12em; margin-left: 12px; }
   .qs-gua { font-size: 12px; color: #7a3d20; letter-spacing: .1em; border-left: 1px solid rgba(155,43,31,.35); padding-left: 8px; margin-left: 14px; }
@@ -191,12 +191,14 @@
   </p>
 </div>
 
-<script src="divine-core.js?v=2026102504"></script>
+<script src="divine-core.js?v=2026102505"></script>
 <script src="divine-ui.js?v=2026102505"></script>
 <script src="divine-lore.js?v=2026091402"></script>
 <script src="qs-data.js?v=2026091402"></script>
+<script src="kaijuan-learn.js?v=2026102501"></script>
 <script>
 const $ = id => document.getElementById(id);
+const BL = DC.bookLink;
 
 /* 籤庫外置於 qs-data.js */
 
@@ -217,7 +219,7 @@ function renderSys() {
     const b = document.createElement("button");
     b.className = "sys-btn" + (s.id === sysId ? " active" : "");
     b.innerHTML = '<span class="d-name">' + s.name + '</span><span class="d-sub">' + s.sub + '</span>';
-    b.onclick = () => { sysId = s.id; renderSys(); updateForm(); };
+    b.onclick = () => { sysId = s.id; renderSys(); updateForm(); if (book) book.show(sysId); };
     $("sys").appendChild(b);
   });
 }
@@ -240,9 +242,9 @@ function runYiju() {
   const q = $("q-input").value.trim();
   const i = DC.rand(DC.YIJU.length);
   const s = DC.YIJU[i];
-  $("out").innerHTML = '<div class="yiju-card"><div class="yiju-no">燭光一句・第 ' + (i + 1) + ' 句</div>' +
+  $("out").innerHTML = '<div class="yiju-card"><div class="yiju-no">' + BL("yiju", "原創百句", "燭光一句") + "・" + BL("yiju", "第" + (i + 1) + "句", "第 " + (i + 1) + " 句") + '</div>' +
     '<div class="yiju-text">' + s + '</div>' +
-    '<div class="yiju-tail">此樓無神・司卷者機緣</div></div>';
+    '<div class="yiju-tail">' + BL("yiju", "此樓無神", "此樓無神・司卷者機緣") + '</div></div>';
   const pr = ["「燭光一句」開卷（本站原創答案之書,crypto 真隨機，百句取一）。" + DC.toneHead(), ""];
   if (q) pr.push("我的問題:" + q, "");
   pr.push("翻得第 " + (i + 1) + " 句：「" + s + "」", "");
@@ -268,9 +270,9 @@ function runKieu() {
   const i = DC.rand(DC.KIEU.length);
   const [viet, hant, title, gloss, pol] = DC.KIEU[i];
   const polTxt = pol === "good" ? "吉" : pol === "bad" ? "慎" : "平";
-  $("out").innerHTML = DC.card("焚香拜請", "Bói Kiều",
+  $("out").innerHTML = DC.card(BL("kieu", "焚香拜請"), BL("kieu", "Bói Kiều"),
     '<p style="color:var(--muted);font-style:italic">「Lạy vua Từ Hải, lạy vãi Giác Duyên, lạy tiên Thúy Kiều…」<br>拜徐海王、拜覺緣師太、拜翠翹仙——默唸問題，書頁自開。</p>') +
-    DC.card("第 " + (i + 1) + " 句・" + title, '<span class="badge' + (pol === "bad" ? " red" : pol === "good" ? "" : " dim") + '">' + polTxt + "</span>",
+    DC.card(BL("kieu", "第" + (i + 1) + "句", "第 " + (i + 1) + " 句・" + title), '<span class="badge' + (pol === "bad" ? " red" : pol === "good" ? "" : " dim") + '">' + BL("kieu", polTxt) + "</span>",
     '<p class="lead" style="font-style:italic;line-height:2">' + viet.replace(/\n/g, "<br>") + "</p>" +
     '<p style="color:var(--ivory)">' + hant + "</p><p>" + gloss + "</p>");
   const pr = ["越南翹傳開卷(Bói Kiều,《金雲翹傳》選句卅五之第 " + (i + 1) + " 句,crypto 真隨機開卷)。" + DC.toneHead(), ""];
@@ -299,12 +301,20 @@ function qiuInit() {
   $("btn-go").textContent = "上 香 稟 告";
   $("btn-reset").hidden = true;
 }
+/* 求籤經過卡（顯示用：筊名、籤號可點進字典；提示詞仍用純文字 qiuLog） */
+function qiuTrace(head) {
+  const lk = (t) => t.replace(/聖筊|笑筊|陰筊/g, (m) => BL("qs", m))
+    .replace(/^第(\d+)籤/, (m, n) => BL("qs", "第" + cnNum(+n) + "籤", m))
+    .replace(/退籤$/, (m) => BL("qs", "退籤", m));
+  return DC.card(head, "", "<ol>" + qiuLog.map((t) => "<li>" + lk(t) + "</li>").join("") + "</ol>");
+}
 function qiuRest() {
   qiuStep = "rest"; qiuStick = 0;
   $("qiu-stick").hidden = true;
   $("btn-go").hidden = true;
   $("btn-reset").hidden = false;
   $("qiu-caption").textContent = "三陰筊至——機緣不到，尚不是時候取籤。靜下心，把所問之事想得更清楚，改日再來請筊。";
+  $("out").innerHTML = qiuTrace(BL("qs", "陰筊三至", "陰筊三至・今日不取"));
 }
 function tossJiao(cb) {
   qiuBusy = true;
@@ -324,24 +334,25 @@ function tossJiao(cb) {
     cb(a !== b ? "sheng" : a ? "xiao" : "yin");
   }, 580);
 }
-function buildSlip(c) {
+function buildSlip(c, linked) {
   const el = document.createElement("div");
   el.className = "qslip";
   const g = KJ_YI[c.gua - 1];
+  const L = linked ? (k, t) => BL("qs", k, t) : (k, t) => (t == null ? k : t);
   el.innerHTML = `
     <div class="qslip-inner">
       <div class="qs-seal">機緣</div>
       <div class="qslip-body">
         <div class="qs-no">第${cnNum(c.n)}籤</div>
-        <div class="qs-gz">${c.gz}籤・屬${c.wx}　利${c.wxs}　宜其${c.wxd}</div>
-        <div class="qs-grade">${c.grade}</div>
+        <div class="qs-gz">${L("干支籤", c.gz + "籤")}・${L(c.wx, "屬" + c.wx)}　利${c.wxs}　宜其${c.wxd}</div>
+        <div class="qs-grade">${L(c.grade)}</div>
         <div class="qs-titlebar">${c.zh}</div>
         ${c.poem.map((l) => `<div class="qs-poem">${l}</div>`).join("")}
-        <div class="qs-gua">卦象　${g[0]}（${g[1].split("・").slice(0, 2).join("・")}）</div>
-        <div class="qs-jie">解曰　${c.jie}</div>
-        <div class="qs-bai">白話　${c.bai}</div>
-        ${c.items.map(([k, v]) => `<div class="qs-item"><b>${k}</b>　${v}</div>`).join("")}
-        <div class="qs-story">典故　${c.story}</div>
+        <div class="qs-gua">${L("卦象")}　${L(g[0])}（${g[1].split("・").slice(0, 2).join("・")}）</div>
+        <div class="qs-jie">${L("解曰")}　${c.jie}</div>
+        <div class="qs-bai">${L("白話")}　${c.bai}</div>
+        ${c.items.map(([k, v]) => `<div class="qs-item"><b>${L("分項", k)}</b>　${v}</div>`).join("")}
+        <div class="qs-story">${L("典故")}　${c.story}</div>
         <div class="qs-house">燭 光 卷 樓 ・ 機 緣 司 籤</div>
       </div>
     </div>`;
@@ -377,7 +388,8 @@ function qsPrompt(c) {
 function confirmQian() {
   const c = QS_CARDS[qiuStick - 1];
   $("slip-scroll").innerHTML = "";
-  $("slip-scroll").appendChild(buildSlip(c));
+  $("slip-scroll").appendChild(buildSlip(c, true));
+  $("out").innerHTML = qiuTrace("求籤經過・" + BL("qs", "第" + cnNum(c.n) + "籤", "第" + cnNum(c.n) + "籤") + "・" + BL("qs", c.grade));
   $("slip-scroll").scrollLeft = $("slip-scroll").scrollWidth;
   $("qiu-caption").textContent = `第${cnNum(c.n)}籤・${c.grade}——「${c.zh}」。籤紙已展於案上。`;
   $("btn-go").hidden = true;
@@ -385,7 +397,7 @@ function confirmQian() {
   $("prompt-box").value = qsPrompt(c);
   $("prompt-sec").hidden = false;
   DC.histSave("開卷館", `靈籤・第${cnNum(c.n)}籤「${c.zh}」`, $("q-input").value.trim(),
-    '<div style="overflow-x:auto;text-align:center">' + $("slip-scroll").innerHTML + "</div>", $("prompt-box").value);
+    '<div style="overflow-x:auto;text-align:center">' + $("slip-scroll").innerHTML + "</div>" + $("out").innerHTML, $("prompt-box").value);
 }
 function qiuClick() {
   if (qiuBusy) return;
@@ -482,32 +494,20 @@ renderSys(); updateForm();
 DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣：「[^」]*」/, "語氣：「" + DC.toneValue() + "」"); });
 DC.histBind("開卷館");
 
-/* ═══ 入門教學 ═══ */
-function buildLearn() {
-  let h = "";
-  h += DC.lcard("開卷占：最古老的隨機數", '<p class="lead-para">翻開一本書，以指到的句子為神諭——這叫<b>開卷占(bibliomancy)</b>,是人類最古老的占卜形式之一：羅馬人翻《埃涅阿斯紀》（維吉爾籤）,中世紀人翻聖經(Sortes Sanctorum),越南人翻《翹傳》，華人到廟裡搖籤筒。它們共同的信念很簡單:<b>你翻開的那一刻，不是偶然</b>。本樓無神——司卷者，機緣也；一切隨機皆出自 crypto 真亂數，誠實不欺。</p>');
-  h += DC.lcard("燭光一句・百句原創", '<p class="lead-para">一本只有一句話的書：默想問題、翻開、得一句。句子是本站原創（市售《解答之書》有版權，我們自己寫了一百句，腔調誠實、偶爾毒舌）。用法只有一條規矩:<b>一事一翻</b>——翻到不合意就再翻，是跟自己討價還價。點下面任一句，逐句細讀:</p>' +
-    '<div id="lb-yiju"></div>');
-  h += DC.lcard("翹傳開卷(Bói Kiều)", '<p class="lead-para">《金雲翹傳》是越南的國民史詩：才女翠翹為救父賣身，十五年風塵輾轉，終與初戀金重重逢——3254 行六八體詩，寫盡人間的才、命、情、劫。越南人相信這部寫透命運的書能回答命運：焚香默唸「拜徐海王、拜覺緣師太、拜翠翹仙」，隨手翻開，指到哪句，命運答哪句。本站取選句卅五，誠實註明非全本。點題名逐句細讀:</p>' +
-    '<div id="lb-kieu"></div>');
-  h += DC.lcard("靈籤求籤・儀式與規矩", '<p class="lead-para">百首靈籤皆為本站原創：七言四句+等第+解曰+白話+六項分斷+典故，各籤附干支五行與配卦供 AI 輔斷。求籤依古禮:<b>上香默稟 → 擲筊請籤（聖筊方開筒）→ 搖籤 → 擲筊問籤</b>。規矩三條：連得<b>三聖筊</b>方為此籤；<b>笑筊</b>退籤重搖；<b>陰筊累計三次</b>,機緣未到、今日不取。筊以 crypto 真隨機為斷——「允與不允」交給機緣本身。</p>' +
-    '<p class="lead-para">百首籤文一覽——點一支，展一張籤紙:</p><div id="lb-qs"></div>');
-  return h;
-}
-function bindLearn() {
-  const brY = DC.browser($("lb-yiju"),
-    DC.YIJU.map(s => ({ t: s.length > 9 ? s.slice(0, 8) + "…" : s })),
-    i => '<div class="yiju-card"><div class="yiju-no">燭光一句・第 ' + (i + 1) + ' 句</div><div class="yiju-text">' + DC.YIJU[i] + '</div><div class="yiju-tail">此樓無神・司卷者機緣</div></div>');
-  const brK = DC.browser($("lb-kieu"),
-    DC.KIEU.map(k => ({ t: k[2], s: k[4] === "good" ? "吉" : k[4] === "bad" ? "慎" : "平" })),
-    kieuDetail);
-  const brQ = DC.browser($("lb-qs"),
-    QS_CARDS.map(c => ({ no: "第" + cnNum(c.n) + "籤", t: c.zh, s: c.grade })),
-    i => '<div class="dict-detail-scroll">' + buildSlip(QS_CARDS[i]).outerHTML + "</div>");
+/* ═══ 入門教學：符號字典＋盤面讀法（內容在 kaijuan-learn.js；三術與起卦頁同步） ═══ */
+let book = null;
+DC.learnInit(() => '<div id="learn-book"></div>', (learn) => {
+  book = DC.learnBook(learn.querySelector("#learn-book"), kaijuanBook(), (id) => { sysId = id; renderSys(); updateForm(); });
+  book.show(sysId);
+  /* ?peek=yiju-N / kieu-N / qs-N：直接打開該句／該籤 */
   const m = location.search.match(/peek=(yiju|kieu|qs)-(\d+)/);
-  if (m) ({ yiju: brY, kieu: brK, qs: brQ })[m[1]].open(+m[2] - 1);
-}
-DC.learnInit(buildLearn, bindLearn);
+  if (m) {
+    const n = +m[2], key = m[1] === "qs" ? "第" + cnNum(n) + "籤" : "第" + n + "句";
+    if (sysId !== m[1]) { sysId = m[1]; renderSys(); updateForm(); }
+    book.open(m[1], key);
+  }
+});
+if (/[?&]peek=(yiju|kieu|qs)-\d+/.test(location.search) && !/[?&]learn=1/.test(location.search)) document.querySelector('.view-btn[data-view="learn"]').click();
 
 /* 開發測試:?test=yiju|kieu|qs(qs 直接定籤) */
 (function () {
