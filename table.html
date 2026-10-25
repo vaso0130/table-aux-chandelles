@@ -2928,7 +2928,8 @@ function buildAiPrompt() {
     L.push(deckDef.reversible
       ? `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（${c.pk}，${c.norev ? "不分正逆位" : drawnRev[i] ? "逆位" : "正位"}）〔${polMark(c)}〕— 關鍵詞：${c.keys}`
       : deckDef.id === "xq" ? `${i + 1}. ${posName(i)}：${c.zh}（${c.latin.split("・")[1]}，${c.pk}）〔${polMark(c)}〕— 關鍵詞：${c.keys}`
-      : `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（№${c.n}，${{ len: "撲克對應 ", gra: "撲克對應 ", yi: "卦序 ", kip: "牌號 ", esp: "花色點數 ", xq: "" }[deckDef.id] || ""}${c.pk}${myth}）〔${polMark(c)}〕— 關鍵詞：${c.keys}`);
+      /* № 只留給以牌號為傳統名的雷諾曼；易經卦序、奇卜牌號已在 pk 中，西班牙牌的 № 是站內排序 */
+      : `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（${deckDef.id === "len" || deckDef.id === "gra" ? `№${c.n}，` : ""}${{ len: "撲克對應 ", gra: "撲克對應 ", yi: "卦序 ", kip: "牌號 ", esp: "花色點數 ", xq: "" }[deckDef.id] || ""}${c.pk}${myth}）〔${polMark(c)}〕— 關鍵詞：${c.keys}`);
     if ((deckDef.id === "gra" || deckDef.id === "zw" || deckDef.id === "dt" || deckDef.id === "xq") && !spread.gt)
       L.push(`   ${deckDef.id === "xq" ? "棋義" : "牌義"}：${drawnRev[i] && c.rtext ? c.rtext : c.text}`);
   });
