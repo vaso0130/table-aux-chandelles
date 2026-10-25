@@ -771,6 +771,17 @@
   .combo-block { border-top: 1px double rgba(138,114,69,.5); margin-top: 8px; padding-top: 20px; }
   .combo-block .cb-title { font-size: 12px; letter-spacing: .3em; color: var(--gold-dim); margin-bottom: 12px; }
   .combo { margin: 0 0 12px; font-size: 15px; max-width: 62ch; }
+  .nj-scroll { overflow-x: auto; margin: 0 0 12px; }
+  .nj-table { border-collapse: collapse; font-size: 14px; white-space: nowrap; }
+  .nj-table th { font-size: 11px; font-weight: 400; letter-spacing: .1em; color: var(--gold-dim); padding: 0 5px 6px; text-align: left; }
+  .nj-table td { padding: 5px; border-top: 1px solid rgba(138,114,69,.25); }
+  .nj-table .nj-yao { color: var(--ink-soft); font-size: 12px; }
+  .nj-table .nj-fu { display: block; color: var(--ink-soft); font-size: 11px; }
+  .nj-table .nj-mark { font-size: 13px; color: var(--gold-dim); }
+  .nj-bar { display: inline-block; width: 26px; height: 5px; margin-right: 4px; vertical-align: middle; background: currentColor; }
+  .nj-bar.yin { background: linear-gradient(90deg, currentColor 0 42%, transparent 42% 58%, currentColor 58%); }
+  .nj-table .nj-sy { color: var(--gold-dim); font-weight: 600; }
+  .nj-table tr.moving td { background: rgba(138,114,69,.08); }
   .combo .yi-glyph { font-size: 22px; line-height: 1; margin-right: 8px; vertical-align: -3px; color: var(--gold-dim); }
   .combo b { font-weight: 600; letter-spacing: .06em; }
   .combo .arrow { color: var(--gold-dim); padding: 0 6px; }
@@ -1424,7 +1435,8 @@ function resetTable() {
   shuffleCount = 0; cutCount = 0; ritualBusy = false;
   $("#spread-title").textContent = spread.name;
   $("#spread-hint").textContent = spread.cast
-    ? (spread.method === "yarrow" ? "分二、掛一、揲四、歸奇，三變成一爻。十八變之後，動爻與之卦自現。" : "三枚銅錢擲六次起卦。擲出動爻，之卦自現。")
+    ? (spread.method === "yarrow" ? "分二、掛一、揲四、歸奇，三變成一爻。十八變之後，動爻與之卦自現。"
+      : spread.najia ? "三枚銅錢擲六次起卦。成卦當刻記為月建、日辰，裝卦排盤。" : "三枚銅錢擲六次起卦。擲出動爻，之卦自現。")
     : spread.qiu
     ? "上香默稟、請筊、搖籤——連三聖筊定籤；陰筊三至，今日不取。"
     : spread.sig
@@ -1993,6 +2005,94 @@ function zhuRank(moving) {
   }
   return null;
 }
+/* ── 六爻納甲（京房八宮・《火珠林》法）：八宮世應、納甲干支、六親、六神、伏神、卦身，月建日辰定旺衰 ── */
+const GAN = "甲乙丙丁戊己庚辛壬癸", ZHI = "子丑寅卯辰巳午未申酉戌亥", ZHI_WX = "水土木木土火火土金金土水";
+const TRI_NAME = "乾兌離震巽坎艮坤", TRI_WX = "金金火木木水土土";
+const TRI_BITS = Object.keys(TRIGRAM).sort((a, b) => TRIGRAM[a] - TRIGRAM[b]).map((k) => [...k].map(Number));
+/* 納甲（依 TRIGRAM 序）：[內卦干, 外卦干, 內三支, 外三支]，支皆由下而上 */
+const NAJIA = [
+  ["甲", "壬", "子寅辰", "午申戌"],   /* 乾 */
+  ["丁", "丁", "巳卯丑", "亥酉未"],   /* 兌 */
+  ["己", "己", "卯丑亥", "酉未巳"],   /* 離 */
+  ["庚", "庚", "子寅辰", "午申戌"],   /* 震 */
+  ["辛", "辛", "丑亥酉", "未巳卯"],   /* 巽 */
+  ["戊", "戊", "寅辰午", "申戌子"],   /* 坎 */
+  ["丙", "丙", "辰午申", "戌子寅"],   /* 艮 */
+  ["乙", "癸", "未巳卯", "丑亥酉"],   /* 坤 */
+];
+const LIUSHEN = ["青龍", "朱雀", "勾陳", "螣蛇", "白虎", "玄武"];
+/* 六親：以宮五行為我，依木火土金水相生序之差取 */
+function liuQin(gongWx, wx) {
+  return ["兄弟", "子孫", "妻財", "官鬼", "父母"][("木火土金水".indexOf(wx) - "木火土金水".indexOf(gongWx) + 5) % 5];
+}
+/* 八宮與世爻：「天同二世天變五，地同四世地變初，本宮六世三世異，人同遊魂人變歸」
+   （地＝初四、人＝二五、天＝三上兩兩相比）；一二三世宮在外卦，四五世與遊魂宮為內卦全反，歸魂宮在內卦 */
+function najiaGong(bits) {
+  const lo = bits.slice(0, 3), up = bits.slice(3);
+  const di = lo[0] === up[0], ren = lo[1] === up[1], tian = lo[2] === up[2];
+  const T = (t) => TRIGRAM[t.join("")], inv = T(lo.map((b) => 1 - b));
+  const [shi, gong, kind] =
+      di && ren && tian ? [6, T(up), "本宮"]
+    : !di && ren && tian ? [1, T(up), "一世"]
+    : !di && !ren && tian ? [2, T(up), "二世"]
+    : !di && !ren && !tian ? [3, T(up), "三世"]
+    : di && !ren && !tian ? [4, inv, "四世"]
+    : di && ren && !tian ? [5, inv, "五世"]
+    : !di && ren && !tian ? [4, inv, "遊魂"]
+    : [3, T(lo), "歸魂"];
+  return { shi, ying: (shi + 2) % 6 + 1, gong, kind };
+}
+/* 起卦時刻的月建、日辰、旬空（23:00 換日；月建依太陽視黃經交節，低精度式約差一刻，交節當刻前後請自行覆核）
+   ⇄ 同法在 divine-core.js DC.bazi——牌桌館零依賴故留精簡版 */
+function najiaTime(at) {
+  const day = Date.UTC(at.y, at.m - 1, at.d) + (at.h >= 23 ? 86400000 : 0);
+  const di = ((Math.round((day - Date.UTC(1949, 9, 1)) / 86400000) % 60) + 60) % 60;   /* 1949-10-01 甲子 */
+  const n = at.ms / 86400000 + 2440587.5 - 2451545, g = (357.529 + 0.98560028 * n) * Math.PI / 180;
+  const lam = 280.459 + 0.98564736 * n + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g);
+  const mB = (Math.floor((((lam - 315) % 360) + 360) % 360 / 30) + 2) % 12;   /* 立春起寅 */
+  const xun = Math.floor(di / 10);
+  return { dS: di % 10, dB: di % 12, mB, kong: [(10 - 2 * xun + 12) % 12, (11 - 2 * xun + 12) % 12] };
+}
+function najiaChart(info) {
+  const bits = info.lines.map((v) => (v === 7 || v === 9 ? 1 : 0));
+  const g = najiaGong(bits), gwx = TRI_WX[g.gong];
+  const lineOf = (b, i) => {
+    const t = NAJIA[TRIGRAM[(i < 3 ? b.slice(0, 3) : b.slice(3)).join("")]];
+    const zhi = (i < 3 ? t[2] : t[3])[i % 3], wx = ZHI_WX[ZHI.indexOf(zhi)];
+    return { gan: i < 3 ? t[0] : t[1], zhi, wx, qin: liuQin(gwx, wx) };
+  };
+  const yao = bits.map((_, i) => lineOf(bits, i));
+  const zb = bits.map((b, i) => (info.moving.includes(i) ? 1 - b : b));
+  const bian = bits.map((_, i) => (info.moving.includes(i) ? lineOf(zb, i) : null));
+  /* 伏神：本卦缺的六親，取本宮純卦同位之爻伏於本卦該爻（飛神）之下 */
+  const pure = [...TRI_BITS[g.gong], ...TRI_BITS[g.gong]], have = yao.map((y) => y.qin);
+  const fu = pure.map((_, i) => { const p = lineOf(pure, i); return have.includes(p.qin) ? null : p; });
+  const T = najiaTime(info.at);
+  const ls = [0, 0, 1, 1, 2, 3, 4, 4, 5, 5][T.dS];   /* 甲乙青龍、丙丁朱雀、戊勾陳、己螣蛇、庚辛白虎、壬癸玄武，自初爻起 */
+  return {
+    ...g, gongName: TRI_NAME[g.gong], gwx, bits, yao, bian, fu, T,
+    shen: bits.map((_, i) => LIUSHEN[(ls + i) % 6]),
+    guaShen: ZHI[((bits[g.shi - 1] ? 0 : 6) + g.shi - 1) % 12],   /* 卦身：陽世從子、陰世從午，數至世爻 */
+  };
+}
+function najiaLine(c, i) {
+  const y = c.yao[i], b = c.bian[i], f = c.fu[i];
+  const mark = c.bits[i] ? (b ? "○" : "⚊") : (b ? "×" : "⚋");
+  return {
+    shen: c.shen[i], fu: f ? `${f.qin}${f.gan}${f.zhi}${f.wx}` : "",
+    main: `${y.qin}${y.gan}${y.zhi}${y.wx}`, mark,
+    sy: c.shi === i + 1 ? "世" : c.ying === i + 1 ? "應" : "",
+    bian: b ? `${b.qin}${b.gan}${b.zhi}${b.wx}` : "",
+  };
+}
+function najiaHead(c, info) {
+  const at = info.at, p2 = (x) => String(x).padStart(2, "0");
+  return {
+    time: `${at.y}-${p2(at.m)}-${p2(at.d)} ${p2(at.h)}:${p2(at.mi)}`,
+    month: `${ZHI[c.T.mB]}月`, day: `${GAN[c.T.dS]}${ZHI[c.T.dB]}日`, kong: c.T.kong.map((k) => ZHI[k]).join(""),
+    gua: `${YI_CARDS[info.ben - 1].zh}（${c.gongName}宮${c.kind === "本宮" ? "本宮" : c.kind}卦，屬${c.gwx}）`,
+  };
+}
 
 function renderCastLines() {
   elCastLines.innerHTML = "";
@@ -2124,15 +2224,22 @@ function finishCast() {
     zhi = hexNum(bits.map((b, i) => (moving.includes(i) ? 1 - b : b)));
   }
   castInfo = { lines: castLines.map((l) => l.v), moving, ben, zhi, method: spread.method || "coins" };
+  if (spread.najia) {   /* 納甲以成卦當刻（裝置當地時間）定月建日辰，存入紀錄供重看 */
+    const d = new Date();
+    castInfo.at = { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate(), h: d.getHours(), mi: d.getMinutes(), ms: d.getTime() };
+  }
+  const nj = spread.najia ? najiaChart(castInfo) : null, njh = nj && najiaHead(nj, castInfo);
   target = zhi ? 2 : 1;
-  $("#cast-caption").textContent = zhi
+  $("#cast-caption").textContent = nj
+    ? `得${njh.gua}${zhi ? `之「${yiShort(zhi)}」` : "，六爻安靜"}。世在${YAO_NAMES[nj.shi - 1]}、應在${YAO_NAMES[nj.ying - 1]}${moving.length ? `；動爻：${moving.map((i) => YAO_NAMES[i]).join("、")}` : ""}。${njh.month}、${njh.day}，旬空${njh.kong}。`
+    : zhi
     ? `得「${yiShort(ben)}之${yiShort(zhi)}」。動爻：${moving.map((i) => YAO_NAMES[i]).join("、")}。本卦為貞，之卦為悔。${moving.length === 3
       ? `三爻變，依朱子變占表居第 ${zhuRank(moving).rank} 卦，${zhuRank(moving).zhen ? "前十卦主貞" : "後十卦主悔"}。` : ""}`
     : `得「${yiShort(ben)}」，六爻皆靜，以本卦卦辭為斷。`;
   if (!zhi) {
     /* 六爻皆靜：之卦格明確標示，不留懸念 */
     const zhiLabel = elSlots.querySelector('.slot[data-idx="1"] .pos-label');
-    if (zhiLabel) zhiLabel.textContent = "之卦・無（六爻皆靜）";
+    if (zhiLabel) zhiLabel.textContent = spread.najia ? "變卦・無（六爻安靜）" : "之卦・無（六爻皆靜）";
   }
   btnThrow.disabled = true;
   setTimeout(() => placeCard(ben - 1), 450);
@@ -2673,7 +2780,23 @@ function finishReading() {
     elCombos.appendChild(block);
   }
 
-  if (spread.cast && castInfo) {
+  if (spread.najia && castInfo && castInfo.at) {
+    /* 六爻排盤：由上而下，與提示詞同源 */
+    const c = najiaChart(castInfo), h = najiaHead(c, castInfo);
+    const rows = [5, 4, 3, 2, 1, 0].map((i) => {
+      const l = najiaLine(c, i);
+      return `<tr${l.bian ? ' class="moving"' : ""}><td class="nj-yao">${"初二三四五上"[i]}</td><td>${l.shen}</td>
+        <td><b>${l.main}</b>${l.fu ? `<small class="nj-fu">伏 ${l.fu}</small>` : ""}</td><td class="nj-mark"><i class="nj-bar${c.bits[i] ? "" : " yin"}"></i>${l.bian ? (c.bits[i] ? "○" : "×") : ""}</td><td class="nj-sy">${l.sy}</td><td>${l.bian ? `→ ${l.bian}` : ""}</td></tr>`;
+    }).join("");
+    const block = document.createElement("div");
+    block.className = "combo-block";
+    block.innerHTML = `<div class="cb-title">六 爻 排 盤 ・ 納 甲</div>
+      <p class="combo"><b>${h.gua}</b>${castInfo.zhi ? `　之　<b>${YI_CARDS[castInfo.zhi - 1].zh}</b>` : "　六爻安靜"}<br>
+      <small style="color:var(--ink-soft)">${h.time}　${h.month}・${h.day}・旬空${h.kong}・卦身${c.guaShen}</small></p>
+      <div class="nj-scroll"><table class="nj-table"><tr><th></th><th>六神</th><th>本卦（伏神）</th><th></th><th>世應</th><th>變爻</th></tr>${rows}</table></div>
+      <p class="combo" style="color:var(--ink-soft)">先依所問取用神，再以月建、日辰看旺衰，世為我、應為人；動爻與所化之爻定成敗。○ 老陽動、× 老陰動。</p>`;
+    elCombos.appendChild(block);
+  } else if (spread.cast && castInfo) {
     /* 卦之三變與之卦之互：與提示詞同源，輔參，以本卦動爻為主 */
     const d = yiDerived(castInfo);
     const rows = [
@@ -2769,7 +2892,9 @@ function buildAiPrompt() {
     kip:"你是一位經驗豐富的奇卜牌（Kipperkarten）占卜解讀師，熟悉三十六張牌的人物與情境語彙、方向與距離的讀法。請以繁體中文為我解讀以下牌陣。",
     gra:"你是一位經驗豐富的大雷諾曼（Grand Jeu de Mlle Lenormand）占卜解讀師，熟悉五十四張牌的撲克對應、神話系列象徵與位置意義。請以繁體中文為我解讀以下牌陣。",
     run:"你是一位經驗豐富的盧恩符文（Elder Futhark）占卜師，熟悉二十四符文的正逆位（merkstave）意涵與符文間的呼應。請以繁體中文為我解讀以下符陣。",
-    yi:"你是一位精通周易的占卜解讀者，熟悉六十四卦的卦辭、象傳與義理，能將卦義落實到現代處境。請以繁體中文為我解讀以下卦陣。",
+    yi: spread.najia
+      ? "你是一位精通六爻納甲（京房八宮、《火珠林》、《增刪卜易》《卜筮正宗》一系）的斷卦師，擅長取用神、論旺衰、看動變與應期，能將斷語落實到現代處境。請以繁體中文為我斷以下這一卦。"
+      : "你是一位精通周易的占卜解讀者，熟悉六十四卦的卦辭、象傳與義理，能將卦義落實到現代處境。請以繁體中文為我解讀以下卦陣。",
     zw:"你是一位經驗豐富的紫微斗數老師，熟悉十四主星、六吉六煞、四化與諸雜曜的星情，以及廟旺落陷的差異。請以繁體中文為我解讀以下星陣（正位視為入廟得力，逆位視為落陷失輝）。",
     dt:"你是一位經驗豐富的塔羅解讀師，眼前是一副以華夏意象重詮的東方塔羅（四象為花色：青龍財帛、朱雀行動、白虎思辨、玄武情感），結構對應標準塔羅。請以繁體中文為我解讀以下牌陣。",
     xq:"你是一位熟悉台灣民間象棋卦（象棋占卜）的解讀師，懂得以紅黑陰陽、將士象車馬炮兵的兵種象意、成組棋型與起承轉收的位置來斷事。請以繁體中文為我解讀以下棋局。",
@@ -2890,33 +3015,37 @@ function buildAiPrompt() {
     L.push(`起卦方式：${castInfo.method === "yarrow"
       ? "大衍筮法（朱子掛扐法：五十策去一，分二掛一揲四歸奇，三變成一爻；老陰 1/16、少陽 5/16、少陰 7/16、老陽 3/16，陽爻易動、陰爻難動）"
       : "三枚銅錢六擲（《火珠林》系俗法：老陰、老陽各 1/8，少陽、少陰各 3/8）"}。六爻由下而上：${castInfo.lines.map((v, i) => `${YAO_NAMES[i]} ${v}（${vName(v)}）`).join("、")}。`);
-    L.push(castInfo.moving.length
-      ? `此占得「${yiShort(castInfo.ben)}之${yiShort(castInfo.zhi)}」。動爻（變爻）：${castInfo.moving.map((i) => YAO_NAMES[i]).join("、")}。本卦為貞（現況）、之卦為悔（趨向）。${castInfo.moving.length <= 2
-        ? "請務必逐一解讀動爻的爻辭，並說明本卦如何變往之卦。"
-        : "動爻爻辭可略述以見變化之由，主斷依下列朱子斷法；並說明本卦如何變往之卦。"}`
-      : `此占得「${yiShort(castInfo.ben)}」，六爻皆靜，以本卦卦辭為斷；內卦為貞，外卦為悔。`);
-    /* 朱子《易學啟蒙・考變占》動爻取斷 */
-    const ZHU = [
-      "六爻皆靜：以本卦卦辭為斷，參其大象；內卦為貞、外卦為悔。",
-      "一爻動：專以本卦動爻之爻辭為斷。",
-      "二爻動：以本卦二動爻之爻辭為斷，而以居上之爻為主。",
-      (() => {
-        if (castInfo.moving.length !== 3) return "";
-        const z = zhuRank(castInfo.moving);
-        return `三爻動：占本卦及之卦之彖辭，本卦為貞、之卦為悔。依朱子變占表，三爻變之二十卦中，變爻含初爻者為前十卦主貞、餘為後十卦主悔；此占之卦居第 ${z.rank} 卦，屬${z.zhen
-          ? `前十卦，主貞：以本卦「${yiShort(castInfo.ben)}」彖辭為主、之卦「${yiShort(castInfo.zhi)}」彖辭為輔`
-          : `後十卦，主悔：以之卦「${yiShort(castInfo.zhi)}」彖辭為主、本卦「${yiShort(castInfo.ben)}」彖辭為輔`}。請兼論兩卦，以貞悔次序敘之。`;
-      })(),
-      "四爻動：以之卦中二不變爻之爻辭為斷，而以居下之爻為主。",
-      "五爻動：以之卦中唯一不變爻之爻辭為斷。",
-      "六爻皆動：乾坤二卦以用九、用六之辭為斷，餘卦以之卦卦辭為斷。",
-    ];
-    L.push(`斷法指引（朱子古法）：${ZHU[castInfo.moving.length]}請依此規則定主從，不必逐爻平均著墨。`);
-    /* 互錯綜：本卦之推導（有動爻時另附之卦之互），輔參不另起陣 */
-    const { hu, cuo, zong, zhiHu } = yiDerived(castInfo);
-    L.push(`卦之三變（輔參）：互卦「${yiShort(hu)}」，事中隱伏之情；錯卦（旁通）「${yiShort(cuo)}」，立場全反之鑑；綜卦（反對）「${yiShort(zong)}」，對方眼中之局。${castInfo.zhi
-      ? `之卦之互「${yiShort(zhiHu)}」，趨向中暗藏之機。`
-      : ""}點到即可，以本卦動爻為主。`);
+    if (spread.najia && castInfo.at) {
+      L.push(...najiaPromptLines(castInfo));
+    } else {
+      L.push(castInfo.moving.length
+        ? `此占得「${yiShort(castInfo.ben)}之${yiShort(castInfo.zhi)}」。動爻（變爻）：${castInfo.moving.map((i) => YAO_NAMES[i]).join("、")}。本卦為貞（現況）、之卦為悔（趨向）。${castInfo.moving.length <= 2
+          ? "請務必逐一解讀動爻的爻辭，並說明本卦如何變往之卦。"
+          : "動爻爻辭可略述以見變化之由，主斷依下列朱子斷法；並說明本卦如何變往之卦。"}`
+        : `此占得「${yiShort(castInfo.ben)}」，六爻皆靜，以本卦卦辭為斷；內卦為貞，外卦為悔。`);
+      /* 朱子《易學啟蒙・考變占》動爻取斷 */
+      const ZHU = [
+        "六爻皆靜：以本卦卦辭為斷，參其大象；內卦為貞、外卦為悔。",
+        "一爻動：專以本卦動爻之爻辭為斷。",
+        "二爻動：以本卦二動爻之爻辭為斷，而以居上之爻為主。",
+        (() => {
+          if (castInfo.moving.length !== 3) return "";
+          const z = zhuRank(castInfo.moving);
+          return `三爻動：占本卦及之卦之彖辭，本卦為貞、之卦為悔。依朱子變占表，三爻變之二十卦中，變爻含初爻者為前十卦主貞、餘為後十卦主悔；此占之卦居第 ${z.rank} 卦，屬${z.zhen
+            ? `前十卦，主貞：以本卦「${yiShort(castInfo.ben)}」彖辭為主、之卦「${yiShort(castInfo.zhi)}」彖辭為輔`
+            : `後十卦，主悔：以之卦「${yiShort(castInfo.zhi)}」彖辭為主、本卦「${yiShort(castInfo.ben)}」彖辭為輔`}。請兼論兩卦，以貞悔次序敘之。`;
+        })(),
+        "四爻動：以之卦中二不變爻之爻辭為斷，而以居下之爻為主。",
+        "五爻動：以之卦中唯一不變爻之爻辭為斷。",
+        "六爻皆動：乾坤二卦以用九、用六之辭為斷，餘卦以之卦卦辭為斷。",
+      ];
+      L.push(`斷法指引（朱子古法）：${ZHU[castInfo.moving.length]}請依此規則定主從，不必逐爻平均著墨。`);
+      /* 互錯綜：本卦之推導（有動爻時另附之卦之互），輔參不另起陣 */
+      const { hu, cuo, zong, zhiHu } = yiDerived(castInfo);
+      L.push(`卦之三變（輔參）：互卦「${yiShort(hu)}」，事中隱伏之情；錯卦（旁通）「${yiShort(cuo)}」，立場全反之鑑；綜卦（反對）「${yiShort(zong)}」，對方眼中之局。${castInfo.zhi
+        ? `之卦之互「${yiShort(zhiHu)}」，趨向中暗藏之機。`
+        : ""}點到即可，以本卦動爻為主。`);
+    }
   }
   L.push("");
   L.push(deckDef.id === "xq"
@@ -2969,9 +3098,35 @@ function buildAiPrompt() {
   return L.join("\n");
 }
 
+/* 六爻納甲的排盤與斷法（提示詞用） */
+function najiaPromptLines(info) {
+  const c = najiaChart(info), h = najiaHead(c, info);
+  const missing = ["父母", "兄弟", "子孫", "妻財", "官鬼"].filter((q) => !c.yao.some((y) => y.qin === q));
+  const L = [];
+  L.push(`讀法：六爻納甲（京房八宮、《火珠林》法）。起卦時間：${h.time}（裝置當地時間，23:00 換日）；月建 ${h.month}，日辰 ${h.day}，旬空 ${h.kong}。`);
+  L.push(`本卦：${h.gua}，世在${YAO_NAMES[c.shi - 1]}、應在${YAO_NAMES[c.ying - 1]}，卦身${c.guaShen}。${info.zhi
+    ? `變卦：${YI_CARDS[info.zhi - 1].zh}；動爻：${info.moving.map((i) => YAO_NAMES[i]).join("、")}。`
+    : "六爻安靜，無變卦。"}${missing.length ? `本卦缺${missing.join("、")}，已取本宮純卦伏神列於該爻之下。` : "六親俱全，無須取伏神。"}`);
+  L.push("六爻排盤（由上而下；○老陽動、×老陰動；→ 為動爻所化之爻，六親仍依本宮五行論）：");
+  [5, 4, 3, 2, 1, 0].forEach((i) => {
+    const l = najiaLine(c, i);
+    L.push(`${YAO_NAMES[i]}　${l.shen}　${l.main} ${l.mark}${l.sy ? `　${l.sy}` : ""}${l.bian ? `　→ 化${l.bian}` : ""}${l.fu ? `　（伏神：${l.fu}）` : ""}`);
+  });
+  L.push("斷法指引（六爻納甲）：依所問之事取用神——父母（文書、房屋、長輩、消息）、官鬼（功名、工作、官司、丈夫、疾病）、妻財（錢財、物品、妻子、女友）、子孫（子女、平安、醫藥、解憂）、兄弟（同輩、競爭、破財）；世爻為我、應爻為對方。以月建、日辰定用神旺衰；動爻能生剋他爻，變爻回頭生剋本爻（回頭生為助、回頭剋為傷），化進化退、化空化破須細看；用神旬空、月破者，待出空、填實之時應事；用神不上卦則取伏神，論飛伏生剋。六神只作象意輔參，不定吉凶。此法以五行生剋為主，卦爻辭可略參，不作主斷。");
+  return L;
+}
+
 /* 易經的【請提供】：筮法依朱子動爻斷法定主從、梅花依體用、其餘象徵抽籤只論卦辭大象（不套牌陣的位置／組合模板） */
 function yiRequests() {
   const advice = `給問卜者的具體建議（${currentTone()}）`;
+  if (spread.najia && castInfo && castInfo.at) return [
+    "依我所問之事定用神（說明取此六親的理由），並指出原神、忌神、仇神所在",
+    "用神旺衰：月建、日辰的生扶剋制，以及旬空、月破、入墓與否",
+    "世應關係與動變：世應生剋，動爻、變爻對用神與世爻的作用（回頭生剋、化進化退）",
+    "若用神不上卦，論伏神與飛神的生剋；六神可作人事象意輔參",
+    "斷語：成敗吉凶與應期（依用神旺衰、空破、動靜推算）",
+    advice,
+  ];
   if (spread.cast && castInfo) {
     const m = castInfo.moving.length;
     const bz = `本卦「${yiShort(castInfo.ben)}」`, zz = castInfo.zhi ? `之卦「${yiShort(castInfo.zhi)}」` : "";
@@ -3425,7 +3580,7 @@ function replayReading(rec) {
     target = still ? 1 : 2;
     if (still) {
       const zhiLabel = elSlots.querySelector('.slot[data-idx="1"] .pos-label');
-      if (zhiLabel) zhiLabel.textContent = "之卦・無（六爻皆靜）";
+      if (zhiLabel) zhiLabel.textContent = spread.najia ? "變卦・無（六爻安靜）" : "之卦・無（六爻皆靜）";
     }
   }
   elCaption.hidden = false;
@@ -3611,6 +3766,7 @@ const elGuideList = $("#guide-list");
 function guideTip(s) {
   const rev = deckDef.reversible ? "此牌組有正逆位：逆位讀作該義受阻、遲滯或走向反面，不必一律當凶。" : "";
   if (s.gt) return `<b>先讀指示牌落點</b>，看它四周八張牌（右側是尚未走到的未來、左側是已經走過的過去），再依「轉宮環鏈」追你在意的主題牌：某牌落在某家，就跳去讀那一家的牌，串成一條故事線。左右對稱的欄互為鏡影，自指示牌走馬步（隔一格的 L 型）所落之牌是暗中牽動的因素。${s.id === "gt9" ? "九四式平鋪無命運四牌，第 5 欄為鏡軸。" : "底部四張各有其宮，另兼命運四牌，連讀作全局結語。"}${rev}`;
+  if (s.najia) return `<b>先依所問取用神</b>：文書長輩看父母、工作官司看官鬼、錢財看妻財、子女平安看子孫、同輩競爭看兄弟。世爻是你、應爻是對方。用神得月建、日辰生扶為旺，受剋為衰；旬空、月破待填實出空才應。動爻生剋他爻，所化之爻回頭生剋本爻。用神不上卦，看伏神。`;
   if (s.cast) return `<b>先看有無動爻</b>。六爻皆靜以本卦卦辭為斷；有動爻依朱子斷法定主從：一爻動讀該爻爻辭，二爻動以上爻為主，三爻動本卦為貞、之卦為悔兼論，四五爻動改讀之卦不變之爻，六爻皆動讀之卦卦辭（乾坤用九用六）。`;
   if (s.id === "yi-tiyong") return `<b>兩張牌只是取數</b>：第一張卦序為上卦數、第二張為下卦數，加時辰取動爻。動爻所在之卦為用、另一卦為體，看用對體的五行：用生體吉、體生用耗、用剋體凶、體剋用成而遲、比和順。互卦看過程，變卦定結局。`;
   if (deckDef.id === "yi") return `<b>牌卦沒有動爻</b>，以卦辭、大象為斷，不擬爻辭、不論之卦。各位置是象徵抽籤的框架，把每一卦的象放進該位置的問題裡讀。${rev}`;
