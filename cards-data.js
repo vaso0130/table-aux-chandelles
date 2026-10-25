@@ -2347,14 +2347,14 @@ if (typeof XQ !== "undefined") {
     cards: XQ.CARDS, reversible:false, preload:true, back:"cards-xq/back.jpg",
     spreads: [
       { id:"xq-gate", name:"五顆開門卦", count:5, cols:3,
-        desc:"中間主位看本體，四角依右上、左上、左下、右下讀起承轉收——台灣民間最常見的象棋卦。",
+        desc:"中間主位看本體，四角依右上、左上、左下、右下讀起承轉收——常見的象棋卦入門卦法。",
         positions: XQ.POS, hints: XQ.HINTS, place: XQ.PLACE, combos: xqCombos },
       { id:"xq-one", name:"一子問事", count:1, cols:1,
         desc:"默想一件事，翻一顆棋：紅為明、為可，黑為暗、為緩，再看兵種定細節。",
         positions:["此事"], combos: () => [] },
       { id:"xq-three", name:"三子・天地人", count:3, cols:3,
-        desc:"天看時勢、人看自己、地看根基——三顆棋一次看三層。",
-        positions:["天・時勢","人・自身","地・根基"], combos: xqCombos },
+        desc:"三才法：天為己方、地為對方與環境、人為關鍵與過程——三顆棋看你、對面與兩者之間。",
+        positions:["天・己方","地・對方與環境","人・關鍵與過程"], combos: xqCombos },
     ] });
 }
 /* ── 六牌陣・全景：各牌組通用盤面（易經以擲卦為本體、象棋以開門卦為本體，不加） ── */

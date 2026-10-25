@@ -153,7 +153,7 @@
 <script src="divine-core.js?v=2026102505"></script>
 <script src="divine-ui.js?v=2026102507"></script>
 <script src="divine-lore.js?v=2026102502"></script>
-<script src="xq-data.js?v=2026101202"></script>
+<script src="xq-data.js?v=2026102501"></script>
 <script src="shilun-data.js?v=2026102503"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -243,7 +243,7 @@ function syncForm() {
   sch.forEach(id => DC.schoolSelect($("sc-" + id), $("scn-" + id), SCHOOL_OF[id]));
 }
 const SCHOOL_OF = { "b-bazi": "bazi", "b-ziwei": "ziwei", "a-natal": "west", "a-transit": "west", "a-horary": "horary",
-  "a-vedic": "vedic", "a-prashna": "prashna", "n-meihua": "meihua", "n-meihua-zi": "meihua" };   /* MIX 術數 → DC.SCHOOLS 的鍵（同鍵共用選擇） */
+  "a-vedic": "vedic", "a-prashna": "prashna", "n-meihua": "meihua", "n-meihua-zi": "meihua", "c-xq": "xq" };   /* MIX 術數 → DC.SCHOOLS 的鍵（同鍵共用選擇） */
 const schoolLines = (id) => DC.schoolPrompt(SCHOOL_OF[id]) ? ["  解讀流派:" + DC.schoolPrompt(SCHOOL_OF[id])] : [];
 renderPool();
 DC.fillCitySelect($("b-city"), $("b-lat"), $("b-lon"), $("b-tz"));
@@ -566,7 +566,7 @@ GEN["c-xq"] = () => {
   const ps = a.slice(0, 5);
   return { title: "象棋占卜・五顆開門卦",
     html: "<p>" + ps.map((p, i) => '<span class="badge' + (p.red ? "" : " dim") + '">' + XQ.POS[i].split("・")[0] + ":" + p.name + "</span>").join(" ") + "</p>",
-    lines: ["象棋占卜（台灣民間象棋卦，32 子蓋棋 crypto 洗勻翻五顆；中為主位，四角依右上起、左上承、左下轉、右下收；紅為陽為明、黑為陰為暗）：",
+    lines: ["象棋占卜（台灣民間象棋卦，32 子蓋棋洗勻翻五顆；中為主位，四角依右上起、左上承、左下轉、右下收；紅為陽為明為吉、黑為陰為暗為凶，帥將與兵卒不以紅黑論吉凶）：",
       ...ps.map((p, i) => "  " + XQ.POS[i] + ":" + p.name + "(" + p.keys + "," + XQ.POL_ZH[p.pol] + ")——" + p.text),
       "  棋局:" + XQ.analyze(ps).join(";")] };
 };
