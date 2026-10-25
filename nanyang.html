@@ -37,6 +37,9 @@
   <p class="section-label divine-only">選擇術數</p>
   <div class="sys-row" id="sys"></div>
 
+  <p class="section-label divine-only" id="modes-label" hidden>選擇題目</p>
+  <div class="modes" id="modes" hidden></div>
+
   <section class="panel" id="panel">
     <h2 id="p-title"></h2>
     <span class="hint" id="p-hint"></span>
@@ -46,6 +49,10 @@
         <div class="field"><label>出生日期</label><input id="b-date" type="date"></div>
         <div class="field" id="f-time"><label>出生時間</label><input id="b-time" type="time" value="12:00">
           <div class="note">緬曆週三分晝（水曜）夜（羅睺）;泰曆週三 18:00 後屬夜佛</div></div>
+        <div class="field" id="f-partner" hidden><label>對方出生日期</label><input id="p-date" type="date">
+          <div class="note">威頓合婚只看兩人出生那天的星期與市集日</div></div>
+        <div class="field" id="f-ptime" hidden><label>對方出生時間（選填）</label><input id="p-time" type="time" value="12:00">
+          <div class="note">只在選「民俗夜日」且對方凌晨出生時才有影響</div></div>
         <div class="field" id="f-target"><label>指定日期（吉凶擇日，選填）</label><input id="t-date" type="date">
           <div class="note">想算下個月某日的吉凶，填那一天；留空即以今日論值曜/宿運</div></div>
         <div class="field"><label>一日的分界</label>
@@ -90,7 +97,7 @@
 <script src="divine-core.js?v=2026102505"></script>
 <script src="divine-ui.js?v=2026102505"></script>
 <script src="divine-lore.js?v=2026091402"></script>
-<script src="nanyang-learn.js?v=2026102501"></script>
+<script src="nanyang-learn.js?v=2026102502"></script>
 <script>
 const $ = id => document.getElementById(id);
 
@@ -98,11 +105,13 @@ const SYS = [
   { id: "maha", name: "緬甸八曜", sub: "Mahabote・မဟာဘုတ်", birth: true,
     hint: "一週八天、八獸八方：依出生曜日列出象徵、方位與 Mahabote 起盤參數。" },
   { id: "weton", name: "爪哇威頓", sub: "Weton・Primbon", birth: true,
-    hint: "七日星期與五日市集週疊成三十五天一輪——你的威頓、靈數(neptu)與下一個本命日。" },
+    hint: "七日星期與五日市集週疊成三十五天一輪——你的威頓、靈數(neptu)與下一個本命日。",
+    modes: [["self", "本命威頓", "七日星期與五日市集週疊成三十五天一輪——你的威頓、靈數(neptu)與下一個本命日。"],
+      ["jodoh", "威頓合婚", "兩人的 neptu 相加、除以 8，依 Primbon 八類法看這段姻緣的樣子。"]] },
   { id: "thai", name: "泰國七曜佛日", sub: "วันเกิด・Wan Kerd", birth: true,
     hint: "依出生星期列出泰國民俗中的本命佛姿、顏色與生肖。" }
 ];
-let sysId = "maha";
+let sysId = "maha", modeId = null;
 let book = null;
 const BL = DC.bookLink;
 
@@ -112,15 +121,25 @@ function renderSys() {
     const b = document.createElement("button");
     b.className = "sys-btn" + (s.id === sysId ? " active" : "");
     b.innerHTML = '<span class="d-name">' + s.name + '</span><span class="d-sub">' + s.sub + '</span>';
-    b.onclick = () => { sysId = s.id; updateForm(); renderSys(); if (book) book.show(sysId); };
+    b.onclick = () => { sysId = s.id; modeId = s.modes ? s.modes[0][0] : null; updateForm(); renderSys(); if (book) book.show(sysId); };
     $("sys").appendChild(b);
   });
 }
+function renderModes() {
+  const s = SYS.find(x => x.id === sysId);
+  DC.renderModes(s.modes, modeId, (id) => { modeId = id; renderModes(); updateForm(); });
+}
 function updateForm() {
   const s = SYS.find(x => x.id === sysId);
+  if (s.modes && !s.modes.some(m => m[0] === modeId)) modeId = s.modes[0][0];
+  const md = s.modes ? s.modes.find(m => m[0] === modeId) : null, jodoh = modeId === "jodoh" && sysId === "weton";
+  $("modes-label").hidden = $("modes").hidden = !s.modes;
+  renderModes();
   $("form-birth").hidden = !s.birth;
-  $("p-title").textContent = s.name;
-  $("p-hint").textContent = s.hint;
+  $("f-partner").hidden = $("f-ptime").hidden = !jodoh;
+  $("f-target").hidden = jodoh;
+  $("p-title").textContent = s.name + (md ? "・" + md[1] : "");
+  $("p-hint").textContent = md ? md[2] : s.hint;
   $("out").innerHTML = ""; $("prompt-sec").hidden = true;
 }
 renderSys(); updateForm();
@@ -128,7 +147,7 @@ DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prom
 DC.histBind("南洋館");
 
 const PK = "dc-ny-profile";
-const prof = DC.profileBind(PK, ["b-date","b-time","day-boundary"]);
+const prof = DC.profileBind(PK, ["b-date","b-time","day-boundary"]);   /* 對方生日不存檔：每次合婚的對象可能不同 */
 
 function readBirth() {
   const dv = $("b-date").value; if (!dv) throw DC.fail("請填出生日期");
@@ -208,6 +227,32 @@ function runWeton(out, pr) {
   pr.push("請以爪哇 Primbon 傳統解讀:1. 此威頓的性格母題與人生節奏(neptu " + w.neptu + " 屬高/中/低，各有講法)。2. 適合的職業與財路（以 neptu 與市集日論）。3. 威頓日的齋戒與許願怎麼做最合傳統。4. " + (T.picked ? "指定日 " + T.str + "(" + tw.name + ",neptu " + tw.neptu + ")與我的威頓相合與否——該日行事吉凶。5. " : "") + "哪些日子（星期×市集日組合）是我的吉日與忌日。" + (T.picked ? "6" : "5") + ". 若貴派 Pancasuda 取法不同請註明並以通行法為準。");
 }
 
+/* ── 爪哇威頓合婚（Primbon 八類法：兩人 neptu 和 ÷ 8）── */
+function runJodoh(out, pr) {
+  const A = readBirth();
+  const pv = $("p-date").value; if (!pv) throw DC.fail("請填對方出生日期");
+  const ptv = $("p-time").value || "12:00";
+  const [py, pm, pd] = pv.split("-").map(Number), [ph, pmi] = ptv.split(":").map(Number);
+  const P = { y: py, m: pm, d: pd, h: ph, mi: pmi, str: pv + " " + ptv };
+  const FA = folkDate(A), FP = folkDate(P);
+  const wa = DC.weton(FA.y, FA.m, FA.d), wp = DC.weton(FP.y, FP.m, FP.d);
+  const J = DC.jodoh(wa.neptu, wp.neptu), [jName, jNote] = J.result;
+  const side = (who, w) => '<span><b>' + who + "</b>" + BL("weton", DC.DAY_ID[w.wd]) + " × " + BL("weton", DC.PASARAN[w.pas][0]) +
+    "・" + BL("weton", "Neptu", "neptu") + " " + DC.NEPTU_DAY[w.wd] + "+" + DC.NEPTU_PAS[w.pas] + "=<b>" + w.neptu + "</b></span>";
+  out.push(DC.card("威頓合婚", "Jodoh・" + wa.name + " × " + wp.name,
+    '<div class="kv">' + side("你", wa) + side("對方", wp) + "</div>" +
+    '<p class="lead" style="font-size:20px">' + BL("weton", jName) + "</p><p>" + jNote + "。</p>" +
+    "<p>" + BL("weton", "合婚算法", "算法") + ":neptu " + wa.neptu + " + " + wp.neptu + " = " + J.total + "，除以 8 " + (J.remainder === 8 ? "整除" : "餘 " + J.remainder) +
+    "，落第 " + J.remainder + " 類。本館採八類法；各地另有其他合婚算法，結果不可混算。</p>" +
+    "<p style='color:var(--muted)'>合婚是爪哇長輩議婚時的參考：凶配不是判決，知其數而後補其缺——Primbon 也備有化解的儀式與擇日。</p>"));
+  pr.push("爪哇威頓合婚 Weton Jodoh(Primbon 八類法;日界採" + boundaryLabel() + "):");
+  pr.push("  我:生於 " + A.str + ",威頓 " + wa.name + ",neptu " + DC.NEPTU_DAY[wa.wd] + "+" + DC.NEPTU_PAS[wa.pas] + "=" + wa.neptu);
+  pr.push("  對方:生於 " + P.str + ",威頓 " + wp.name + ",neptu " + DC.NEPTU_DAY[wp.wd] + "+" + DC.NEPTU_PAS[wp.pas] + "=" + wp.neptu);
+  pr.push("  neptu 和 " + J.total + ",除以 8 " + (J.remainder === 8 ? "整除（第 8 類）" : "餘 " + J.remainder) + " → " + jName + "——" + jNote);
+  pr.push("  ※ 本盤只採八類法；其他地區的合婚算法請勿混算。", "");
+  pr.push("請以爪哇 Primbon 傳統解讀:1. 「" + jName + "」這一類婚配的意涵與相處模式。2. 兩人各自威頓（日象、市集日性情）的互補與摩擦。3. 若屬需經營的組合，傳統上怎麼化解（擇日、selamatan 等）與現代的實際建議。4. 若我有提問，直接回答。");
+}
+
 /* ── 泰國七曜佛日 ── */
 function runThai(out, pr) {
   const B = readBirth();
@@ -240,12 +285,14 @@ $("btn-go").onclick = () => {
   const head = ["請依所列東南亞民俗體系分析以下資料，並把文化傳統與可驗證事實分開說明。" + DC.toneHead(), ""];
   if (q) head.push("我的問題:" + q, "");
   try {
-    ({ maha: runMaha, weton: runWeton, thai: runThai })[sysId](out, pr);
+    if (sysId === "weton" && modeId === "jodoh") runJodoh(out, pr);
+    else ({ maha: runMaha, weton: runWeton, thai: runThai })[sysId](out, pr);
   } catch (e) { if (!$("go-hint").textContent) $("go-hint").textContent = "起算失敗:" + e.message; return; }
   $("out").innerHTML = out.join("");
   $("prompt-box").value = head.concat(pr).join("\n");
   $("prompt-sec").hidden = false;
-  DC.histSave("南洋館", SYS.find(x => x.id === sysId).name, q, $("out").innerHTML, $("prompt-box").value);
+  const sObj = SYS.find(x => x.id === sysId), mObj = sObj.modes && sObj.modes.find(m => m[0] === modeId);
+  DC.histSave("南洋館", sObj.name + (mObj ? "・" + mObj[1] : ""), q, $("out").innerHTML, $("prompt-box").value);
 };
 $("btn-copy").onclick = async () => {
   try { await navigator.clipboard.writeText($("prompt-box").value); }
