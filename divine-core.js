@@ -647,6 +647,57 @@ var DC = {};
     };
   };
 
+  /* ═══ 易經起卦（牌桌館與 MIX 共用）═══ */
+  DC.YAO_NAMES = ["初爻", "二爻", "三爻", "四爻", "五爻", "上爻"];
+  DC.coinLine = function () { // 三錢一擲：字 2、背 3，三枚相加 6–9（老陰 1/8、少陽 3/8、少陰 3/8、老陽 1/8）
+    const coins = [0, 0, 0].map(() => (DC.rand01() < 0.5 ? 2 : 3));
+    return { v: coins[0] + coins[1] + coins[2], coins };
+  };
+  /* 大衍（朱子掛扐法）：初變掛扐五（3/4）或九（1/4），二、三變各四或八（各半）；掛扐少者計一：
+     三少＝老陽九、二少＝少陰八、一少＝少陽七、無少＝老陰六 → 老陰 1/16、少陽 5/16、少陰 7/16、老陽 3/16 */
+  DC.yarrowLine = function () {
+    const lu = [DC.rand01() < 0.75 ? 5 : 9, DC.rand01() < 0.5 ? 4 : 8, DC.rand01() < 0.5 ? 4 : 8];
+    return { v: [6, 7, 8, 9][lu.filter(x => x === 5 || x === 4).length], lu };
+  };
+  /* 朱子變占表（《易學啟蒙・考變占》）：三爻變的二十卦依變爻位置由下而上的字典序排列
+     （乾：否漸旅咸渙未濟困蠱井恆／益噬嗑隨賁既濟豐損節歸妹泰），前十卦即變爻含初爻者，主貞；後十卦主悔 */
+  DC.zhuRank = function (moving) {
+    let r = 0;
+    for (let a = 0; a < 6; a++) for (let b = a + 1; b < 6; b++) for (let c = b + 1; c < 6; c++) {
+      r++;
+      if (a === moving[0] && b === moving[1] && c === moving[2]) return { rank: r, zhen: r <= 10 };
+    }
+    return null;
+  };
+  DC.hexNameOf = bits => DC.HEX_NAME[DC.trigIdx(bits.slice(3, 6))][DC.trigIdx(bits.slice(0, 3))];
+  /* 納甲盤的一爻（顯示與提示詞共用） */
+  DC.najiaLineFmt = function (c, i) {
+    const y = c.yao[i], b = c.bian[i], f = c.fu[i];
+    return {
+      shen: c.shen[i], fu: f ? f.qin + f.gan + f.zhi + f.wx : "",
+      main: y.qin + y.gan + y.zhi + y.wx, mark: c.bits[i] ? (b ? "○" : "⚊") : (b ? "×" : "⚋"),
+      sy: c.shi === i + 1 ? "世" : c.ying === i + 1 ? "應" : "",
+      bian: b ? b.qin + b.gan + b.zhi + b.wx : "",
+    };
+  };
+  /* 納甲盤的提示詞（排盤＋斷法指引）；timeNote 例：「2026-10-25 11:02（裝置當地時間，23:00 換日）」 */
+  DC.najiaPrompt = function (c, timeNote) {
+    const Y = DC.YAO_NAMES, zb = c.bits.map((b, i) => (c.moving.includes(i) ? 1 - b : b));
+    const missing = ["父母", "兄弟", "子孫", "妻財", "官鬼"].filter(q => !c.yao.some(y => y.qin === q));
+    const L = [];
+    L.push("讀法：六爻納甲（京房八宮、《火珠林》法）。起卦時間：" + timeNote + "；月建 " + c.month + "月，日辰 " + c.dayGZ + "日，旬空 " + c.kong + "。");
+    L.push("本卦：" + DC.hexNameOf(c.bits) + "（" + c.gongName + "宮" + c.kind + "卦，屬" + c.gwx + "），世在" + Y[c.shi - 1] + "、應在" + Y[c.ying - 1] + "，卦身" + c.guaShen + "。" +
+      (c.moving.length ? "變卦：" + DC.hexNameOf(zb) + "；動爻：" + c.moving.map(i => Y[i]).join("、") + "。" : "六爻安靜，無變卦。") +
+      (missing.length ? "本卦缺" + missing.join("、") + "，已取本宮純卦伏神列於該爻之下。" : "六親俱全，無須取伏神。"));
+    L.push("六爻排盤（由上而下；○老陽動、×老陰動；→ 為動爻所化之爻，六親仍依本宮五行論）：");
+    [5, 4, 3, 2, 1, 0].forEach(i => {
+      const l = DC.najiaLineFmt(c, i);
+      L.push(Y[i] + "　" + l.shen + "　" + l.main + " " + l.mark + (l.sy ? "　" + l.sy : "") + (l.bian ? "　→ 化" + l.bian : "") + (l.fu ? "　（伏神：" + l.fu + "）" : ""));
+    });
+    L.push("斷法指引（六爻納甲）：依所問之事取用神——父母（文書、房屋、長輩、消息）、官鬼（功名、工作、官司、丈夫、疾病）、妻財（錢財、物品、妻子、女友）、子孫（子女、平安、醫藥、解憂）、兄弟（同輩、競爭、破財）；世爻為我、應爻為對方。以月建、日辰定用神旺衰；動爻能生剋他爻，變爻回頭生剋本爻（回頭生為助、回頭剋為傷），化進化退、化空化破須細看；用神旬空、月破者，待出空、填實之時應事；用神不上卦則取伏神，論飛伏生剋。六神只作象意輔參，不定吉凶。此法以五行生剋為主，卦爻辭可略參，不作主斷。");
+    return L;
+  };
+
   /* ═══ 生命靈數 ═══ */
   const digitsOf = s => String(s).split("").map(Number).filter(n => !isNaN(n));
   DC.numReduce = function (n, keepMaster) {

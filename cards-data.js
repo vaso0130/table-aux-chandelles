@@ -2343,17 +2343,17 @@ if (typeof XQ !== "undefined") {
   const xqCombos = (d) => XQ.analyze(d).map((t) => ({ label: "棋局", text: t }));
   DECKS.push({ id:"xq", hall:"east", name:"象棋占卜", short:"象棋卦 · 32 子",
     title:"象棋占卜",
-    sub:"三十二顆棋子蓋在桌上——翻開哪一顆，命運就走到哪一步。",
+    sub:"三十二張棋牌蓋在桌上——翻開哪一張，命運就走到哪一步。",
     cards: XQ.CARDS, reversible:false, preload:true, back:"cards-xq/back.jpg",
     spreads: [
-      { id:"xq-gate", name:"五顆開門卦", count:5, cols:3,
+      { id:"xq-gate", name:"五張開門卦", count:5, cols:3,
         desc:"中間主位看本體，四角依右上、左上、左下、右下讀起承轉收——常見的象棋卦入門卦法。",
         positions: XQ.POS, hints: XQ.HINTS, place: XQ.PLACE, combos: xqCombos },
       { id:"xq-one", name:"一子問事", count:1, cols:1,
-        desc:"默想一件事，翻一顆棋：紅為明、為可，黑為暗、為緩，再看兵種定細節。",
+        desc:"默想一件事，翻一張：紅為明、為可，黑為暗、為緩，再看兵種定細節。",
         positions:["此事"], combos: () => [] },
       { id:"xq-three", name:"三子・天地人", count:3, cols:3,
-        desc:"三才法：天為己方、地為對方與環境、人為關鍵與過程——三顆棋看你、對面與兩者之間。",
+        desc:"三才法：天為己方、地為對方與環境、人為關鍵與過程——三張牌看你、對面與兩者之間。",
         positions:["天・己方","地・對方與環境","人・關鍵與過程"], combos: xqCombos },
     ] });
 }

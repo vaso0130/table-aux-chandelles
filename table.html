@@ -1089,9 +1089,9 @@
   </form>
 </dialog>
 
-<script src="divine-core.js?v=2026102505"></script>
-<script src="xq-data.js?v=2026102501"></script>
-<script src="cards-data.js?v=2026102504"></script>
+<script src="divine-core.js?v=2026102506"></script>
+<script src="xq-data.js?v=2026102502"></script>
+<script src="cards-data.js?v=2026102505"></script>
 <script>
 "use strict";
 
@@ -1239,8 +1239,6 @@ HALLS.forEach(([hid, hname]) => {
   elDecks.appendChild(wrap);
 });
 
-/* 計數單位：象棋是棋子論「顆」，其餘論「張」 */
-const unit = (id) => ((id || deckDef.id) === "xq" ? "顆" : "張");
 function selectDeck(d) {
   if (deckDef === d) return;
   if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
@@ -1255,7 +1253,6 @@ function selectDeck(d) {
   $(".subtitle").textContent = d.sub;
   buildSpreadMenu();
   syncXqSchool();
-  $("#pile-hint").textContent = "抽 一 " + unit();
   applyDeckBack();
   spread = null;
   elTable.classList.remove("on");
@@ -1295,7 +1292,7 @@ function buildSpreadMenu() {
           <span class="s-idx">${NUMERALS[idx] || idx + 1}</span>
           <span class="s-name">${s.name}</span>${lastMark}
           <span class="s-leader"></span>
-          <span class="s-count">${s.count} ${unit()}</span>
+          <span class="s-count">${s.count} 張</span>
         </div>
         <div class="s-desc">${s.desc}</div>`;
       b.addEventListener("click", () => selectSpread(s, b));
@@ -1518,8 +1515,8 @@ function buildCutPiles() {
   cuts.forEach(([pos, label]) => {
     const b = document.createElement("button");
     b.className = "cut-pile";
-    b.title = `提起 ${pos} ${unit()}——自第 ${pos + 1} ${unit()}切起`;
-    b.setAttribute("aria-label", `${label}:提起 ${pos} ${unit()}，下段翻上成為新的頂`);
+    b.title = `提起 ${pos} 張——自第 ${pos + 1} 張切起`;
+    b.setAttribute("aria-label", `${label}:提起 ${pos} 張，下段翻上成為新牌頂`);
     const layers = Math.max(2, Math.min(10, Math.round(pos / N * 12)));
     for (let i = 0; i < layers; i++) {
       const c = document.createElement("div");
@@ -1529,7 +1526,7 @@ function buildCutPiles() {
     }
     const lab = document.createElement("span");
     lab.className = "pile-label";
-    lab.textContent = `${label}・提 ${pos} ${unit()}`;
+    lab.textContent = `${label}・提 ${pos} 張`;
     b.appendChild(lab);
     b.addEventListener("click", () => doCut(pos, b));
     elCutPiles.appendChild(b);
@@ -1549,8 +1546,8 @@ function buildCutFan() {
       c.title = "現任牌頂";
       c.setAttribute("aria-label", "現任牌頂（不可選）");
     } else {
-      c.title = `自第 ${pos + 1} ${unit()}切開`;
-      c.setAttribute("aria-label", `自第 ${pos + 1} ${unit()}切開，它成為新的頂`);
+      c.title = `自第 ${pos + 1} 張切開`;
+      c.setAttribute("aria-label", `自第 ${pos + 1} 張切開，它成為新牌頂`);
       c.addEventListener("click", () => doCutFan(pos, c));
     }
     elCutFan.appendChild(c);
@@ -1681,7 +1678,7 @@ function performCut(pos) {
   cutCount++;
   exitCutView();
   ritualStatus();
-  elRitualCaption.textContent = `已切${deckDef.id === "xq" ? "棋" : "牌"}——提起 ${pos} ${unit()}，下段翻上成為新的頂。` + (shuffleCount ? "可再切、再洗，或開始抽牌。" : "（記得也要洗牌）");
+  elRitualCaption.textContent = `已切牌——提起 ${pos} 張，下段翻上成為新牌頂。` + (shuffleCount ? "可再切、再洗，或開始抽牌。" : "（記得也要洗牌）");
   ritualBusy = false;
 }
 function doCut(pos, btn) {
@@ -1722,30 +1719,11 @@ function yiDerived(info) {
     zhiHu: info.zhi ? huOf(bits.map((b, i) => (info.moving.includes(i) ? 1 - b : b))) : null,
   };
 }
-/* 朱子變占表（《易學啟蒙・考變占》卦變圖）：三爻變的二十卦依變爻位置由下而上的字典序排列
-   （乾：否漸旅咸渙未濟困蠱井恆／益噬嗑隨賁既濟豐損節歸妹泰），前十卦即變爻含初爻者，主貞；後十卦主悔 */
-function zhuRank(moving) {
-  let r = 0;
-  for (let a = 0; a < 6; a++) for (let b = a + 1; b < 6; b++) for (let c = b + 1; c < 6; c++) {
-    r++;
-    if (a === moving[0] && b === moving[1] && c === moving[2]) return { rank: r, zhen: r <= 10 };
-  }
-  return null;
-}
+/* 朱子變占表：DC.zhuRank（divine-core.js） */
 /* ── 六爻納甲：排盤在 divine-core.js DC.najia，此處只管起卦時刻與顯示格式 ── */
 function najiaChart(info) {
   const at = info.at;
   return DC.najia(info.lines, at.y, at.m, at.d, at.h, at.mi, at.tz ?? -new Date(at.ms).getTimezoneOffset() / 60);
-}
-function najiaLine(c, i) {
-  const y = c.yao[i], b = c.bian[i], f = c.fu[i];
-  const mark = c.bits[i] ? (b ? "○" : "⚊") : (b ? "×" : "⚋");
-  return {
-    shen: c.shen[i], fu: f ? `${f.qin}${f.gan}${f.zhi}${f.wx}` : "",
-    main: `${y.qin}${y.gan}${y.zhi}${y.wx}`, mark,
-    sy: c.shi === i + 1 ? "世" : c.ying === i + 1 ? "應" : "",
-    bian: b ? `${b.qin}${b.gan}${b.zhi}${b.wx}` : "",
-  };
 }
 function najiaHead(c, info) {
   const at = info.at, p2 = (x) => String(x).padStart(2, "0");
@@ -1802,19 +1780,7 @@ function commitThrow(line) {
   renderCastLines();
   if (castLines.length === 6) finishCast();
 }
-/* 三錢：字=2、背=3，三枚相加 6–9（老陰 1/8、少陽 3/8、少陰 3/8、老陽 1/8） */
-function coinLine() {
-  const coins = [0, 0, 0].map(() => (DC.rand01() < 0.5 ? 2 : 3));
-  return { v: coins[0] + coins[1] + coins[2], coins };
-}
-/* 大衍（朱子掛扐法）：初變掛扐五（3/4）或九（1/4），二、三變各四或八（各半）；
-   掛扐少者計一：三少＝老陽九、二少＝少陰八、一少＝少陽七、無少＝老陰六
-   → 老陰 1/16、少陽 5/16、少陰 7/16、老陽 3/16，陽動易、陰動難 */
-function stalkLine() {
-  const lu = [DC.rand01() < 0.75 ? 5 : 9, DC.rand01() < 0.5 ? 4 : 8, DC.rand01() < 0.5 ? 4 : 8];
-  const few = lu.filter((x) => x === 5 || x === 4).length;
-  return { v: [6, 7, 8, 9][few], lu };
-}
+/* 單爻起法：DC.coinLine（三錢）、DC.yarrowLine（大衍・朱子掛扐法），在 divine-core.js */
 const elStalks = $("#stalks"), elStalkNote = $("#stalk-note");
 function buildStalks() {
   if (elStalks.children.length) { [...elStalks.children].forEach((s) => { s.className = "stalk"; }); elStalkNote.textContent = "　"; return; }
@@ -1856,7 +1822,7 @@ function animateStalks(lu) {
 }
 function throwOnce() {
   const yarrow = spread.method === "yarrow";
-  const line = yarrow ? stalkLine() : coinLine();
+  const line = yarrow ? DC.yarrowLine() : DC.coinLine();
   if (location.search.includes("rwdtest")) { commitThrow(line); return; }   /* 測試直通：六連擲不等動畫 */
   castBusy = true;
   btnThrow.disabled = true;
@@ -1896,7 +1862,7 @@ function finishCast() {
     ? `得${njh.gua}${zhi ? `之「${yiShort(zhi)}」` : "，六爻安靜"}。世在${YAO_NAMES[nj.shi - 1]}、應在${YAO_NAMES[nj.ying - 1]}${moving.length ? `；動爻：${moving.map((i) => YAO_NAMES[i]).join("、")}` : ""}。${njh.month}、${njh.day}，旬空${njh.kong}。`
     : zhi
     ? `得「${yiShort(ben)}之${yiShort(zhi)}」。動爻：${moving.map((i) => YAO_NAMES[i]).join("、")}。本卦為貞，之卦為悔。${moving.length === 3
-      ? `三爻變，依朱子變占表居第 ${zhuRank(moving).rank} 卦，${zhuRank(moving).zhen ? "前十卦主貞" : "後十卦主悔"}。` : ""}`
+      ? `三爻變，依朱子變占表居第 ${DC.zhuRank(moving).rank} 卦，${DC.zhuRank(moving).zhen ? "前十卦主貞" : "後十卦主悔"}。` : ""}`
     : `得「${yiShort(ben)}」，六爻皆靜，以本卦卦辭為斷。`;
   if (!zhi) {
     /* 六爻皆靜：之卦格明確標示，不留懸念 */
@@ -2074,7 +2040,7 @@ function buildFan() {
     const c = document.createElement("button");
     c.className = "fan-card";
     c.dataset.deckPos = pos;
-    c.setAttribute("aria-label", `蓋著的${deckDef.id === "xq" ? "棋" : "牌"} 第 ${pos + 1} ${unit()}`);
+    c.setAttribute("aria-label", `蓋著的牌 第 ${pos + 1} 張`);
     c.style.transform = `rotate(${(pos - deck.length / 2) * 0.4}deg)`;
     c.addEventListener("click", () => drawFromFan(c, pos));
     elFan.appendChild(c);
@@ -2196,9 +2162,9 @@ function updateCaption() {
   const left = target - drawn.length;
   if (left > 0) {
     const next = posName(drawn.length);
-    elCaption.innerHTML = `下一張・落【<b>${next}</b>】（第 ${drawn.length + 1}／${target} ${unit()}）`
+    elCaption.innerHTML = `下一張・落【<b>${next}</b>】（第 ${drawn.length + 1}／${target} 張）`
       + (drawMode === "pile" ? " ── 點牌堆抽出" : " ── 憑直覺，選你被召喚的那一張");
-    elPileCount.textContent = `剩 ${left} ${unit()}`;
+    elPileCount.textContent = `剩 ${left} 張`;
     elDrawPile.disabled = false;
   } else {
     elCaption.innerHTML = `牌已抽齊 ── <a href="#reading" id="goto-reading" style="color:var(--gold-bright)">看解讀 ▼</a>`;
@@ -2422,7 +2388,7 @@ function finishReading() {
     /* 六爻排盤：由上而下，與提示詞同源 */
     const c = najiaChart(castInfo), h = najiaHead(c, castInfo);
     const rows = [5, 4, 3, 2, 1, 0].map((i) => {
-      const l = najiaLine(c, i);
+      const l = DC.najiaLineFmt(c, i);
       return `<tr${l.bian ? ' class="moving"' : ""}><td class="nj-yao">${"初二三四五上"[i]}</td><td>${l.shen}</td>
         <td><b>${l.main}</b>${l.fu ? `<small class="nj-fu">伏 ${l.fu}</small>` : ""}</td><td class="nj-mark"><i class="nj-bar${c.bits[i] ? "" : " yin"}"></i>${l.bian ? (c.bits[i] ? "○" : "×") : ""}</td><td class="nj-sy">${l.sy}</td><td>${l.bian ? `→ ${l.bian}` : ""}</td></tr>`;
     }).join("");
@@ -2566,7 +2532,7 @@ function buildAiPrompt() {
   if (spread.gong) L.push("宮位讀法：入廟之星在該宮得力（煞星則煞為我用）；落陷之星示該宮的破口（吉星則助力打折）。");
   if (spread.wx) L.push("四象生剋讀法：同象得位氣旺；位生牌得助；牌生位洩秀；位剋牌受制；牌剋位犯衝；大牌不拘五行、權重最重。");
   L.push("");
-  L.push(`【盤面】${spread.name}（共 ${drawn.length} ${unit()}）`);
+  L.push(`【盤面】${spread.name}（共 ${drawn.length} 張）`);
   if (!spread.gt && spread.desc) L.push(`陣形說明：${spread.desc.split("。")[0]}。`);
   if (spread.hints) {
     L.push("【位置意涵】");
@@ -2646,7 +2612,7 @@ function buildAiPrompt() {
       ? "大衍筮法（朱子掛扐法：五十策去一，分二掛一揲四歸奇，三變成一爻；老陰 1/16、少陽 5/16、少陰 7/16、老陽 3/16，陽爻易動、陰爻難動）"
       : "三枚銅錢六擲（《火珠林》系俗法：老陰、老陽各 1/8，少陽、少陰各 3/8）"}。六爻由下而上：${castInfo.lines.map((v, i) => `${YAO_NAMES[i]} ${v}（${vName(v)}）`).join("、")}。`);
     if (spread.najia && castInfo.at) {
-      L.push(...najiaPromptLines(castInfo));
+      L.push(...DC.najiaPrompt(najiaChart(castInfo), najiaHead(najiaChart(castInfo), castInfo).time + "（裝置當地時間，23:00 換日）"));
     } else {
       L.push(castInfo.moving.length
         ? `此占得「${yiShort(castInfo.ben)}之${yiShort(castInfo.zhi)}」。動爻（變爻）：${castInfo.moving.map((i) => YAO_NAMES[i]).join("、")}。本卦為貞（現況）、之卦為悔（趨向）。${castInfo.moving.length <= 2
@@ -2660,7 +2626,7 @@ function buildAiPrompt() {
         "二爻動：以本卦二動爻之爻辭為斷，而以居上之爻為主。",
         (() => {
           if (castInfo.moving.length !== 3) return "";
-          const z = zhuRank(castInfo.moving);
+          const z = DC.zhuRank(castInfo.moving);
           return `三爻動：占本卦及之卦之彖辭，本卦為貞、之卦為悔。依朱子變占表，三爻變之二十卦中，變爻含初爻者為前十卦主貞、餘為後十卦主悔；此占之卦居第 ${z.rank} 卦，屬${z.zhen
             ? `前十卦，主貞：以本卦「${yiShort(castInfo.ben)}」彖辭為主、之卦「${yiShort(castInfo.zhi)}」彖辭為輔`
             : `後十卦，主悔：以之卦「${yiShort(castInfo.zhi)}」彖辭為主、本卦「${yiShort(castInfo.ben)}」彖辭為輔`}。請兼論兩卦，以貞悔次序敘之。`;
@@ -2728,23 +2694,6 @@ function buildAiPrompt() {
   return L.join("\n");
 }
 
-/* 六爻納甲的排盤與斷法（提示詞用） */
-function najiaPromptLines(info) {
-  const c = najiaChart(info), h = najiaHead(c, info);
-  const missing = ["父母", "兄弟", "子孫", "妻財", "官鬼"].filter((q) => !c.yao.some((y) => y.qin === q));
-  const L = [];
-  L.push(`讀法：六爻納甲（京房八宮、《火珠林》法）。起卦時間：${h.time}（裝置當地時間，23:00 換日）；月建 ${h.month}，日辰 ${h.day}，旬空 ${h.kong}。`);
-  L.push(`本卦：${h.gua}，世在${YAO_NAMES[c.shi - 1]}、應在${YAO_NAMES[c.ying - 1]}，卦身${c.guaShen}。${info.zhi
-    ? `變卦：${YI_CARDS[info.zhi - 1].zh}；動爻：${info.moving.map((i) => YAO_NAMES[i]).join("、")}。`
-    : "六爻安靜，無變卦。"}${missing.length ? `本卦缺${missing.join("、")}，已取本宮純卦伏神列於該爻之下。` : "六親俱全，無須取伏神。"}`);
-  L.push("六爻排盤（由上而下；○老陽動、×老陰動；→ 為動爻所化之爻，六親仍依本宮五行論）：");
-  [5, 4, 3, 2, 1, 0].forEach((i) => {
-    const l = najiaLine(c, i);
-    L.push(`${YAO_NAMES[i]}　${l.shen}　${l.main} ${l.mark}${l.sy ? `　${l.sy}` : ""}${l.bian ? `　→ 化${l.bian}` : ""}${l.fu ? `　（伏神：${l.fu}）` : ""}`);
-  });
-  L.push("斷法指引（六爻納甲）：依所問之事取用神——父母（文書、房屋、長輩、消息）、官鬼（功名、工作、官司、丈夫、疾病）、妻財（錢財、物品、妻子、女友）、子孫（子女、平安、醫藥、解憂）、兄弟（同輩、競爭、破財）；世爻為我、應爻為對方。以月建、日辰定用神旺衰；動爻能生剋他爻，變爻回頭生剋本爻（回頭生為助、回頭剋為傷），化進化退、化空化破須細看；用神旬空、月破者，待出空、填實之時應事；用神不上卦則取伏神，論飛伏生剋。六神只作象意輔參，不定吉凶。此法以五行生剋為主，卦爻辭可略參，不作主斷。");
-  return L;
-}
 
 /* 易經的【請提供】：筮法依朱子動爻斷法定主從、梅花依體用、其餘象徵抽籤只論卦辭大象（不套牌陣的位置／組合模板） */
 function yiRequests() {
@@ -2764,7 +2713,7 @@ function yiRequests() {
       `主斷——六爻皆靜：以${bz}卦辭為斷，參彖傳與大象；內卦為貞（我方、現況），外卦為悔（對方、後勢）`,
       `主斷——一爻動：以${bz}${YAO_NAMES[castInfo.moving[0]]}之爻辭為斷，兼看此爻的時位（當位與否、與應爻比爻的關係）`,
       `主斷——二爻動：兩動爻之爻辭皆解，以居上的${YAO_NAMES[castInfo.moving[1]]}為主`,
-      m === 3 && `主斷——三爻動：兼論${bz}與${zz}的卦辭（彖辭），依朱子變占表此占${zhuRank(castInfo.moving).zhen ? `主貞，以${bz}為主` : `主悔，以${zz}為主`}，以貞悔次序敘之`,
+      m === 3 && `主斷——三爻動：兼論${bz}與${zz}的卦辭（彖辭），依朱子變占表此占${DC.zhuRank(castInfo.moving).zhen ? `主貞，以${bz}為主` : `主悔，以${zz}為主`}，以貞悔次序敘之`,
       `主斷——四爻動：以${zz}中二不變爻之爻辭為斷，以居下之爻為主`,
       `主斷——五爻動：以${zz}中唯一不變爻之爻辭為斷`,
       castInfo.ben === 1 ? "主斷——六爻皆動：以乾卦「用九：見群龍无首，吉」為斷"
@@ -3147,7 +3096,7 @@ function renderHistory() {
         if (!c) return "？";
         return c.zh + (rec.revs && rec.revs[i] ? "⟲" : "");
       }).join("・")
-      + (rec.cards.length > 10 ? `・⋯（共 ${rec.cards.length} ${unit(rec.deck)}）` : "");
+      + (rec.cards.length > 10 ? `・⋯（共 ${rec.cards.length} 張）` : "");
     const item = document.createElement("div");
     item.className = "hist-item";
     item.innerHTML = `
@@ -3259,7 +3208,7 @@ function dictPosLines(c) {
   const K = c.keys.split("・");
   const last = deckDef.id === "yi" ? (K[1] || K[0]) : K[K.length - 1]; /* 易經末詞常為卦辭截語，改取次詞 */
   const isLen = deckDef.id === "len";
-  const unit = { yi: "這一卦", run: "這枚符文", zw: "這顆星", xq: "這顆棋" }[deckDef.id] || "這張牌";
+  const unit = { yi: "這一卦", run: "這枚符文", zw: "這顆星", xq: "這張牌" }[deckDef.id] || "這張牌";
   const isPerson = /當事人|指示牌/.test(c.keys) || (deckDef.id === "sib" && SIB_PERSONS[c.n]);
   const rows = [
     ["過去・根源", isLen
@@ -3354,7 +3303,7 @@ function showDictCard(i) {
     const temple = { king: c.red ? "帥讀作神明或神助（如觀音）" : "將讀作神明或神助", guard: "仕士讀作無形的力量或護持", chariot: c.red ? "" : "黑車讀作業障或無形干擾" }[c.kind];
     extra = `
       <div class="dict-sec"><div class="cb-title">象 棋 卦 讀 法</div>
-        <p class="combo">32 子中，${c.zh}共 ${n} 顆。${c.kind === "king" || c.kind === "soldier"
+        <p class="combo">32 張中，${c.zh}共 ${n} 張。${c.kind === "king" || c.kind === "soldier"
           ? "帥將與兵卒<b>不以紅黑論吉凶</b>：帥將看主事的核心在明處還是幕後，兵卒看小事與眾人的多寡。"
           : `仕相車馬炮依<b>紅吉黑凶</b>論：紅${c.ch}偏吉、黑${c.ch}偏凶，再看位置。`}</p>
         <p class="combo">紅為陽、為明，黑為陰、為暗。也可依字音字形取象（如「士」通「仕」，主官位）。</p>
@@ -3384,7 +3333,7 @@ function showDictCard(i) {
     ${revBlock}
     ${extra}
     <div class="dict-sec"><div class="cb-title">位 置 解 讀</div>
-      <p class="ai-note" style="margin:0 0 4px">${deckDef.id === "xq" ? "同一顆棋落在不同位置，說的是不同層面的話。依本館盤面的位置各示範一種讀法。" : "同一張牌落在不同位置，說的是不同層面的話。八種常見位置，各示範一種讀法。"}</p>
+      <p class="ai-note" style="margin:0 0 4px">${deckDef.id === "xq" ? "同一張牌落在不同位置，說的是不同層面的話。依本館盤面的位置各示範一種讀法。" : "同一張牌落在不同位置，說的是不同層面的話。八種常見位置，各示範一種讀法。"}</p>
       ${posRows}
     </div>`;
   const img = elDictDetail.querySelector(".dd-img");
@@ -3411,7 +3360,7 @@ function guideTip(s) {
   if (deckDef.id === "yi") return `<b>牌卦沒有動爻</b>，以卦辭、大象為斷，不擬爻辭、不論之卦。各位置是象徵抽籤的框架，把每一卦的象放進該位置的問題裡讀。${rev}`;
   if (s.id === "houses") return `<b>每宮一張</b>，以牌義對應該宮的人生領域；先看命宮（自我）、財帛、夫妻、官祿四宮，再看其餘。同一張牌落不同宮，說的是不同層面。${rev}`;
   if (s.sig) return `<b>指示牌代表這一問的主體</b>，置於中央。先讀 它相鄰的牌：左為來路、右為去向、上為所思（懸於心頭）、下為所踏（已在掌握）；再看左右鏡影與對角。不指定而全洗入抽，指示牌自然落陣的位置本身就是訊息。${rev}`;
-  if (s.id === "xq-gate") return `<b>先看主位那顆</b>：顏色定明暗，兵種定主角；再看紅黑多寡、有沒有王見王（帥將同現）或成組。最後依右上起、左上承、左下轉、右下收，把四角讀成一段過程（「收位定結局」為本站讀法）。仕相車馬炮紅吉黑凶，帥將與兵卒不以紅黑論吉凶。`;
+  if (s.id === "xq-gate") return `<b>先看主位那張</b>：顏色定明暗，兵種定主角；再看紅黑多寡、有沒有王見王（帥將同現）或成組。最後依右上起、左上承、左下轉、右下收，把四角讀成一段過程（「收位定結局」為本站讀法）。仕相車馬炮紅吉黑凶，帥將與兵卒不以紅黑論吉凶。`;
   if (deckDef.id === "xq") return `<b>先看紅黑</b>：紅為明、為吉，黑為暗、為凶——但帥將與兵卒不以紅黑論吉凶。再看兵種：將帥主事、仕士近身、相象守家、車是主力、馬主奔波、炮包借力或口舌、兵卒是小事與眾人。${s.id === "xq-three" ? "三才法：天是己方、地是對方與環境、人是關鍵與過程。" : ""}`;
   if (s.count === 1) return `<b>一張牌一句話</b>。先讀關鍵詞，再把牌義放進你的問題裡。今日指引不必求全，記一句就夠。${rev}`;
   if (s.count <= 3) return `<b>先各讀一張</b>，再把相鄰兩張連成一句：前牌為主詞，後牌為修飾。三張讀出一條線，中央那張是重心。${rev}`;
@@ -3428,7 +3377,7 @@ function renderGuide() {
     const pos = s.positions
       ? `<ol>${s.positions.map((p) => `<li>${p}</li>`).join("")}</ol>`
       : s.gt ? (s.id === "gt9" ? "<p>三十六席依 9 × 4 平鋪，各席即雷諾曼宮位；無命運四牌。</p>" : "<p>三十六席依 8 × 4 排列，各席即雷諾曼宮位；底部另有命運四牌。</p>") : "";
-    d.innerHTML = `<summary><span class="g-name">${s.name}</span><span class="g-count">${s.count} ${unit()}</span><span class="g-mark" aria-hidden="true"></span></summary>
+    d.innerHTML = `<summary><span class="g-name">${s.name}</span><span class="g-count">${s.count} 張</span><span class="g-mark" aria-hidden="true"></span></summary>
       <div class="guide-body"><p>${s.desc}</p>${pos}<p class="g-tip">${guideTip(s)}</p></div>`;
     elGuideList.appendChild(d);
   });

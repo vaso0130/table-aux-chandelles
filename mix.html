@@ -150,10 +150,10 @@
   </p>
 </div>
 
-<script src="divine-core.js?v=2026102505"></script>
+<script src="divine-core.js?v=2026102506"></script>
 <script src="divine-ui.js?v=2026102507"></script>
 <script src="divine-lore.js?v=2026102502"></script>
-<script src="xq-data.js?v=2026102501"></script>
+<script src="xq-data.js?v=2026102502"></script>
 <script src="shilun-data.js?v=2026102503"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -184,7 +184,7 @@ const POOL = [
   { g: "牌卡快抽（六張）", items: [
     ["c-len", "雷諾曼", ""], ["c-sib", "西碧拉", ""], ["c-bel", "貝林神諭", ""], ["c-kip", "奇卜", ""],
     ["c-gra", "大雷諾曼", ""], ["c-run", "盧恩符文", ""], ["c-zw", "紫微星曜", ""], ["c-dt", "東方塔羅", ""],
-    ["c-esp", "西班牙牌", ""], ["c-yi", "易經（擲卦）", ""], ["c-xq", "象棋占卜（開門卦）", ""]
+    ["c-esp", "西班牙牌", ""], ["c-yi", "易經（大衍筮法）", ""], ["c-najia", "六爻納甲（三錢）", ""], ["c-xq", "象棋占卜（開門卦）", ""]
   ]},
   { g: "鐘樓（原創）", items: [
     ["c-shilun", "時輪占（親手洗牌）", ""]
@@ -559,14 +559,14 @@ function drawCards(deckId, deckName) {
 for (const [id, dk, nm] of [["c-len", "len", "雷諾曼"], ["c-sib", "sib", "西碧拉"], ["c-bel", "bel", "貝林神諭"], ["c-kip", "kip", "奇卜"],
   ["c-gra", "gra", "大雷諾曼"], ["c-run", "run", "盧恩符文"], ["c-zw", "zw", "紫微星曜"], ["c-dt", "dt", "東方塔羅"], ["c-esp", "esp", "西班牙牌"]])
   GEN[id] = () => drawCards(dk, nm);
-/* 象棋占卜：32 子蓋棋洗勻翻五顆開門卦（同牌桌館讀法，xq-data.js） */
+/* 象棋占卜：32 張棋牌洗勻翻五張開門卦（同牌桌館讀法，xq-data.js） */
 GEN["c-xq"] = () => {
   const a = XQ.CARDS.slice();
   for (let k = a.length - 1; k > 0; k--) { const j = DC.rand(k + 1); [a[k], a[j]] = [a[j], a[k]]; }
   const ps = a.slice(0, 5);
-  return { title: "象棋占卜・五顆開門卦",
+  return { title: "象棋占卜・五張開門卦",
     html: "<p>" + ps.map((p, i) => '<span class="badge' + (p.red ? "" : " dim") + '">' + XQ.POS[i].split("・")[0] + ":" + p.name + "</span>").join(" ") + "</p>",
-    lines: ["象棋占卜（台灣民間象棋卦，32 子蓋棋洗勻翻五顆；中為主位，四角依右上起、左上承、左下轉、右下收；紅為陽為明為吉、黑為陰為暗為凶，帥將與兵卒不以紅黑論吉凶）：",
+    lines: ["象棋占卜（台灣民間象棋卦，32 張棋牌蓋著洗勻翻五張；中為主位，四角依右上起、左上承、左下轉、右下收；紅為陽為明為吉、黑為陰為暗為凶，帥將與兵卒不以紅黑論吉凶）：",
       ...ps.map((p, i) => "  " + XQ.POS[i] + ":" + p.name + "(" + p.keys + "," + XQ.POL_ZH[p.pol] + ")——" + p.text),
       "  棋局:" + XQ.analyze(ps).join(";")] };
 };
@@ -650,26 +650,36 @@ GEN["c-kieu"] = () => {
     lines: ["越南翹傳開卷(Bói Kiều,選句第" + (i + 1) + ",crypto 開卷):" + viet.replace(/\n/g, " / "),
       "  中譯:" + hant + ";題:" + title + "(" + (pol === "good" ? "吉" : pol === "bad" ? "慎" : "平") + ");初解:" + gloss] };
 };
+/* 易經：大衍筮法（朱子掛扐法起卦、朱子斷法）與六爻納甲（三錢起卦、以起局時刻排月建日辰）——起法與排盤皆在 divine-core */
+const castSix = (fn) => { const ls = [0, 1, 2, 3, 4, 5].map(() => fn().v); return { ls, bits: ls.map(v => (v === 7 || v === 9 ? 1 : 0)), moving: ls.map((v, i) => (v === 6 || v === 9 ? i : -1)).filter(i => i >= 0) }; };
+const vName = (v) => ({ 6: "老陰・動", 7: "少陽", 8: "少陰", 9: "老陽・動" })[v];
 GEN["c-yi"] = () => {
-  const lines = [], mov = [];
-  for (let i = 0; i < 6; i++) {
-    const v = 6 + DC.rand(2) + DC.rand(2) + DC.rand(2); // 三枚錢各 2/3,總和 6-9:6 老陰動、7 少陽、8 少陰、9 老陽動
-    lines.push(v % 2); if (v === 6 || v === 9) mov.push(i + 1);
-  }
-  const trig = ls => DC.TRIG_LINES.findIndex(t => t[0] === ls[0] && t[1] === ls[1] && t[2] === ls[2]);
-  const l1 = trig(lines.slice(0, 3)), u1 = trig(lines.slice(3, 6));
-  const lines2 = lines.map((x, i) => mov.includes(i + 1) ? 1 - x : x);
-  const l2 = trig(lines2.slice(0, 3)), u2 = trig(lines2.slice(3, 6));
-  const name1 = DC.HEX_NAME[u1][l1], name2 = DC.HEX_NAME[u2][l2];
+  const { ls, bits, moving } = castSix(DC.yarrowLine), Y = DC.YAO_NAMES;
+  const zb = bits.map((b, i) => (moving.includes(i) ? 1 - b : b));
+  const name1 = DC.hexNameOf(bits), name2 = DC.hexNameOf(zb);
   const mini = (DC.DECKS_MINI && DC.DECKS_MINI.yi) ? DC.DECKS_MINI.yi.cards : null;
   const kw = nm => { const c = mini && mini.find(x => x[0] === nm); return c ? nm + "（" + c[1] + "，" + (c[2] === "+" ? "吉" : c[2] === "-" ? "慎" : "平") + "）" : nm; };
+  const z = moving.length === 3 ? DC.zhuRank(moving) : null;
   const ZHU = ["六爻皆靜，以本卦卦辭為斷（內卦為貞、外卦為悔）", "一爻動，專以本卦動爻之爻辭為斷", "二爻動，以本卦二動爻之爻辭為斷，居上之爻為主",
-    "三爻動，本卦為貞、之卦為悔，依朱子變占表前十主貞、後十主悔", "四爻動，以之卦中二不變爻之爻辭為斷，居下之爻為主", "五爻動，以之卦中唯一不變爻之爻辭為斷", "六爻皆動，乾坤以用九用六為斷，餘卦以之卦卦辭為斷"];
-  const hu = DC.HEX_NAME[trig([lines[2], lines[3], lines[4]])][trig([lines[1], lines[2], lines[3]])];
-  return { title: "易經・擲卦",
-    html: "<p>本卦" + name1 + (mov.length ? "・動爻" + mov.join(",") + "・之卦" + name2 : "・六爻安靜") + "</p>",
-    lines: ["易經三枚錢擲卦：本卦 " + kw(name1) + (mov.length ? ",動爻第" + mov.join("、") + "爻，之卦 " + kw(name2) : ",六爻安靜") + "；互卦 " + hu,
-      "  斷法（朱子）：" + ZHU[mov.length] + "。" + (DC.DECK_GUIDES && DC.DECK_GUIDES.yi ? DC.DECK_GUIDES.yi : "")] };
+    z ? "三爻動，本卦為貞、之卦為悔；依朱子變占表此占居第 " + z.rank + " 卦，" + (z.zhen ? "屬前十卦，主貞：以本卦彖辭為主" : "屬後十卦，主悔：以之卦彖辭為主") : "",
+    "四爻動，以之卦中二不變爻之爻辭為斷，居下之爻為主", "五爻動，以之卦中唯一不變爻之爻辭為斷",
+    name1 === "乾為天" ? "六爻皆動，以乾卦用九之辭為斷" : name1 === "坤為地" ? "六爻皆動，以坤卦用六之辭為斷" : "六爻皆動，以之卦卦辭為斷"];
+  const hu = DC.hexNameOf([bits[1], bits[2], bits[3], bits[2], bits[3], bits[4]]);
+  return { title: "易經・大衍筮法",
+    html: "<p>本卦" + name1 + (moving.length ? "・動爻" + moving.map(i => Y[i]).join("、") + "・之卦" + name2 : "・六爻皆靜") + "</p>",
+    lines: ["易經大衍筮法（朱子掛扐法：五十策去一，分二掛一揲四歸奇，三變成一爻；老陰 1/16、少陽 5/16、少陰 7/16、老陽 3/16）",
+      "  六爻由下而上：" + ls.map((v, i) => Y[i] + " " + v + "（" + vName(v) + "）").join("、"),
+      "  本卦 " + kw(name1) + (moving.length ? "，動爻" + moving.map(i => Y[i]).join("、") + "，之卦 " + kw(name2) : "，六爻皆靜") + "；互卦 " + hu,
+      "  斷法（朱子）：" + ZHU[moving.length] + "。"] };
+};
+GEN["c-najia"] = () => {
+  const { ls } = castSix(DC.coinLine), n = nowT(), tz = nowTz();
+  const c = DC.najia(ls, n.y, n.m, n.d, n.h, n.mi, tz);
+  const zb = c.bits.map((b, i) => (c.moving.includes(i) ? 1 - b : b));
+  return { title: "六爻納甲",
+    html: "<p>" + DC.hexNameOf(c.bits) + "（" + c.gongName + "宮" + c.kind + "）" + (c.moving.length ? "之" + DC.hexNameOf(zb) : "・六爻安靜") +
+      "・世" + DC.YAO_NAMES[c.shi - 1] + "・" + c.month + "月" + c.dayGZ + "日</p>",
+    lines: ["六爻納甲（三枚錢六擲，《火珠林》法）：", ...DC.najiaPrompt(c, n.y + "-" + DC.pad2(n.m) + "-" + DC.pad2(n.d) + " " + DC.pad2(n.h) + ":" + DC.pad2(n.mi) + "（起局時刻，UTC" + (tz >= 0 ? "+" : "") + tz + "，23:00 換日）").map(l => "  " + l)] };
 };
 GEN["c-yiju"] = () => {
   const i = DC.rand(DC.YIJU.length);
@@ -688,7 +698,7 @@ GEN["c-qs"] = () => {
 /* 三術類型（合參裁決用）:依 id 歸類 */
 function mixType(id) {
   if (["b-bazi", "b-ziwei", "b-shichu", "b-dang", "a-natal", "a-vedic", "n-heluo", "n-taiyiming", "n-life", "y-maha", "y-weton", "y-thai"].includes(id)) return ["命理", "管稟賦與底盤格局"];
-  if (["b-qimen", "b-liuren", "a-horary", "a-prashna", "n-meihua", "n-meihua-zi", "c-yi"].includes(id)) return ["式占卦占", "管此事成敗——對成敗問題有優先裁決權"];
+  if (["b-qimen", "b-liuren", "a-horary", "a-prashna", "n-meihua", "n-meihua-zi", "c-yi", "c-najia"].includes(id)) return ["式占卦占", "管此事成敗——對成敗問題有優先裁決權"];
   if (["a-xiu", "b-nine", "n-taiyi", "a-transit"].includes(id)) return ["時運擇日", "管時機與某日吉凶"];
   if (["c-yiju", "c-kieu", "c-qs"].includes(id)) return ["開卷機緣", "管一句點醒，不參與成敗裁決"];
   return ["牌卡", "管當下心境與檯面下的訊息"];

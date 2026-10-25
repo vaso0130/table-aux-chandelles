@@ -78,6 +78,16 @@ for (let u = 0; u < 8; u++) for (let l = 0; l < 8; l++) {
 assert.equal(DC.HEX_NAME[6][5], "山水蒙");
 assert.equal(DC.HEX_NAME[6][6], "艮為山");
 
+// 起卦：大衍（朱子掛扐法）四象機率 1/16、5/16、7/16、3/16；朱子變占表前十卦即變爻含初爻者。
+{ const N = 200000, f = { 6: 0, 7: 0, 8: 0, 9: 0 };
+  for (let k = 0; k < N; k++) f[DC.yarrowLine().v]++;
+  [[6, 1], [7, 5], [8, 7], [9, 3]].forEach(([v, x]) => assert.ok(Math.abs(f[v] / N - x / 16) < 0.006, "大衍 " + v + ":" + f[v] / N));
+  let r = 0; for (let a = 0; a < 6; a++) for (let b = a + 1; b < 6; b++) for (let c = b + 1; c < 6; c++) { r++; assert.equal(DC.zhuRank([a, b, c]).zhen, a === 0); }
+  assert.equal(r, 20);
+  assert.equal(DC.hexNameOf([1, 0, 1, 0, 1, 0]), "水火既濟");
+  const nj = DC.najiaPrompt(DC.najia([8, 8, 8, 6, 7, 7], 2026, 10, 25, 11, 2, 8), "T");
+  assert.match(nj[1], /^本卦：風地觀（乾宮四世卦，屬金），世在四爻、應在初爻，卦身酉。變卦：天地否/); }
+
 // 文王卦序：64 卦各一，八純卦與既濟、未濟位置。
 assert.equal(new Set(DC.KW.flat()).size, 64);
 assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 7].map(i => DC.KW[i][i]), [1, 58, 30, 51, 57, 29, 52, 2]);
