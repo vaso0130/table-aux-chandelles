@@ -119,7 +119,7 @@
   </section>
 
   <p class="footnote">
-    行星位置採簡化天文根數(精度約 ±0.1°,月亮 ±0.5°),宮位採<b>整宮制</b>;印度與宿曜採 Lahiri 恆星黃道。<br>
+    行星位置採簡化天文根數(精度約 ±0.1°,月亮 ±0.5°),宮位預設<b>整宮制</b>（西洋與卜卦可改等宮制）;印度與宿曜採 Lahiri 恆星黃道。<br>
     此壇無星官——起盤者，天體與時刻也。解讀交給你信任的眼睛，或交給 AI。
   </p>
 </div>
@@ -127,7 +127,7 @@
 <script src="divine-core.js?v=2026102505"></script>
 <script src="divine-ui.js?v=2026102505"></script>
 <script src="divine-lore.js?v=2026091402"></script>
-<script src="astro-learn.js?v=2026102501"></script>
+<script src="astro-learn.js?v=2026102502"></script>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -399,11 +399,14 @@ MODES.natal = (B, P, N, q, out, pr) => {
   pr.push("主要相位:" + asps.slice(0, 14).map(a => a.a.zh + a.name + a.b.zh + "(" + a.orb.toFixed(1) + "°)").join("、"), "");
   pr.push("請解讀:1. 太陽/月亮/上升的三位一體人格。2. 各行星落宮的人生領域展開。3. 三個最重要的相位格局。4. 此生的天賦與功課。5. 給我一段誠實的總結。");
 };
+/* 入相／離相只對「會動的星 × 定點」有意義：本命盤、組合盤的星是定點，速度歸零；兩張本命盤互比則沒有入離可言 */
+const fixedPts = (list) => list.map((p) => ({ ...p, speed: 0 }));
+const noMotion = (list) => list.map(({ speed, ...p }) => p);
 MODES.transit = (B, P, N, q, out, pr) => {
   const nat = fullChart(B, B.lat, B.lon), tr = fullChart(N, N.lat, N.lon);
   for (const p of tr.list) p.house = houseOf(p.lon, nat); // 行運落本命宮
   const asps = DC.aspects(tr.list.filter(p => ["jup", "sat", "ura", "nep", "plu", "nod"].includes(p.id)),
-    nat.list.concat([{ id: "asc", zh: "上升", lon: nat.asc }, { id: "mc", zh: "天頂", lon: nat.mc }]));
+    fixedPts(nat.list.concat([{ id: "asc", zh: "上升", lon: nat.asc }, { id: "mc", zh: "天頂", lon: nat.mc }])));
   let slow = tr.list.filter(p => ["jup", "sat", "ura", "nep", "plu"].includes(p.id))
     .map(p => L("行運") + plL(p) + "在" + signL(DC.signOf(p.lon)) + "(你的" + houseL(p.house) + ":" + HOUSE_MEAN[p.house - 1] + ")").join("<br>");
   out.push(DC.card("行運概況", "Transits " + N.str, "<p>" + slow + "</p>" + chartTable(tr, true, "—(行運上升)")));
@@ -415,7 +418,7 @@ MODES.transit = (B, P, N, q, out, pr) => {
 };
 MODES.synastry = (B, P, N, q, out, pr) => {
   const a = fullChart(B, B.lat, B.lon), b = fullChart(P, P.lat, P.lon);
-  const asps = DC.aspects(a.list, b.list).filter(x => ["sun", "moo", "ven", "mar", "mer", "asc"].includes(x.a.id) || ["sun", "moo", "ven", "mar"].includes(x.b.id));
+  const asps = DC.aspects(noMotion(a.list), noMotion(b.list)).filter(x => ["sun", "moo", "ven", "mar", "mer", "asc"].includes(x.a.id) || ["sun", "moo", "ven", "mar"].includes(x.b.id));
   const overlay = a.list.map(p => ({ ...p, house: houseOf(p.lon, b) }));
   out.push(DC.card("我的星盤", "", svgWheel(a) + chartTable(a, true)));
   out.push(DC.card("對方星盤", "", svgWheel(b) + chartTable(b, true)));
@@ -434,7 +437,7 @@ MODES.composite = (B, P, N, q, out, pr) => {
   for (const p of comp.list) p.house = houseOf(p.lon, comp);
   const inner = DC.aspects(comp.list);
   const tr = fullChart(N, N.lat, N.lon);
-  const hits = DC.aspects(tr.list.filter(p => ["jup", "sat", "ura", "nep", "plu"].includes(p.id)), comp.list);
+  const hits = DC.aspects(tr.list.filter(p => ["jup", "sat", "ura", "nep", "plu"].includes(p.id)), fixedPts(comp.list));
   out.push(DC.card("組合中點盤（關係之盤）", "Composite", svgWheel(comp) +
     '<p class="lead">' + L("組合中點盤", "關係") + "的" + L("太陽") + "在" + signL(DC.signOf(comp.list[0].lon)) + "・" + L("月亮") + "在" + signL(DC.signOf(comp.list[1].lon)) + "</p>" + chartTable(comp, true)));
   out.push(DC.card("此刻行運對關係的擾動", "Transit → Composite", aspectRows(hits, 12, "行運", "組合盤")));
