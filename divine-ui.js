@@ -276,6 +276,66 @@ DC.browser = function (mount, items, renderDetail) {
   return { open: function (i) { view = i; draw(false); } };
 };
 /* 教學卡：可摺疊的 details，第一張預設展開；learnInit 會在頂端補一列目次 */
+/* ── 教學書（仿牌桌館：符號字典一覽＋逐項細讀、盤面讀法逐項可摺疊）──
+   spec[sysId] = { name, intro, dict: [{ cat, items: [{ no, t, s, html }] }], guide: [{ name, sub, html }] }
+   最上面一列命術（仿牌桌館先選牌組）；onPick(sysId) 讓頁面同步起盤那邊的選擇。
+   回傳 { show(sysId) }：起盤那邊切換命術時呼叫，教學內容跟著換 */
+DC.learnBook = function (mount, spec, onPick) {
+  var cur = null, curId = null, tab = "dict", cat = 0, ids = Object.keys(spec);
+  mount.innerHTML = (ids.length > 1 ? '<div class="book-sys" role="group" aria-label="命術">' +
+      ids.map(function (id) { return '<button type="button" data-id="' + id + '">' + spec[id].name + "</button>"; }).join("") + "</div>" : "") +
+    '<p class="book-intro lead-para"></p>' +
+    '<div class="book-tabs" role="tablist"><button class="book-tab" data-tab="dict" role="tab">符號字典</button><button class="book-tab" data-tab="guide" role="tab">盤面讀法</button></div>' +
+    '<div class="book-dict"><div class="book-cats"></div><div class="book-browser"></div></div>' +
+    '<div class="book-guide"></div>';
+  var $q = function (sel) { return mount.querySelector(sel); };
+  var drawDict = function () {
+    var d = cur.dict;
+    $q(".book-cats").innerHTML = d.length > 1 ? d.map(function (c, i) {
+      return '<button class="book-cat' + (i === cat ? " on" : "") + '" type="button">' + c.cat + '<small>' + c.items.length + "</small></button>";
+    }).join("") : "";
+    $q(".book-cats").querySelectorAll(".book-cat").forEach(function (b, i) { b.onclick = function () { cat = i; drawDict(); }; });
+    var items = d[cat].items;
+    DC.browser($q(".book-browser"), items, function (i) { return items[i].html; });
+  };
+  var drawGuide = function () {
+    $q(".book-guide").innerHTML = cur.guide.map(function (g, i) {
+      return '<details class="guide-item"' + (i === 0 ? " open" : "") + '><summary><span class="g-name">' + g.name + "</span>" +
+        (g.sub ? '<span class="g-count">' + g.sub + "</span>" : "") + '<span class="g-mark" aria-hidden="true"></span></summary><div class="guide-body">' + g.html + "</div></details>";
+    }).join("");
+  };
+  var drawTab = function () {
+    mount.querySelectorAll(".book-tab").forEach(function (b) {
+      var on = b.dataset.tab === tab;
+      b.classList.toggle("on", on); b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    $q(".book-dict").hidden = tab !== "dict"; $q(".book-guide").hidden = tab !== "guide";
+  };
+  var show = function (id) {
+    if (!spec[id] || id === curId) return;
+    curId = id; cur = spec[id]; cat = 0;
+    mount.querySelectorAll(".book-sys button").forEach(function (b) {
+      b.classList.toggle("on", b.dataset.id === id); b.setAttribute("aria-pressed", b.dataset.id === id ? "true" : "false");
+    });
+    $q(".book-intro").innerHTML = cur.intro;
+    drawDict(); drawGuide();
+  };
+  mount.querySelectorAll(".book-sys button").forEach(function (b) {
+    b.onclick = function () { show(b.dataset.id); if (onPick) onPick(b.dataset.id); };
+  });
+  mount.querySelectorAll(".book-tab").forEach(function (b) { b.onclick = function () { tab = b.dataset.tab; drawTab(); }; });
+  drawTab();
+  return { show: show };
+};
+/* 字典細讀頁：標題、別名、關鍵詞，接幾段以細線分隔的小節（仿牌桌館牌義頁） */
+DC.bookEntry = function (o) {
+  return '<div class="book-entry"><div class="be-head">' + (o.glyph ? '<span class="be-glyph">' + o.glyph + "</span>" : "") +
+    '<div><p class="be-sub">' + (o.sub || "") + '</p><h3 class="be-title">' + o.title + "</h3>" +
+    (o.keys ? '<p class="be-keys">' + o.keys + "</p>" : "") + "</div></div>" +
+    (o.sections || []).filter(function (s) { return s && s[1]; }).map(function (s) {
+      return '<div class="be-sec"><p class="be-h">' + s[0] + "</p>" + (/^\s*</.test(s[1]) ? s[1] : "<p>" + s[1] + "</p>") + "</div>";
+    }).join("") + "</div>";
+};
 DC.lcard = function (t, body) { return '<details class="result-card lcard"><summary><h3>' + t + "</h3></summary>" + body + "</details>"; };
 DC.ltable = function (headers, rows) {
   return '<div class="tbl-scroll"><table class="data wrap"><tr>' + headers.map(function (h) { return "<th>" + h + "</th>"; }).join("") + "</tr>" +

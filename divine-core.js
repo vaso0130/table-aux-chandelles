@@ -656,6 +656,9 @@ var DC = {};
     }
     return n;
   };
+  DC.NUM_LINES = [["123", "藝術線", "美感、表達與品味"], ["456", "組織線", "秩序、執行與管理"], ["789", "權力線", "影響力、企圖與擔當"],
+    ["147", "務實線", "腳踏實地、積累成業"], ["258", "情感線", "同理、連結與人和"], ["369", "智慧線", "思辨、公益與遠見"],
+    ["159", "事業線", "意志貫徹、勇往直前"], ["357", "人緣線", "表達魅力、廣結善緣"]]; // 生日九宮連線
   DC.lifeNumbers = function (y, m, d, nowY, nowM, nowD) {
     const all = digitsOf(y).concat(digitsOf(m), digitsOf(d));
     const total = all.reduce((a, b) => a + b, 0);
@@ -674,10 +677,7 @@ var DC = {};
     const pd = DC.numReduce(pm + nowD, false);
     const grid = {}; for (let i = 1; i <= 9; i++) grid[i] = 0;
     for (const n of all) if (n > 0) grid[n]++;
-    const LINES = [["123", "藝術線", "美感、表達與品味"], ["456", "組織線", "秩序、執行與管理"], ["789", "權力線", "影響力、企圖與擔當"],
-      ["147", "務實線", "腳踏實地、積累成業"], ["258", "情感線", "同理、連結與人和"], ["369", "智慧線", "思辨、公益與遠見"],
-      ["159", "事業線", "意志貫徹、勇往直前"], ["357", "人緣線", "表達魅力、廣結善緣"]];
-    const lines = LINES.filter(([ln]) => ln.split("").every(ch => grid[+ch] > 0)).map(([ln, name, note]) => ({ ln, name, note }));
+    const lines = DC.NUM_LINES.filter(([ln]) => ln.split("").every(ch => grid[+ch] > 0)).map(([ln, name, note]) => ({ ln, name, note }));
     const missing = Object.keys(grid).filter(k => grid[k] === 0).map(Number);
     return { total, lp, birthday, attitude, talent: total, challenges: [c1, c2, c3, c4], pinnacles: [{ n: p1, from: 0, to: a1 }, { n: p2, from: a1 + 1, to: a1 + 9 }, { n: p3, from: a1 + 10, to: a1 + 18 }, { n: p4, from: a1 + 19, to: 999 }], py, pm, pd, grid, lines, missing };
   };
@@ -698,6 +698,12 @@ var DC = {};
 
   /* ═══ 紫微斗數 ═══ */
   DC.ZW_PALACES = ["命宮", "兄弟", "夫妻", "子女", "財帛", "疾厄", "遷移", "交友", "官祿", "田宅", "福德", "父母"];
+  DC.ZW_HUA = [ // 生年四化（依年干）：[化祿, 化權, 化科, 化忌]
+    ["廉貞", "破軍", "武曲", "太陽"], ["天機", "天梁", "紫微", "太陰"], ["天同", "天機", "文昌", "廉貞"],
+    ["太陰", "天同", "天機", "巨門"], ["貪狼", "太陰", "右弼", "天機"], ["武曲", "貪狼", "天梁", "文曲"],
+    ["太陽", "武曲", "太陰", "天同"], ["巨門", "太陽", "文曲", "文昌"], ["天梁", "紫微", "左輔", "武曲"],
+    ["破軍", "巨門", "太陰", "貪狼"]
+  ];
   DC.ziwei = function (lm, ld, hb, yS, yB, male) {
     const P = Array.from({ length: 12 }, (_, b) => ({ branch: b, stars: [], good: [], bad: [], hua: [] }));
     const ming = ((2 + (lm - 1) - hb) % 12 + 12) % 12;
@@ -735,10 +741,7 @@ var DC = {};
     put((11 - hb + 12) % 12, "地空", "bad"); put((11 + hb) % 12, "地劫", "bad");
     put([2, 11, 8, 5][yB % 4], "天馬", "good");
     // 四化
-    const HUA = [["廉貞", "破軍", "武曲", "太陽"], ["天機", "天梁", "紫微", "太陰"], ["天同", "天機", "文昌", "廉貞"],
-      ["太陰", "天同", "天機", "巨門"], ["貪狼", "太陰", "右弼", "天機"], ["武曲", "貪狼", "天梁", "文曲"],
-      ["太陽", "武曲", "太陰", "天同"], ["巨門", "太陽", "文曲", "文昌"], ["天梁", "紫微", "左輔", "武曲"],
-      ["破軍", "巨門", "太陰", "貪狼"]][yS];
+    const HUA = DC.ZW_HUA[yS];
     const HUA_T = ["化祿", "化權", "化科", "化忌"];
     for (let b = 0; b < 12; b++)
       for (const arr of ["stars", "good"])
