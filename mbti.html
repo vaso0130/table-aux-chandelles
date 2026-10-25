@@ -105,7 +105,7 @@
 </div>
 
 <script src="divine-core.js?v=2026102501"></script>
-<script src="divine-ui.js?v=2026102501"></script>
+<script src="divine-ui.js?v=2026102502"></script>
 <script src="divine-lore.js?v=2026091402"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -336,7 +336,7 @@ function renderQuiz() {
 }
 renderQuiz();
 DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣：「[^」]*」/, "語氣：「" + DC.toneValue() + "」"); });
-DC.histBind();
+DC.histBind("鏡廳");
 
 function card(t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
 function poleOf(it, side) { const [p1, p2] = AXES[it.ax]; return side === "A" ? it.a : (it.a === p1 ? p2 : p1); }

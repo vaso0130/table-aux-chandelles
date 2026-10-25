@@ -72,18 +72,34 @@ DC.say = function (msg, okLabel) {
 /* DC.simQ／DC.SIMQ_TH（同題比對）在 divine-core.js——牌桌館也要用，但不載入本檔 */
 DC.REPEAT_MSG = "同一件事，你今天已用同一套占卜系統問過 {n} 次。\n再問，就只是在抽心安，不是在占卜。\n\n盤不會因為多問一次而換答案。答案不合意時，該換的是問題，或行動。\n（合參心法：機緣說的話，聽三遍就夠了。）";
 
-DC.histBind = function () { // 跨館共用歷史(需 #hist-list/#hist-clear/#out/#prompt-box/#prompt-sec)
+/* 已併館的舊紀錄歸屬：數字館拆館時，生命靈數歸八字館、梅花河洛歸式占館 */
+DC.histPageOf = function (r) {
+  if (r.page === "數字館") return /靈數/.test(r.title) ? "八字館" : "式占館";
+  return r.page;
+};
+DC.histBind = function (page) { // 各館歷史各自獨立（同一儲存鍵，依館名分開；需 #hist-list/#hist-clear/#out/#prompt-box/#prompt-sec）
   var $id = function (x) { return document.getElementById(x); };
   var list = $id("hist-list");
   if (!list) { DC.histSave = function () {}; return; }
-  var KEY = "dc-hall-history";
+  var KEY = "dc-hall-history", PER_PAGE = 30;
   var all = function () { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { return []; } };
-  var save = function (a) { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} };
+  var mine = function (r) { return DC.histPageOf(r) === page; };
+  var save = function (a) {   /* 各館合計可能逼近儲存上限：存不下就從最舊的一筆開始讓位 */
+    for (;;) {
+      try { localStorage.setItem(KEY, JSON.stringify(a)); return; } catch (e) {}
+      if (a.length <= 1) return;
+      var oldest = 0;
+      a.forEach(function (r, i) { if (r.t < a[oldest].t) oldest = i; });
+      a.splice(oldest, 1);
+    }
+  };
   var render = function () {
-    var arr = all();
-    if (!arr.length) { list.innerHTML = '<p class="hist-empty">還沒有紀錄。問過一次，就會留在這裡。</p>'; return; }
+    var arr = all().filter(mine);
+    var clr = $id("hist-clear");
+    if (clr) clr.hidden = !arr.length;
+    if (!arr.length) { list.innerHTML = '<p class="hist-empty">還沒有紀錄。在這一館問過一次，就會留在這裡。</p>'; return; }
     list.innerHTML = "";
-    arr.forEach(function (r, i) {
+    arr.forEach(function (r) {
       var d = new Date(r.t);
       var div = document.createElement("div");
       div.className = "hist-item";
@@ -91,7 +107,7 @@ DC.histBind = function () { // 跨館共用歷史(需 #hist-list/#hist-clear/#ou
       var when = document.createElement("span"); when.className = "h-when";
       when.textContent = d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate() + " " + DC.pad2(d.getHours()) + ":" + DC.pad2(d.getMinutes());
       var what = document.createElement("span"); what.className = "h-what";
-      what.textContent = "【" + r.page + "】" + r.title;
+      what.textContent = r.title;
       info.appendChild(when); info.appendChild(what);
       if (r.q) { var qq = document.createElement("span"); qq.className = "h-q"; qq.textContent = r.q; info.appendChild(qq); }
       var act = document.createElement("div"); act.className = "h-actions";
@@ -103,7 +119,7 @@ DC.histBind = function () { // 跨館共用歷史(需 #hist-list/#hist-clear/#ou
         $id("out").scrollIntoView({ behavior: "smooth" });
       };
       var bd = document.createElement("button"); bd.className = "ghost-btn"; bd.textContent = "刪除";
-      bd.onclick = function () { var a = all(); a.splice(i, 1); save(a); render(); };
+      bd.onclick = function () { save(all().filter(function (x) { return x.t !== r.t; })); render(); };
       act.appendChild(bv);
       var ex = DC.histHook && DC.histHook(r);   /* 各館可替舊紀錄加一顆按鈕（鐘樓館：補抽流年） */
       if (ex) { var be = document.createElement("button"); be.className = "gold-btn"; be.textContent = ex.label; be.onclick = function () { ex.run(r); }; act.appendChild(be); }
@@ -113,21 +129,25 @@ DC.histBind = function () { // 跨館共用歷史(需 #hist-list/#hist-clear/#ou
     });
   };
   var clr = $id("hist-clear");
-  if (clr) clr.onclick = function () { save([]); render(); };
-  DC.histSave = function (page, title, q, html, prompt) {
+  if (clr) {
+    clr.textContent = "清空本館歷史";
+    clr.onclick = function () { save(all().filter(function (r) { return !mine(r); })); render(); };
+  }
+  DC.histSave = function (pg, title, q, html, prompt) {
     var a = all();
     /* 重複占問勸誡：系統=館+術名(title 第一段);今日同系統同題（模糊）第三次起提醒 */
-    var sysKey = page + "|" + String(title).split("・")[0];
+    var sysKey = pg + "|" + String(title).split("・")[0];
     var today = new Date().toDateString();
     var n = 0;
     a.forEach(function (r) {
       if (new Date(r.t).toDateString() !== today) return;
-      if (r.page + "|" + String(r.title).split("・")[0] !== sysKey) return;
+      if (DC.histPageOf(r) + "|" + String(r.title).split("・")[0] !== sysKey) return;
       if (DC.simQ(r.q, q) >= DC.SIMQ_TH) n++;
     });
     if (n >= 2) setTimeout(function () { DC.say(DC.REPEAT_MSG.replace("{n}", n + 1)); }, 400);
-    a.unshift({ t: Date.now(), page: page, title: title, q: q || "", html: html, prompt: prompt });
-    while (a.length > 30) a.pop();
+    a.unshift({ t: Date.now(), page: pg, title: title, q: q || "", html: html, prompt: prompt });
+    var kept = 0;   /* 每館各留最近 30 筆，不再互相擠掉 */
+    a = a.filter(function (r) { return DC.histPageOf(r) !== pg || ++kept <= PER_PAGE; });
     save(a); render();
   };
   DC.histUpdate = function (t, patch) {   /* 依建立時間 t 改寫一筆紀錄（不動時間與排序） */

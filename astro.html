@@ -125,7 +125,7 @@
 </div>
 
 <script src="divine-core.js?v=2026102501"></script>
-<script src="divine-ui.js?v=2026102501"></script>
+<script src="divine-ui.js?v=2026102502"></script>
 <script src="divine-lore.js?v=2026091402"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -247,7 +247,7 @@ function updateForm() {
 }
 renderSys(); renderModes(); updateForm();
 DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣：「[^」]*」/, "語氣：「" + DC.toneValue() + "」"); });
-DC.histBind();
+DC.histBind("占星館");
 // 活時鐘：勾著「跟隨此刻」就每秒對時；手動改時間即自動解除跟隨
 setInterval(() => { if ($("n-follow").checked && !$("form-now").hidden) setNowFields(); }, 1000);
 ["n-date", "n-time"].forEach(id => $(id).addEventListener("input", () => { $("n-follow").checked = false; }));

@@ -147,7 +147,7 @@
 </div>
 
 <script src="divine-core.js?v=2026102501"></script>
-<script src="divine-ui.js?v=2026102501"></script>
+<script src="divine-ui.js?v=2026102502"></script>
 <script src="divine-lore.js?v=2026091402"></script>
 <script src="xq-data.js?v=2026101202"></script>
 <script src="shilun-data.js?v=2026101901"></script>
@@ -237,7 +237,7 @@ renderPool();
 DC.fillCitySelect($("b-city"), $("b-lat"), $("b-lon"), $("b-tz"));
 DC.fillCitySelect($("n-city"), $("n-lat"), $("n-lon"), $("n-tz"));
 DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣：「[^」]*」/, "語氣：「" + DC.toneValue() + "」"); });
-DC.histBind();
+DC.histBind("合參");
 
 const PK = "dc-mix-profile";
 const prof = DC.profileBind(PK, ["b-date", "b-time", "b-gender", "b-city", "b-lat", "b-lon", "b-tz"]); // 生辰檔案工廠：含舊鍵遷移+跨館共用 dc-profile

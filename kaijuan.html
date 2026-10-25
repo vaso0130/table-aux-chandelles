@@ -192,7 +192,7 @@
 </div>
 
 <script src="divine-core.js?v=2026102501"></script>
-<script src="divine-ui.js?v=2026102501"></script>
+<script src="divine-ui.js?v=2026102502"></script>
 <script src="divine-lore.js?v=2026091402"></script>
 <script src="qs-data.js?v=2026091402"></script>
 <script>
@@ -482,7 +482,7 @@ $("btn-copy").onclick = async () => {
 };
 renderSys(); updateForm();
 DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣：「[^」]*」/, "語氣：「" + DC.toneValue() + "」"); });
-DC.histBind();
+DC.histBind("開卷館");
 
 /* ═══ 入門教學 ═══ */
 function buildLearn() {

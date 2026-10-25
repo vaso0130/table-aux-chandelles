@@ -88,7 +88,7 @@
 </div>
 
 <script src="divine-core.js?v=2026102501"></script>
-<script src="divine-ui.js?v=2026102501"></script>
+<script src="divine-ui.js?v=2026102502"></script>
 <script src="divine-lore.js?v=2026091402"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -122,7 +122,7 @@ function updateForm() {
 }
 renderSys(); updateForm();
 DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣：「[^」]*」/, "語氣：「" + DC.toneValue() + "」"); });
-DC.histBind();
+DC.histBind("南洋館");
 
 const PK = "dc-ny-profile";
 const prof = DC.profileBind(PK, ["b-date","b-time","day-boundary"]);
