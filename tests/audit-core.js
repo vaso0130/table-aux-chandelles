@@ -78,6 +78,13 @@ for (let u = 0; u < 8; u++) for (let l = 0; l < 8; l++) {
 assert.equal(DC.HEX_NAME[6][5], "山水蒙");
 assert.equal(DC.HEX_NAME[6][6], "艮為山");
 
+// 文王卦序：64 卦各一，八純卦與既濟、未濟位置。
+assert.equal(new Set(DC.KW.flat()).size, 64);
+assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 7].map(i => DC.KW[i][i]), [1, 58, 30, 51, 57, 29, 52, 2]);
+assert.equal(DC.hexNum([1, 0, 1, 0, 1, 0]), 63);
+assert.equal(DC.hexNum([0, 1, 0, 1, 0, 1]), 64);
+for (let k = 0; k < 1000; k++) { const r = DC.rand01(); assert.ok(r >= 0 && r < 1); }
+
 // 六爻納甲：八宮依「逐爻變一至五世、四爻復變為遊魂、內卦復原為歸魂」獨立生成，64 卦宮位世爻各一。
 const seenHex = new Set();
 for (let g = 0; g < 8; g++) {

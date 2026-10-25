@@ -52,6 +52,36 @@ DC.toneValue = function () {
 DC.toneHead = function () { return "用繁體中文解讀，語氣：「" + DC.toneValue() + "」。"; };
 
 /* 紙面對話框：取代 alert（樣式在 hall.css 的 dialog.note） */
+/* ── 各館共用小幫手（原本各館各抄一份） ── */
+DC.card = function (t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; };
+DC.fail = function (msg) { document.getElementById("go-hint").textContent = msg; return new Error(msg); };
+DC.setNow = function (dateId, timeId) { // 日期、時間欄填入此刻
+  var n = new Date();
+  document.getElementById(dateId).value = n.getFullYear() + "-" + DC.pad2(n.getMonth() + 1) + "-" + DC.pad2(n.getDate());
+  document.getElementById(timeId).value = DC.pad2(n.getHours()) + ":" + DC.pad2(n.getMinutes());
+};
+DC.readT = function (dateId, timeId) { // 讀日期、時間欄（當地鐘點）；未填則取此刻
+  var dv = document.getElementById(dateId).value, tv = document.getElementById(timeId).value;
+  if (dv && tv) {
+    var d = dv.split("-").map(Number), t = tv.split(":").map(Number);
+    return { y: d[0], m: d[1], d: d[2], h: t[0], mi: t[1] };
+  }
+  var n = new Date();
+  return { y: n.getFullYear(), m: n.getMonth() + 1, d: n.getDate(), h: n.getHours(), mi: n.getMinutes() };
+};
+DC.renderModes = function (modes, activeId, onPick) { // 盤式／題目按鈕列（#modes）
+  var box = document.getElementById("modes");
+  box.innerHTML = "";
+  (modes || []).forEach(function (md, i) {
+    var b = document.createElement("button");
+    b.className = "mode-btn" + (md[0] === activeId ? " active" : "");
+    b.innerHTML = '<span class="s-row"><span class="s-idx">' + "壹貳參肆伍陸柒捌"[i] + '</span><span class="s-name">' + md[1] +
+      '</span><span class="s-leader"></span></span><span class="s-desc">' + md[2] + '</span>';
+    b.onclick = function () { onPick(md[0]); };
+    box.appendChild(b);
+  });
+};
+
 DC.say = function (msg, okLabel) {
   if (typeof document === "undefined") return;
   var dlg = document.getElementById("note");

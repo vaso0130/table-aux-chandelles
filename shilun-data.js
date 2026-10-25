@@ -235,7 +235,7 @@
     if (!m || !tm) return null;
     const parts = m[1].split("/"), old = LAYERS.slice(1);
     if (parts.length !== old.length) return null;
-    const t = { y: +tm[1], m: +tm[2], d: +tm[3], h: +tm[4], mi: +tm[5], tz: 8 }, P = positionsAt(t);
+    const t = { y: +tm[1], m: +tm[2], d: +tm[3], h: +tm[4], mi: +tm[5] }, P = positionsAt(t);
     const cards = [];
     for (let k = 0; k < old.length; k++) {
       const rev = /逆$/.test(parts[k]), zh = parts[k].replace(/逆$/, ""), n = CARDS[old[k].id].findIndex(c => c[1] === zh) + 1;

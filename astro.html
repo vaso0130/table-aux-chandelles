@@ -124,8 +124,8 @@
   </p>
 </div>
 
-<script src="divine-core.js?v=2026102501"></script>
-<script src="divine-ui.js?v=2026102502"></script>
+<script src="divine-core.js?v=2026102503"></script>
+<script src="divine-ui.js?v=2026102503"></script>
 <script src="divine-lore.js?v=2026091402"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -152,11 +152,7 @@ try {
   if (p.hs) $("house-system").value = p.hs;
 } catch (e) {}
 
-function setNowFields() {
-  const n = new Date();
-  $("n-date").value = n.getFullYear() + "-" + DC.pad2(n.getMonth() + 1) + "-" + DC.pad2(n.getDate());
-  $("n-time").value = DC.pad2(n.getHours()) + ":" + DC.pad2(n.getMinutes());
-}
+const setNowFields = () => DC.setNow("n-date", "n-time");
 setNowFields();
 
 /* ── 解讀資料 ── */
@@ -217,15 +213,7 @@ function renderSys() {
 }
 function renderModes() {
   const s = SYS.find(x => x.id === sysId);
-  $("modes").innerHTML = "";
-  s.modes.forEach(([id, name, desc], i) => {
-    const b = document.createElement("button");
-    b.className = "mode-btn" + (id === modeId ? " active" : "");
-    b.innerHTML = '<span class="s-row"><span class="s-idx">' + "壹貳參肆伍陸"[i] + '</span><span class="s-name">' + name +
-      '</span><span class="s-leader"></span></span><span class="s-desc">' + desc + '</span>';
-    b.onclick = () => { modeId = id; renderModes(); updateForm(); };
-    $("modes").appendChild(b);
-  });
+  DC.renderModes(s.modes, modeId, (id) => { modeId = id; renderModes(); updateForm(); });
   $("modes-label").hidden = s.modes.length === 1;
 }
 const NEED = { // [本命, 對方, 此刻]
@@ -320,7 +308,6 @@ function svgWheel(ch) {
   s += '<text x="' + mx2 + '" y="' + (my2 + 4) + '" text-anchor="middle" font-size="11" fill="#C9A45C">MC</text>';
   return '<div class="wheel-box">' + s + "</svg></div>";
 }
-function card(title, en, body) { return '<div class="result-card"><h3>' + title + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
 function chartLines(ch, tag) { // 提示詞用
   const L = [tag + ":"];
   for (const p of ch.list) L.push("  " + p.zh + " " + DC.fmtLon(p.lon) + (p.retro ? "(逆行)" : "") + " 第" + p.house + "宮");
@@ -392,11 +379,11 @@ MODES.natal = (B, P, N, q, out, pr) => {
   const ch = fullChart(B, B.lat, B.lon);
   const asps = DC.aspects(ch.list);
   const sun = ch.list[0], moo = ch.list[1];
-  out.push(card("本命星盤", "Natal Chart", svgWheel(ch) +
+  out.push(DC.card("本命星盤", "Natal Chart", svgWheel(ch) +
     '<p class="lead">太陽 ' + DC.ZODIAC[DC.signOf(sun.lon)] + "・月亮 " + DC.ZODIAC[DC.signOf(moo.lon)] + "・上升 " + DC.ZODIAC[ch.ascSign] + "</p>" +
     "<p>太陽落" + DC.ZODIAC[DC.signOf(sun.lon)] + "——" + SIGN_TRAIT[DC.signOf(sun.lon)] + ";月亮落" + DC.ZODIAC[DC.signOf(moo.lon)] + "——內在需要" + SIGN_TRAIT[DC.signOf(moo.lon)] + ";上升" + DC.ZODIAC[ch.ascSign] + ",給世界的第一印象是" + SIGN_TRAIT[ch.ascSign] + "。</p>" +
     chartTable(ch, true)));
-  out.push(card("主要相位", "Aspects", aspectRows(asps, 14)));
+  out.push(DC.card("主要相位", "Aspects", aspectRows(asps, 14)));
   pr.push(...chartLines(ch, "本命盤(" + B.str + ",北緯" + B.lat + " 東經" + B.lon + ")"));
   pr.push("主要相位:" + asps.slice(0, 14).map(a => a.a.zh + a.name + a.b.zh + "(" + a.orb.toFixed(1) + "°)").join("、"), "");
   pr.push("請解讀:1. 太陽/月亮/上升的三位一體人格。2. 各行星落宮的人生領域展開。3. 三個最重要的相位格局。4. 此生的天賦與功課。5. 給我一段誠實的總結。");
@@ -408,8 +395,8 @@ MODES.transit = (B, P, N, q, out, pr) => {
     nat.list.concat([{ id: "asc", zh: "上升", lon: nat.asc }, { id: "mc", zh: "天頂", lon: nat.mc }]));
   let slow = tr.list.filter(p => ["jup", "sat", "ura", "nep", "plu"].includes(p.id))
     .map(p => "行運" + p.zh + "在" + DC.ZODIAC[DC.signOf(p.lon)] + "(你的第 " + p.house + " 宮:" + HOUSE_MEAN[p.house - 1] + ")").join("<br>");
-  out.push(card("行運概況", "Transits " + N.str, "<p>" + slow + "</p>" + chartTable(tr, true, "—(行運上升)")));
-  out.push(card("行運 × 本命 相位", "", aspectRows(asps, 14, "行運", "本命")));
+  out.push(DC.card("行運概況", "Transits " + N.str, "<p>" + slow + "</p>" + chartTable(tr, true, "—(行運上升)")));
+  out.push(DC.card("行運 × 本命 相位", "", aspectRows(asps, 14, "行運", "本命")));
   pr.push(...chartLines(nat, "本命盤(" + B.str + ")"));
   pr.push("", ...chartLines(tr, "行運盤(" + N.str + ",宮位為行運星落入的本命宮)"));
   pr.push("行運×本命相位:" + asps.slice(0, 14).map(a => "行運" + a.a.zh + a.name + "本命" + a.b.zh + "(" + a.orb.toFixed(1) + "°)").join("、"), "");
@@ -419,9 +406,9 @@ MODES.synastry = (B, P, N, q, out, pr) => {
   const a = fullChart(B, B.lat, B.lon), b = fullChart(P, P.lat, P.lon);
   const asps = DC.aspects(a.list, b.list).filter(x => ["sun", "moo", "ven", "mar", "mer", "asc"].includes(x.a.id) || ["sun", "moo", "ven", "mar"].includes(x.b.id));
   const overlay = a.list.map(p => ({ ...p, house: houseOf(p.lon, b) }));
-  out.push(card("我的星盤", "", svgWheel(a) + chartTable(a, true)));
-  out.push(card("對方星盤", "", svgWheel(b) + chartTable(b, true)));
-  out.push(card("關係相位（合盤）", "Synastry", aspectRows(asps, 16, "我", "對方") +
+  out.push(DC.card("我的星盤", "", svgWheel(a) + chartTable(a, true)));
+  out.push(DC.card("對方星盤", "", svgWheel(b) + chartTable(b, true)));
+  out.push(DC.card("關係相位（合盤）", "Synastry", aspectRows(asps, 16, "我", "對方") +
     "<p>我的行星落入對方的宮位:" + overlay.filter(p => ["sun", "moo", "ven", "mar"].includes(p.id)).map(p => p.zh + "→對方第" + p.house + "宮(" + HOUSE_MEAN[p.house - 1] + ")").join("、") + "</p>"));
   pr.push(...chartLines(a, "我的本命盤(" + B.str + ")"), "", ...chartLines(b, "對方本命盤(" + P.str + ")"));
   pr.push("合盤相位:" + asps.slice(0, 16).map(x => "我方" + x.a.zh + x.name + "對方" + x.b.zh + "(" + x.orb.toFixed(1) + "°)").join("、"));
@@ -437,9 +424,9 @@ MODES.composite = (B, P, N, q, out, pr) => {
   const inner = DC.aspects(comp.list);
   const tr = fullChart(N, N.lat, N.lon);
   const hits = DC.aspects(tr.list.filter(p => ["jup", "sat", "ura", "nep", "plu"].includes(p.id)), comp.list);
-  out.push(card("組合中點盤（關係之盤）", "Composite", svgWheel(comp) +
+  out.push(DC.card("組合中點盤（關係之盤）", "Composite", svgWheel(comp) +
     '<p class="lead">關係的太陽在' + DC.ZODIAC[DC.signOf(comp.list[0].lon)] + "・月亮在" + DC.ZODIAC[DC.signOf(comp.list[1].lon)] + "</p>" + chartTable(comp, true)));
-  out.push(card("此刻行運對關係的擾動", "Transit → Composite", aspectRows(hits, 12, "行運", "組合盤")));
+  out.push(DC.card("此刻行運對關係的擾動", "Transit → Composite", aspectRows(hits, 12, "行運", "組合盤")));
   pr.push(...chartLines(comp, "組合中點盤（兩人星盤逐星取中點）"));
   pr.push("盤內相位:" + inner.slice(0, 12).map(x => x.a.zh + x.name + x.b.zh).join("、"));
   pr.push("此刻(" + N.str + ")行運對組合盤:" + hits.slice(0, 12).map(x => "行運" + x.a.zh + x.name + "組合" + x.b.zh + "(" + x.orb.toFixed(1) + "°)").join("、"), "");
@@ -466,10 +453,10 @@ MODES.returns = (B, P, N, q, out, pr) => {
     }
   }
   events.sort((x, y) => x.t - y.t);
-  out.push(card("太陽返照盤（本年生日盤）", "Solar Return " + srCh.when.str,
+  out.push(DC.card("太陽返照盤（本年生日盤）", "Solar Return " + srCh.when.str,
     svgWheel(srCh) + '<p class="lead">返照上升' + DC.ZODIAC[srCh.ascSign] + "——今年的主旋律由此起。</p>" + chartTable(srCh, true)));
-  out.push(card("月亮返照盤（未來一月）", "Lunar Return " + lrCh.when.str, chartTable(lrCh, true)));
-  out.push(card("未來九十日・重大行運時刻", "Timing",
+  out.push(DC.card("月亮返照盤（未來一月）", "Lunar Return " + lrCh.when.str, chartTable(lrCh, true)));
+  out.push(DC.card("未來九十日・重大行運時刻", "Timing",
     events.length ? '<div class="tbl-scroll"><table class="data"><tr><th>日期</th><th>行運</th></tr>' +
       events.map(e => "<tr><td>" + DC.fmtJD(e.t, N.tz, false) + '</td><td class="hl">行運' + e.p + e.a + "本命" + e.n + "</td></tr>").join("") + "</table></div>"
       : "<p>未來九十日外行星對你的四要點無精確相位——平流層，適合按部就班。</p>"));
@@ -483,7 +470,7 @@ MODES.stars = (B, P, N, q, out, pr) => {
   const ch = fullChart(B, B.lat, B.lon);
   const pts = ch.list.concat([{ id: "asc", zh: "上升", gl: "↑", lon: ch.asc }, { id: "mc", zh: "天頂", gl: "MC", lon: ch.mc }]);
   const hits = DC.fixedStarHits(pts, B.jd, 1.5);
-  out.push(card("恆星合相", "Fixed Stars(容許 1.5°)",
+  out.push(DC.card("恆星合相", "Fixed Stars(容許 1.5°)",
     hits.length ? hits.map(h => '<p><b style="color:var(--gold-bright)">' + h.star + "</b> 合 " + h.planet.zh + "(" + h.orb.toFixed(1) + "°)——" + h.note + "</p>").join("")
       : "<p>你的星盤要點與十六大恆星皆無緊密合相——你的故事由行星自己來寫。</p>"));
   pr.push(...chartLines(ch, "本命盤(" + B.str + ")"));
@@ -508,11 +495,11 @@ MODES.horary = (B, P, N, q, out, pr) => {
     const sign = (ch.ascSign + i) % 12, r = DC.RULER[sign], rp = ch.list.find(p => p.zh === r);
     return "第" + (i + 1) + "宮(" + HOUSE_MEAN[i] + ")在" + DC.ZODIAC[sign] + ",宮主" + r + "落第" + rp.house + "宮";
   });
-  out.push(card("卜卦盤", "Horary " + N.str, svgWheel(ch) +
+  out.push(DC.card("卜卦盤", "Horary " + N.str, svgWheel(ch) +
     '<p class="lead">上升' + DC.ZODIAC[ch.ascSign] + " " + ascDeg.toFixed(0) + "°,問卜者主星為" + ruler + "(落第" + rulerP.house + "宮" + (rulerP.retro ? ",逆行" : "") + ")</p>" +
     (warns.length ? "<p>" + warns.map(w => '<span class="badge red">' + w + "</span>").join(" ") + "</p>" : '<p><span class="badge">盤面具根性，可以放心論斷</span></p>') +
     chartTable(ch, true)));
-  out.push(card("十二宮宮主星", "House Rulers(傳統守護)", "<p>" + houses.join("<br>") + "</p>" +
+  out.push(DC.card("十二宮宮主星", "House Rulers(傳統守護)", "<p>" + houses.join("<br>") + "</p>" +
     "<p>月亮" + (voc.voc ? "空亡" : "下一個入相位:" + voc.asp + rulerNote(voc)) + "。月亮代表事情的走向與問卜者的心。</p>"));
   function rulerNote(v) { return v.hit ? v.hit + "(約 " + ((v.at - N.jd) * 24).toFixed(0) + " 小時後)" : ""; }
   pr.push(...chartLines(ch, "卜卦盤(以提問此刻 " + N.str + " 起盤，北緯" + N.lat + " 東經" + N.lon + ")"));
@@ -531,7 +518,7 @@ MODES.vnatal = (B, P, N, q, out, pr) => {
   const moonSid = sid.find(p => p.id === "moo");
   const nak = DC.nakOf(moonSid.lon);
   sid.push({ id: "ket", zh: "Ketu 南交", gl: "☋", lon: DC.rev(sid.find(p => p.id === "nod").lon + 180), retro: true });
-  out.push(card("印度本命盤（南印式）", "Rāśi Chart", southChart(sid, lagnaSign) +
+  out.push(DC.card("印度本命盤（南印式）", "Rāśi Chart", southChart(sid, lagnaSign) +
     '<p class="lead">上升(Lagna)' + DC.ZODIAC[lagnaSign] + "・月亮在 " + nak.name + " 第" + nak.pada + "步(主星 " + nak.lord + ")</p>" +
     "<p>月宿即心性:" + nak.key + "。</p>" +
     '<div class="tbl-scroll"><table class="data"><tr><th>星體</th><th>恆星黃道位置</th><th>宮位</th></tr>' +
@@ -556,11 +543,11 @@ MODES.dasha = (B, P, N, q, out, pr) => {
     if (a.to > cur.from) { if (a.from < cur.from) a.from = cur.from; antar.push(a); }
   }
   const curA = antar.find(a => nowJd >= a.from && nowJd < a.to);
-  out.push(card("Vimśottarī 大運", "Mahādaśā",
+  out.push(DC.card("Vimśottarī 大運", "Mahādaśā",
     '<p class="lead">現行大運:' + cur.lord + "(至 " + DC.fmtJD(cur.to, 8, false) + ")・現行副運:" + (curA ? curA.lord + "(至 " + DC.fmtJD(curA.to, 8, false) + ")" : "—") + "</p>" +
     '<div class="tbl-scroll"><table class="data"><tr><th>大運主</th><th>起</th><th>訖</th><th>年數</th></tr>' +
     das.map(d => '<tr' + (d === cur ? ' style="color:var(--gold-bright)"' : "") + "><td>" + d.lord + "</td><td>" + DC.fmtJD(d.from, 8, false) + "</td><td>" + DC.fmtJD(d.to, 8, false) + "</td><td>" + (d.balance ? d.balance.toFixed(1) : d.years) + "</td></tr>").join("") + "</table></div>"));
-  out.push(card("現行大運的副運(Antardaśā)", "",
+  out.push(DC.card("現行大運的副運(Antardaśā)", "",
     '<div class="tbl-scroll"><table class="data"><tr><th>副運主</th><th>起</th><th>訖</th></tr>' +
     antar.map(a => '<tr' + (a === curA ? ' style="color:var(--gold-bright)"' : "") + "><td>" + a.lord + "</td><td>" + DC.fmtJD(a.from, 8, false) + "</td><td>" + DC.fmtJD(a.to, 8, false) + "</td></tr>").join("") + "</table></div>"));
   pr.push("出生:" + B.str + ",月亮恆星黃經 " + DC.fmtLon(moonSid) + "(" + DC.nakOf(moonSid).name + ")");
@@ -574,7 +561,7 @@ MODES.navamsa = (B, P, N, q, out, pr) => {
   const sid = ch.list.map(p => ({ ...p, lon: DC.rev(p.lon - ay) }));
   const navList = sid.map(p => ({ ...p, sign: DC.navamsaSign(p.lon) }));
   const lagnaNav = DC.navamsaSign(DC.rev(ch.asc - ay));
-  out.push(card("九分盤", "Navāṃśa D9", southChartSigns(navList, lagnaNav) +
+  out.push(DC.card("九分盤", "Navāṃśa D9", southChartSigns(navList, lagnaNav) +
     "<p>九分盤是靈魂的底片：行星在 D1 是外顯，在 D9 是本質。落在同一星座(Vargottama)的行星力量倍增。</p>" +
     "<p>" + navList.map(p => p.zh + "→" + DC.ZODIAC[p.sign] + (DC.signOf(p.lon) === p.sign ? "(Vargottama!)" : "")).join("、") + "</p>"));
   pr.push(...sidLines(ch, ay, "本命盤 D1(" + B.str + ")"));
@@ -592,7 +579,7 @@ MODES.gochara = (B, P, N, q, out, pr) => {
   const sadeSati = dSat === 11 || dSat === 0 || dSat === 1;
   const jupHouse = ((jupSign - natMoonSign) % 12 + 12) % 12 + 1;
   const goodJup = [2, 5, 7, 9, 11].includes(jupHouse);
-  out.push(card("恆星制行運", "Gochara " + N.str,
+  out.push(DC.card("恆星制行運", "Gochara " + N.str,
     '<p class="lead">本命月亮星座(Janma Rāśi):' + DC.ZODIAC[natMoonSign] + "</p>" +
     "<p>" + (sadeSati ? '<span class="badge red">Sade Sati 進行中</span> 行運土星在' + DC.ZODIAC[satSign] + ",七年半土星試煉的" + (dSat === 11 ? "第一階段（醞釀）" : dSat === 0 ? "第二階段（最沉）" : "第三階段（出關）") : "目前不在 Sade Sati 期間，土星在" + DC.ZODIAC[satSign] + "(自月亮起第 " + (dSat + 1) + " 位)") + "。</p>" +
     "<p>行運木星在" + DC.ZODIAC[jupSign] + "(自月亮起第 " + jupHouse + " 位)——" + (goodJup ? "吉位，木星祝福正灑向你" : "非傳統吉位，擴張須節制") + "。</p>" +
@@ -609,7 +596,7 @@ MODES.prashna = (B, P, N, q, out, pr) => {
   const lagna = DC.rev(ch.asc - ay), lagnaSign = DC.signOf(lagna);
   const moonSid = sid.find(p => p.id === "moo");
   const nak = DC.nakOf(moonSid.lon);
-  out.push(card("問事盤", "Praśna " + N.str, southChart(sid, lagnaSign) +
+  out.push(DC.card("問事盤", "Praśna " + N.str, southChart(sid, lagnaSign) +
     '<p class="lead">問事上升 ' + DC.ZODIAC[lagnaSign] + " " + (lagna % 30).toFixed(0) + "°・此刻月亮在 " + nak.name + "(" + nak.key + ")</p>" +
     "<p>Praśna 以此刻天空作答：上升是問事者，月亮是事情的心，第七宮是對方/結果。</p>"));
   pr.push(...sidLines(ch, ay, "問事盤(提問此刻 " + N.str + " 起盤)"));
@@ -621,7 +608,7 @@ MODES.xnatal = (B, P, N, q, out, pr) => {
   const nak = DC.nakOf(DC.rev(DC.moonLon(B.jd) - ay));
   const xiu = DC.XIU27[nak.idx];
   const yao = DC.yaoOfDate(B.y, B.mo, B.d);
-  out.push(card("本命宿", "宿曜經",
+  out.push(DC.card("本命宿", "宿曜經",
     '<p class="lead" style="font-size:22px">' + xiu + "宿 <span style=\"font-size:14px;color:var(--muted)\">(" + nak.name + ")</span></p>" +
     "<p>" + DC.XIU_NOTE[nak.idx] + "。</p>" +
     "<p>生於" + yao + "曜日——" + { "日": "如日之人，光明磊落，自帶主角光環", "月": "如月之人，溫潤多感，以柔克剛", "火": "如火之人，烈性熱腸，勇往直前", "水": "如水之人，聰敏善變，隨物賦形", "木": "如木之人，正直向上，厚德載物", "金": "如金之人，重義重財，言出必行", "土": "如土之人，沉穩包容，大地之德" }[yao] + "。</p>"));
@@ -634,7 +621,7 @@ MODES.xtoday = (B, P, N, q, out, pr) => {
   const my = DC.nakOf(DC.rev(DC.moonLon(B.jd) - ayB));
   const td = DC.nakOf(DC.rev(DC.moonLon(N.jd) - ayN));
   const rel = DC.xiuRelation(my.idx, td.idx);
-  out.push(card("今日宿運（三九秘法）", DC.fmtJD(N.jd, N.tz, false),
+  out.push(DC.card("今日宿運（三九秘法）", DC.fmtJD(N.jd, N.tz, false),
     '<p class="lead">本命 ' + DC.XIU27[my.idx] + "宿 → 今日月在 " + DC.XIU27[td.idx] + "宿:<b style=\"font-size:20px;color:var(--gold-bright)\">" + rel.rel + "</b>(" + rel.ring + ",第 " + rel.dist + " 宿)</p>" +
     "<p>" + SANKU_MEAN[rel.rel] + "。</p>" +
     "<p>三九秘法：近距(1-9)應於身，中距(10-18)應於事，遠距(19-27)應於心。今日屬" + rel.ring + "。</p>"));
@@ -648,7 +635,7 @@ MODES.xbond = (B, P, N, q, out, pr) => {
   const b = DC.nakOf(DC.rev(DC.moonLon(P.jd) - ayB2));
   const ab = DC.xiuRelation(a.idx, b.idx), ba = DC.xiuRelation(b.idx, a.idx);
   const pairName = [ab.rel, ba.rel].sort().join("");
-  out.push(card("宿曜相性", "兩人宿緣",
+  out.push(DC.card("宿曜相性", "兩人宿緣",
     '<p class="lead">我:' + DC.XIU27[a.idx] + "宿・對方:" + DC.XIU27[b.idx] + "宿</p>" +
     "<p>由我看對方：第 " + ab.dist + " 宿，「<b>" + ab.rel + "</b>」(" + ab.ring + ")——" + SANKU_MEAN[ab.rel].split("——")[1] + "</p>" +
     "<p>由對方看我：第 " + ba.dist + " 宿，「<b>" + ba.rel + "</b>」(" + ba.ring + ")——" + SANKU_MEAN[ba.rel].split("——")[1] + "</p>" +

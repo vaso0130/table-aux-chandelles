@@ -87,8 +87,8 @@
   </p>
 </div>
 
-<script src="divine-core.js?v=2026102501"></script>
-<script src="divine-ui.js?v=2026102502"></script>
+<script src="divine-core.js?v=2026102503"></script>
+<script src="divine-ui.js?v=2026102503"></script>
 <script src="divine-lore.js?v=2026091402"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -127,10 +127,8 @@ DC.histBind("南洋館");
 const PK = "dc-ny-profile";
 const prof = DC.profileBind(PK, ["b-date","b-time","day-boundary"]);
 
-function card(t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
-function fail(msg) { $("go-hint").textContent = msg; return new Error(msg); }
 function readBirth() {
-  const dv = $("b-date").value; if (!dv) throw fail("請填出生日期");
+  const dv = $("b-date").value; if (!dv) throw DC.fail("請填出生日期");
   const tv = $("b-time").value || "12:00";
   const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
   return { y, m, d, h, mi, str: dv + " " + tv };
@@ -159,12 +157,12 @@ function runMaha(out, pr) {
   const todayIdx = tAM;
   const dayYaoStr = tAM === tPM ? DC.BUR8[tAM][0] : DC.BUR8[tAM][0] + "(上午)/" + DC.BUR8[tPM][0] + "(正午後)";
   const hitMine = tAM === idx || tPM === idx;
-  out.push(card("八曜生辰", "生於" + yao + "日",
+  out.push(DC.card("八曜生辰", "生於" + yao + "日",
     '<p class="lead" style="font-size:20px">' + yao + "・" + animal + '<span style="font-size:13px;color:var(--muted)">(守護星:' + planet + ")</span></p>" +
     "<p>" + trait + "。</p>" +
     "<p>你的佛塔方位角在<b style='color:var(--gold-bright)'>" + dir + "</b>——緬甸人到佛塔，會去自己生曜的角落澆水獻花，一歲澆一杯，再加一杯敬未來。</p>" +
     "<p>" + T.str + "值" + dayYaoStr + "——" + (hitMine ? "正是你的本命曜日，宜行大事、宜還願" : "與你的" + yao + "相參看該日行事") + "。</p>"));
-  out.push(card("摩訶菩提命盤（起盤參數）", "Mahabote",
+  out.push(DC.card("摩訶菩提命盤（起盤參數）", "Mahabote",
     '<div class="kv"><span><b>緬曆年</b>' + me.ME + " ME</span><span><b>年餘數</b>" + me.r + "(緬曆年 ÷ 7 之餘)</span><span><b>生曜</b>" + yao + "</span></div>" +
     "<p>Mahabote 以生曜與緬曆年餘數，把七曜佈入賓伽(Binga)、阿通(Ahtaung)、亞扎(Yaza)、阿提帕蒂(Adhipati)、馬拉納(Marana)、泰克(Thike)、普提(Puti)七宮論命。此處提供正確起盤參數，七宮詳排交由 AI 完成。</p>"));
   pr.push("緬甸八曜與 Mahabote(生於 " + B.str + ";日界採" + boundaryLabel() + "):");
@@ -185,7 +183,7 @@ function runWeton(out, pr) {
   const [pcName, pcNote] = DC.PANCASUDA[w.panca];
   const dina = DC.DINA[w.wd];
   const special = DC.WETON_SPECIAL[w.wd + "," + w.pas];
-  out.push(card("你的威頓", "Weton " + w.name,
+  out.push(DC.card("你的威頓", "Weton " + w.name,
     '<p class="lead" style="font-size:20px">' + DC.DAY_ID[w.wd] + " × " + pasName + '</p>' +
     (special ? '<p><span class="badge">' + special[0] + "</span> " + special[1] + "。</p>" : "") +
     '<div class="kv"><span><b>靈數 Neptu</b>' + DC.NEPTU_DAY[w.wd] + " + " + DC.NEPTU_PAS[w.pas] + " = <b style='font-size:17px'>" + w.neptu + "</b></span><span><b>日象</b>" + dina[0] + "</span><span><b>市集日方位</b>" + pasDir + "</span><span><b>本命色</b>" + pasColor + "</span></div>" +
@@ -216,7 +214,7 @@ function runThai(out, pr) {
   const animal = DC.THAI12[((zy - 4) % 12 + 12) % 12];
   const T = readTarget();
   const todayIdx = DC.thai7Index(T.y, T.m, T.d, 12);
-  out.push(card("本命佛日", "เกิดวัน" + "・" + dayName + "生",
+  out.push(DC.card("本命佛日", "เกิดวัน" + "・" + dayName + "生",
     '<p class="lead" style="font-size:20px">' + buddha + '</p>' +
     "<p>" + trait + "。</p>" +
     '<div class="kv"><span><b>本命色</b>' + color + "</span><span><b>忌色</b>" + badColor + "(民俗簡表)</span><span><b>泰式生肖</b>" + animal + "年（宋干節換歲）</span></div>" +

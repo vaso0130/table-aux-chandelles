@@ -102,8 +102,8 @@
   </p>
 </div>
 
-<script src="divine-core.js?v=2026102501"></script>
-<script src="divine-ui.js?v=2026102502"></script>
+<script src="divine-core.js?v=2026102503"></script>
+<script src="divine-ui.js?v=2026102503"></script>
 <script src="divine-lore.js?v=2026091402"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -150,15 +150,7 @@ function renderSys() {
 }
 function renderModes() {
   const s = SYS.find(x => x.id === sysId);
-  $("modes").innerHTML = "";
-  (s.modes || []).forEach(([id, name, desc], i) => {
-    const b = document.createElement("button");
-    b.className = "mode-btn" + (id === modeId ? " active" : "");
-    b.innerHTML = '<span class="s-row"><span class="s-idx">' + "壹貳參肆伍陸柒捌"[i] + '</span><span class="s-name">' + name +
-      '</span><span class="s-leader"></span></span><span class="s-desc">' + desc + '</span>';
-    b.onclick = () => { modeId = id; renderModes(); updateForm(); };
-    $("modes").appendChild(b);
-  });
+  DC.renderModes(s.modes, modeId, (id) => { modeId = id; renderModes(); updateForm(); });
 }
 function updateForm() {
   const s = SYS.find(x => x.id === sysId);
@@ -179,10 +171,8 @@ const PK = "dc-bazi-profile";
 DC.fillCitySelect($("b-city"), {}, {}, $("b-tz"));   /* 與占星館、MIX 同一份城市清單；本館只需時區 */
 const prof = DC.profileBind(PK, ["b-date","b-time","b-gender","b-city","b-tz","b-zwyear","b-dayboundary","b-zwleap"]);
 
-function card(t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
-function fail(msg) { $("go-hint").textContent = msg; return new Error(msg); }
 function readBirth() {
-  const dv = $("b-date").value; if (!dv) throw fail("請填出生日期");
+  const dv = $("b-date").value; if (!dv) throw DC.fail("請填出生日期");
   const tv = $("b-time").value || "12:00";
   const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
   return { y, m, d, h, mi, tz: DC.numOr($("b-tz").value, 8), male: $("b-gender").value === "m", dayBoundary: $("b-dayboundary").value, str: dv + " " + tv };
@@ -214,11 +204,11 @@ function runBazi(out, pr) {
   const ss = DC.shensha(bz);
   const cnt = wxCount(bz);
   const dS = bz.pillars[2].s;
-  out.push(card("八字命盤", B.str + "(" + (B.male ? "男" : "女") + "命)", pillarsHtml(bz, true) +
+  out.push(DC.card("八字命盤", B.str + "(" + (B.male ? "男" : "女") + "命)", pillarsHtml(bz, true) +
     '<div class="kv"><span><b>日主</b>' + DC.STEMS[dS] + DC.STEM_WX[dS] + "</span><span><b>空亡</b>" + bz.kong.join("") + "</span><span><b>五行</b>" +
     Object.entries(cnt).map(([k, v]) => k + v).join(" ") + "</span></div>" +
     (ss.length ? "<p>" + ss.map(s => '<span class="badge">' + s.split("——")[0] + "</span>").join(" ") + "</p>" : "")));
-  out.push(card("大運", (dy.fwd ? "順行" : "逆行") + "・" + dy.startAge.toFixed(1) + " 歲起運",
+  out.push(DC.card("大運", (dy.fwd ? "順行" : "逆行") + "・" + dy.startAge.toFixed(1) + " 歲起運",
     '<div class="tbl-scroll"><table class="data"><tr><th>起歲</th>' + dy.list.map(d => "<th>" + Math.round(d.fromAge) + "</th>").join("") + "</tr>" +
     "<tr><td>大運</td>" + dy.list.map(d => '<td class="hl">' + d.gz + "</td>").join("") + "</tr>" +
     "<tr><td>十神</td>" + dy.list.map(d => "<td>" + DC.tenGod(dS, d.s) + "</td>").join("") + "</tr></table></div>"));
@@ -238,7 +228,7 @@ function runZiwei(out, pr) {
   const B = readBirth();
   const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz);
   const lun = DC.lunar(B.y, B.m, B.d, B.tz);
-  if (!lun) throw fail("農曆換算失敗");
+  if (!lun) throw DC.fail("農曆換算失敗");
   const useLichun = $("b-zwyear").value === "lichun";
   const ly = DC.lunarYearGZ(B.y, B.m, lun);
   const yS = useLichun ? bz.pillars[0].s : ly.s, yB = useLichun ? bz.pillars[0].b : ly.b;
@@ -269,9 +259,9 @@ function runZiwei(out, pr) {
       '<span class="c-tag">大限 ' + P.daxian + "</span></div>";
   }
   grid += "</div>";
-  out.push(card("紫微命盤", "中州派安星・年界" + (useLichun ? "立春" : "正月初一"), grid));
+  out.push(DC.card("紫微命盤", "中州派安星・年界" + (useLichun ? "立春" : "正月初一"), grid));
   const mingP = zw.P[zw.ming];
-  out.push(card("命宮概要", "", '<p class="lead">命宮' + DC.BRANCHES[zw.ming] + "宮，主星:" + (mingP.stars.join("、") || "無主星（借對宮）") + "</p>" +
+  out.push(DC.card("命宮概要", "", '<p class="lead">命宮' + DC.BRANCHES[zw.ming] + "宮，主星:" + (mingP.stars.join("、") || "無主星（借對宮）") + "</p>" +
     "<p>" + zw.juName + ",第一大限自 " + zw.ju + " 歲起。四化:" + zw.P.flatMap(p => p.hua).join("、") + "。</p>"));
   pr.push("紫微斗數命盤(" + B.str + " → 農曆 " + yGZ + "年" + lunStr + "," + (B.male ? "男" : "女") + "命," + zw.juName + "):");
   pr.push("  年界取法:" + (useLichun ? "以立春換歲（部分門派取法）——生於立春至正月初一之間者，年柱與主流盤不同" : "以農曆正月初一換歲（主流取法）") + ";年干支 " + yGZ + ",宮干五虎遁、生年四化、祿存羊陀、魁鉞火鈴皆依此年干支起，請依此取法解讀。");
@@ -288,7 +278,7 @@ function runShichu(out, pr) {
   const B = readBirth();
   const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz, B.dayBoundary);
   const dS = bz.pillars[2].s;
-  out.push(card("四柱推命", "命式(" + B.str + ")", pillarsHtml(bz, true) +
+  out.push(DC.card("四柱推命", "命式(" + B.str + ")", pillarsHtml(bz, true) +
     '<div class="tbl-scroll"><table class="data"><tr><th>柱</th><th>干支</th><th>通変星</th><th>十二運</th></tr>' +
     bz.pillars.map((p, i) => "<tr><td>" + p.tag + '</td><td class="hl">' + p.gz + "</td><td>" + (i === 2 ? "日主" : DC.tenGod(dS, p.s).replace("七殺", "偏官").replace("正印", "印綬")) + "</td><td>" + twelveUn(dS, p.b) + "</td></tr>").join("") + "</table></div>" +
     "<p>十二運星看每一柱的氣勢盛衰：年柱主祖上與少年、月柱主家庭與青年、日柱主自身與中年、時柱主晚年與子息。</p>"));
@@ -317,10 +307,10 @@ function runNinestar(out, pr) {
   const shengWo = DC.WX[(DC.WX.indexOf(myWx) + 4) % 5], woSheng = DC.WX[(DC.WX.indexOf(myWx) + 1) % 5];
   const goodStars = [];
   for (let s2 = 1; s2 <= 9; s2++) if (s2 !== 5 && s2 !== star && (DC.NSTAR_WX[s2] === shengWo || DC.NSTAR_WX[s2] === myWx)) goodStars.push(s2);
-  out.push(card("本命星與月命星", "九星氣學",
+  out.push(DC.card("本命星與月命星", "九星氣學",
     '<p class="lead">本命星:' + DC.NSTAR[star] + "(" + (B.male ? "男" : "女") + "命算法)・月命星:" + DC.NSTAR[mStar] + "</p>" +
     "<p>本命星屬" + myWx + ":" + shengWo + "生我為生氣、" + myWx + "比和為旺氣——" + goodStars.map(s2 => DC.NSTAR[s2]).join("、") + " 為你的吉星。</p>"));
-  out.push(card("本年年盤(" + effNow + " 立春起)", "五黃殺與吉方",
+  out.push(DC.card("本年年盤(" + effNow + " 立春起)", "五黃殺與吉方",
     '<div class="grid9">' + [4, 9, 2, 3, 5, 7, 8, 1, 6].map(p2 =>
       '<div class="cell' + (p2 === myPalace ? " hl" : "") + '"><span class="g-name">' + DC.GONG_NAME[p2] + '</span><span class="g-main">' + DC.NSTAR[palaceStar(p2)].slice(0, 2) + "</span>" +
       (palaceStar(p2) === 5 && p2 !== 5 ? '<br><span class="g-mut" style="color:#E8A08F">五黃殺</span>' : "") +
@@ -353,14 +343,14 @@ function runDangsaju(out, pr) {
   const B = readBirth();
   const ds = DC.dangsaju(B.y, B.m, B.d, B.h, B.tz);   /* 起星收斂於 core(與 MIX 同源) */
   const lun = ds.lun;
-  if (!lun) throw fail("農曆換算失敗");
+  if (!lun) throw DC.fail("農曆換算失敗");
   const yB = ds.yB, hb = ds.hb;
   const [posY, posM, posD, posH] = ds.pos;
   const stages = [
     ["初年運(~20)", posY, "年支起星"], ["青年運(20-40)", posM, "數至" + (lun.isLeap ? "閏" : "") + DC.CN_MONTH[lun.month - 1] + "月"],
     ["中年運(40-60)", posD, "數至" + DC.CN_DAY[lun.day - 1]], ["晚年運(60~)", posH, "數至" + DC.BRANCHES[hb] + "時"]
   ];
-  out.push(card("唐四柱・十二天星", "당사주(" + DC.BRANCHES[yB] + "年 " + (lun.isLeap ? "閏" : "") + DC.CN_MONTH[lun.month - 1] + "月" + DC.CN_DAY[lun.day - 1] + DC.BRANCHES[hb] + "時)",
+  out.push(DC.card("唐四柱・十二天星", "당사주(" + DC.BRANCHES[yB] + "年 " + (lun.isLeap ? "閏" : "") + DC.CN_MONTH[lun.month - 1] + "月" + DC.CN_DAY[lun.day - 1] + DC.BRANCHES[hb] + "時)",
     '<div class="pillars">' + stages.map(([tag, p]) => {
       const s = DS_STARS[p];
       return '<div class="pillar"><span class="p-tag">' + tag + '</span><span class="p-char" style="font-size:26px"><i class="ds-ico" aria-hidden="true">' + s[2] + "</i>" + s[0] + '</span><span class="p-ten">' + s[1] + "</span></div>";
@@ -380,17 +370,17 @@ function runHumand(out, pr) {
   const B = readBirth();
   const hd = DC.humanDesign(B.y, B.m, B.d, B.h, B.mi, B.tz);
   const dDate = (() => { const dt = new Date((hd.jdD - DC.jd(1970, 1, 1, 0, 0, 0)) * 86400000 + B.tz * 3600000); return dt.getUTCFullYear() + "-" + DC.pad2(dt.getUTCMonth() + 1) + "-" + DC.pad2(dt.getUTCDate()); })();
-  out.push(card("類型與權威", hd.T.name,
+  out.push(DC.card("類型與權威", hd.T.name,
     '<div class="kv"><span><b>類型</b>' + hd.T.name + "</span><span><b>人生角色</b>" + hd.profile + "(" + hd.profileName + ")</span><span><b>定義</b>" + hd.defName + "</span></div>" +
     '<p class="lead">策略:' + hd.T.strat + "</p>" +
     "<p><b>內在權威</b>:" + hd.auth + "。</p>" +
     "<p>對頻的訊號是「" + hd.T.sig + "」，走偏的訊號是「" + hd.T.notself + "」——感到" + hd.T.notself + "時，回到策略重新來過。</p>" +
     "<p>輪迴交叉:" + hd.angle + " " + hd.cross + "(個性日地|設計日地)。</p>"));
-  out.push(card("十三星體啟動", "設計(紅・潛意識，約 " + dDate + ")|個性（黑・意識，出生時刻）",
+  out.push(DC.card("十三星體啟動", "設計(紅・潛意識，約 " + dDate + ")|個性（黑・意識，出生時刻）",
     '<div class="tbl-scroll"><table class="data"><tr><th style="color:#E8A08F">設計</th><th>星體</th><th style="color:var(--gold-bright)">個性</th></tr>' +
     hd.pers.map((p, i) => "<tr><td style='color:#E8A08F'>" + hd.des[i].gate + "." + hd.des[i].line + "</td><td>" + p.gl + " " + p.zh + '</td><td class="hl">' + p.gate + "." + p.line + "</td></tr>").join("") + "</table></div>"));
   const openC = DC.HD_CENTERS.map((n, i) => i).filter(i => !hd.defined.has(i));
-  out.push(card("九中心與通道", hd.defined.size + " 定義・" + openC.length + " 開放",
+  out.push(DC.card("九中心與通道", hd.defined.size + " 定義・" + openC.length + " 開放",
     "<p>" + DC.HD_CENTERS.map((n, i) => '<span class="badge' + (hd.defined.has(i) ? "" : " dim") + '">' + n + (hd.defined.has(i) ? "" : "(開放)") + "</span>").join(" ") + "</p>" +
     (hd.channels.length ? "<p>接通的通道:" + hd.channels.map(c => "<b>" + c[0] + "-" + c[1] + "</b> " + c[2]).join("、") + "。</p>" : "<p>無完整通道（反映者）。</p>") +
     "<p>定義中心是你穩定的能量與天賦；開放中心是你放大並學習他人的地方，也是「非自己」雜音的入口。</p>"));
@@ -412,7 +402,7 @@ const YEAR_MEAN = ["", "播種年——開新局、立新志，種下九年的�
   "築基年——蓋地基的苦工年，穩紮穩打", "轉折年——變動與自由之年，舊的走新的來", "收成與責任年——家庭、感情、承擔，愛的功課",
   "內省年——沉澱、學習、獨處，向內挖金礦", "豐收年——事業與財務的大年，敢拿敢收", "了結年——清倉、告別、放手，為新週期騰位"];
 function runLifenum(topic, out, pr) {
-  const dv = $("b-date").value; if (!dv) throw fail("請填出生日期");
+  const dv = $("b-date").value; if (!dv) throw DC.fail("請填出生日期");
   const [y, m, d] = dv.split("-").map(Number);
   const tv = $("t-date").value;
   const now = tv ? (() => { const [ty, tm, td] = tv.split("-").map(Number); return { getFullYear: () => ty, getMonth: () => tm - 1, getDate: () => td }; })() : new Date();
@@ -432,38 +422,38 @@ function runLifenum(topic, out, pr) {
   pr.push("  流年 " + L.py + "、流月 " + L.pm + "、流日 " + L.pd + "(" + (tv ? "指定日期 " : "") + now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate() + ")", "");
   const T = {
     blueprint() {
-      out.push(card("人生藍圖", "Life Blueprint", baseKv +
+      out.push(DC.card("人生藍圖", "Life Blueprint", baseKv +
         '<p class="lead">' + L.lp + " 號人・" + C.t + "——" + C.key + "</p>" +
         "<p>光面:" + C.light + "。影面:" + C.shadow + "。</p>" + gridH + "<p>" + linesH + "</p>" +
         "<p>空缺數字 " + (L.missing.join("、") || "無") + (L.missing.length ? "——這是待補的人生拼圖，不是缺陷" : "——九宮俱全，資源自足") + "。</p>"));
       pr.push("請以生命靈數解讀我的人生藍圖:1. 生命靈數的核心使命。2. 天賦/生日/態度數如何互相搭配。3. 九宮連線與空缺數字的意義。4. 巔峰數的四階段人生節奏。5. 一段給我的總結。");
     },
     wealth() {
-      out.push(card("財運", "Money", baseKv + '<p class="lead">' + L.lp + " 號人的財富公式</p><p>" + C.money + "。</p>" +
+      out.push(DC.card("財運", "Money", baseKv + '<p class="lead">' + L.lp + " 號人的財富公式</p><p>" + C.money + "。</p>" +
         "<p>生日數 " + L.birthday + " 補充:" + coreOf(L.birthday).money + "。</p>"));
       pr.push("請聚焦「財運」解讀:1. 生命靈數 " + L.lp + " 的賺錢模式與漏財暗礁。2. 生日數 " + L.birthday + " 的加成。3. 今年流年 " + L.py + " 的財務策略。4. 具體的開源節流建議。");
     },
     love() {
-      out.push(card("戀愛", "Love", baseKv + '<p class="lead">' + L.lp + " 號人的愛情語言</p><p>" + C.love + "。</p>" +
+      out.push(DC.card("戀愛", "Love", baseKv + '<p class="lead">' + L.lp + " 號人的愛情語言</p><p>" + C.love + "。</p>" +
         "<p>態度數 " + L.attitude + "(初見印象):" + coreOf(L.attitude).love + "。</p>"));
       pr.push("請聚焦「戀愛」解讀:1. 生命靈數 " + L.lp + " 在親密關係中的樣子與地雷。2. 態度數 " + L.attitude + " 給人的第一印象落差。3. 與哪些數字的人最互補/最磨。4. 今年流年 " + L.py + " 的感情機會與提醒。");
     },
     career() {
-      out.push(card("職涯", "Career", baseKv + '<p class="lead">' + L.lp + " 號人的職場定位</p><p>" + C.work + "。</p><p>" + linesH + "</p>"));
+      out.push(DC.card("職涯", "Career", baseKv + '<p class="lead">' + L.lp + " 號人的職場定位</p><p>" + C.work + "。</p><p>" + linesH + "</p>"));
       pr.push("請聚焦「職涯」解讀:1. 生命靈數 " + L.lp + " 適合的角色與產業。2. 連線(" + (L.lines.map(l => l.name).join("、") || "無") + ")透露的職場武器。3. 帶人還是單兵、創業還是深耕。4. 未來三年職涯佈局（參考流年）。");
     },
     study() {
-      out.push(card("學習", "Learning", baseKv + '<p class="lead">' + L.lp + " 號人的學習模式</p><p>" + C.study + "。</p>"));
+      out.push(DC.card("學習", "Learning", baseKv + '<p class="lead">' + L.lp + " 號人的學習模式</p><p>" + C.study + "。</p>"));
       pr.push("請聚焦「學習」解讀:1. 生命靈數 " + L.lp + " 的最佳學習法。2. 空缺數字 " + (L.missing.join("、") || "無") + " 需要刻意練習的能力。3. 適合的進修方向與考運策略。");
     },
     change() {
-      out.push(card("變動", "Change", baseKv +
+      out.push(DC.card("變動", "Change", baseKv +
         "<p>5 的能量（自由與變動）在你盤中出現 " + (L.grid[5] || 0) + " 次；流年 " + L.py + "——" + YEAR_MEAN[L.py] + "。</p>" +
         "<p>挑戰數 " + L.challenges.join("、") + " 標示了變動時最容易絆倒的石頭。</p>"));
       pr.push("請聚焦「變動」解讀:1. 我面對搬遷/轉職/轉變的體質(5 能量 ×" + (L.grid[5] || 0) + ")。2. 流年 " + L.py + " 適不適合大動作。3. 若要變動，最好的時間窗與準備清單。");
     },
     year() {
-      out.push(card("流年", "Personal Year " + L.py, baseKv +
+      out.push(DC.card("流年", "Personal Year " + L.py, baseKv +
         '<p class="lead">流年 ' + L.py + "——" + YEAR_MEAN[L.py] + "</p>" +
         "<p>流月 " + L.pm + "、流日 " + L.pd + "。九年一循環，你正走在第 " + L.py + " 步。</p>" +
         '<div class="tbl-scroll"><table class="data"><tr><th>流年</th><th>主題</th></tr>' +
@@ -471,7 +461,7 @@ function runLifenum(topic, out, pr) {
       pr.push("請聚焦「流年」解讀:1. 流年 " + L.py + " 這一年的劇本與月份節奏。2. 上半年/下半年的重點。3. 明年流年 " + (L.py % 9 + 1) + " 該提前佈的局。");
     },
     challenge() {
-      out.push(card("挑戰", "Challenges", baseKv +
+      out.push(DC.card("挑戰", "Challenges", baseKv +
         '<div class="tbl-scroll"><table class="data"><tr><th>階段</th><th>挑戰數</th><th>課題</th></tr>' +
         L.challenges.map((c, i) => "<tr><td>" + ["第一(~" + L.pinnacles[0].to + "歲)", "第二(" + L.pinnacles[1].from + "-" + L.pinnacles[1].to + "歲)", "第三(" + L.pinnacles[2].from + "-" + L.pinnacles[2].to + "歲)", "第四(" + L.pinnacles[3].from + "歲~)"][i] + '</td><td class="hl">' + c + "</td><td>" + (c === 0 ? "無特定挑戰——自由題，自己出題自己答" : coreOf(c).shadow + "(修成:" + coreOf(c).light + ")") + "</td></tr>").join("") + "</table></div>"));
       pr.push("請聚焦「挑戰數」解讀:1. 四階段挑戰各自的具體場景。2. 我現在正處於哪一關、如何過。3. 挑戰數 0(若有)的自由題怎麼答。");

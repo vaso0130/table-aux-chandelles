@@ -191,8 +191,8 @@
   </p>
 </div>
 
-<script src="divine-core.js?v=2026102501"></script>
-<script src="divine-ui.js?v=2026102502"></script>
+<script src="divine-core.js?v=2026102503"></script>
+<script src="divine-ui.js?v=2026102503"></script>
 <script src="divine-lore.js?v=2026091402"></script>
 <script src="qs-data.js?v=2026091402"></script>
 <script>
@@ -234,8 +234,6 @@ function updateForm() {
   if (sysId === "qs") qiuInit();
 }
 
-function card(t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
-const rand01 = () => DC.rand(1073741824) / 1073741824;
 
 /* ═══ 燭光一句 ═══ */
 function runYiju() {
@@ -270,9 +268,9 @@ function runKieu() {
   const i = DC.rand(DC.KIEU.length);
   const [viet, hant, title, gloss, pol] = DC.KIEU[i];
   const polTxt = pol === "good" ? "吉" : pol === "bad" ? "慎" : "平";
-  $("out").innerHTML = card("焚香拜請", "Bói Kiều",
+  $("out").innerHTML = DC.card("焚香拜請", "Bói Kiều",
     '<p style="color:var(--muted);font-style:italic">「Lạy vua Từ Hải, lạy vãi Giác Duyên, lạy tiên Thúy Kiều…」<br>拜徐海王、拜覺緣師太、拜翠翹仙——默唸問題，書頁自開。</p>') +
-    card("第 " + (i + 1) + " 句・" + title, '<span class="badge' + (pol === "bad" ? " red" : pol === "good" ? "" : " dim") + '">' + polTxt + "</span>",
+    DC.card("第 " + (i + 1) + " 句・" + title, '<span class="badge' + (pol === "bad" ? " red" : pol === "good" ? "" : " dim") + '">' + polTxt + "</span>",
     '<p class="lead" style="font-style:italic;line-height:2">' + viet.replace(/\n/g, "<br>") + "</p>" +
     '<p style="color:var(--ivory)">' + hant + "</p><p>" + gloss + "</p>");
   const pr = ["越南翹傳開卷(Bói Kiều,《金雲翹傳》選句卅五之第 " + (i + 1) + " 句,crypto 真隨機開卷)。" + DC.toneHead(), ""];
@@ -316,7 +314,7 @@ function tossJiao(cb) {
     el.dataset.face = "";
     el.classList.remove("toss"); void el.offsetWidth; el.classList.add("toss");
   });
-  const a = rand01() < 0.5, b = rand01() < 0.5;
+  const a = DC.rand01() < 0.5, b = DC.rand01() < 0.5;
   setTimeout(() => {
     [[$("jiao-a"), a], [$("jiao-b"), b]].forEach(([el, flat]) => {
       el.className = "jiao-block " + (flat ? "flat" : "round");

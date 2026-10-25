@@ -211,10 +211,10 @@
   </p>
 </div>
 
-<script src="divine-core.js?v=2026102501"></script>
-<script src="divine-ui.js?v=2026102502"></script>
+<script src="divine-core.js?v=2026102503"></script>
+<script src="divine-ui.js?v=2026102503"></script>
 <script src="divine-lore.js?v=2026091402"></script>
-<script src="shilun-data.js?v=2026101901"></script>
+<script src="shilun-data.js?v=2026102503"></script>
 <script>
 const $ = id => document.getElementById(id);
 const S = window.SHILUN;
@@ -223,20 +223,12 @@ const sleep = ms => new Promise(r => setTimeout(r, RM ? Math.min(ms, 30) : ms));
 const BY = { y: "依年份", z: "依月份", g: "依日期", d: "依星期", h: "依時辰", m: "依分鐘" };
 
 /* ═══ 起占時刻（第一次搓洗時鎖定） ═══ */
-function setNowFields() {
-  const n = new Date();
-  $("w-date").value = n.getFullYear() + "-" + DC.pad2(n.getMonth() + 1) + "-" + DC.pad2(n.getDate());
-  $("w-time").value = DC.pad2(n.getHours()) + ":" + DC.pad2(n.getMinutes());
-}
+const setNowFields = () => DC.setNow("w-date", "w-time");
 setNowFields();
 setInterval(() => { if ($("n-follow").checked && !lockedT) setNowFields(); }, 1000);
 ["w-date", "w-time"].forEach(id => $(id).addEventListener("input", () => { $("n-follow").checked = false; }));
 $("n-follow").addEventListener("change", () => { if ($("n-follow").checked) setNowFields(); });
-function nowT() {
-  const dv = $("w-date").value, tv = $("w-time").value;
-  if (dv && tv) { const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number); return { y, m, d, h, mi, tz: 8 }; }
-  const n = new Date(); return { y: n.getFullYear(), m: n.getMonth() + 1, d: n.getDate(), h: n.getHours(), mi: n.getMinutes(), tz: 8 };
-}
+const nowT = () => DC.readT("w-date", "w-time"); // 時輪占只看當地鐘點（國曆刻度），不需時區
 function lockTime() {
   if (lockedT) return;
   lockedT = patch ? patch.t : nowT(); P = S.positionsAt(lockedT);

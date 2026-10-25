@@ -237,93 +237,6 @@
   .sig-mini:hover, .sig-mini:focus-visible { border-color: var(--gold-dim); background: rgba(201,164,92,.08); color: var(--gold-bright); }
   .sig-mini:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 
-  /* ── 求籤・擲筊 ─────────────────────────── */
-  #qiu { text-align: center; }
-  #jiao { display: flex; gap: 20px; justify-content: center; align-items: flex-end; height: 52px; margin: 10px 0 4px; }
-  .jiao-block { width: 66px; height: 34px; position: relative; }
-  .jiao-block.flat {
-    background: linear-gradient(#b8542f, #93381f);
-    border-radius: 10px 10px 30px 30px / 8px 8px 26px 26px;
-    box-shadow: inset 0 3px 0 rgba(255,226,180,.4), 0 3px 8px rgba(0,0,0,.4);
-  }
-  .jiao-block.round {
-    background: linear-gradient(#7c2d1c 20%, #a5462f);
-    border-radius: 32px 32px 10px 10px / 30px 30px 8px 8px;
-    box-shadow: inset 0 -3px 0 rgba(0,0,0,.25), 0 3px 8px rgba(0,0,0,.4);
-  }
-  .jiao-block::after {
-    content: attr(data-face); position: absolute; inset: 0;
-    display: grid; place-items: center;
-    color: #f6e7c8; font-size: 13px; letter-spacing: .15em;
-  }
-  @keyframes jiao-toss {
-    0% { transform: translateY(0) rotate(0); }
-    45% { transform: translateY(-40px) rotate(200deg); }
-    100% { transform: translateY(0) rotate(360deg); }
-  }
-  .jiao-block.toss { animation: jiao-toss .55s ease-in; }
-  #qiu-stick {
-    width: 30px; height: 132px; margin: 12px auto 2px;
-    background: linear-gradient(90deg, #caa25e, #e5c98c 45%, #b98f4e);
-    border: 1px solid #8a6a33; border-radius: 4px 4px 8px 8px;
-    writing-mode: vertical-rl; display: flex; align-items: center; justify-content: center;
-    color: #7a2418; font-size: 15px; letter-spacing: .1em; font-weight: 700;
-    box-shadow: 0 4px 10px rgba(0,0,0,.45);
-  }
-  @keyframes stick-out { 0% { transform: translateY(26px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-  #qiu-stick.out { animation: stick-out .5s ease-out; }
-  #qiu-stick[hidden] { display: none; }
-  #qiu-log { font-size: 12.5px; color: var(--muted); letter-spacing: .06em; min-height: 1.5em; margin: 6px 0 0; }
-
-  /* ── 詩籤（古式直排籤紙） ────────────────── */
-  #slots.qiu { display: block; width: auto; max-width: 100%; }
-  .qslip {
-    --qred: #9b2b1f; --qink: #3d2e19;
-    /* 直排內容不會隨容器縮寬：紙框必須跟著內容走，平移交給外層捲動 */
-    display: inline-block; width: max-content; max-width: none; margin: 0 auto; padding: 10px;
-    background: linear-gradient(165deg, #f7eed6, #efe0ba 55%, #e7d3a4);
-    border: 1px solid #c9a45c; border-radius: 2px;
-    box-shadow: 0 8px 28px rgba(0,0,0,.5), inset 0 0 70px rgba(150,95,30,.14);
-    color: var(--qink); position: relative; text-align: initial;
-  }
-  .qslip-inner {
-    border: 3px double var(--qred); padding: 20px 16px 20px 20px; position: relative;
-    width: max-content;
-    background:
-      radial-gradient(ellipse at 18% 8%, rgba(155,43,31,.05), transparent 42%),
-      radial-gradient(ellipse at 85% 92%, rgba(155,43,31,.05), transparent 42%);
-  }
-  .qslip-body { writing-mode: vertical-rl; height: 430px; line-height: 1.9; }
-  .qslip-body > div { margin-left: 10px; }
-  .qs-no { color: var(--qred); font-size: 21px; font-weight: 700; letter-spacing: .3em; margin-left: 14px; }
-  .qs-grade {
-    color: #f3e5c2; background: var(--qred); border-radius: 2px;
-    padding: 10px 3px; font-size: 15px; letter-spacing: .35em; align-self: flex-start;
-    height: max-content; box-shadow: 0 1px 4px rgba(0,0,0,.3);
-  }
-  .qs-gz { font-size: 11px; color: #8a5a28; letter-spacing: .12em; margin-left: 12px; }
-  .qs-gua { font-size: 12px; color: #7a3d20; letter-spacing: .1em; border-left: 1px solid rgba(155,43,31,.35); padding-left: 8px; margin-left: 14px; }
-  .qs-bai { font-size: 12px; color: #6a5230; letter-spacing: .03em; }
-  .qs-titlebar { font-size: 16px; letter-spacing: .3em; border-left: 1px solid rgba(155,43,31,.4); padding-left: 8px; margin-left: 14px; }
-  .qs-poem { font-size: 19px; letter-spacing: .22em; font-weight: 600; }
-  .qs-poem:last-of-type { margin-left: 16px; }
-  .qs-jie { font-size: 13.5px; color: #6a4a22; border-left: 1px solid rgba(155,43,31,.4); padding-left: 8px; margin-left: 14px; max-height: 430px; }
-  .qs-item { font-size: 12.5px; color: #5b4526; letter-spacing: .05em; }
-  .qs-item b { color: var(--qred); font-weight: 700; }
-  .qs-story { font-size: 11.5px; color: #77602f; border-left: 1px solid rgba(155,43,31,.35); padding-left: 8px; margin-left: 12px; }
-  .qs-house { font-size: 10.5px; color: #9a814c; letter-spacing: .3em; margin-left: 4px; }
-  .qs-seal {
-    position: absolute; left: 14px; bottom: 14px; width: 40px; height: 40px;
-    background: var(--qred); color: #f3e5c2; border-radius: 3px;
-    writing-mode: vertical-rl; display: grid; place-items: center;
-    font-size: 15px; letter-spacing: .2em; opacity: .88;
-    box-shadow: 0 1px 5px rgba(0,0,0,.35); z-index: 2;
-  }
-  @media (max-width: 640px) {
-    .qslip-body { height: 400px; }
-    .qs-poem { font-size: 17px; }
-  }
-
   /* 問題輸入 */
   .question-row {
     display: flex; align-items: center; gap: 14px;
@@ -1052,18 +965,6 @@
           <button class="ghost-btn gold" id="btn-throw">擲 錢</button>
         </div>
       </div>
-      <div id="qiu" hidden>
-        <p class="deck-caption" id="qiu-caption"></p>
-        <div id="jiao" aria-live="polite" hidden>
-          <div class="jiao-block" id="jiao-a"></div>
-          <div class="jiao-block" id="jiao-b"></div>
-        </div>
-        <div id="qiu-stick" hidden></div>
-        <p id="qiu-log" aria-live="polite"></p>
-        <div class="deck-tools">
-          <button class="ghost-btn gold" id="btn-qiu" data-act="bing">上 香 稟 告</button>
-        </div>
-      </div>
       <div id="ritual">
         <div id="ritual-steps" aria-hidden="true">
           <span class="rstep" data-step="shuffle">① 洗牌</span><span class="rsep">──</span><span
@@ -1179,9 +1080,9 @@
   </form>
 </dialog>
 
-<script src="divine-core.js?v=2026102501"></script>
+<script src="divine-core.js?v=2026102503"></script>
 <script src="xq-data.js?v=2026101202"></script>
-<script src="cards-data.js?v=2026102501"></script>
+<script src="cards-data.js?v=2026102503"></script>
 <script>
 "use strict";
 
@@ -1281,24 +1182,19 @@ function applyDeckBack() {
 applyDeckBack();
 
 /* 加密級 0–1 隨機數 */
-function rand01() {
-  const b = new Uint32Array(1);
-  crypto.getRandomValues(b);
-  return b[0] / 4294967296;
-}
 
 /* 真實鴿尾式洗牌（GSR 模型）：
    以二項分布把牌切成兩疊，再依兩疊剩餘張數的比例交錯落牌。
    每按一次「洗牌」執行一次；約七次後牌序即接近完全隨機。 */
 function riffle(arr) {
   let cutN = 0;
-  for (let i = 0; i < arr.length; i++) if (rand01() < 0.5) cutN++;
+  for (let i = 0; i < arr.length; i++) if (DC.rand01() < 0.5) cutN++;
   const left = arr.slice(0, cutN), right = arr.slice(cutN);
   const out = [];
   let li = 0, ri = 0;
   while (li < left.length || ri < right.length) {
     const lRemain = left.length - li, rRemain = right.length - ri;
-    if (rand01() < lRemain / (lRemain + rRemain)) out.push(left[li++]);
+    if (DC.rand01() < lRemain / (lRemain + rRemain)) out.push(left[li++]);
     else out.push(right[ri++]);
   }
   return out;
@@ -1438,14 +1334,12 @@ function resetTable() {
   $("#spread-hint").textContent = spread.cast
     ? (spread.method === "yarrow" ? "分二、掛一、揲四、歸奇，三變成一爻。十八變之後，動爻與之卦自現。"
       : spread.najia ? "三枚銅錢擲六次起卦。成卦當刻記為月建、日辰，裝卦排盤。" : "三枚銅錢擲六次起卦。擲出動爻，之卦自現。")
-    : spread.qiu
-    ? "上香默稟、請筊、搖籤——連三聖筊定籤；陰筊三至，今日不取。"
     : spread.sig
     ? `可先指定一張指示牌置中，或不指定——${spread.count === 9 ? "九" : "五"}張全憑抽。`
     : spread.gt
     ? "洗牌切牌之後抽牌入盤——或交給命運一次抽完。"
     : "先洗牌、切牌，再點選你被吸引的那幾張。";
-  $("#btn-reset").textContent = spread.cast ? "重新起卦" : spread.qiu ? "重新求籤" : "重新洗牌";
+  $("#btn-reset").textContent = spread.cast ? "重新起卦" : "重新洗牌";
   buildSlots();
   buildStack();
   /* 擲卦盤面：以銅錢起卦，不走洗切抽流程 */
@@ -1472,21 +1366,7 @@ function resetTable() {
   const isSig = !!spread.sig;
   elSigPick.hidden = !isSig;
   if (isSig) { phase = "sig"; renderSigPick(); }
-  /* 求籤盤面：請筊搖籤，不走洗切抽流程 */
-  const isQiu = !!spread.qiu;
-  elQiu.hidden = !isQiu;
-  if (isQiu) {
-    phase = "qiu";
-    qiuStep = "bing"; qiuStick = 0; qiuLog = []; qiuBusy = false;
-    qiuSheng = 0; qiuYin = 0;
-    elQiuCap.textContent = "燭已點好。心中默想所問之事——此桌無神，司籤者機緣；誠心即可上香。";
-    elQiuLog.textContent = "";
-    elJiao.hidden = true;
-    elQiuStick.hidden = true;
-    btnQiu.hidden = false;
-    btnQiu.textContent = "上 香 稟 告";
-  }
-  elRitual.hidden = isCast || isSig || isQiu;
+  elRitual.hidden = isCast || isSig;
   elStackWrap.hidden = false;
   elCutPiles.hidden = true;
   elCutPiles.innerHTML = "";
@@ -1522,7 +1402,6 @@ function resetTable() {
    易經誦朱子《筮儀》命筮辭；其餘牌組各有默唸引。問題即時代入。 */
 const INVOCATIONS = {
   yi:  (q) => `假爾泰筮有常，假爾泰筮有常。<br>弟子〔默唸姓名〕，今以 ${q} 未知可否，爰質所疑于神于靈。<br>吉凶得失，悔吝憂虞，惟爾有神，尚明告之。`,
-  qs:  (q) => `弟子〔默唸姓名〕焚香叩首——今為 ${q} 敬叩司籤，伏乞賜籤明示。若蒙允准，願得聖筊。`,
   len: (q) => `燭已點好，先靜三息。我為此事而來：${q}——願三十六張小圖，直言不諱。`,
   sib: (q) => `西碧拉夫人，市井之聲皆是預言。今問：${q}——請以人情世故，說我聽得懂的話。`,
   bel: (q) => `諸星在上，靈使引路。今以 ${q} 相叩——願星辰之語，落於牌面。`,
@@ -1619,9 +1498,9 @@ function buildCutPiles() {
   elCutPiles.innerHTML = "";
   const N = deck.length;
   const cuts = [
-    [Math.max(1, Math.round(N * (0.20 + rand01() * 0.10))), "淺 切"],
-    [Math.round(N * (0.45 + rand01() * 0.10)), "中 切"],
-    [Math.min(N - 1, Math.round(N * (0.70 + rand01() * 0.10))), "深 切"],
+    [Math.max(1, Math.round(N * (0.20 + DC.rand01() * 0.10))), "淺 切"],
+    [Math.round(N * (0.45 + DC.rand01() * 0.10)), "中 切"],
+    [Math.min(N - 1, Math.round(N * (0.70 + DC.rand01() * 0.10))), "深 切"],
   ];
   cuts.forEach(([pos, label]) => {
     const b = document.createElement("button");
@@ -1706,11 +1585,11 @@ btnQuick.addEventListener("click", () => {
   if (!elCutPiles.hidden || !elCutFanScroll.hidden) exitCutView();
   for (let k = 0; k < 7; k++) { deck = riffle(deck); }
   shuffleCount += 7;
-  deck = cutDeck(deck, 1 + Math.floor(rand01() * (deck.length - 1)));
+  deck = cutDeck(deck, 1 + Math.floor(DC.rand01() * (deck.length - 1)));
   cutCount++;
   const cards = [...elStack.children];
   cards.forEach((c) => {
-    c.style.transform = `translate(${(rand01() * 2 - 1) * 90}px, ${(rand01() * 2 - 1) * 40}px) rotate(${(rand01() * 2 - 1) * 40}deg)`;
+    c.style.transform = `translate(${(DC.rand01() * 2 - 1) * 90}px, ${(DC.rand01() * 2 - 1) * 40}px) rotate(${(DC.rand01() * 2 - 1) * 40}deg)`;
   });
   setTimeout(() => {
     cards.forEach((c, i) => {
@@ -1784,157 +1663,6 @@ function pickSig(n) {
   elRitualCaption.textContent = `指示牌「${CARDS[idx].zh}」已置於陣中央——現在洗牌、切牌，抽出它的${spread.count >= 9 ? "八方" : "四方"}。`;
 }
 
-/* ── 求籤・擲筊 ────────────────────────────
-   此桌無神：筊以 crypto 真隨機為斷——聖筊 1/2、笑筊 1/4、陰筊 1/4。
-   流程：上香默稟 → 請籤筊（聖筊開筒） → 搖籤 → 問籤筊。
-   定籤須「連得三聖筊」；笑筊退籤重搖；全程陰筊累計三次,
-   即告機緣未到，今日不取籤。 */
-const elQiu = $("#qiu"), elQiuCap = $("#qiu-caption"), elQiuLog = $("#qiu-log");
-const elJiao = $("#jiao"), elJiaoA = $("#jiao-a"), elJiaoB = $("#jiao-b");
-const elQiuStick = $("#qiu-stick"), btnQiu = $("#btn-qiu");
-let qiuStep = "bing", qiuStick = 0, qiuLog = [], qiuBusy = false;
-let qiuSheng = 0, qiuYin = 0;   /* 本支籤的連續聖筊數／本次求籤累計陰筊數 */
-
-/* 陰筊三至：機緣未到，收筊歇手 */
-function qiuRest() {
-  qiuStep = "rest";
-  qiuStick = 0;
-  elQiuStick.hidden = true;
-  btnQiu.hidden = true;
-  elQiuCap.textContent = "三陰筊至——機緣不到，尚不是時候取籤。靜下心，把所問之事想得更清楚，改日再來請筊。";
-}
-
-function tossJiao(cb) {
-  qiuBusy = true;
-  elJiao.hidden = false;
-  [elJiaoA, elJiaoB].forEach((el) => {
-    el.className = "jiao-block round";
-    el.dataset.face = "";
-    el.classList.remove("toss"); void el.offsetWidth; el.classList.add("toss");
-  });
-  const a = rand01() < 0.5, b = rand01() < 0.5;   /* true＝平面朝上 */
-  setTimeout(() => {
-    [[elJiaoA, a], [elJiaoB, b]].forEach(([el, flat]) => {
-      el.className = "jiao-block " + (flat ? "flat" : "round");
-      el.dataset.face = flat ? "平" : "凸";
-    });
-    qiuBusy = false;
-    cb(a !== b ? "sheng" : a ? "xiao" : "yin");
-  }, 580);
-}
-
-function buildSlip(c) {
-  const el = document.createElement("div");
-  el.className = "qslip";
-  el.innerHTML = `
-    <div class="qslip-inner">
-      <div class="qs-seal">機緣</div>
-      <div class="qslip-body">
-        <div class="qs-no">第${cnNum(c.n)}籤</div>
-        <div class="qs-gz">${c.gz}籤・屬${c.wx}　利${c.wxs}　宜其${c.wxd}</div>
-        <div class="qs-grade">${c.grade}</div>
-        <div class="qs-titlebar">${c.zh}</div>
-        ${c.poem.map((l) => `<div class="qs-poem">${l}</div>`).join("")}
-        <div class="qs-gua">卦象　${YI_CARDS[c.gua - 1].zh}（${YI_CARDS[c.gua - 1].keys.split("・").slice(0, 2).join("・")}）</div>
-        <div class="qs-jie">解曰　${c.jie}</div>
-        <div class="qs-bai">白話　${c.bai}</div>
-        ${c.items.map(([k, v]) => `<div class="qs-item"><b>${k}</b>　${v}</div>`).join("")}
-        <div class="qs-story">典故　${c.story}</div>
-        <div class="qs-house">燭 光 牌 桌 ・ 機 緣 司 籤</div>
-      </div>
-    </div>`;
-  return el;
-}
-
-function confirmQian() {
-  const card = CARDS[qiuStick - 1];
-  drawn = [card]; drawnRev = [false];
-  elSlots.innerHTML = "";
-  elSlots.appendChild(buildSlip(card));
-  /* 直排籤紙由右讀起：窄螢幕先捲到最右端 */
-  const scroller = elSlots.parentElement;
-  if (scroller) scroller.scrollLeft = scroller.scrollWidth;
-  elQiuCap.textContent = `第${cnNum(card.n)}籤・${card.grade}——「${card.zh}」。籤紙已展於案上。`;
-  btnQiu.hidden = true;
-  addEntry(card, 0);
-  finishReading();
-}
-
-btnQiu.addEventListener("click", () => {
-  if (qiuBusy || phase !== "qiu") return;
-  if (qiuStep === "bing") {
-    elQiuCap.textContent = "已默稟。擲筊請示——今日可否賜籤？";
-    btnQiu.textContent = "擲 筊 請 籤";
-    qiuStep = "qing";
-    return;
-  }
-  if (qiuStep === "qing") {
-    tossJiao((r) => {
-      if (r === "sheng") {
-        qiuLog.push("請籤筊：聖筊——允");
-        elQiuCap.textContent = "聖筊——機緣已允。搖動籤筒，求你的籤。";
-        btnQiu.textContent = "搖 籤 筒";
-        qiuStep = "yao";
-      } else if (r === "xiao") {
-        qiuLog.push("請籤筊：笑筊");
-        elQiuCap.textContent = "笑筊——未聞其詳。把所問之事在心中說得更清楚，再擲。";
-      } else {
-        qiuLog.push("請籤筊：陰筊");
-        qiuYin++;
-        if (qiuYin >= 3) { elQiuLog.textContent = qiuLog.join("　"); qiuRest(); return; }
-        elQiuCap.textContent = `陰筊——機緣未至。靜心三息，再擲一次。（陰筊已 ${qiuYin} 次，三至則今日不取）`;
-      }
-      elQiuLog.textContent = qiuLog.join("　");
-    });
-    return;
-  }
-  if (qiuStep === "yao") {
-    qiuStick = 1 + Math.floor(rand01() * CARDS.length);
-    qiuSheng = 0;
-    elQiuStick.textContent = `第${cnNum(qiuStick)}籤`;
-    elQiuStick.hidden = false;
-    elQiuStick.classList.remove("out"); void elQiuStick.offsetWidth; elQiuStick.classList.add("out");
-    elQiuCap.textContent = `籤筒傾落一支——第${cnNum(qiuStick)}籤。連得三聖筊，方為此籤。`;
-    btnQiu.textContent = "擲 筊 問 籤";
-    qiuStep = "que";
-    return;
-  }
-  if (qiuStep === "que") {
-    tossJiao((r) => {
-      if (r === "sheng") {
-        qiuSheng++;
-        qiuLog.push(`第${qiuStick}籤・聖筊 ${qiuSheng}／3`);
-        elQiuLog.textContent = qiuLog.join("　");
-        if (qiuSheng >= 3) {
-          elQiuStick.hidden = true;
-          elJiao.hidden = true;
-          confirmQian();
-        } else {
-          elQiuCap.textContent = `聖筊${cnNum(qiuSheng)}——再擲。連得三聖筊，方為此籤。`;
-        }
-      } else if (r === "xiao") {
-        qiuLog.push(`第${qiuStick}籤・笑筊——退籤`);
-        elQiuCap.textContent = `笑筊——莞爾未答。第${cnNum(qiuStick)}籤退回筒中，重新搖籤。`;
-        elQiuLog.textContent = qiuLog.join("　");
-        qiuStick = 0; qiuSheng = 0;
-        elQiuStick.hidden = true;
-        btnQiu.textContent = "搖 籤 筒";
-        qiuStep = "yao";
-      } else {
-        qiuLog.push(`第${qiuStick}籤・陰筊——退籤`);
-        qiuYin++;
-        elQiuLog.textContent = qiuLog.join("　");
-        if (qiuYin >= 3) { qiuRest(); return; }
-        elQiuCap.textContent = `陰筊——非此籤。第${cnNum(qiuStick)}籤退回筒中，重新搖籤。（陰筊已 ${qiuYin} 次，三至則今日不取）`;
-        qiuStick = 0; qiuSheng = 0;
-        elQiuStick.hidden = true;
-        btnQiu.textContent = "搖 籤 筒";
-        qiuStep = "yao";
-      }
-    });
-  }
-});
-
 function performCut(pos) {
   deck = cutDeck(deck, pos);   /* 牌序真的從這裡切開 */
   cutCount++;
@@ -1963,22 +1691,7 @@ const elCast = $("#cast"), elCastLines = $("#cast-lines"), btnThrow = $("#btn-th
 let castLines = [];   // 由下而上的六爻:{v: 6|7|8|9, coins:[2|3,…]}
 let castInfo = null;  // {lines, moving, ben, zhi}
 
-/* 三爻（由下而上）→ 八卦索引：乾兌離震巽坎艮坤 */
-const TRIGRAM = { "111":0, "110":1, "101":2, "100":3, "011":4, "010":5, "001":6, "000":7 };
-/* 文王卦序:KW[下卦][上卦] */
-const KW = [
-  [1,43,14,34,9,5,26,11],
-  [10,58,38,54,61,60,41,19],
-  [13,49,30,55,37,63,22,36],
-  [25,17,21,51,42,3,27,24],
-  [44,28,50,32,57,48,18,46],
-  [6,47,64,40,59,29,4,7],
-  [33,31,56,62,53,39,52,15],
-  [12,45,35,16,20,8,23,2],
-];
-function hexNum(bits) {
-  return KW[TRIGRAM[bits.slice(0, 3).join("")]][TRIGRAM[bits.slice(3, 6).join("")]];
-}
+/* 六爻（由下而上）→ 文王卦序：用 divine-core.js DC.hexNum */
 const YAO_NAMES = ["初爻","二爻","三爻","四爻","五爻","上爻"];
 /* 卦的簡稱：乾為天→乾、天雷無妄→無妄 */
 function yiShort(n) {
@@ -1988,11 +1701,11 @@ function yiShort(n) {
 /* 卦之三變與之卦之互：互取二至五爻，錯為六爻皆反，綜為上下顛倒；有動爻時另取之卦之互 */
 function yiDerived(info) {
   const bits = info.lines.map((v) => (v === 7 || v === 9 ? 1 : 0));
-  const huOf = (x) => hexNum([x[1], x[2], x[3], x[2], x[3], x[4]]);
+  const huOf = (x) => DC.hexNum([x[1], x[2], x[3], x[2], x[3], x[4]]);
   return {
     hu: huOf(bits),
-    cuo: hexNum(bits.map((b) => 1 - b)),
-    zong: hexNum(bits.slice().reverse()),
+    cuo: DC.hexNum(bits.map((b) => 1 - b)),
+    zong: DC.hexNum(bits.slice().reverse()),
     zhiHu: info.zhi ? huOf(bits.map((b, i) => (info.moving.includes(i) ? 1 - b : b))) : null,
   };
 }
@@ -2078,14 +1791,14 @@ function commitThrow(line) {
 }
 /* 三錢：字=2、背=3，三枚相加 6–9（老陰 1/8、少陽 3/8、少陰 3/8、老陽 1/8） */
 function coinLine() {
-  const coins = [0, 0, 0].map(() => (rand01() < 0.5 ? 2 : 3));
+  const coins = [0, 0, 0].map(() => (DC.rand01() < 0.5 ? 2 : 3));
   return { v: coins[0] + coins[1] + coins[2], coins };
 }
 /* 大衍（朱子掛扐法）：初變掛扐五（3/4）或九（1/4），二、三變各四或八（各半）；
    掛扐少者計一：三少＝老陽九、二少＝少陰八、一少＝少陽七、無少＝老陰六
    → 老陰 1/16、少陽 5/16、少陰 7/16、老陽 3/16，陽動易、陰動難 */
 function stalkLine() {
-  const lu = [rand01() < 0.75 ? 5 : 9, rand01() < 0.5 ? 4 : 8, rand01() < 0.5 ? 4 : 8];
+  const lu = [DC.rand01() < 0.75 ? 5 : 9, DC.rand01() < 0.5 ? 4 : 8, DC.rand01() < 0.5 ? 4 : 8];
   const few = lu.filter((x) => x === 5 || x === 4).length;
   return { v: [6, 7, 8, 9][few], lu };
 }
@@ -2109,7 +1822,7 @@ function animateStalks(lu) {
     const n = live.length;
     const ok = [];
     for (let L = Math.floor(n * 0.35); L <= Math.ceil(n * 0.65); L++) if (rem(L) + rem(n - L - 1) + 1 === lu[k]) ok.push(L);
-    const L = ok[Math.floor(rand01() * ok.length)];   /* 分二 */
+    const L = ok[Math.floor(DC.rand01() * ok.length)];   /* 分二 */
     stalks.forEach((s) => { if (!live.includes(s)) s.className = "stalk aside"; });
     live.forEach((s, i) => { s.className = "stalk " + (i < L ? "left" : "right"); });
     const hang = live[L];
@@ -2154,10 +1867,10 @@ function finishCast() {
   phase = "draw";
   const bits = castLines.map((l) => (l.v === 7 || l.v === 9 ? 1 : 0));
   const moving = castLines.map((l, i) => (l.v === 6 || l.v === 9 ? i : -1)).filter((i) => i >= 0);
-  const ben = hexNum(bits);
+  const ben = DC.hexNum(bits);
   let zhi = null;
   if (moving.length) {
-    zhi = hexNum(bits.map((b, i) => (moving.includes(i) ? 1 - b : b)));
+    zhi = DC.hexNum(bits.map((b, i) => (moving.includes(i) ? 1 - b : b)));
   }
   castInfo = { lines: castLines.map((l) => l.v), moving, ben, zhi, method: spread.method || "coins" };
   if (spread.najia) {   /* 納甲以成卦當刻（裝置當地時間）定月建日辰，存入紀錄供重看 */
@@ -2246,7 +1959,7 @@ function placeCardFlying(fromEl, cardIdx) {
   ghost.style.cssText = `left:${fromRect.left}px;top:${fromRect.top}px;width:${fromRect.width}px;height:${fromRect.height}px;`;
   document.body.appendChild(ghost);
   ghost.getBoundingClientRect();   /* 強制排版，讓下一行 transform 走 transition */
-  ghost.style.transform = `translate(${toRect.left + toRect.width / 2 - (fromRect.left + fromRect.width / 2)}px,${toRect.top + toRect.height / 2 - (fromRect.top + fromRect.height / 2)}px) rotate(${(rand01() * 2 - 1) * 9}deg) scale(${toRect.width / fromRect.width})`;
+  ghost.style.transform = `translate(${toRect.left + toRect.width / 2 - (fromRect.left + fromRect.width / 2)}px,${toRect.top + toRect.height / 2 - (fromRect.top + fromRect.height / 2)}px) rotate(${(DC.rand01() * 2 - 1) * 9}deg) scale(${toRect.width / fromRect.width})`;
   let landed = false;
   const land = () => { if (landed) return; landed = true; ghost.remove(); c3.style.visibility = ""; };
   ghost.addEventListener("transitionend", land);
@@ -2278,8 +1991,6 @@ function posName(i) {
 function buildSlots() {
   elSlots.innerHTML = "";
   elSlots.classList.toggle("tableau", !!spread.gt);
-  elSlots.classList.toggle("qiu", !!spread.qiu);
-  if (spread.qiu) { elSlots.style.gridTemplateColumns = ""; return; }   /* 籤紙直接展於此，不建牌位 */
   /* span2：以半格欄位排出金字塔的交錯置中（欄寬 = 半張牌扣掉半個間距） */
   elSlots.style.gridTemplateColumns = spread.span2
     ? `repeat(${spread.cols}, calc(var(--cw) / 2 - 7px))`
@@ -2397,7 +2108,7 @@ function placeCard(cardIdx, forcedRev) {
   const card = CARDS[cardIdx];
   /* 正逆位：重看紀錄時沿用當時的牌位，否則由命運決定；norev 的牌（如貝林藍卡）恆為正位 */
   const rev = deckDef.reversible && !card.norev
-    ? (forcedRev !== undefined ? !!forcedRev : rand01() < 0.5)
+    ? (forcedRev !== undefined ? !!forcedRev : DC.rand01() < 0.5)
     : false;
   drawn.push(card);
   drawnRev.push(rev);
@@ -2769,35 +2480,6 @@ function finishReading() {
 
 /* ── AI 解讀提示詞 ────────────────────────── */
 function buildAiPrompt() {
-  /* 靈籤走解籤格式 */
-  if (deckDef.id === "qs" && drawn.length) {
-    const c = drawn[0];
-    const g = YI_CARDS[c.gua - 1];
-    const q0 = $("#q-input").value.trim();
-    return [
-      "你是一位深諳廟宇籤詩的解籤人，擅長從籤詩、等第、詩意、典故，以及干支五行與卦象推衍問事者的處境。請以繁體中文為我解籤。",
-      "",
-      `【靈籤】第${cnNum(c.n)}籤・${c.grade}——「${c.zh}」`,
-      `干支：${c.gz}籤，屬${c.wx}——利${c.wxs}，宜其${c.wxd}（可據此參酌時令與方位）。`,
-      `卦象：第${g.n}卦「${g.zh}」（${g.keys}）——${g.text}`,
-      "籤詩：",
-      ...c.poem.map((l) => `　${l}`),
-      `解曰：${c.jie}`,
-      `白話：${c.bai}`,
-      "分項：" + c.items.map(([k, v]) => `${k}——${v}`).join("；"),
-      `典故：${c.story}`,
-      ...(qiuLog.length ? [`求籤經過：${qiuLog.join("；")}。（本桌無神，筊以機緣為斷）`] : []),
-      "",
-      "【請提供】",
-      "1. 籤詩逐句釋義與整體詩意（白話可為底本，請再深入）",
-      "2. 等第與典故如何映照我的處境",
-      "3. 以卦象與干支五行輔斷：卦義與籤詩相參，時令方位可供擇時參考",
-      "4. 就我所問之事的具體推斷（可參考分項）",
-      `5. 給問事者的具體建議（${currentTone()}）`,
-      "",
-      q0 ? `我所問之事：${q0}` : "我所問之事：〔請把你想問的事寫在這裡〕",
-    ].join("\n");
-  }
   const L = [];
   L.push({
     len:"你是一位經驗豐富的雷諾曼（Petit Lenormand）占卜解讀師，熟悉牌義、位置意義與牌與牌之間的組合技法。請以繁體中文為我解讀以下牌陣。",
@@ -3393,7 +3075,6 @@ function saveHistoryRecord() {
     revs: deckDef.reversible ? drawnRev.map((r) => (r ? 1 : 0)) : undefined,
     cast: spread.cast && castInfo ? castInfo : undefined,
     sigd: spread.sig && sigPicked !== null ? 1 : undefined,
-    qlog: spread.qiu && qiuLog.length ? qiuLog.slice() : undefined,
   };
   currentRecId = rec.id;
   const list = loadHist();
@@ -3501,23 +3182,13 @@ function replayReading(rec) {
   elFanScroll.hidden = true;   /* 重看不需要牌堆 */
 
   suppressSave = true;
-  if (spread.qiu && rec.cards.length) {
-    /* 重看靈籤：直接展開籤紙 */
-    elQiu.hidden = true;
-    qiuLog = rec.qlog ? rec.qlog.slice() : [];
-    const qc = CARDS[rec.cards[0] - 1];
-    drawn = [qc]; drawnRev = [false];
-    elSlots.appendChild(buildSlip(qc));
-    addEntry(qc, 0);
-  } else {
-    const revAt = (i) => (rec.revs ? !!rec.revs[i] : false);
-    const base = Math.min(rec.cards.length, s.count);
-    for (let i = 0; i < base; i++) placeCard(rec.cards[i] - 1, revAt(i));
-    if (rec.cards.length > s.count && s.extend) {
-      target = s.count + s.extend.count;
-      addExtensionSlots();
-      for (let i = s.count; i < rec.cards.length; i++) placeCard(rec.cards[i] - 1, revAt(i));
-    }
+  const revAt = (i) => (rec.revs ? !!rec.revs[i] : false);
+  const base = Math.min(rec.cards.length, s.count);
+  for (let i = 0; i < base; i++) placeCard(rec.cards[i] - 1, revAt(i));
+  if (rec.cards.length > s.count && s.extend) {
+    target = s.count + s.extend.count;
+    addExtensionSlots();
+    for (let i = s.count; i < rec.cards.length; i++) placeCard(rec.cards[i] - 1, revAt(i));
   }
   suppressSave = false;
 
@@ -3610,16 +3281,6 @@ function renderDict() {
 
 function showDictCard(i) {
   const c = CARDS[i];
-  /* 靈籤：字典直接展開古式籤紙 */
-  if (deckDef.id === "qs") {
-    elDictDetail.innerHTML = `<div style="text-align:center;overflow-x:auto;padding:4px 0"></div>`;
-    const wrap = elDictDetail.firstElementChild;
-    wrap.appendChild(buildSlip(c));
-    wrap.scrollLeft = wrap.scrollWidth;
-    elDictDetail.hidden = false;
-    elDictDetail.scrollIntoView({ behavior: "smooth", block: "start" });
-    return;
-  }
   let extra = "";
   if (deckDef.id === "len") {
     extra = `
@@ -3686,7 +3347,6 @@ function guideTip(s) {
   if (deckDef.id === "yi") return `<b>牌卦沒有動爻</b>，以卦辭、大象為斷，不擬爻辭、不論之卦。各位置是象徵抽籤的框架，把每一卦的象放進該位置的問題裡讀。${rev}`;
   if (s.id === "houses") return `<b>每宮一張</b>，以牌義對應該宮的人生領域；先看命宮（自我）、財帛、夫妻、官祿四宮，再看其餘。同一張牌落不同宮，說的是不同層面。${rev}`;
   if (s.sig) return `<b>指示牌代表這一問的主體</b>，置於中央。先讀 它相鄰的牌：左為來路、右為去向、上為所思（懸於心頭）、下為所踏（已在掌握）；再看左右鏡影與對角。不指定而全洗入抽，指示牌自然落陣的位置本身就是訊息。${rev}`;
-  if (s.qiu) return `<b>連三聖筊定籤</b>，笑筊退籤重稟，陰筊三至今日不取。籤詩讀四句本文，再看籤解與各事項；干支五行與配卦是輔助，不是主斷。`;
   if (s.id === "xq-gate") return `<b>先看主位那顆的紅黑</b>，定全局明暗；再看紅黑多寡、有沒有王見王（帥將同現）或成組（同色將士象、車馬炮）。最後依右上起、左上承、左下轉、右下收，把四角讀成一段過程——收位的顏色，就是結局的顏色。`;
   if (deckDef.id === "xq") return `<b>先看紅黑</b>：紅為明、為主動，黑為暗、為被動；再看兵種——將帥主事、仕士近身、相象守家、車是主力、馬主奔波、炮包借力或口舌、兵卒是小事與眾人。`;
   if (s.count === 1) return `<b>一張牌一句話</b>。先讀關鍵詞，再把牌義放進你的問題裡。今日指引不必求全，記一句就夠。${rev}`;
@@ -3769,19 +3429,6 @@ if (location.search.includes("rwdtest")) {
     document.querySelector(`.spread-btn[data-sid="${id}"]`).click();
     if (spread.cast) {
       for (let i = 0; i < 6; i++) btnThrow.click();   /* 擲卦盤面：擲滿六爻 */
-    } else if (spread.qiu) {
-      if (location.search.includes("qiufull")) {
-        /* 完整流程測試：反覆按鈕直到聖筊定籤 */
-        const t = setInterval(() => {
-          if (btnQiu.hidden) { clearInterval(t); return; }
-          if (!qiuBusy) btnQiu.click();
-        }, 700);
-      } else {
-        /* 求籤盤面：略過筊，直接搖籤定籤 */
-        qiuStick = 1 + Math.floor(rand01() * CARDS.length);
-        qiuLog = ["請籤筊：聖筊——允", `第${qiuStick}籤・聖筊 1／3`, `第${qiuStick}籤・聖筊 2／3`, `第${qiuStick}籤・聖筊 3／3`];
-        confirmQian();
-      }
     } else {
       if (spread.sig) $("#sigpick-btns .sig-btn").click();   /* 十字陣：選第一個指示牌選項 */
       deck = riffle(deck); shuffleCount++;
@@ -3850,7 +3497,6 @@ if (location.search.includes("selftest")) {
 if (location.search.includes("minidump")) {
   const obj = {};
   DECKS.forEach((d) => {
-    if (d.id === "qs") return;
     obj[d.id] = { name: d.name, rev: !!d.reversible,
       cards: d.cards.map((c) => [c.zh, (c.keys || "").split("・")[0], c.pol === "good" ? "+" : c.pol === "bad" ? "-" : "0"]) };
   });

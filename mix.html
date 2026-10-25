@@ -146,11 +146,11 @@
   </p>
 </div>
 
-<script src="divine-core.js?v=2026102501"></script>
-<script src="divine-ui.js?v=2026102502"></script>
+<script src="divine-core.js?v=2026102503"></script>
+<script src="divine-ui.js?v=2026102503"></script>
 <script src="divine-lore.js?v=2026091402"></script>
 <script src="xq-data.js?v=2026101202"></script>
-<script src="shilun-data.js?v=2026101901"></script>
+<script src="shilun-data.js?v=2026102503"></script>
 <script>
 const $ = id => document.getElementById(id);
 const q3 = () => $("q-input").value.trim();
@@ -243,36 +243,22 @@ const PK = "dc-mix-profile";
 const prof = DC.profileBind(PK, ["b-date", "b-time", "b-gender", "b-city", "b-lat", "b-lon", "b-tz"]); // 生辰檔案工廠：含舊鍵遷移+跨館共用 dc-profile
 
 /* ── 工具 ── */
-function card(t, body) { return '<div class="result-card"><h3>' + t + "</h3>" + body + "</div>"; }
-function fail(msg) { $("go-hint").textContent = msg; return new Error(msg); }
 function birth() {
-  const dv = $("b-date").value; if (!dv) throw fail("所選術數需要出生日期");
+  const dv = $("b-date").value; if (!dv) throw DC.fail("所選術數需要出生日期");
   const tv = $("b-time").value || "12:00";
   const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
   const tz = DC.numOr($("b-tz").value, 8);
   return { y, m, d, h, mi, tz, male: $("b-gender").value === "m", jd: DC.jd(y, m, d, h, mi, tz), str: dv + " " + tv,
     lat: DC.numOr($("b-lat").value, 25.04), lon: DC.numOr($("b-lon").value, 121.51) };
 }
-function nowT() { // 起局時刻（可微調；跟隨此刻時每秒對時）
-  const dv = $("w-date").value, tv = $("w-time").value;
-  if (dv && tv) {
-    const [y, m, d] = dv.split("-").map(Number), [h, mi] = tv.split(":").map(Number);
-    return { y, m, d, h, mi };
-  }
-  const n = new Date();
-  return { y: n.getFullYear(), m: n.getMonth() + 1, d: n.getDate(), h: n.getHours(), mi: n.getMinutes() };
-}
+const nowT = () => DC.readT("w-date", "w-time"); // 起局時刻（可微調；跟隨此刻時每秒對時）
 function targetDay() { // 所問之日（選填）
   const tv = $("t-date").value;
   if (!tv) return null;
   const [y, m, d] = tv.split("-").map(Number);
   return { y, m, d, str: tv };
 }
-function setNowFields() {
-  const n = new Date();
-  $("w-date").value = n.getFullYear() + "-" + DC.pad2(n.getMonth() + 1) + "-" + DC.pad2(n.getDate());
-  $("w-time").value = DC.pad2(n.getHours()) + ":" + DC.pad2(n.getMinutes());
-}
+const setNowFields = () => DC.setNow("w-date", "w-time");
 setNowFields();
 setInterval(() => { if ($("n-follow").checked) setNowFields(); }, 1000);
 ["w-date", "w-time"].forEach(id => $(id).addEventListener("input", () => { $("n-follow").checked = false; }));
@@ -303,7 +289,7 @@ GEN["a-natal"] = () => {
       "  上升 " + DC.fmtLon(ch.asc) + ";主要相位:" + asps.map(a => a.a.zh + a.name + a.b.zh).join("、")] };
 };
 GEN["a-horary"] = () => {
-  const N = nowCtx(); if (!q3()) throw fail("卜卦占星需要問題");
+  const N = nowCtx(); if (!q3()) throw DC.fail("卜卦占星需要問題");
   const ch = tropChart(N.jd, N.lat, N.lon);
   const ruler = DC.RULER[ch.ascSign], rp = ch.list.find(p => p.zh === ruler);
   return { title: "卜卦占星",
@@ -326,7 +312,7 @@ GEN["a-vedic"] = () => {
       "  Vimśottarī 現行大運 " + (cur ? cur.lord + "(至 " + DC.fmtJD(cur.to, 8, false) + ")" : "—")] };
 };
 GEN["a-prashna"] = () => {
-  const N = nowCtx(); if (!q3()) throw fail("印度問事需要問題");
+  const N = nowCtx(); if (!q3()) throw DC.fail("印度問事需要問題");
   const ay = DC.ayanamsa(N.jd), ch = tropChart(N.jd, N.lat, N.lon);
   const sid = ch.list.map(p => ({ ...p, lon: DC.rev(p.lon - ay) }));
   const nak = DC.nakOf(sid[1].lon);
@@ -385,7 +371,7 @@ GEN["n-meihua"] = () => {
       "  體卦" + DC.TRIG[mh.ti] + "(" + DC.TRIG_WX[mh.ti] + ")、用卦" + DC.TRIG[mh.yong] + "(" + DC.TRIG_WX[mh.yong] + ");" + mh.rel] };
 };
 GEN["n-meihua-zi"] = () => {
-  const q = q3(); if (!q) throw fail("梅花字占需要先寫下問題");
+  const q = q3(); if (!q) throw DC.fail("梅花字占需要先寫下問題");
   const chars = [...q.replace(/\s/g, "")];
   const n = nowT(), hb = DC.hourBranch(n.h);
   const zi = DC.meihuaZi(chars.length, hb);   /* 十字以內字數加時，十一字以上平分（與式占館同式） */
@@ -596,7 +582,7 @@ function slDoCut(frac) {
 $("sl-cutbar").addEventListener("click", e => { const r = $("sl-cutbar").getBoundingClientRect(); slDoCut((e.clientX - r.left) / r.width); });
 $("sl-cutbar").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); slDoCut(.5); } });
 GEN["c-shilun"] = () => {
-  if (!slCut) throw fail("時輪占要先親手搓洗、切牌（表單裡的「時輪占・親手洗牌」）");
+  if (!slCut) throw DC.fail("時輪占要先親手搓洗、切牌（表單裡的「時輪占・親手洗牌」）");
   const n = nowT();
   const R = SHILUN.draw(slDecks, { y: n.y, m: n.m, d: n.d, h: n.h, mi: n.mi, tz: nowTz() });
   return { title: "時輪占",
@@ -718,7 +704,7 @@ $("btn-go").onclick = () => {
     for (const id of picked) {
       const g = GEN[id]();
       g.id = id;
-      out.push(card(g.title, g.html));
+      out.push(DC.card(g.title, "", g.html));
       sections.push(g);
     }
   } catch (e) { if (!$("go-hint").textContent) $("go-hint").textContent = "起盤失敗:" + e.message; return; }

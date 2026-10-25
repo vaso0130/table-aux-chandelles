@@ -21,6 +21,11 @@ var DC = {};
     do { crypto.getRandomValues(u); } while (u[0] >= lim);
     return u[0] % n;
   };
+  DC.rand01 = function () { // crypto 隨機 [0, 1)
+    const u = new Uint32Array(1);
+    crypto.getRandomValues(u);
+    return u[0] / 4294967296;
+  };
 
   /* ── 時間 ── */
   DC.jdFromUTC = ms => ms / 86400000 + 2440587.5;
@@ -527,6 +532,12 @@ var DC = {};
   DC.TRIG_SYM = ["☰", "☱", "☲", "☳", "☴", "☵", "☶", "☷"];
   DC.TRIG_WX = ["金", "金", "火", "木", "木", "水", "土", "土"];
   DC.TRIG_LINES = [[1, 1, 1], [1, 1, 0], [1, 0, 1], [1, 0, 0], [0, 1, 1], [0, 1, 0], [0, 0, 1], [0, 0, 0]]; // 下起
+  DC.KW = [ // 文王卦序 KW[下卦][上卦]（皆依 TRIG 序）
+    [1, 43, 14, 34, 9, 5, 26, 11], [10, 58, 38, 54, 61, 60, 41, 19], [13, 49, 30, 55, 37, 63, 22, 36], [25, 17, 21, 51, 42, 3, 27, 24],
+    [44, 28, 50, 32, 57, 48, 18, 46], [6, 47, 64, 40, 59, 29, 4, 7], [33, 31, 56, 62, 53, 39, 52, 15], [12, 45, 35, 16, 20, 8, 23, 2]
+  ];
+  DC.trigIdx = ls => DC.TRIG_LINES.findIndex(t => t[0] === ls[0] && t[1] === ls[1] && t[2] === ls[2]);
+  DC.hexNum = bits => DC.KW[DC.trigIdx(bits.slice(0, 3))][DC.trigIdx(bits.slice(3, 6))]; // 六爻由下而上 → 文王卦序
   DC.HEX_NAME = [ // [上卦][下卦]
     ["乾為天", "天澤履", "天火同人", "天雷無妄", "天風姤", "天水訟", "天山遯", "天地否"],
     ["澤天夬", "兌為澤", "澤火革", "澤雷隨", "澤風大過", "澤水困", "澤山咸", "澤地萃"],
@@ -594,22 +605,21 @@ var DC = {};
   ];
   DC.LIUSHEN = ["青龍", "朱雀", "勾陳", "螣蛇", "白虎", "玄武"];
   const ZHI_WX = "水土木木土火火土金金土水";
-  const trigIdx = ls => DC.TRIG_LINES.findIndex(t => t[0] === ls[0] && t[1] === ls[1] && t[2] === ls[2]);
   DC.liuQin = (gongWx, wx) => ["兄弟", "子孫", "妻財", "官鬼", "父母"][(DC.WX.indexOf(wx) - DC.WX.indexOf(gongWx) + 5) % 5];
   /* 八宮與世爻：「天同二世天變五，地同四世地變初，本宮六世三世異，人同遊魂人變歸」（地＝初四、人＝二五、天＝三上）；
      一二三世宮在外卦，四五世與遊魂宮為內卦全反，歸魂宮在內卦 */
   DC.najiaGong = function (bits) {
     const lo = bits.slice(0, 3), up = bits.slice(3);
-    const di = lo[0] === up[0], ren = lo[1] === up[1], tian = lo[2] === up[2], inv = trigIdx(lo.map(b => 1 - b));
+    const di = lo[0] === up[0], ren = lo[1] === up[1], tian = lo[2] === up[2], inv = DC.trigIdx(lo.map(b => 1 - b));
     const [shi, gong, kind] =
-        di && ren && tian ? [6, trigIdx(up), "本宮"]
-      : !di && ren && tian ? [1, trigIdx(up), "一世"]
-      : !di && !ren && tian ? [2, trigIdx(up), "二世"]
-      : !di && !ren && !tian ? [3, trigIdx(up), "三世"]
+        di && ren && tian ? [6, DC.trigIdx(up), "本宮"]
+      : !di && ren && tian ? [1, DC.trigIdx(up), "一世"]
+      : !di && !ren && tian ? [2, DC.trigIdx(up), "二世"]
+      : !di && !ren && !tian ? [3, DC.trigIdx(up), "三世"]
       : di && !ren && !tian ? [4, inv, "四世"]
       : di && ren && !tian ? [5, inv, "五世"]
       : !di && ren && !tian ? [4, inv, "遊魂"]
-      : [3, trigIdx(lo), "歸魂"];
+      : [3, DC.trigIdx(lo), "歸魂"];
     return { shi, ying: (shi + 2) % 6 + 1, gong, kind };
   };
   /* lines：由下而上 6/7/8/9；起卦時刻 y m d h mi 與時區 tz（時） */
@@ -617,7 +627,7 @@ var DC = {};
     const bits = lines.map(v => (v === 7 || v === 9 ? 1 : 0)), moving = lines.map((v, i) => (v === 6 || v === 9 ? i : -1)).filter(i => i >= 0);
     const g = DC.najiaGong(bits), gwx = DC.TRIG_WX[g.gong];
     const lineOf = (b, i) => {
-      const t = DC.NAJIA[trigIdx(i < 3 ? b.slice(0, 3) : b.slice(3))];
+      const t = DC.NAJIA[DC.trigIdx(i < 3 ? b.slice(0, 3) : b.slice(3))];
       const zhi = (i < 3 ? t[2] : t[3])[i % 3], wx = ZHI_WX[DC.BRANCHES.indexOf(zhi)];
       return { gan: i < 3 ? t[0] : t[1], zhi, wx, qin: DC.liuQin(gwx, wx) };
     };

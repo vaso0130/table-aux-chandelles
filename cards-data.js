@@ -2283,8 +2283,7 @@ const DT_SPREADS = [
     combos: () => [] },
 ];
 
-/* 靈籤已遷開卷館(qs-data.js + kaijuan.html);牌桌館之擲筊引擎閒置保留
-   (spread.qiu 永不為真，舊 qs 歷史紀錄由 replayReading 顯示遷館提示)。 */
+/* 靈籤已遷開卷館(qs-data.js + kaijuan.html);牌桌館的舊 qs 歷史紀錄由 replayReading 顯示遷館提示。 */
 
 /* ── 牌組註冊表 ───────────────────────────── */
 const DECKS = [
@@ -2338,7 +2337,6 @@ const DECKS = [
     sub:"雲遊者踏出山徑，四象在牌中流轉——一副東方的塔羅。",
     cards: DT_CARDS, spreads: DT_SPREADS, reversible:true, preload:true,
     back:"cards-dongtarot/back.jpg" },
-  /* 靈籤已遷居開卷館(kaijuan.html);資料保留於此以支援舊占卜歷史重看 */
 ];
 /* ── 象棋占卜：棋子資料與組合判讀在 xq-data.js（MIX 共用），須先於本檔載入 ── */
 if (typeof XQ !== "undefined") {

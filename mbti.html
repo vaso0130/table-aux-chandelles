@@ -104,8 +104,8 @@
   </p>
 </div>
 
-<script src="divine-core.js?v=2026102501"></script>
-<script src="divine-ui.js?v=2026102502"></script>
+<script src="divine-core.js?v=2026102503"></script>
+<script src="divine-ui.js?v=2026102503"></script>
 <script src="divine-lore.js?v=2026091402"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -338,7 +338,6 @@ renderQuiz();
 DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣：「[^」]*」/, "語氣：「" + DC.toneValue() + "」"); });
 DC.histBind("鏡廳");
 
-function card(t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; }
 function poleOf(it, side) { const [p1, p2] = AXES[it.ax]; return side === "A" ? it.a : (it.a === p1 ? p2 : p1); }
 /* 計分：每軸 S=Σ權重（正向第一極），PCI=S/(2n)；分半（軸內奇偶題）異號一律降為邊界；
    配對題（同 pair）選出的極不同計一次不一致；A 側比例過高或過低標「順著同一邊作答」 */
@@ -415,23 +414,23 @@ $("btn-go").onclick = () => {
     ? "大致可信，但邊界軸請當作「兩邊都用得順手」，不要急著站隊。"
     : "作答前後一致，這面鏡子照得算清楚。";
   const out = [];
-  out.push(card("鏡中之人：" + R.type, T[0],
+  out.push(DC.card("鏡中之人：" + R.type, T[0],
     '<p class="lead">' + T[1] + "</p>" + barsH +
     "<p>" + R.axes.map(axisLabel).join("・") + "</p>" +
     "<p><b>光面</b>：" + T[2] + "。<br><b>影面</b>：" + T[3] + "。<br><b>合拍舞台</b>：" + T[4] + "。<br><b>辨析</b>：" + T[5] + "。" + (T[6] ? "<br><b>常被誤讀成</b>：" + T[6] + "。" : "") + "</p>" +
     '<p style="color:var(--muted)">偏好指數從 −1 到 +1，正負只代表方向。絕對值小於 0.15 的軸算邊界，兩邊你都用得順手，情境會決定你出哪隻手。指數大也只是偏好鮮明，不代表另一側的能力缺席。T/F 尤其如此：它量的是決策時誰先發言，不是邏輯或同理的能力值。</p>'));
-  out.push(card("這面鏡子有多可信", "可信度：" + credLevel,
+  out.push(DC.card("這面鏡子有多可信", "可信度：" + credLevel,
     "<p class=\"lead\">" + credText + "</p>" +
     (credWhy.length ? "<p>" + credWhy.join("；") + "。</p>" : "<p>配對題答得一致，沒有邊界軸，作答也沒有偏向某一側。</p>") +
     (bd.length ? "<p>" + bd.map(a => a.ax + " 軸只要改 " + a.flipBy + " 題就會翻面").join("；") + "。</p>" : "")));
-  out.push(card("引擎室：認知功能", st.join(" · "),
+  out.push(DC.card("引擎室：認知功能", st.join(" · "),
     "<p><b>主導</b> " + st[0] + " " + FN[st[0]] + "，你最順手的那隻手，不假思索就在用。<br>" +
     "<b>輔助</b> " + st[1] + " " + FN[st[1]] + "，副駕駛，替主導補盲區；成熟與否看它。<br>" +
     "<b>第三</b> " + st[2] + " " + FN[st[2]] + "，中年後漸醒的援軍，刻意練習的好標的。<br>" +
     "<b>劣勢</b> " + st[3] + " " + FN[st[3]] + "，壓力破口：" + GRIP[st[3]] + "。</p>" +
     '<p style="color:var(--muted)">成長方向：別急著補劣勢，先把輔助功能養壯，它才是主導的煞車與方向盤。功能堆疊與壓力反應是類型圈的詮釋模型，沒有實證研究背書，當作反思的鏡片就好。</p>'));
   if (alts.length) {
-    out.push(card("鏡緣的倒影", "sister types",
+    out.push(DC.card("鏡緣的倒影", "sister types",
       "<p>你有 " + alts.length + " 條軸站在邊界上，以下姊妹類型的鏡子也值得照一照：</p><p>" +
       alts.map(x => x.ax + " 軸改 " + x.flipBy + " 題就翻面 → <b>" + x.k + "</b>（" + TYPES[x.k][0] + "，" + TYPES[x.k][1] + "）").join("<br>") +
       "</p><p style='color:var(--muted)'>邊界不是量錯，是你真的兩邊都靈活。</p>"));
