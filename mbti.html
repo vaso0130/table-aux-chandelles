@@ -107,8 +107,10 @@
 <script src="divine-core.js?v=2026102504"></script>
 <script src="divine-ui.js?v=2026102505"></script>
 <script src="divine-lore.js?v=2026091402"></script>
+<script src="mbti-learn.js?v=2026102501"></script>
 <script>
 const $ = id => document.getElementById(id);
+const BL = DC.bookLink;
 
 /* ── 題本：每軸九題;pole 標 A 選項所代表的字母 ──
    出題採四軸輪轉(EI→SN→TF→JP 循環九輪)且各軸內極性不規則交錯——
@@ -385,13 +387,13 @@ $("btn-go").onclick = () => {
   const T = TYPES[R.type];
   const st = STACK[R.type];
   const fmtPci = (a) => (a.pci >= 0 ? "+" : "−") + Math.abs(a.pci).toFixed(2);
-  const axisLabel = a => a.win + "（" + (a.win === a.p1 ? a.n1 : a.n2) + "）" + fmtPci(a) + "・" + a.grade;
+  const axisLabel = a => BL("mbti", a.win, a.win + "（" + (a.win === a.p1 ? a.n1 : a.n2) + "）") + BL("mbti", "偏好指數", fmtPci(a)) + "・" + BL("mbti", a.grade === "邊界" ? "邊界軸" : "強度分級", a.grade);
   const barsH = R.axes.map(a => {
     const leftWin = a.win === a.p1;
     const pctL = Math.round((a.S + 2 * a.n) / (4 * a.n) * 100);   /* 全偏第一極=100%，全偏第二極=0% */
-    return '<div class="axis-bar"><span class="ab-l"' + (leftWin ? ' style="color:var(--gold-bright)"' : "") + ">" + a.p1 + " " + a.n1 + '</span>' +
+    return '<div class="axis-bar"><span class="ab-l"' + (leftWin ? ' style="color:var(--gold-bright)"' : "") + ">" + BL("mbti", a.p1, a.p1 + " " + a.n1) + '</span>' +
       '<span class="ab-track"><span class="ab-se" title="±一個標準誤：落在這一帶的差距只是雜訊"></span><span class="ab-fill" style="width:' + pctL + '%"></span></span>' +
-      '<span class="ab-r"' + (!leftWin ? ' style="color:var(--gold-bright)"' : "") + ">" + a.n2 + " " + a.p2 + "</span></div>";
+      '<span class="ab-r"' + (!leftWin ? ' style="color:var(--gold-bright)"' : "") + ">" + BL("mbti", a.p2, a.n2 + " " + a.p2) + "</span></div>";
   }).join("");
   /* 邊界軸→姊妹類型：改幾題就是另一面鏡子 */
   const bd = R.axes.filter(a => a.border);
@@ -408,31 +410,38 @@ $("btn-go").onclick = () => {
   if (flips.length) credWhy.push("同軸前後半題指向相反：" + flips.map(a => a.ax).join("、"));
   if (R.lean) credWhy.push("A 側選了 " + R.aCount + "/" + R.total + " 題，疑似順著同一邊作答");
   const credLevel = R.lean ? "低" : R.cred;
+  /* 顯示用（可點詞）；credWhy 純文字留給提示詞 */
+  const credWhyH = [];
+  if (R.nPairs) credWhyH.push("同構念" + BL("mbti", "配對題") + " " + R.nPairs + " 組，其中 " + R.incons + " 組答得相反");
+  if (bd.length) credWhyH.push(BL("mbti", "邊界軸") + " " + bd.length + " 條（" + bd.map(a => BL("mbti", a.ax)).join("、") + "）");
+  if (flips.length) credWhyH.push(BL("mbti", "分半異號", "同軸前後半題指向相反") + "：" + flips.map(a => BL("mbti", a.ax)).join("、"));
+  if (R.lean) credWhyH.push("A 側選了 " + R.aCount + "/" + R.total + " 題，疑似" + BL("mbti", "順著同一邊作答"));
   const credText = credLevel === "低"
     ? "這次的鏡子有點花。建議改天、換個心情再照一次，再把結果當真。"
     : credLevel === "中"
     ? "大致可信，但邊界軸請當作「兩邊都用得順手」，不要急著站隊。"
     : "作答前後一致，這面鏡子照得算清楚。";
   const out = [];
-  out.push(DC.card("鏡中之人：" + R.type, T[0],
+  out.push(DC.card("鏡中之人：" + BL("mbti", R.type), T[0],
     '<p class="lead">' + T[1] + "</p>" + barsH +
     "<p>" + R.axes.map(axisLabel).join("・") + "</p>" +
-    "<p><b>光面</b>：" + T[2] + "。<br><b>影面</b>：" + T[3] + "。<br><b>合拍舞台</b>：" + T[4] + "。<br><b>辨析</b>：" + T[5] + "。" + (T[6] ? "<br><b>常被誤讀成</b>：" + T[6] + "。" : "") + "</p>" +
+    "<p><b>光面</b>：" + T[2] + "。<br><b>影面</b>：" + T[3] + "。<br><b>合拍舞台</b>：" + T[4] + "。<br><b>辨析</b>：" + T[5].replace(/\b[EI][SN][TF][JP]\b/g, m => m === R.type ? m : BL("mbti", m)) + "。" + (T[6] ? "<br><b>常被誤讀成</b>：" + T[6] + "。" : "") + "</p>" +
     '<p style="color:var(--muted)">偏好指數從 −1 到 +1，正負只代表方向。絕對值小於 0.15 的軸算邊界，兩邊你都用得順手，情境會決定你出哪隻手。指數大也只是偏好鮮明，不代表另一側的能力缺席。T/F 尤其如此：它量的是決策時誰先發言，不是邏輯或同理的能力值。</p>'));
-  out.push(DC.card("這面鏡子有多可信", "可信度：" + credLevel,
+  out.push(DC.card("這面鏡子有多可信", BL("mbti", "可信度") + "：" + credLevel,
     "<p class=\"lead\">" + credText + "</p>" +
-    (credWhy.length ? "<p>" + credWhy.join("；") + "。</p>" : "<p>配對題答得一致，沒有邊界軸，作答也沒有偏向某一側。</p>") +
-    (bd.length ? "<p>" + bd.map(a => a.ax + " 軸只要改 " + a.flipBy + " 題就會翻面").join("；") + "。</p>" : "")));
-  out.push(DC.card("引擎室：認知功能", st.join(" · "),
-    "<p><b>主導</b> " + st[0] + " " + FN[st[0]] + "，你最順手的那隻手，不假思索就在用。<br>" +
-    "<b>輔助</b> " + st[1] + " " + FN[st[1]] + "，副駕駛，替主導補盲區；成熟與否看它。<br>" +
-    "<b>第三</b> " + st[2] + " " + FN[st[2]] + "，中年後漸醒的援軍，刻意練習的好標的。<br>" +
-    "<b>劣勢</b> " + st[3] + " " + FN[st[3]] + "，壓力破口：" + GRIP[st[3]] + "。</p>" +
+    (credWhyH.length ? "<p>" + credWhyH.join("；") + "。</p>" : "<p>配對題答得一致，沒有邊界軸，作答也沒有偏向某一側。</p>") +
+    (bd.length ? "<p>" + bd.map(a => BL("mbti", a.ax, a.ax + " 軸") + "只要改 " + BL("mbti", "翻面題數", a.flipBy + " 題") + "就會翻面").join("；") + "。</p>" : "")));
+  const fnL = (i) => "<b>" + BL("mbti", ["主導", "輔助", "第三", "劣勢"][i]) + "</b> " + BL("mbti", st[i], st[i] + " " + FN[st[i]]);
+  out.push(DC.card("引擎室：認知功能", st.map(f => BL("mbti", f)).join(" · "),
+    "<p>" + fnL(0) + "，你最順手的那隻手，不假思索就在用。<br>" +
+    fnL(1) + "，副駕駛，替主導補盲區；成熟與否看它。<br>" +
+    fnL(2) + "，中年後漸醒的援軍，刻意練習的好標的。<br>" +
+    fnL(3) + "，壓力破口：" + GRIP[st[3]] + "。</p>" +
     '<p style="color:var(--muted)">成長方向：別急著補劣勢，先把輔助功能養壯，它才是主導的煞車與方向盤。功能堆疊與壓力反應是類型圈的詮釋模型，沒有實證研究背書，當作反思的鏡片就好。</p>'));
   if (alts.length) {
-    out.push(DC.card("鏡緣的倒影", "sister types",
+    out.push(DC.card("鏡緣的倒影", BL("mbti", "姊妹類型", "sister types"),
       "<p>你有 " + alts.length + " 條軸站在邊界上，以下姊妹類型的鏡子也值得照一照：</p><p>" +
-      alts.map(x => x.ax + " 軸改 " + x.flipBy + " 題就翻面 → <b>" + x.k + "</b>（" + TYPES[x.k][0] + "，" + TYPES[x.k][1] + "）").join("<br>") +
+      alts.map(x => BL("mbti", x.ax, x.ax + " 軸") + "改 " + x.flipBy + " 題就翻面 → <b>" + BL("mbti", x.k) + "</b>（" + TYPES[x.k][0] + "，" + TYPES[x.k][1] + "）").join("<br>") +
       "</p><p style='color:var(--muted)'>邊界不是量錯，是你真的兩邊都靈活。</p>"));
   }
   $("out").innerHTML = out.join("");
@@ -463,26 +472,10 @@ $("btn-copy").onclick = async () => {
 };
 
 /* ── 入門教學 ── */
-function buildLearn() {
-  let h = "";
-  h += DC.lcard("MBTI 在量什麼", '<p class="lead-para">MBTI 源自榮格的心理類型論：人在<b>取得能量、接收資訊、做決定、對外生活</b>四件事上各有慣用的手。四軸各取一邊，組成十六型。它量的是<b>偏好</b>——像慣用手，不是只有一隻手；也會隨人生階段流動。把結果當鏡子照自己，別當籠子關自己，更別拿來釘別人。</p>');
-  h += DC.lcard("四軸速記", DC.ltable(["軸", "一邊", "另一邊"], [
-    ["能量", "E 外向——向人與世界充電", "I 內向——向獨處與內心充電"],
-    ["資訊", "S 實感——信具體與經驗", "N 直覺——信可能與聯想"],
-    ["決策", "T 思考——先論對錯利弊", "F 情感——先顧人與價值"],
-    ["生活", "J 判斷——愛定案與秩序", "P 感知——愛彈性與留白"]]) +
-    "<p>四軸量的是<b>誰先發言</b>,不是能力值:F 不等於不邏輯,T 不等於沒感情;I 不等於怕生,P 不等於散漫。真正的 T/F 分水嶺不在「在不在乎人」——多數人都在乎——而在<b>人的利益與該做的事相撞時，你先聽哪邊的</b>。</p>");
-  h += DC.lcard("認知功能：四字母底下的引擎",
-    '<p class="lead-para">四個字母是門牌，認知功能才是屋裡的人。榮格說：感知有實感(S)與直覺(N),判斷有思考(T)與情感(F),各自又分朝外(e)與朝內(i)——共八種功能。每型按固定順序用四個:<b>主導</b>是慣用手，<b>輔助</b>是副駕駛，<b>第三</b>中年漸醒，<b>劣勢</b>是壓力的破口。同是 INTJ 與 ISTJ,只差一個字母，引擎卻整組不同(Ni-Te vs Si-Te)——這就是為什麼「差一個字母」讀起來判若兩人。照完鏡，去結果卡的「引擎室」看你的四缸。</p>');
-  h += DC.lcard("十六型一覽", DC.ltable(["類型", "稱號", "一句話", "功能堆疊"], Object.keys(TYPES).map(k => [k, TYPES[k][0], TYPES[k][1], STACK[k].join("·")])));
-  h += DC.lcard("MBTI 科學嗎?——誠實說",
-    '<p class="lead-para">學界對 MBTI 有真實的批評：重測可能變型（尤其邊界軸）、把連續的光譜切成二分、預測工作表現的效度有限；人格研究的學術主流是五大人格。這些批評都對。本站題本每軸十二題、四段強度，仍是粗略的自陳工具，結果頁的「可信度」卡會告訴你這次照得清不清楚；認知功能堆疊與壓力反應則是類型圈的詮釋模型，沒有實證研究背書，當鏡片用就好。但 MBTI 有一樣東西沒被打倒——它給了普通人一套<b>談論差異而不分高下</b>的語言：內向不是害羞，務實不是無趣。本站的立場：把它當自我反思的鏡子與對話的起點，別當診斷、別當招聘門檻、更別當攻擊別人的標籤。鏡子照人，不釘人。</p>');
-  h += DC.lcard("鏡與命盤的分際",
-    '<p class="lead-para">同一屋簷下，八字館、人類圖排的是<b>生辰</b>——不管你怎麼看自己，盤就是那張盤；鏡廳照的是<b>自陳</b>——答案全部來自你對自己的認識，你變，鏡子跟著變。一個是「盤面上的你」，一個是「你以為的你」，兩者對照著看很有趣，但別拿一個去「驗證」另一個——它們量的根本不是同一件事。這也是鏡廳不入 MIX 合參的原因：類型學不是占卜，混著算是對兩邊都不敬。</p>');
-  h += DC.lcard("照鏡的心法", '<p class="lead-para">① 憑直覺答，選「習慣」不選「應該」；「很像」與「稍像」誠實分，鏡子才照得清。② 偏好指數在 ±0.15 以內是邊界，代表你兩側都靈活，不必急著站隊，姊妹類型的速寫也讀一讀。③ 類型沒有好壞，只有舞台合不合。④ 隔幾年再照一次，鏡子會告訴你，你走了多遠。</p>');
-  return h;
-}
-DC.learnInit(buildLearn);
+/* 入門教學：符號字典＋盤面讀法（內容在 mbti-learn.js） */
+DC.learnInit(() => '<div id="learn-book"></div>', (learn) => {
+  DC.learnBook(learn.querySelector("#learn-book"), mbtiBook()).show("mbti");
+});
 
 /* 開發測試：?test=mbti（全「A 很像」自動照鏡；A 側極性平衡時每軸 S=0→ESTJ 且四軸邊界，並觸發「順著同一邊作答」警示） */
 (function () {
