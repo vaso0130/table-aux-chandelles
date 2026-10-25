@@ -59,8 +59,15 @@ DC.schoolGet = function (key) {
 };
 DC.schoolPrompt = function (key) {   /* 提示詞裡的一行；未選（不指定）回傳空字串 */
   var v = DC.schoolGet(key), x = (DC.SCHOOLS[key] || []).filter(function (s) { return s[0] && s[0] === v; })[0];
-  return x ? x[3] + "下列要點若與此派方法不合，請依此派的取捨調整；與他派結論不同處可簡述差異。" : "";
+  return x ? x[3] + "本提示詞列出的解讀要點若與此派方法不合，請依此派的取捨調整；與他派結論不同處可簡述差異。" : "";
 };
+DC.schoolUI = function (key) {   /* 各館切換命術時呼叫：頁面需有 #f-school、#b-school、#school-note */
+  var f = document.getElementById("f-school");
+  if (!f) return;
+  f.hidden = !DC.SCHOOLS[key];
+  if (DC.SCHOOLS[key]) DC.schoolSelect(document.getElementById("b-school"), document.getElementById("school-note"), key);
+};
+DC.schoolHead = function (key) { var x = DC.schoolPrompt(key); return x ? ["解讀流派:" + x, ""] : []; };   /* 放在提示詞開頭 */
 DC.schoolSelect = function (sel, note, key) {   /* 把 <select> 填成該術的流派選單，改了就記住並更新說明 */
   var list = DC.SCHOOLS[key];
   sel.innerHTML = list.map(function (x) { return '<option value="' + x[0] + '">' + x[1] + (x[0] ? "" : "（綜合常見讀法）") + "</option>"; }).join("");
@@ -318,7 +325,11 @@ DC.learnBook = function (mount, spec, onPick) {
     br = DC.browser($q(".book-browser"), items, function (i) { return items[i].html; });
   };
   var drawGuide = function () {
-    $q(".book-guide").innerHTML = cur.guide.map(function (g, i) {
+    var guide = cur.guide.slice(), sch = DC.SCHOOLS && DC.SCHOOLS[curId];
+    if (sch) guide.push({ name: "解讀流派", sub: "起盤表單可選", html: "<p>同一張盤，不同流派看的重點不同。起盤表單可選「解讀流派」，選了會寫進給 AI 的提示詞，請它以那一派的方法為主；八字館與 MIX 共用這個選擇。</p><ul>" +
+      sch.filter(function (x) { return x[0]; }).map(function (x) { return "<li><b>" + x[1] + "</b>　" + x[2] + "</li>"; }).join("") +
+      '</ul><p class="g-tip"><b>讀法要領</b>　不確定就選「不指定」——AI 會用綜合常見讀法。想比較時，同一張盤換流派各問一次。</p>' });
+    $q(".book-guide").innerHTML = guide.map(function (g, i) {
       return '<details class="guide-item"' + (i === 0 ? " open" : "") + '><summary><span class="g-name">' + g.name + "</span>" +
         (g.sub ? '<span class="g-count">' + g.sub + "</span>" : "") + '<span class="g-mark" aria-hidden="true"></span></summary><div class="guide-body">' + g.html + "</div></details>";
     }).join("");

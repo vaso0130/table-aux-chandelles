@@ -151,8 +151,8 @@
 </div>
 
 <script src="divine-core.js?v=2026102505"></script>
-<script src="divine-ui.js?v=2026102506"></script>
-<script src="divine-lore.js?v=2026102501"></script>
+<script src="divine-ui.js?v=2026102507"></script>
+<script src="divine-lore.js?v=2026102502"></script>
 <script src="xq-data.js?v=2026101202"></script>
 <script src="shilun-data.js?v=2026102503"></script>
 <script>
@@ -237,12 +237,13 @@ function syncForm() {
   $("form-loc").hidden = !needLoc;
   $("form-shilun").hidden = !picked.includes("c-shilun");
   /* 選了有流派之分的術（八字、紫微），各給一個流派選單；選擇與八字館共用 */
-  const sch = picked.filter(id => SCHOOL_OF[id]);
+  const sch = picked.filter(id => SCHOOL_OF[id]).filter((id, i, arr) => arr.findIndex(x => SCHOOL_OF[x] === SCHOOL_OF[id]) === i);   /* 同一套流派只出一個選單 */
   $("form-school").hidden = !sch.length;
   $("school-fields").innerHTML = sch.map(id => '<div class="field"><label>' + ALL.find(x => x[0] === id)[1] + '</label><select id="sc-' + id + '"></select><div class="note" id="scn-' + id + '"></div></div>').join("");
   sch.forEach(id => DC.schoolSelect($("sc-" + id), $("scn-" + id), SCHOOL_OF[id]));
 }
-const SCHOOL_OF = { "b-bazi": "bazi", "b-ziwei": "ziwei" };   /* MIX 術數 → DC.SCHOOLS 的鍵 */
+const SCHOOL_OF = { "b-bazi": "bazi", "b-ziwei": "ziwei", "a-natal": "west", "a-transit": "west", "a-horary": "horary",
+  "a-vedic": "vedic", "a-prashna": "prashna", "n-meihua": "meihua", "n-meihua-zi": "meihua" };   /* MIX 術數 → DC.SCHOOLS 的鍵（同鍵共用選擇） */
 const schoolLines = (id) => DC.schoolPrompt(SCHOOL_OF[id]) ? ["  解讀流派:" + DC.schoolPrompt(SCHOOL_OF[id])] : [];
 renderPool();
 DC.fillCitySelect($("b-city"), $("b-lat"), $("b-lon"), $("b-tz"));
@@ -430,7 +431,7 @@ GEN["b-bazi"] = () => {
     html: '<div class="pillars">' + bz.pillars.map(p => '<div class="pillar"><span class="p-tag">' + p.tag + '</span><span class="p-char">' + p.gz + "</span></div>").join("") + "</div>",
     lines: ["八字(" + B.str + "," + (B.male ? "男" : "女") + "命):" + bz.pillars.map(p => p.tag + p.gz).join(" "),
       "  日主" + DC.STEMS[dS] + DC.STEM_WX[dS] + ";十神:" + bz.pillars.map((p, i) => i === 2 ? "日主" : DC.tenGod(dS, p.s)).join("、") + ";空亡" + bz.kong.join(""),
-      "  大運(" + dy.startAge.toFixed(1) + "歲起" + (dy.fwd ? "順" : "逆") + "):" + dy.list.slice(0, 5).map(d => Math.round(d.fromAge) + "歲" + d.gz).join("、"), ...schoolLines("b-bazi")] };
+      "  大運(" + dy.startAge.toFixed(1) + "歲起" + (dy.fwd ? "順" : "逆") + "):" + dy.list.slice(0, 5).map(d => Math.round(d.fromAge) + "歲" + d.gz).join("、")] };
 };
 GEN["b-ziwei"] = () => {
   const B = birth();
@@ -444,7 +445,6 @@ GEN["b-ziwei"] = () => {
     const b2 = ((zw.ming - k) % 12 + 12) % 12, P = zw.P[b2];
     lines.push("  " + P.palace + "(" + DC.BRANCHES[b2] + (P.isShen ? ",身" : "") + "):" + (P.stars.join(" ") || "無主星") + (P.good.length ? " 吉:" + P.good.join(" ") : "") + (P.bad.length ? " 煞:" + P.bad.join(" ") : "") + (P.hua.length ? " " + P.hua.join(" ") : ""));
   }
-  lines.push(...schoolLines("b-ziwei"));
   return { title: "紫微斗數",
     html: "<p>命宮" + DC.BRANCHES[zw.ming] + "(" + (zw.P[zw.ming].stars.join("、") || "無主星") + ")・" + zw.juName + "</p>", lines };
 };
@@ -724,7 +724,7 @@ $("btn-go").onclick = () => {
   const q = q3();
   const pr = ["你是一位同時精通多種占卜體系的顧問。這是同一個問題，用三套不同術數（或依生辰、或依此刻、或依機緣）起出的盤面。" + DC.toneHead(), ""];
   if (q) pr.push("我的問題:" + q, "");
-  sections.forEach((g, i) => { pr.push("【第" + "一二三"[i] + "術】"); pr.push(...g.lines); pr.push(""); });
+  sections.forEach((g, i) => { pr.push("【第" + "一二三"[i] + "術】"); pr.push(...g.lines, ...schoolLines(g.id)); pr.push(""); });   /* 有選流派的術，段末加一行 */
   /* 三術類型與主術裁決 */
   pr.push("三術類型:" + sections.map((g, i) => { const t = mixType(g.id); return "第" + "一二三"[i] + "術「" + g.title + "」屬" + t[0] + "(" + t[1] + ")"; }).join(";") + "。");
   pr.push("裁決規則：相左時依問題性質定主術——問成敗聽式占卦占、問稟賦聽命理、問時機聽時運擇日；主術定調，他術補條件；開卷機緣只作點醒，不推翻合議。");

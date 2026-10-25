@@ -77,6 +77,8 @@
     <div class="form-grid" style="margin-top:14px">
       <div class="field full"><label>你的問題</label>
         <input id="q-input" type="text" maxlength="200" placeholder="默想，寫下你想問的事——式占以問立局，建議必填"></div>
+      <div class="field" id="f-school" hidden><label>解讀流派</label><select id="b-school"></select>
+        <div class="note" id="school-note"></div></div>
     </div>
     <div class="btn-row">
       <button class="gold-btn" id="btn-go">起 局</button>
@@ -110,8 +112,8 @@
 </div>
 
 <script src="divine-core.js?v=2026102505"></script>
-<script src="divine-ui.js?v=2026102506"></script>
-<script src="divine-lore.js?v=2026102501"></script>
+<script src="divine-ui.js?v=2026102507"></script>
+<script src="divine-lore.js?v=2026102502"></script>
 <script src="shi-learn.js?v=2026102501"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -164,6 +166,7 @@ function renderModes() {
   DC.renderModes(s.modes, modeId, (id) => { modeId = id; renderModes(); updateForm(); });
 }
 function updateForm() {
+  DC.schoolUI(sysId);   /* 解讀流派（有流派之分的命術才出現） */
   const s = SYS.find(x => x.id === sysId);
   $("modes-label").hidden = !s.modes; $("modes").hidden = !s.modes;
   if (s.modes) { if (!s.modes.some(m => m[0] === modeId)) modeId = s.modes[0][0]; renderModes(); }
@@ -469,7 +472,7 @@ $("btn-go").onclick = () => {
   prof.save();
   const q = $("q-input").value.trim();
   const out = [], pr = [];
-  const head = [(sysId === "meihua" || sysId === "heluo" ? "請依所選易數規則分析以下卦象。" : "請依所選三式規則分析以下局式。") + DC.toneHead(), ""];
+  const head = [(sysId === "meihua" || sysId === "heluo" ? "請依所選易數規則分析以下卦象。" : "請依所選三式規則分析以下局式。") + DC.toneHead(), "", ...DC.schoolHead(sysId)];
   head.push("取法說明:" + SCHOOL_NOTE[sysId] + " 請沿用本盤取法；如採其他傳承，請分開列出差異，不要直接改寫盤面。", "");
   if (q) head.push("我的問題:" + q, "");
   try {

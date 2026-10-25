@@ -93,6 +93,8 @@
         <div class="note">兩者都保留實際上升點；行星靠近宮界時，宮位可能不同。</div></div>
       <div class="field full"><label>你的問題</label>
         <input id="q-input" type="text" maxlength="200" placeholder="默想，寫下你想問的事（卜卦與問事占星必填，其餘選填）"></div>
+      <div class="field" id="f-school" hidden><label>解讀流派</label><select id="b-school"></select>
+        <div class="note" id="school-note"></div></div>
     </div>
     <div class="btn-row">
       <button class="gold-btn" id="btn-go">起 盤</button>
@@ -125,8 +127,8 @@
 </div>
 
 <script src="divine-core.js?v=2026102505"></script>
-<script src="divine-ui.js?v=2026102506"></script>
-<script src="divine-lore.js?v=2026102501"></script>
+<script src="divine-ui.js?v=2026102507"></script>
+<script src="divine-lore.js?v=2026102502"></script>
 <script src="astro-learn.js?v=2026102502"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -226,6 +228,7 @@ const NEED = { // [本命, 對方, 此刻]
   prashna: [0, 0, 1], xnatal: [1, 0, 0], xtoday: [1, 0, 1], xbond: [1, 1, 0]
 };
 function updateForm() {
+  DC.schoolUI(sysId);   /* 解讀流派（有流派之分的命術才出現） */
   const need = NEED[modeId];
   $("form-birth").hidden = !need[0];
   $("form-partner").hidden = !need[1];
@@ -377,7 +380,7 @@ function run() {
   $("out").innerHTML = out.join("");
   const activeHouse = (sysId === "west" || sysId === "horary") && $("house-system").value === "equal" ? "等宮制" : "整宮制";
   const head = ["請依以下盤面資料解讀。" + DC.toneHead(),
-    "(天體位置使用簡化天文根數；本盤宮位採" + activeHouse + ",印度與宿曜採 Lahiri。請沿用所選算法，不要混用其他宮制。)", ""];
+    "(天體位置使用簡化天文根數；本盤宮位採" + activeHouse + ",印度與宿曜採 Lahiri。請沿用所選算法，不要混用其他宮制。)", "", ...DC.schoolHead(sysId)];
   if (q) head.push("我的問題:" + q, "");
   $("prompt-box").value = head.concat(pr).join("\n");
   $("prompt-sec").hidden = false;
