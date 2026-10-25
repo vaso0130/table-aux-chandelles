@@ -277,11 +277,12 @@ DC.browser = function (mount, items, renderDetail) {
 };
 /* 教學卡：可摺疊的 details，第一張預設展開；learnInit 會在頂端補一列目次 */
 /* ── 教學書（仿牌桌館：符號字典一覽＋逐項細讀、盤面讀法逐項可摺疊）──
-   spec[sysId] = { name, intro, dict: [{ cat, items: [{ no, t, s, html }] }], guide: [{ name, sub, html }] }
+   spec[sysId] = { name, intro, dict: [{ cat, items: [{ no, t, s, html, key? }] }], guide: [{ name, sub, html }] }
+   key 是結果頁連過來時用的名字（省略則用 t）；結果頁以 DC.bookLink(sysId, key) 產生可點的詞
    最上面一列命術（仿牌桌館先選牌組）；onPick(sysId) 讓頁面同步起盤那邊的選擇。
    回傳 { show(sysId) }：起盤那邊切換命術時呼叫，教學內容跟著換 */
 DC.learnBook = function (mount, spec, onPick) {
-  var cur = null, curId = null, tab = "dict", cat = 0, ids = Object.keys(spec);
+  var cur = null, curId = null, tab = "dict", cat = 0, br = null, ids = Object.keys(spec);
   mount.innerHTML = (ids.length > 1 ? '<div class="book-sys" role="group" aria-label="命術">' +
       ids.map(function (id) { return '<button type="button" data-id="' + id + '">' + spec[id].name + "</button>"; }).join("") + "</div>" : "") +
     '<p class="book-intro lead-para"></p>' +
@@ -296,7 +297,7 @@ DC.learnBook = function (mount, spec, onPick) {
     }).join("") : "";
     $q(".book-cats").querySelectorAll(".book-cat").forEach(function (b, i) { b.onclick = function () { cat = i; drawDict(); }; });
     var items = d[cat].items;
-    DC.browser($q(".book-browser"), items, function (i) { return items[i].html; });
+    br = DC.browser($q(".book-browser"), items, function (i) { return items[i].html; });
   };
   var drawGuide = function () {
     $q(".book-guide").innerHTML = cur.guide.map(function (g, i) {
@@ -325,8 +326,43 @@ DC.learnBook = function (mount, spec, onPick) {
   });
   mount.querySelectorAll(".book-tab").forEach(function (b) { b.onclick = function () { tab = b.dataset.tab; drawTab(); }; });
   drawTab();
-  return { show: show };
+  /* 從結果頁點詞進來：切到該術、該類別，直接打開那一條 */
+  var open = function (id, key) {
+    show(id);
+    if (!cur) return false;
+    for (var c = 0; c < cur.dict.length; c++) {
+      var items = cur.dict[c].items;
+      for (var i = 0; i < items.length; i++) {
+        if ((items[i].key || items[i].t) === key) {
+          tab = "dict"; drawTab(); cat = c; drawDict(); br.open(i);
+          mount.querySelector(".book-dict").scrollIntoView({ behavior: "smooth", block: "start" });
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+  var api = { show: show, open: open };
+  DC._book = api;
+  setTimeout(function () {   /* 頁面的 after 回呼先跑完（它會 show 目前命術），再處理點詞帶來的待開項 */
+    if (DC._bookPending) { open(DC._bookPending[0], DC._bookPending[1]); DC._bookPending = null; }
+  }, 0);
+  return api;
 };
+/* 結果頁的可點詞：點了切到入門教學並打開字典那一條（label 省略則顯示 key） */
+DC.bookLink = function (sysId, key, label) {
+  return '<a class="book-link" href="#" data-book="' + sysId + ":" + key + '" title="在符號字典查「' + key + '」">' + (label == null ? key : label) + "</a>";
+};
+if (typeof document !== "undefined") document.addEventListener("click", function (e) {
+  var a = e.target.closest && e.target.closest(".book-link");
+  if (!a) return;
+  e.preventDefault();
+  var k = a.dataset.book, cut = k.indexOf(":");
+  var sys = k.slice(0, cut), key = k.slice(cut + 1);
+  if (DC._book) { var tab = document.querySelector('.view-btn[data-view="learn"]'); if (tab) tab.click(); DC._book.open(sys, key); return; }
+  DC._bookPending = [sys, key];
+  var t = document.querySelector('.view-btn[data-view="learn"]'); if (t) t.click();   /* 首次開教學頁會建書，建好後處理待開項 */
+});
 /* 字典細讀頁：標題、別名、關鍵詞，接幾段以細線分隔的小節（仿牌桌館牌義頁） */
 DC.bookEntry = function (o) {
   return '<div class="book-entry"><div class="be-head">' + (o.glyph ? '<span class="be-glyph">' + o.glyph + "</span>" : "") +

@@ -27,7 +27,7 @@ function baziBook() {
   const HE_WX = ["土", "金", "水", "木", "火"]; // 甲己土、乙庚金、丙辛水、丁壬木、戊癸火
   const ganItems = GAN.map((g, i) => {
     const he = S[(i + 5) % 10], chong = i < 4 ? S[i + 6] : i > 5 ? S[i - 6] : "";
-    return { no: S[i], t: g[0], s: g[1], html: E({
+    return { no: S[i], t: g[0], s: g[1], key: S[i], html: E({
       glyph: S[i], sub: "天干・第 " + (i + 1) + " 干", title: S[i] + "・" + g[0], keys: g[1],
       sections: [
         ["作為日主", "日柱天干是" + S[i] + "的人，命盤的主角就是「" + g[1] + "」。<br><b>光面</b>　" + g[2] + "。<br><b>影面</b>　" + g[3] + "。"],
@@ -54,7 +54,7 @@ function baziBook() {
   const KU = { 4: "水庫", 10: "火庫", 1: "金庫", 7: "木庫" };
   const zhiItems = ZHI.map((z, i) => {
     const h0 = (23 + 2 * i) % 24, hid = DC.HIDDEN[i];
-    return { no: B[i], t: z[1] + DC.BRANCH_WX[i] + "・" + z[0], s: z[2].split("，")[0], html: E({
+    return { no: B[i], key: B[i], t: z[1] + DC.BRANCH_WX[i] + "・" + z[0], s: z[2].split("，")[0], html: E({
       glyph: B[i], sub: "地支・第 " + (i + 1) + " 支・生肖" + z[0], title: B[i] + "・" + z[1] + DC.BRANCH_WX[i], keys: z[2],
       sections: [
         ["時間", "<b>月令</b>　農曆" + MONTH_NAME[i] + "<br><b>時辰</b>　" + String(h0).padStart(2, "0") + ":00～" + String((h0 + 2) % 24).padStart(2, "0") + ":00"],
@@ -243,7 +243,7 @@ function baziBook() {
   const HDT = [["M", "約 9%", "發起、開路——不需等待，但要讓人知道你要動"], ["G", "約 37%", "薦骨馬達，做對的事有用不完的電，做錯的事秒沒電"],
     ["MG", "約 33%", "多軌並進、跳步快改——允許自己半途轉彎"], ["P", "約 20%", "看系統、帶人與指路——被認可時才施展，先養專業"], ["R", "約 1%", "全開放的鏡子，反映環境健康與否——大決定睡過 28 天"]];
   const hdTypeItems = HDT.map(([k, pct, how]) => { const T = DC.HD_TYPES[k], zh = T.name.split(" ")[0];
-    return { no: pct, t: zh, s: T.strat.slice(0, 6), html: E({ glyph: zh[0], sub: "人類圖・類型・" + pct, title: T.name, keys: T.strat,
+    return { no: pct, t: zh, key: T.name, s: T.strat.slice(0, 6), html: E({ glyph: zh[0], sub: "人類圖・類型・" + pct, title: T.name, keys: T.strat,
       sections: [["怎麼活", how + "。"], ["訊號", "對頻時感到「" + T.sig + "」，走偏時感到「" + T.notself + "」——感到" + T.notself + "，就回到策略重來。"]] }) }; });
   const AUTH = [
     ["情緒權威", "情緒中心有定義", "沒有當下的真實。情緒是一道波，等波過完、高低都經歷過，再做決定。"],
@@ -254,7 +254,7 @@ function baziBook() {
     ["無內在權威（環境權威）", "部分投射者", "在對的環境、對信任的人談，答案自然浮現；地點與人比邏輯重要。"],
     ["月循環權威", "反映者", "跟著月亮走完約 28 天，在不同的日子感受同一件事，再定。"],
   ];
-  const hdAuthItems = AUTH.map((a) => ({ t: a[0].replace(/（.*）/, ""), s: a[1].slice(0, 9), html: E({ sub: "人類圖・內在權威", title: a[0], keys: a[1], sections: [["怎麼做決定", a[2]]] }) }));
+  const hdAuthItems = AUTH.map((a) => ({ t: a[0].replace(/（.*）/, ""), key: a[0], s: a[1].slice(0, 9), html: E({ sub: "人類圖・內在權威", title: a[0], keys: a[1], sections: [["怎麼做決定", a[2]]] }) }));
   const CEN = [ // [類, 功能, 有定義, 開放]
     ["壓力", "靈感、疑問、想要弄懂", "有穩定的靈感來源", "容易被別人的問題困擾，去想不屬於你的問題"],
     ["覺察", "概念化、分析、形成觀點", "有固定的思考方式", "思考有彈性，不必假裝確定"],
@@ -272,18 +272,18 @@ function baziBook() {
   const LINE6 = ["探究者：先打好地基，需要研究透徹才有安全感", "隱士：天賦渾然天成，需要獨處，等被召喚", "烈士：從錯誤中學習，試了才知道",
     "機會主義者：機會來自熟人網絡，重關係", "異端者：被他人投射期待，是救火者也背黑鍋", "人生典範：三十歲前像 3 爻試錯，三十至五十上屋頂觀察，五十後成為典範"];
   const hdProItems = Object.keys(DC.HD_PROFILE).map((k) => { const [a, b] = k.split("/").map(Number);
-    return { no: k, t: DC.HD_PROFILE[k], s: "", html: E({ glyph: k, sub: "人類圖・人生角色", title: k + "・" + DC.HD_PROFILE[k],
+    return { no: k, key: k, t: DC.HD_PROFILE[k], s: "", html: E({ glyph: k, sub: "人類圖・人生角色", title: k + "・" + DC.HD_PROFILE[k],
       keys: "意識（個性）" + a + " 爻・潛意識（設計）" + b + " 爻",
       sections: [["前一個數字（意識）", a + " 爻 " + LINE6[a - 1] + "。"], ["後一個數字（潛意識）", b + " 爻 " + LINE6[b - 1] + "。"],
         ["在盤上怎麼看", "人生角色由個性太陽與設計太陽的爻決定，是你的處世人設——別人怎麼看你、你怎麼跟世界打交道。"]] }) }; });
-  const hdChItems = DC.HD_CHANNELS.map(([a, b, name]) => ({ no: a + "-" + b, t: name, s: DC.HD_CENTERS[DC.HD_GC[a]].replace(/（.*|\(.*/, "") + "↔" + DC.HD_CENTERS[DC.HD_GC[b]].replace(/（.*|\(.*/, ""),
+  const hdChItems = DC.HD_CHANNELS.map(([a, b, name]) => ({ no: a + "-" + b, key: a + "-" + b, t: name, s: DC.HD_CENTERS[DC.HD_GC[a]].replace(/（.*|\(.*/, "") + "↔" + DC.HD_CENTERS[DC.HD_GC[b]].replace(/（.*|\(.*/, ""),
     html: E({ glyph: a + "<br>" + b, sub: "人類圖・通道", title: name + "通道", keys: a + "-" + b,
       sections: [["連接", "閘門 " + a + "（" + DC.HD_CENTERS[DC.HD_GC[a]] + "）與閘門 " + b + "（" + DC.HD_CENTERS[DC.HD_GC[b]] + "）。"],
         ["在盤上怎麼看", "兩端閘門都被星體啟動（黑紅皆算），通道就接通，兩端的中心一起被定義。接通的通道是你穩定、可靠的天賦。"]] }) }));
 
   /* ── 生命靈數 ── */
   const numItems = Object.keys(DC.NUM_CORE).map((n) => { const c = DC.NUM_CORE[n];
-    return { no: n, t: c.t.replace(/（.*）/, ""), s: c.key.split("・")[0], html: E({ glyph: n, sub: "生命靈數・" + (n > 9 ? "卓越數" : "核心數字"), title: n + "・" + c.t, keys: c.key,
+    return { no: n, key: n, t: c.t.replace(/（.*）/, ""), s: c.key.split("・")[0], html: E({ glyph: n, sub: "生命靈數・" + (n > 9 ? "卓越數" : "核心數字"), title: n + "・" + c.t, keys: c.key,
       sections: [["光與影", "<b>光面</b>　" + c.light + "。<br><b>影面</b>　" + c.shadow + "。"], ["愛情", c.love + "。"], ["財運", c.money + "。"], ["職涯", c.work + "。"], ["學習", c.study + "。"]] }) }; });
   const CORE = [
     ["生命靈數", "生日所有數字加總，反覆相加到一位數（遇 11、22、33 保留）", "你的主題與使命，盤上的主角。例：1990-05-15 → 30 → 3。"],
@@ -297,7 +297,7 @@ function baziBook() {
   const lineItems = DC.NUM_LINES.map(([ln, name, note]) => ({ no: ln.split("").join("-"), t: name, s: note.split("、")[0], html: E({ glyph: ln, sub: "生命靈數・九宮連線", title: name, keys: note,
     sections: [["怎麼成線", "生日數字填進 1–9 九宮格，" + ln.split("").join("、") + " 三格都有數字就連成這條線。"], ["意義", "這是你自帶的套裝技能——" + note + "。湊不滿的線不是缺陷，是這輩子要練的新招。"]] }) }));
   const yearItems = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => { const [head, tail] = YEAR_MEAN[n].split("——");
-    return { no: "流年 " + n, t: head, s: (tail || "").split("，")[0], html: E({ glyph: n, sub: "生命靈數・流年九年一輪", title: "流年 " + n + "・" + head, keys: tail,
+    return { no: "流年 " + n, key: "流年" + n, t: head, s: (tail || "").split("，")[0], html: E({ glyph: n, sub: "生命靈數・流年九年一輪", title: "流年 " + n + "・" + head, keys: tail,
       sections: [["在盤上怎麼看", "流年＝出生月＋日＋當年年份，化簡到一位數。九年一循環：1 播種、9 清倉；知道自己走到第幾步，就不會在該蹲的年份硬跳。"]] }) }; });
 
   /* ── 盤面讀法 ── */

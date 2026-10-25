@@ -3,7 +3,7 @@
 <title>燭光命房 · 八字館</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="hall.css?v=2026102501">
+<link rel="stylesheet" href="hall.css?v=2026102502">
 
 <div class="wrap">
   <header>
@@ -103,9 +103,9 @@
 </div>
 
 <script src="divine-core.js?v=2026102504"></script>
-<script src="divine-ui.js?v=2026102504"></script>
+<script src="divine-ui.js?v=2026102505"></script>
 <script src="divine-lore.js?v=2026091402"></script>
-<script src="bazi-learn.js?v=2026102501"></script>
+<script src="bazi-learn.js?v=2026102502"></script>
 <script>
 const $ = id => document.getElementById(id);
 
@@ -186,14 +186,18 @@ function wxCount(bz) {
   for (const p of bz.pillars) { cnt[DC.STEM_WX[p.s]]++; cnt[DC.BRANCH_WX[p.b]]++; }
   return cnt;
 }
-function pillarsHtml(bz, withTen) {
+/* 結果裡的詞連到入門教學的字典（DC.bookLink）；四柱推命用日式通変星名 */
+const BL = DC.bookLink;
+const jpTen = (t) => ({ 七殺: "偏官", 正印: "印綬" })[t] || t;
+const tenLink = (sys, t) => sys === "shichu" ? BL("shichu", jpTen(t), t) : BL("bazi", t);
+function pillarsHtml(bz, withTen, sys = "bazi") {
   const dS = bz.pillars[2].s;
   return '<div class="pillars">' + bz.pillars.map((p, i) => {
-    const ten = i === 2 ? "日主" : DC.tenGod(dS, p.s);
+    const ten = i === 2 ? "日主" : tenLink(sys, DC.tenGod(dS, p.s));
     const hid = DC.HIDDEN[p.b].map(hc => hc + "(" + DC.tenGod(dS, DC.STEMS.indexOf(hc)) + ")").join(" ");
     return '<div class="pillar' + (i === 2 ? " day" : "") + '"><span class="p-tag">' + p.tag + '</span>' +
       (withTen ? '<span class="p-ten">' + ten + "</span>" : "") +
-      '<span class="p-char">' + p.gz[0] + "<br>" + p.gz[1] + "</span>" +
+      '<span class="p-char">' + BL("bazi", p.gz[0]) + "<br>" + BL("bazi", p.gz[1]) + "</span>" +
       '<span class="p-ten">' + p.ny + "</span>" +
       (withTen ? '<span class="p-hid">藏 ' + hid + "</span>" : "") + "</div>";
   }).join("") + "</div>";
@@ -206,13 +210,13 @@ function runBazi(out, pr) {
   const cnt = wxCount(bz);
   const dS = bz.pillars[2].s;
   out.push(DC.card("八字命盤", B.str + "(" + (B.male ? "男" : "女") + "命)", pillarsHtml(bz, true) +
-    '<div class="kv"><span><b>日主</b>' + DC.STEMS[dS] + DC.STEM_WX[dS] + "</span><span><b>空亡</b>" + bz.kong.join("") + "</span><span><b>五行</b>" +
-    Object.entries(cnt).map(([k, v]) => k + v).join(" ") + "</span></div>" +
-    (ss.length ? "<p>" + ss.map(s => '<span class="badge">' + s.split("——")[0] + "</span>").join(" ") + "</p>" : "")));
+    '<div class="kv"><span><b>日主</b>' + BL("bazi", DC.STEMS[dS]) + DC.STEM_WX[dS] + "</span><span><b>" + BL("bazi", "空亡") + "</b>" + bz.kong.join("") + "</span><span><b>五行</b>" +
+    Object.entries(cnt).map(([k, v]) => BL("bazi", k) + v).join(" ") + "</span></div>" +
+    (ss.length ? "<p>" + ss.map(s => { const t = s.split("——")[0]; return '<span class="badge">' + BL("bazi", t.replace(/\(.*\)/, ""), t) + "</span>"; }).join(" ") + "</p>" : "")));
   out.push(DC.card("大運", (dy.fwd ? "順行" : "逆行") + "・" + dy.startAge.toFixed(1) + " 歲起運",
     '<div class="tbl-scroll"><table class="data"><tr><th>起歲</th>' + dy.list.map(d => "<th>" + Math.round(d.fromAge) + "</th>").join("") + "</tr>" +
     "<tr><td>大運</td>" + dy.list.map(d => '<td class="hl">' + d.gz + "</td>").join("") + "</tr>" +
-    "<tr><td>十神</td>" + dy.list.map(d => "<td>" + DC.tenGod(dS, d.s) + "</td>").join("") + "</tr></table></div>"));
+    "<tr><td>十神</td>" + dy.list.map(d => "<td>" + BL("bazi", DC.tenGod(dS, d.s)) + "</td>").join("") + "</tr></table></div>"));
   pr.push("八字命盤(" + B.str + ",UTC+" + B.tz + "," + (B.male ? "男" : "女") + "命):");
   pr.push("  四柱:" + bz.pillars.map(p => p.tag + " " + p.gz + "(" + p.ny + ")").join("、"));
   pr.push("  日主 " + DC.STEMS[dS] + DC.STEM_WX[dS] + ";天干十神:" + bz.pillars.map((p, i) => i === 2 ? "日主" : p.tag[0] + "干" + DC.tenGod(dS, p.s)).join("、"));
@@ -239,6 +243,7 @@ function runZiwei(out, pr) {
   if (lun.isLeap && (leapRule === "next" || (leapRule === "split" && lun.day >= 16))) zwMonth = lun.month % 12 + 1;
   const zw = DC.ziwei(zwMonth, lun.day, bz.hB, yS, yB, B.male);
   const lunStr = (lun.isLeap ? "閏" : "") + DC.CN_MONTH[lun.month - 1] + "月" + DC.CN_DAY[lun.day - 1] + DC.BRANCHES[bz.hB] + "時";
+  const zwL = (arr) => arr.map(st => BL("ziwei", st)).join(" ");
   let grid = '<div class="grid12">';
   const cellMap = {};
   for (const [br, r, c] of ZW_LAYOUT) cellMap[r + "," + c] = br;
@@ -252,17 +257,17 @@ function runZiwei(out, pr) {
     const br = cellMap[r + "," + c], P = zw.P[br];
     grid += '<div class="cell' + (br === zw.ming ? " hl" : "") + '">' +
       '<span class="c-gz">' + DC.STEMS[P.stem] + DC.BRANCHES[br] + '</span>' +
-      '<span class="c-palace">' + P.palace + (P.isShen ? "・身" : "") + '</span>' +
-      '<span class="star-major">' + (P.stars.join(" ") || "—") + "</span><br>" +
-      (P.good.length ? '<span class="star-good">' + P.good.join(" ") + "</span><br>" : "") +
-      (P.bad.length ? '<span class="star-bad">' + P.bad.join(" ") + "</span><br>" : "") +
-      (P.hua.length ? '<span class="star-hua">' + P.hua.join(" ") + "</span><br>" : "") +
+      '<span class="c-palace">' + BL("ziwei", P.palace) + (P.isShen ? "・身" : "") + '</span>' +
+      '<span class="star-major">' + (zwL(P.stars) || "—") + "</span><br>" +
+      (P.good.length ? '<span class="star-good">' + zwL(P.good) + "</span><br>" : "") +
+      (P.bad.length ? '<span class="star-bad">' + zwL(P.bad) + "</span><br>" : "") +
+      (P.hua.length ? '<span class="star-hua">' + P.hua.map(h => BL("ziwei", h.slice(-2), h)).join(" ") + "</span><br>" : "") +
       '<span class="c-tag">大限 ' + P.daxian + "</span></div>";
   }
   grid += "</div>";
   out.push(DC.card("紫微命盤", "中州派安星・年界" + (useLichun ? "立春" : "正月初一"), grid));
   const mingP = zw.P[zw.ming];
-  out.push(DC.card("命宮概要", "", '<p class="lead">命宮' + DC.BRANCHES[zw.ming] + "宮，主星:" + (mingP.stars.join("、") || "無主星（借對宮）") + "</p>" +
+  out.push(DC.card("命宮概要", "", '<p class="lead">命宮' + DC.BRANCHES[zw.ming] + "宮，主星:" + (mingP.stars.map(st => BL("ziwei", st)).join("、") || "無主星（借對宮）") + "</p>" +
     "<p>" + zw.juName + ",第一大限自 " + zw.ju + " 歲起。四化:" + zw.P.flatMap(p => p.hua).join("、") + "。</p>"));
   pr.push("紫微斗數命盤(" + B.str + " → 農曆 " + yGZ + "年" + lunStr + "," + (B.male ? "男" : "女") + "命," + zw.juName + "):");
   pr.push("  年界取法:" + (useLichun ? "以立春換歲（部分門派取法）——生於立春至正月初一之間者，年柱與主流盤不同" : "以農曆正月初一換歲（主流取法）") + ";年干支 " + yGZ + ",宮干五虎遁、生年四化、祿存羊陀、魁鉞火鈴皆依此年干支起，請依此取法解讀。");
@@ -279,9 +284,9 @@ function runShichu(out, pr) {
   const B = readBirth();
   const bz = DC.bazi(B.y, B.m, B.d, B.h, B.mi, B.tz, B.dayBoundary);
   const dS = bz.pillars[2].s;
-  out.push(DC.card("四柱推命", "命式(" + B.str + ")", pillarsHtml(bz, true) +
+  out.push(DC.card("四柱推命", "命式(" + B.str + ")", pillarsHtml(bz, true, "shichu") +
     '<div class="tbl-scroll"><table class="data"><tr><th>柱</th><th>干支</th><th>通変星</th><th>十二運</th></tr>' +
-    bz.pillars.map((p, i) => "<tr><td>" + p.tag + '</td><td class="hl">' + p.gz + "</td><td>" + (i === 2 ? "日主" : DC.tenGod(dS, p.s).replace("七殺", "偏官").replace("正印", "印綬")) + "</td><td>" + twelveUn(dS, p.b) + "</td></tr>").join("") + "</table></div>" +
+    bz.pillars.map((p, i) => "<tr><td>" + p.tag + '</td><td class="hl">' + p.gz + "</td><td>" + (i === 2 ? "日主" : BL("shichu", jpTen(DC.tenGod(dS, p.s)))) + "</td><td>" + BL("shichu", twelveUn(dS, p.b)) + "</td></tr>").join("") + "</table></div>" +
     "<p>十二運星看每一柱的氣勢盛衰：年柱主祖上與少年、月柱主家庭與青年、日柱主自身與中年、時柱主晚年與子息。</p>"));
   pr.push("四柱推命命式(" + B.str + ",UTC+" + B.tz + "," + (B.male ? "男" : "女") + "命):");
   pr.push("  換日法:" + (B.dayBoundary === "midnight" ? "午夜 00:00 換日" : "晚子初 23:00 換日") + "。以下干支已按此法排定。");
@@ -309,13 +314,13 @@ function runNinestar(out, pr) {
   const goodStars = [];
   for (let s2 = 1; s2 <= 9; s2++) if (s2 !== 5 && s2 !== star && (DC.NSTAR_WX[s2] === shengWo || DC.NSTAR_WX[s2] === myWx)) goodStars.push(s2);
   out.push(DC.card("本命星與月命星", "九星氣學",
-    '<p class="lead">本命星:' + DC.NSTAR[star] + "(" + (B.male ? "男" : "女") + "命算法)・月命星:" + DC.NSTAR[mStar] + "</p>" +
+    '<p class="lead">本命星:' + BL("ninestar", DC.NSTAR[star]) + "(" + (B.male ? "男" : "女") + "命算法)・月命星:" + BL("ninestar", DC.NSTAR[mStar]) + "</p>" +
     "<p>本命星屬" + myWx + ":" + shengWo + "生我為生氣、" + myWx + "比和為旺氣——" + goodStars.map(s2 => DC.NSTAR[s2]).join("、") + " 為你的吉星。</p>"));
   out.push(DC.card("本年年盤(" + effNow + " 立春起)", "五黃殺與吉方",
     '<div class="grid9">' + [4, 9, 2, 3, 5, 7, 8, 1, 6].map(p2 =>
       '<div class="cell' + (p2 === myPalace ? " hl" : "") + '"><span class="g-name">' + DC.GONG_NAME[p2] + '</span><span class="g-main">' + DC.NSTAR[palaceStar(p2)].slice(0, 2) + "</span>" +
-      (palaceStar(p2) === 5 && p2 !== 5 ? '<br><span class="g-mut" style="color:#E8A08F">五黃殺</span>' : "") +
-      (p2 === OPP[wuhuang] && p2 !== 5 && wuhuang !== 5 ? '<br><span class="g-mut" style="color:#E8A08F">暗劍殺</span>' : "") +
+      (palaceStar(p2) === 5 && p2 !== 5 ? '<br><span class="g-mut" style="color:#E8A08F">' + BL("ninestar", "五黃殺") + '</span>' : "") +
+      (p2 === OPP[wuhuang] && p2 !== 5 && wuhuang !== 5 ? '<br><span class="g-mut" style="color:#E8A08F">' + BL("ninestar", "暗劍殺") + '</span>' : "") +
       (p2 === myPalace ? '<br><span class="g-sub">你在此</span>' : "") + "</div>").join("") + "</div>" +
     "<p>你的本命星今年飛到" + DC.GONG_NAME[myPalace] + "。" + (wuhuang === 5 ? "本年五黃入中宮，諸方無五黃殺與暗劍殺（中宮非方位）。" : "五黃所在與其對沖（暗劍殺）為大凶方，今年動土、搬遷、遠行宜避。") + "</p>"));
   pr.push("九星氣學(生日 " + B.str + "," + (B.male ? "男" : "女") + "命):");
@@ -356,7 +361,7 @@ function runDangsaju(out, pr) {
       const s = DS_STARS[p];
       return '<div class="pillar"><span class="p-tag">' + tag + '</span><span class="p-char" style="font-size:26px"><i class="ds-ico" aria-hidden="true">' + s[2] + "</i>" + s[0] + '</span><span class="p-ten">' + s[1] + "</span></div>";
     }).join("") + "</div>" +
-    stages.map(([tag, p]) => { const s = DS_STARS[p]; return "<p><b style='color:var(--gold-bright)'>" + tag + " " + s[0] + "(" + s[1] + ")</b>——" + s[3] + "。</p>"; }).join("") +
+    stages.map(([tag, p]) => { const s = DS_STARS[p]; return "<p><b style='color:var(--gold-bright)'>" + tag + " " + BL("dangsaju", s[0]) + "(" + s[1] + ")</b>——" + s[3] + "。</p>"; }).join("") +
     "<p>唐四柱為朝鮮時代流行的民間看圖命書(당사주책):不論格局用神，只以十二天星說四段人生，直白如畫。" + (lun.isLeap ? "閏月依本月起數。" : "") + "</p>"));
   pr.push("唐四柱(당사주,韓國民俗四柱):");
   pr.push("  陰曆生辰:" + DC.BRANCHES[yB] + "年" + (lun.isLeap ? "閏" : "") + lun.month + "月" + lun.day + "日" + DC.BRANCHES[hb] + "時(" + B.str + ")");
@@ -372,9 +377,9 @@ function runHumand(out, pr) {
   const hd = DC.humanDesign(B.y, B.m, B.d, B.h, B.mi, B.tz);
   const dDate = (() => { const dt = new Date((hd.jdD - DC.jd(1970, 1, 1, 0, 0, 0)) * 86400000 + B.tz * 3600000); return dt.getUTCFullYear() + "-" + DC.pad2(dt.getUTCMonth() + 1) + "-" + DC.pad2(dt.getUTCDate()); })();
   out.push(DC.card("類型與權威", hd.T.name,
-    '<div class="kv"><span><b>類型</b>' + hd.T.name + "</span><span><b>人生角色</b>" + hd.profile + "(" + hd.profileName + ")</span><span><b>定義</b>" + hd.defName + "</span></div>" +
+    '<div class="kv"><span><b>類型</b>' + BL("humand", hd.T.name) + "</span><span><b>人生角色</b>" + BL("humand", hd.profile) + "(" + hd.profileName + ")</span><span><b>定義</b>" + hd.defName + "</span></div>" +
     '<p class="lead">策略:' + hd.T.strat + "</p>" +
-    "<p><b>內在權威</b>:" + hd.auth + "。</p>" +
+    "<p><b>內在權威</b>:" + BL("humand", hd.auth.split("——")[0]) + "——" + hd.auth.split("——").slice(1).join("——") + "。</p>" +
     "<p>對頻的訊號是「" + hd.T.sig + "」，走偏的訊號是「" + hd.T.notself + "」——感到" + hd.T.notself + "時，回到策略重新來過。</p>" +
     "<p>輪迴交叉:" + hd.angle + " " + hd.cross + "(個性日地|設計日地)。</p>"));
   out.push(DC.card("十三星體啟動", "設計(紅・潛意識，約 " + dDate + ")|個性（黑・意識，出生時刻）",
@@ -382,8 +387,8 @@ function runHumand(out, pr) {
     hd.pers.map((p, i) => "<tr><td style='color:#E8A08F'>" + hd.des[i].gate + "." + hd.des[i].line + "</td><td>" + p.gl + " " + p.zh + '</td><td class="hl">' + p.gate + "." + p.line + "</td></tr>").join("") + "</table></div>"));
   const openC = DC.HD_CENTERS.map((n, i) => i).filter(i => !hd.defined.has(i));
   out.push(DC.card("九中心與通道", hd.defined.size + " 定義・" + openC.length + " 開放",
-    "<p>" + DC.HD_CENTERS.map((n, i) => '<span class="badge' + (hd.defined.has(i) ? "" : " dim") + '">' + n + (hd.defined.has(i) ? "" : "(開放)") + "</span>").join(" ") + "</p>" +
-    (hd.channels.length ? "<p>接通的通道:" + hd.channels.map(c => "<b>" + c[0] + "-" + c[1] + "</b> " + c[2]).join("、") + "。</p>" : "<p>無完整通道（反映者）。</p>") +
+    "<p>" + DC.HD_CENTERS.map((n, i) => '<span class="badge' + (hd.defined.has(i) ? "" : " dim") + '">' + BL("humand", n) + (hd.defined.has(i) ? "" : "(開放)") + "</span>").join(" ") + "</p>" +
+    (hd.channels.length ? "<p>接通的通道:" + hd.channels.map(c => "<b>" + BL("humand", c[0] + "-" + c[1]) + "</b> " + c[2]).join("、") + "。</p>" : "<p>無完整通道（反映者）。</p>") +
     "<p>定義中心是你穩定的能量與天賦；開放中心是你放大並學習他人的地方，也是「非自己」雜音的入口。</p>"));
   pr.push("人類圖(Human Design,回歸黃道;" + B.str + ",UTC+" + B.tz + "):");
   pr.push("  類型:" + hd.T.name + ";策略:" + hd.T.strat + ";標誌/非自己:" + hd.T.sig + "/" + hd.T.notself);
@@ -409,13 +414,16 @@ function runLifenum(topic, out, pr) {
   const now = tv ? (() => { const [ty, tm, td] = tv.split("-").map(Number); return { getFullYear: () => ty, getMonth: () => tm - 1, getDate: () => td }; })() : new Date();
   const L = DC.lifeNumbers(y, m, d, now.getFullYear(), now.getMonth() + 1, now.getDate());
   const C = coreOf(L.lp);
-  const baseKv = '<div class="kv"><span><b>生命靈數</b>' + L.lp + "(" + C.t + ")</span><span><b>天賦數</b>" + L.total + "</span><span><b>生日數</b>" + L.birthday + "</span><span><b>態度數</b>" + L.attitude + "</span><span><b>流年數</b>" + L.py + "</span></div>";
+  const NL = (label) => BL("lifenum", label);
+  const baseKv = '<div class="kv"><span><b>' + NL("生命靈數") + "</b>" + BL("lifenum", String(L.lp)) + "(" + C.t + ")</span><span><b>" + NL("天賦數") + "</b>" + L.total +
+    "</span><span><b>" + NL("生日數") + "</b>" + BL("lifenum", String(L.birthday)) + "</span><span><b>" + NL("態度數") + "</b>" + BL("lifenum", String(L.attitude)) +
+    "</span><span><b>" + NL("流年數") + "</b>" + BL("lifenum", "流年" + L.py, String(L.py)) + "</span></div>";
   let gridH = '<div class="numgrid">';
   [[3, 6, 9], [2, 5, 8], [1, 4, 7]].forEach(row => row.forEach(n => {
     gridH += '<div class="cell"><span class="n' + (L.grid[n] ? "" : " none") + '">' + n + '</span><span class="dots">' + (L.grid[n] ? "●".repeat(Math.min(L.grid[n], 4)) : "—") + "</span></div>";
   }));
   gridH += "</div>";
-  const linesH = L.lines.length ? L.lines.map(l => '<span class="badge">' + l.name + "(" + l.ln + ")</span>").join(" ") : '<span class="badge dim">無完整連線——自由拼圖型</span>';
+  const linesH = L.lines.length ? L.lines.map(l => '<span class="badge">' + BL("lifenum", l.name) + "(" + l.ln + ")</span>").join(" ") : '<span class="badge dim">無完整連線——自由拼圖型</span>';
   pr.push("生命靈數資料(生日 " + dv + "):");
   pr.push("  生命靈數 " + L.lp + "(" + C.t + ")、天賦數 " + L.total + "、生日數 " + L.birthday + "、態度數 " + L.attitude);
   pr.push("  生日九宮:" + Object.keys(L.grid).map(k => k + "×" + L.grid[k]).join(" ") + ";連線:" + (L.lines.map(l => l.name).join("、") || "無") + ";空缺數字:" + (L.missing.join("、") || "無"));
