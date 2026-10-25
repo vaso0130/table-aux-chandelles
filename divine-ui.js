@@ -52,6 +52,24 @@ DC.toneValue = function () {
 DC.toneHead = function () { return "用繁體中文解讀，語氣：「" + DC.toneValue() + "」。"; };
 
 /* 紙面對話框：取代 alert（樣式在 hall.css 的 dialog.note） */
+/* ── 解讀流派（清單在 divine-lore.js DC.SCHOOLS）：選擇各館共用同一份記憶，八字館選過的，MIX 也沿用 ── */
+DC.schoolGet = function (key) {
+  var v = ""; try { v = localStorage.getItem("dc-bazi-school-" + key) || ""; } catch (e) {}
+  return (DC.SCHOOLS[key] || []).some(function (x) { return x[0] === v; }) ? v : "";
+};
+DC.schoolPrompt = function (key) {   /* 提示詞裡的一行；未選（不指定）回傳空字串 */
+  var v = DC.schoolGet(key), x = (DC.SCHOOLS[key] || []).filter(function (s) { return s[0] && s[0] === v; })[0];
+  return x ? x[3] + "下列要點若與此派方法不合，請依此派的取捨調整；與他派結論不同處可簡述差異。" : "";
+};
+DC.schoolSelect = function (sel, note, key) {   /* 把 <select> 填成該術的流派選單，改了就記住並更新說明 */
+  var list = DC.SCHOOLS[key];
+  sel.innerHTML = list.map(function (x) { return '<option value="' + x[0] + '">' + x[1] + (x[0] ? "" : "（綜合常見讀法）") + "</option>"; }).join("");
+  sel.value = DC.schoolGet(key);
+  var desc = function () { if (note) note.textContent = list.filter(function (x) { return x[0] === sel.value; })[0][2]; };
+  desc();
+  sel.onchange = function () { try { localStorage.setItem("dc-bazi-school-" + key, sel.value); } catch (e) {} desc(); };
+};
+
 /* ── 各館共用小幫手（原本各館各抄一份） ── */
 DC.card = function (t, en, body) { return '<div class="result-card"><h3>' + t + (en ? '<span class="en">' + en + "</span>" : "") + "</h3>" + body + "</div>"; };
 DC.fail = function (msg) { document.getElementById("go-hint").textContent = msg; return new Error(msg); };

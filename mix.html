@@ -103,6 +103,10 @@
           <div class="note">奇門/六壬以該日干支入局為用神；靈數流年流日、南洋值曜/威頓以該日論</div></div>
       </div>
     </div>
+    <div id="form-school" hidden>
+      <p class="fieldset-label">解讀流派</p>
+      <div class="form-grid" id="school-fields"></div>
+    </div>
     <div id="form-shilun" hidden>
       <p class="fieldset-label">時輪占・親手洗牌</p>
       <div class="btn-row" style="margin-top:8px">
@@ -147,8 +151,8 @@
 </div>
 
 <script src="divine-core.js?v=2026102505"></script>
-<script src="divine-ui.js?v=2026102505"></script>
-<script src="divine-lore.js?v=2026091402"></script>
+<script src="divine-ui.js?v=2026102506"></script>
+<script src="divine-lore.js?v=2026102501"></script>
 <script src="xq-data.js?v=2026101202"></script>
 <script src="shilun-data.js?v=2026102503"></script>
 <script>
@@ -232,7 +236,14 @@ function syncForm() {
   $("form-birth").hidden = !needBirth;
   $("form-loc").hidden = !needLoc;
   $("form-shilun").hidden = !picked.includes("c-shilun");
+  /* 選了有流派之分的術（八字、紫微），各給一個流派選單；選擇與八字館共用 */
+  const sch = picked.filter(id => SCHOOL_OF[id]);
+  $("form-school").hidden = !sch.length;
+  $("school-fields").innerHTML = sch.map(id => '<div class="field"><label>' + ALL.find(x => x[0] === id)[1] + '</label><select id="sc-' + id + '"></select><div class="note" id="scn-' + id + '"></div></div>').join("");
+  sch.forEach(id => DC.schoolSelect($("sc-" + id), $("scn-" + id), SCHOOL_OF[id]));
 }
+const SCHOOL_OF = { "b-bazi": "bazi", "b-ziwei": "ziwei" };   /* MIX 術數 → DC.SCHOOLS 的鍵 */
+const schoolLines = (id) => DC.schoolPrompt(SCHOOL_OF[id]) ? ["  解讀流派:" + DC.schoolPrompt(SCHOOL_OF[id])] : [];
 renderPool();
 DC.fillCitySelect($("b-city"), $("b-lat"), $("b-lon"), $("b-tz"));
 DC.fillCitySelect($("n-city"), $("n-lat"), $("n-lon"), $("n-tz"));
@@ -419,7 +430,7 @@ GEN["b-bazi"] = () => {
     html: '<div class="pillars">' + bz.pillars.map(p => '<div class="pillar"><span class="p-tag">' + p.tag + '</span><span class="p-char">' + p.gz + "</span></div>").join("") + "</div>",
     lines: ["八字(" + B.str + "," + (B.male ? "男" : "女") + "命):" + bz.pillars.map(p => p.tag + p.gz).join(" "),
       "  日主" + DC.STEMS[dS] + DC.STEM_WX[dS] + ";十神:" + bz.pillars.map((p, i) => i === 2 ? "日主" : DC.tenGod(dS, p.s)).join("、") + ";空亡" + bz.kong.join(""),
-      "  大運(" + dy.startAge.toFixed(1) + "歲起" + (dy.fwd ? "順" : "逆") + "):" + dy.list.slice(0, 5).map(d => Math.round(d.fromAge) + "歲" + d.gz).join("、")] };
+      "  大運(" + dy.startAge.toFixed(1) + "歲起" + (dy.fwd ? "順" : "逆") + "):" + dy.list.slice(0, 5).map(d => Math.round(d.fromAge) + "歲" + d.gz).join("、"), ...schoolLines("b-bazi")] };
 };
 GEN["b-ziwei"] = () => {
   const B = birth();
@@ -433,6 +444,7 @@ GEN["b-ziwei"] = () => {
     const b2 = ((zw.ming - k) % 12 + 12) % 12, P = zw.P[b2];
     lines.push("  " + P.palace + "(" + DC.BRANCHES[b2] + (P.isShen ? ",身" : "") + "):" + (P.stars.join(" ") || "無主星") + (P.good.length ? " 吉:" + P.good.join(" ") : "") + (P.bad.length ? " 煞:" + P.bad.join(" ") : "") + (P.hua.length ? " " + P.hua.join(" ") : ""));
   }
+  lines.push(...schoolLines("b-ziwei"));
   return { title: "紫微斗數",
     html: "<p>命宮" + DC.BRANCHES[zw.ming] + "(" + (zw.P[zw.ming].stars.join("、") || "無主星") + ")・" + zw.juName + "</p>", lines };
 };

@@ -105,9 +105,9 @@
 </div>
 
 <script src="divine-core.js?v=2026102505"></script>
-<script src="divine-ui.js?v=2026102505"></script>
-<script src="divine-lore.js?v=2026091402"></script>
-<script src="bazi-learn.js?v=2026102503"></script>
+<script src="divine-ui.js?v=2026102506"></script>
+<script src="divine-lore.js?v=2026102501"></script>
+<script src="bazi-learn.js?v=2026102504"></script>
 <script>
 const $ = id => document.getElementById(id);
 
@@ -167,22 +167,12 @@ function updateForm() {
   $("p-hint").textContent = m ? m[2] : s.hint;
   $("out").innerHTML = ""; $("prompt-sec").hidden = true;
 }
-/* 解讀流派：八字、紫微各記各的選擇（清單在 bazi-learn.js 的 BAZI_SCHOOLS） */
-const SCHOOL_KEY = (id) => "dc-bazi-school-" + id;
+/* 解讀流派：八字、紫微各記各的選擇（清單 DC.SCHOOLS、取用 DC.school*，與 MIX 共用記憶） */
 function renderSchool() {
-  const list = BAZI_SCHOOLS[sysId];
-  $("f-school").hidden = !list;
-  if (!list) return;
-  let v = ""; try { v = localStorage.getItem(SCHOOL_KEY(sysId)) || ""; } catch (e) {}
-  $("b-school").innerHTML = list.map((x) => '<option value="' + x[0] + '">' + x[1] + (x[0] ? "" : "（綜合常見讀法）") + "</option>").join("");
-  $("b-school").value = list.some((x) => x[0] === v) ? v : "";
-  $("school-note").textContent = (list.find((x) => x[0] === $("b-school").value) || list[0])[2];
+  $("f-school").hidden = !DC.SCHOOLS[sysId];
+  if (DC.SCHOOLS[sysId]) DC.schoolSelect($("b-school"), $("school-note"), sysId);
 }
-$("b-school").addEventListener("change", () => {
-  try { localStorage.setItem(SCHOOL_KEY(sysId), $("b-school").value); } catch (e) {}
-  $("school-note").textContent = BAZI_SCHOOLS[sysId].find((x) => x[0] === $("b-school").value)[2];
-});
-const schoolLine = () => { const x = (BAZI_SCHOOLS[sysId] || []).find((s) => s[0] && s[0] === $("b-school").value); return x ? x[3] + "下列要點若與此派方法不合，請依此派的取捨調整；與他派結論不同處可簡述差異。" : ""; };
+const schoolLine = () => DC.schoolPrompt(sysId);
 renderSys(); updateForm();
 DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣：「[^」]*」/, "語氣：「" + DC.toneValue() + "」"); });
 DC.histBind("八字館");
