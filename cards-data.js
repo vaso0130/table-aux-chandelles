@@ -2350,7 +2350,7 @@ if (typeof XQ !== "undefined") {
         desc:"中間主位看本體，四角依右上、左上、左下、右下讀起承轉收——常見的象棋卦入門卦法。",
         positions: XQ.POS, hints: XQ.HINTS, place: XQ.PLACE, combos: xqCombos },
       { id:"xq-one", name:"一子問事", count:1, cols:1,
-        desc:"默想一件事，翻一張：紅為明、為可，黑為暗、為緩，再看兵種定細節。",
+        desc:"聖元派的基本問法：問前約定紅黑（如紅為好、黑為不好），一題翻一張；想問細，就用多占逐題縮小範圍。",
         positions:["此事"], combos: () => [] },
       { id:"xq-three", name:"三子・天地人", count:3, cols:3,
         desc:"三才法：天為己方、地為對方與環境、人為關鍵與過程——三張牌看你、對面與兩者之間。",

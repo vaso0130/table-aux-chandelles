@@ -149,4 +149,23 @@ for (let remainder = 1; remainder <= 8; remainder++) {
 }
 assert.match(DC.jodoh(16, 16).result[0], /^Pesthi/);
 
+// 象棋聖元派：十四種棋都有資料，紅黑成對強度相同、數字相同（帥 1／將 9、兵 7／卒 8 例外），兵卒依性別論正常反常。
+box.window = box;
+vm.runInContext(fs.readFileSync("xq-data.js", "utf8"), box, { filename: "xq-data.js" });
+const XQ = box.XQ;
+assert.equal(XQ.CARDS.length, 32);
+assert.equal(Object.keys(XQ.SY).length, 14);
+for (const [r, k] of ["帥將", "仕士", "相象", "俥車", "傌馬", "炮包", "兵卒"]) {
+  assert.equal(XQ.SY[r].pct, XQ.SY[k].pct);
+  assert.equal(XQ.SY[r].cls, XQ.SY[k].cls);
+  for (const t of XQ.TOPICS) assert.ok(XQ.SY[r].t[t] && XQ.SY[k].t[t]);
+  if (XQ.SY[r].cls === 2) { assert.ok(XQ.SY[k].turn); assert.equal(XQ.SY[r].num, XQ.SY[k].num); }
+}
+assert.deepEqual(["仕", "相", "俥", "傌", "炮"].map((c) => XQ.SY[c].pct), [100, 90, 80, 70, 60]);
+assert.match(XQ.verdict("士", ["是", "不是"]), /不是/);
+assert.match(XQ.verdict("仕", ["是", "不是"]), /「是」/);
+assert.match(XQ.sexNote("兵", "男"), /反常/);
+assert.match(XQ.sexNote("卒", "男"), /正常/);
+assert.equal(XQ.sexNote("仕", "男"), "");
+
 console.log(`PASS: ${builtIn.split("\n").length} 項內建檢核 + 全域組合稽核`);

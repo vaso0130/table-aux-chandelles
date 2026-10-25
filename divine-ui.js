@@ -70,7 +70,7 @@ DC.schoolUI = function (key) {   /* 各館切換命術時呼叫：頁面需有 #
 DC.schoolHead = function (key) { var x = DC.schoolPrompt(key); return x ? ["解讀流派:" + x, ""] : []; };   /* 放在提示詞開頭 */
 DC.schoolSelect = function (sel, note, key) {   /* 把 <select> 填成該術的流派選單，改了就記住並更新說明 */
   var list = DC.SCHOOLS[key];
-  sel.innerHTML = list.map(function (x) { return '<option value="' + x[0] + '">' + x[1] + (x[0] ? "" : "（綜合常見讀法）") + "</option>"; }).join("");
+  sel.innerHTML = list.map(function (x) { return '<option value="' + x[0] + '">' + x[1] + (x[0] || x[4] ? "" : "（綜合常見讀法）") + "</option>"; }).join("");
   sel.value = DC.schoolGet(key);
   var desc = function () { if (note) note.textContent = list.filter(function (x) { return x[0] === sel.value; })[0][2]; };
   desc();
