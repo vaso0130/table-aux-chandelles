@@ -90,6 +90,7 @@
 <script src="divine-core.js?v=2026102504"></script>
 <script src="divine-ui.js?v=2026102505"></script>
 <script src="divine-lore.js?v=2026091402"></script>
+<script src="nanyang-learn.js?v=2026102501"></script>
 <script>
 const $ = id => document.getElementById(id);
 
@@ -102,6 +103,8 @@ const SYS = [
     hint: "依出生星期列出泰國民俗中的本命佛姿、顏色與生肖。" }
 ];
 let sysId = "maha";
+let book = null;
+const BL = DC.bookLink;
 
 function renderSys() {
   $("sys").innerHTML = "";
@@ -109,7 +112,7 @@ function renderSys() {
     const b = document.createElement("button");
     b.className = "sys-btn" + (s.id === sysId ? " active" : "");
     b.innerHTML = '<span class="d-name">' + s.name + '</span><span class="d-sub">' + s.sub + '</span>';
-    b.onclick = () => { sysId = s.id; updateForm(); renderSys(); };
+    b.onclick = () => { sysId = s.id; updateForm(); renderSys(); if (book) book.show(sysId); };
     $("sys").appendChild(b);
   });
 }
@@ -157,14 +160,15 @@ function runMaha(out, pr) {
   const todayIdx = tAM;
   const dayYaoStr = tAM === tPM ? DC.BUR8[tAM][0] : DC.BUR8[tAM][0] + "(上午)/" + DC.BUR8[tPM][0] + "(正午後)";
   const hitMine = tAM === idx || tPM === idx;
+  const dayYaoH = tAM === tPM ? BL("maha", DC.BUR8[tAM][0]) : BL("maha", DC.BUR8[tAM][0]) + "(上午)/" + BL("maha", DC.BUR8[tPM][0]) + "(正午後)";
   out.push(DC.card("八曜生辰", "生於" + yao + "日",
-    '<p class="lead" style="font-size:20px">' + yao + "・" + animal + '<span style="font-size:13px;color:var(--muted)">(守護星:' + planet + ")</span></p>" +
+    '<p class="lead" style="font-size:20px">' + BL("maha", yao) + "・" + BL("maha", yao, animal) + '<span style="font-size:13px;color:var(--muted)">(守護星:' + planet + ")</span></p>" +
     "<p>" + trait + "。</p>" +
-    "<p>你的佛塔方位角在<b style='color:var(--gold-bright)'>" + dir + "</b>——緬甸人到佛塔，會去自己生曜的角落澆水獻花，一歲澆一杯，再加一杯敬未來。</p>" +
-    "<p>" + T.str + "值" + dayYaoStr + "——" + (hitMine ? "正是你的本命曜日，宜行大事、宜還願" : "與你的" + yao + "相參看該日行事") + "。</p>"));
+    "<p>你的" + BL("maha", "佛塔方位角") + "在<b style='color:var(--gold-bright)'>" + dir + "</b>——緬甸人到佛塔，會去自己生曜的角落澆水獻花，一歲澆一杯，再加一杯敬未來。</p>" +
+    "<p>" + T.str + "值" + dayYaoH + "——" + (hitMine ? "正是你的本命曜日，宜行大事、宜還願" : "與你的" + BL("maha", yao) + "相參看該日行事") + "。</p>"));
   out.push(DC.card("摩訶菩提命盤（起盤參數）", "Mahabote",
-    '<div class="kv"><span><b>緬曆年</b>' + me.ME + " ME</span><span><b>年餘數</b>" + me.r + "(緬曆年 ÷ 7 之餘)</span><span><b>生曜</b>" + yao + "</span></div>" +
-    "<p>Mahabote 以生曜與緬曆年餘數，把七曜佈入賓伽(Binga)、阿通(Ahtaung)、亞扎(Yaza)、阿提帕蒂(Adhipati)、馬拉納(Marana)、泰克(Thike)、普提(Puti)七宮論命。此處提供正確起盤參數，七宮詳排交由 AI 完成。</p>"));
+    '<div class="kv"><span><b>' + BL("maha", "緬曆年") + '</b>' + me.ME + " ME</span><span><b>" + BL("maha", "年餘數") + "</b>" + me.r + "(緬曆年 ÷ 7 之餘)</span><span><b>生曜</b>" + BL("maha", yao) + "</span></div>" +
+    "<p>Mahabote 以生曜與緬曆年餘數，把七曜佈入" + [["賓伽", "Binga"], ["阿通", "Ahtaung"], ["亞扎", "Yaza"], ["阿提帕蒂", "Adhipati"], ["馬拉納", "Marana"], ["泰克", "Thike"], ["普提", "Puti"]].map(([zh, en]) => BL("maha", en, zh + "(" + en + ")")).join("、") + "七宮論命。此處提供正確起盤參數，七宮詳排交由 AI 完成。</p>"));
   pr.push("緬甸八曜與 Mahabote(生於 " + B.str + ";日界採" + boundaryLabel() + "):");
   pr.push("  生曜:" + yao + "(獸:" + animal + ",守護星:" + planet + ",佛塔方位:" + dir + ")——" + trait);
   pr.push("  緬曆年 " + me.ME + " ME(潑水節換歲簡式),年餘數 " + me.r);
@@ -184,14 +188,14 @@ function runWeton(out, pr) {
   const dina = DC.DINA[w.wd];
   const special = DC.WETON_SPECIAL[w.wd + "," + w.pas];
   out.push(DC.card("你的威頓", "Weton " + w.name,
-    '<p class="lead" style="font-size:20px">' + DC.DAY_ID[w.wd] + " × " + pasName + '</p>' +
-    (special ? '<p><span class="badge">' + special[0] + "</span> " + special[1] + "。</p>" : "") +
-    '<div class="kv"><span><b>靈數 Neptu</b>' + DC.NEPTU_DAY[w.wd] + " + " + DC.NEPTU_PAS[w.pas] + " = <b style='font-size:17px'>" + w.neptu + "</b></span><span><b>日象</b>" + dina[0] + "</span><span><b>市集日方位</b>" + pasDir + "</span><span><b>本命色</b>" + pasColor + "</span></div>" +
-    "<p>日象(watak dina):" + dina[1] + "。</p>" +
+    '<p class="lead" style="font-size:20px">' + BL("weton", DC.DAY_ID[w.wd]) + " × " + BL("weton", pasName) + '</p>' +
+    (special ? '<p><span class="badge">' + BL("weton", special[0]) + "</span> " + special[1] + "。</p>" : "") +
+    '<div class="kv"><span><b>' + BL("weton", "Neptu", "靈數 Neptu") + '</b>' + DC.NEPTU_DAY[w.wd] + " + " + DC.NEPTU_PAS[w.pas] + " = <b style='font-size:17px'>" + w.neptu + "</b></span><span><b>日象</b>" + BL("weton", DC.DAY_ID[w.wd], dina[0]) + "</span><span><b>市集日方位</b>" + pasDir + "</span><span><b>本命色</b>" + pasColor + "</span></div>" +
+    "<p>" + BL("weton", "Watak dina", "日象(watak dina)") + ":" + dina[1] + "。</p>" +
     "<p>市集日性情:" + pasTrait + "。</p>" +
-    "<p>neptu " + w.neptu + "(全域 7~18):" + (w.neptu >= 15 ? "偏高——氣場強硬，扛得住大事，防剛愎" : w.neptu <= 10 ? "偏低——敏感纖細，傳統視為近靈之質，直覺是天賦" : "中庸——剛柔可調，是最好相處的一群") + "。</p>" +
-    "<p>五神數(Pancasuda 簡法):<b style='color:var(--gold-bright)'>" + pcName + "</b>——" + pcNote + "。</p>" +
-    "<p>你的威頓每 35 天輪迴一次——爪哇人在自己的威頓日齋戒、靜思或辦 selamatan 感恩宴。自" + T.str + "起，最近的本命威頓日是 <b style='color:var(--gold-bright)'>" + (nw ? nw.getUTCFullYear() + "-" + DC.pad2(nw.getUTCMonth() + 1) + "-" + DC.pad2(nw.getUTCDate()) : "—") + "</b>,傳統上常用來齋戒、靜思或舉行感恩儀式。</p>" +
+    "<p>neptu " + w.neptu + "(全域 7~18):" + (w.neptu >= 15 ? BL("weton", "neptu 偏高", "偏高") + "——氣場強硬，扛得住大事，防剛愎" : w.neptu <= 10 ? BL("weton", "neptu 偏低", "偏低") + "——敏感纖細，傳統視為近靈之質，直覺是天賦" : BL("weton", "neptu 中庸", "中庸") + "——剛柔可調，是最好相處的一群") + "。</p>" +
+    "<p>五神數(Pancasuda 簡法):<b style='color:var(--gold-bright)'>" + BL("weton", pcName) + "</b>——" + pcNote + "。</p>" +
+    "<p>你的" + BL("weton", "Weton", "威頓") + "每 35 天輪迴一次——爪哇人在自己的威頓日" + BL("weton", "Puasa weton", "齋戒") + "、靜思或辦 " + BL("weton", "Selamatan", "selamatan") + " 感恩宴。自" + T.str + "起，最近的" + BL("weton", "本命威頓日") + "是 <b style='color:var(--gold-bright)'>" + (nw ? nw.getUTCFullYear() + "-" + DC.pad2(nw.getUTCMonth() + 1) + "-" + DC.pad2(nw.getUTCDate()) : "—") + "</b>,傳統上常用來齋戒、靜思或舉行感恩儀式。</p>" +
     (T.picked ? "<p>指定日 " + T.str + " 為 <b>" + tw.name + "</b>(neptu " + tw.neptu + ")" + (tw.wd === w.wd && tw.pas === w.pas ? "——與本命威頓相同；傳統上視為適合紀念與反省的日子" : "——與你的 " + w.name + " 合參論該日行事") + "。</p>" : "")));
   pr.push("爪哇威頓 Weton/Primbon(生於 " + B.str + ";日界採" + boundaryLabel() + "):");
   pr.push("  威頓:" + w.name + "(" + DC.DAY_ID[w.wd] + " × " + pasName + "),neptu = " + DC.NEPTU_DAY[w.wd] + "+" + DC.NEPTU_PAS[w.pas] + " = " + w.neptu + (special ? ";特殊威頓:" + special[0] + "——" + special[1] : ""));
@@ -215,11 +219,11 @@ function runThai(out, pr) {
   const T = readTarget();
   const todayIdx = DC.thai7Index(T.y, T.m, T.d, 12);
   out.push(DC.card("本命佛日", "เกิดวัน" + "・" + dayName + "生",
-    '<p class="lead" style="font-size:20px">' + buddha + '</p>' +
+    '<p class="lead" style="font-size:20px">' + BL("thai", buddha) + '</p>' +
     "<p>" + trait + "。</p>" +
-    '<div class="kv"><span><b>本命色</b>' + color + "</span><span><b>忌色</b>" + badColor + "(民俗簡表)</span><span><b>泰式生肖</b>" + animal + "年（宋干節換歲）</span></div>" +
-    "<p>泰國人拜佛先找自己的生日佛：大殿旁一排七(八)尊，你的那尊是<b style='color:var(--gold-bright)'>" + buddha + "</b>。</p>" +
-    "<p>" + T.str + "值" + (todayIdx === 7 ? "週三夜佛" : DC.THAI7[todayIdx][0]) + "——" + (todayIdx === idx ? "正是你的佛日，宜佈施、宜開張、宜求願" : "非你本命佛日，平常心行事") + "。</p>"));
+    '<div class="kv"><span><b>' + BL("thai", "本命色") + '</b>' + color + "</span><span><b>" + BL("thai", "忌色") + "</b>" + badColor + "(民俗簡表)</span><span><b>泰式生肖</b>" + BL("thai", animal) + "年（" + BL("thai", "宋干節", "宋干節換歲") + "）</span></div>" +
+    "<p>泰國人拜佛先找自己的" + BL("thai", "生日佛") + "：大殿旁一排七(八)尊，你的那尊是<b style='color:var(--gold-bright)'>" + BL("thai", buddha) + "</b>。</p>" +
+    "<p>" + T.str + "值" + (todayIdx === 7 ? BL("thai", DC.THAI7[7][0], "週三夜佛") : BL("thai", DC.THAI7[todayIdx][0])) + "——" + (todayIdx === idx ? "正是你的佛日，宜佈施、宜開張、宜求願" : "非你本命佛日，平常心行事") + "。</p>"));
   pr.push("泰國七曜佛日(生於 " + B.str + "," + dayName + ";日界採" + boundaryLabel() + "):");
   pr.push("  本命佛:" + buddha + ";本命色 " + color + ",忌色 " + badColor + "(民俗簡表);泰式生肖 " + animal + "年（宋干節 4/13 換歲簡式）");
   pr.push("  性情:" + trait);
@@ -250,27 +254,11 @@ $("btn-copy").onclick = async () => {
 };
 
 /* ── 入門教學 ── */
-function buildLearn() {
-  let h = "";
-  h += DC.lcard("南洋的命運觀：日子本身就是神諭", '<p class="lead-para">東南亞的占卜大多不排複雜的星盤——它們相信<b>「你生在哪一天」本身就是答案</b>:緬甸人問你星期幾生，爪哇人問你的威頓，泰國人問你的佛日。日子有性格，人隨日子生，便承了那天的脾氣。</p>');
-  h += DC.lcard("緬甸八曜・八獸八方", DC.ltable(["曜日", "獸", "佛塔方位", "性情"],
-    DC.BUR8.map(b => [b[0] + "(" + b[3] + ")", b[1], b[2], b[4]])) +
-    "<p>緬甸把一週切成八天——週三下午獨立為「羅睺」。到緬甸佛塔，先找自己生曜的角落：澆水一歲一杯，再加一杯敬未來。Mahabote 命盤則以生曜+緬曆年餘數排七宮，是緬甸版的命盤。</p>");
-  h += DC.lcard("爪哇威頓・35 天的宇宙", '<p class="lead-para">爪哇曆把 7 日星期與 5 日市集週(pasaran)疊在一起,35 天一輪——你出生那天的組合就是<b>威頓(weton)</b>,爪哇人一生的座標。它同時給你三樣東西:<b>日象</b>(星期的自然之象)、<b>市集日性情</b>(五日週的方位與色)、<b>靈數 neptu</b>(兩者數值之和,7~18)。</p>' +
-    DC.ltable(["星期", "日象", "如其人"], DC.DAY_ID.map((d, i) => [d + "(" + DC.NEPTU_DAY[i] + ")", DC.DINA[i][0], DC.DINA[i][1]])) +
-    DC.ltable(["市集日", "方位", "色", "性情"], DC.PASARAN.map((p, i) => [p[0] + "(" + DC.NEPTU_PAS[i] + ")", p[1], p[2], p[3]])));
-  h += DC.lcard("威頓・neptu 與特殊之日", '<p class="lead-para">neptu = 星期值+市集日值。<b>高 neptu(15~18)</b>氣場強硬、能扛能撐；<b>低 neptu(7~10)</b>敏感纖細，傳統認為近靈、直覺強；中段剛柔並濟。幾個名字響亮的特殊威頓:</p>' +
-    DC.ltable(["特殊威頓", "意義"], Object.keys(DC.WETON_SPECIAL).map(k => DC.WETON_SPECIAL[k])) +
-    '<p class="lead-para">每 35 天輪回你的威頓日——爪哇人這天行<b>puasa weton</b>(威頓齋)或辦 selamatan 感恩宴：是自己的小新年，宜靜思、還願、立願。</p>');
-  h += DC.lcard("威頓合婚(jodoh)", '<p class="lead-para">爪哇婚配的常見 Primbon 算法：兩人 neptu 相加，除以 8 取餘(整除作 8)——</p>' +
-    DC.ltable(["餘數", "類型", "意義"], DC.JODOH8.map((j, i) => [(i + 1) + (i === 7 ? "(整除作 8)" : ""), j[0], j[1]])) +
-    '<p class="lead-para">例:neptu 13 + 16 = 29,除 8 餘 5 → Tinari 福;neptu 12 + 16 = 28,除 8 餘 4 → Topo 苦盡甘；總和 32 整除則為 Pesthi 安。不同地區另有其他合婚算法，本館明示採此八類法，不把流派混算。長輩若搖頭，常是這裡卡住——但知其數而後補其缺，凶配亦可經營。想合算兩人，把彼此生日各起一次威頓,neptu 相加即可。</p>');
-  h += DC.lcard("泰國七曜佛日", DC.ltable(["生日", "本命佛", "本命色", "性情"],
-    DC.THAI7.map((t, i) => [i === 7 ? "週三夜" : ["週日", "週一", "週二", "週三(日)", "週四", "週五", "週六"][i], t[0], t[1], t[3]])) +
-    "<p>泰國大殿旁常有一排七(八)尊小佛——那是給每個生日的人拜的。記住自己的佛、穿自己的色，是泰國人從小的護身常識。</p>");
-  return h;
-}
-DC.learnInit(buildLearn);
+/* 入門教學：符號字典＋盤面讀法（內容在 nanyang-learn.js；命術與起算頁同步） */
+DC.learnInit(() => '<div id="learn-book"></div>', (learn) => {
+  book = DC.learnBook(learn.querySelector("#learn-book"), nanyangBook(), (id) => { sysId = id; updateForm(); renderSys(); });
+  book.show(sysId);
+});
 
 /* 開發測試:?test=sysId */
 (function () {
