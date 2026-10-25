@@ -69,6 +69,49 @@ for (let month = 1; month <= 12; month++) for (const day of [1, 15, 30]) {
   }
 }
 
+// 卦名表：經卦三爻由下而上，HEX_NAME[上][下]；艮列曾錯置蒙與艮。
+for (let u = 0; u < 8; u++) for (let l = 0; l < 8; l++) {
+  const name = DC.HEX_NAME[u][l];
+  if (u === l) assert.match(name, /為/);
+  else assert.ok(name.startsWith(["天", "澤", "火", "雷", "風", "水", "山", "地"][u]), name);
+}
+assert.equal(DC.HEX_NAME[6][5], "山水蒙");
+assert.equal(DC.HEX_NAME[6][6], "艮為山");
+
+// 六爻納甲：八宮依「逐爻變一至五世、四爻復變為遊魂、內卦復原為歸魂」獨立生成，64 卦宮位世爻各一。
+const seenHex = new Set();
+for (let g = 0; g < 8; g++) {
+  const t = DC.TRIG_LINES[g];
+  let h = t.concat(t);
+  const seq = [[h.slice(), 6, "本宮"]];
+  for (let k = 0; k < 5; k++) { h[k] = 1 - h[k]; seq.push([h.slice(), k + 1, ["一世", "二世", "三世", "四世", "五世"][k]]); }
+  h[3] = 1 - h[3]; seq.push([h.slice(), 4, "遊魂"]);
+  h = t.concat(h.slice(3)); seq.push([h.slice(), 3, "歸魂"]);
+  for (const [bits, shi, kind] of seq) {
+    const r = DC.najiaGong(bits);
+    assert.deepEqual([r.gong, r.shi, r.kind], [g, shi, kind], bits.join(""));
+    seenHex.add(bits.join(""));
+  }
+}
+assert.equal(seenHex.size, 64);
+// 古籍排盤對照（由上而下）：天風姤、風地觀、澤雷隨。
+const njRows = nj => [5, 4, 3, 2, 1, 0].map(i => nj.yao[i].qin + nj.yao[i].gan + nj.yao[i].zhi + nj.yao[i].wx
+  + (nj.shi === i + 1 ? "世" : nj.ying === i + 1 ? "應" : "") + (nj.fu[i] ? "/伏" + nj.fu[i].qin + nj.fu[i].gan + nj.fu[i].zhi : "")).join(" ");
+const gou = DC.najia([8, 7, 7, 7, 7, 7], 2026, 10, 25, 10, 0, 8);
+assert.equal(njRows(gou), "父母壬戌土 兄弟壬申金 官鬼壬午火應 兄弟辛酉金 子孫辛亥水/伏妻財甲寅 父母辛丑土世");
+assert.equal(gou.guaShen, "午");
+const guan = DC.najia([8, 8, 8, 6, 7, 7], 2026, 10, 25, 11, 2, 8);
+assert.equal(njRows(guan), "妻財辛卯木 官鬼辛巳火/伏兄弟壬申 父母辛未土世 妻財乙卯木 官鬼乙巳火 父母乙未土應/伏子孫甲子");
+assert.equal(guan.bian[3].qin + guan.bian[3].gan + guan.bian[3].zhi, "官鬼壬午");
+assert.deepEqual([guan.month, guan.dayGZ, guan.kong, guan.guaShen, guan.shen[0]], ["戌", "壬申", "戌亥", "酉", "玄武"]);
+const sui = DC.najia([7, 8, 8, 7, 7, 8], 2026, 10, 25, 11, 3, 8);
+assert.equal(njRows(sui), "妻財丁未土應 官鬼丁酉金 父母丁亥水/伏子孫庚午 妻財庚辰土世 兄弟庚寅木 父母庚子水");
+
+// 同題比對（牌桌館與各館共用）。
+assert.equal(DC.simQ("", ""), 1);
+assert.ok(DC.simQ("他會不會回來", "他還會回來嗎") >= DC.SIMQ_TH);
+assert.ok(DC.simQ("他會不會回來", "這份工作適合我嗎") < DC.SIMQ_TH);
+
 // Weton 35 日週期必須覆蓋 35 種組合；合婚為八類且整除落 Pesthi。
 const wetonPairs = new Set();
 for (let n = 0; n < 35; n++) {

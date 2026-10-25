@@ -1818,41 +1818,6 @@ YI_CARDS.forEach((c, i) => {
   c.img = "cards-yijing/" + String(c.n).padStart(2, "0") + ".jpg";
 });
 
-/* 梅花起卦小引擎（牌桌館零依賴，與 divine-core.js DC.meihua 同法）：
-   先天卦序 乾一兌二離三震四巽五坎六艮七坤八；經卦三爻由下而上；KW[下卦][上卦]＝文王卦序 */
-const YI_MH = {
-  trig: ["乾","兌","離","震","巽","坎","艮","坤"],
-  wx: ["金","金","火","木","木","水","土","土"],
-  lines: [[1,1,1],[1,1,0],[1,0,1],[1,0,0],[0,1,1],[0,1,0],[0,0,1],[0,0,0]],
-  kw: [[1,43,14,34,9,5,26,11],[10,58,38,54,61,60,41,19],[13,49,30,55,37,63,22,36],[25,17,21,51,42,3,27,24],
-       [44,28,50,32,57,48,18,46],[6,47,64,40,59,29,4,7],[33,31,56,62,53,39,52,15],[12,45,35,16,20,8,23,2]],
-  order: ["木","火","土","金","水"],
-  trigOf(ls) { return this.lines.findIndex((t) => t[0] === ls[0] && t[1] === ls[1] && t[2] === ls[2]); },
-  hexName(u, l) { return YI_CARDS[this.kw[l][u] - 1].zh; },
-  hourNum(d) { return Math.floor(((d.getHours() + 1) % 24) / 2) + 1; },   /* 子1…亥12 */
-  rel(x, ti) {   /* 經卦 x 對體卦 ti 的五行關係（《梅花易數・體用總訣》） */
-    const i = (w) => this.order.indexOf(w), xw = this.wx[x], tw = this.wx[ti];
-    if (xw === tw) return "比和，和氣相扶，事多順遂";
-    if ((i(xw) + 1) % 5 === i(tw)) return "生體，得外力相助，吉";
-    if ((i(tw) + 1) % 5 === i(xw)) return "體生之，洩氣耗損，事多費力難成";
-    if ((i(xw) + 2) % 5 === i(tw)) return "剋體，外境相迫，凶，宜避其鋒";
-    return "體剋之，我能制事，事雖成而遲";
-  },
-  cast(n1, n2, h) {   /* 上卦數、下卦數、時辰數 → 本互變、體用、生剋 */
-    const u = (n1 - 1) % 8, l = (n2 - 1) % 8;
-    let mov = (n1 + n2 + h) % 6; if (mov === 0) mov = 6;
-    const ls = this.lines[l].concat(this.lines[u]);
-    const ls2 = ls.slice(); ls2[mov - 1] = 1 - ls2[mov - 1];
-    const l2 = this.trigOf(ls2.slice(0, 3)), u2 = this.trigOf(ls2.slice(3, 6));
-    const hl = this.trigOf([ls[1], ls[2], ls[3]]), hu = this.trigOf([ls[2], ls[3], ls[4]]);
-    const tiLower = mov > 3, ti = tiLower ? l : u, yong = tiLower ? u : l;
-    const huY = tiLower ? hu : hl, bianY = tiLower ? u2 : l2;   /* 互、變各取「用」那一側的經卦與體論生剋 */
-    const tag = (x) => `${this.trig[x]}（${this.wx[x]}）`;
-    return { u, l, mov, name: this.hexName(u, l), huName: this.hexName(hu, hl), bianName: this.hexName(u2, l2),
-      ti, yong, rel: this.rel(yong, ti), huRel: tag(huY) + this.rel(huY, ti), bianRel: tag(bianY) + this.rel(bianY, ti) };
-  },
-};
-
 const YI_SPREADS = [
   { id:"yi-shi", name:"揲蓍・大衍筮法", count:2, cols:2, cast:true, method:"yarrow",
     desc:"《繫辭》原法：五十策去其一，分二、掛一、揲四、歸奇，三變成一爻，十八變成卦。陽爻易動、陰爻難動，與《筮儀》命筮辭相配。",
@@ -1876,14 +1841,15 @@ const YI_SPREADS = [
     desc:"邵子報數法，數從牌來：第一張卦序為上卦數，第二張為下卦數，加時辰數取動爻。動者為用、靜者為體，再看互卦與變卦對體的生剋。兩張牌只是取數，不論其卦義。",
     positions:["上卦數・第一張卦序","下卦數・第二張卦序"],
     combos:(d) => {
-      const h = YI_MH.hourNum(new Date());
-      const m = YI_MH.cast(d[0].n, d[1].n, h);
-      const T = YI_MH.trig, W = YI_MH.wx;
+      /* 梅花起卦用 divine-core.js DC.meihua（邵子報數：上卦數、下卦數，加時辰數取動爻） */
+      const h = DC.hourBranch(new Date().getHours()) + 1;   /* 子1…亥12 */
+      const m = DC.meihua(d[0].n, d[1].n, d[0].n + d[1].n + h);
+      const T = DC.TRIG, W = DC.TRIG_WX;
       return [
         { label:"起卦", a:d[0], b:d[1],
-          text:`第一張第 ${d[0].n} 卦取上卦 ${T[m.u]}，第二張第 ${d[1].n} 卦取下卦 ${T[m.l]}，加時辰數 ${h} 得動爻第 ${m.mov} 爻。本卦「${m.name}」，互卦「${m.huName}」，變卦「${m.bianName}」。` },
+          text:`第一張第 ${d[0].n} 卦取上卦 ${T[m.upper]}，第二張第 ${d[1].n} 卦取下卦 ${T[m.lower]}，加時辰數 ${h} 得動爻第 ${m.mov} 爻。本卦「${m.name}」，互卦「${m.hu.name}」，變卦「${m.bian.name}」。` },
         { label:"體用生剋", a:d[0], b:d[1],
-          text:`動爻在${m.mov > 3 ? "上" : "下"}卦，故${T[m.yong]}（${W[m.yong]}）為用、${T[m.ti]}（${W[m.ti]}）為體。用對體：${m.rel}。互卦用互${m.huRel}，此為過程；變卦${m.bianRel}，此為結局。` },
+          text:`動爻在${m.mov > 3 ? "上" : "下"}卦，故${T[m.yong]}（${W[m.yong]}）為用、${T[m.ti]}（${W[m.ti]}）為體。${m.rel}。${m.huRel}；${m.bianRel}。` },
       ];
     } },
   { id:"yi-sangua", name:"三卦・事心終", count:3, cols:3,

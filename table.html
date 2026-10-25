@@ -1179,8 +1179,9 @@
   </form>
 </dialog>
 
+<script src="divine-core.js?v=2026102501"></script>
 <script src="xq-data.js?v=2026101202"></script>
-<script src="cards-data.js?v=2026101202"></script>
+<script src="cards-data.js?v=2026102501"></script>
 <script>
 "use strict";
 
@@ -2005,75 +2006,10 @@ function zhuRank(moving) {
   }
   return null;
 }
-/* ── 六爻納甲（京房八宮・《火珠林》法）：八宮世應、納甲干支、六親、六神、伏神、卦身，月建日辰定旺衰 ── */
-const GAN = "甲乙丙丁戊己庚辛壬癸", ZHI = "子丑寅卯辰巳午未申酉戌亥", ZHI_WX = "水土木木土火火土金金土水";
-const TRI_NAME = "乾兌離震巽坎艮坤", TRI_WX = "金金火木木水土土";
-const TRI_BITS = Object.keys(TRIGRAM).sort((a, b) => TRIGRAM[a] - TRIGRAM[b]).map((k) => [...k].map(Number));
-/* 納甲（依 TRIGRAM 序）：[內卦干, 外卦干, 內三支, 外三支]，支皆由下而上 */
-const NAJIA = [
-  ["甲", "壬", "子寅辰", "午申戌"],   /* 乾 */
-  ["丁", "丁", "巳卯丑", "亥酉未"],   /* 兌 */
-  ["己", "己", "卯丑亥", "酉未巳"],   /* 離 */
-  ["庚", "庚", "子寅辰", "午申戌"],   /* 震 */
-  ["辛", "辛", "丑亥酉", "未巳卯"],   /* 巽 */
-  ["戊", "戊", "寅辰午", "申戌子"],   /* 坎 */
-  ["丙", "丙", "辰午申", "戌子寅"],   /* 艮 */
-  ["乙", "癸", "未巳卯", "丑亥酉"],   /* 坤 */
-];
-const LIUSHEN = ["青龍", "朱雀", "勾陳", "螣蛇", "白虎", "玄武"];
-/* 六親：以宮五行為我，依木火土金水相生序之差取 */
-function liuQin(gongWx, wx) {
-  return ["兄弟", "子孫", "妻財", "官鬼", "父母"][("木火土金水".indexOf(wx) - "木火土金水".indexOf(gongWx) + 5) % 5];
-}
-/* 八宮與世爻：「天同二世天變五，地同四世地變初，本宮六世三世異，人同遊魂人變歸」
-   （地＝初四、人＝二五、天＝三上兩兩相比）；一二三世宮在外卦，四五世與遊魂宮為內卦全反，歸魂宮在內卦 */
-function najiaGong(bits) {
-  const lo = bits.slice(0, 3), up = bits.slice(3);
-  const di = lo[0] === up[0], ren = lo[1] === up[1], tian = lo[2] === up[2];
-  const T = (t) => TRIGRAM[t.join("")], inv = T(lo.map((b) => 1 - b));
-  const [shi, gong, kind] =
-      di && ren && tian ? [6, T(up), "本宮"]
-    : !di && ren && tian ? [1, T(up), "一世"]
-    : !di && !ren && tian ? [2, T(up), "二世"]
-    : !di && !ren && !tian ? [3, T(up), "三世"]
-    : di && !ren && !tian ? [4, inv, "四世"]
-    : di && ren && !tian ? [5, inv, "五世"]
-    : !di && ren && !tian ? [4, inv, "遊魂"]
-    : [3, T(lo), "歸魂"];
-  return { shi, ying: (shi + 2) % 6 + 1, gong, kind };
-}
-/* 起卦時刻的月建、日辰、旬空（23:00 換日；月建依太陽視黃經交節，低精度式約差一刻，交節當刻前後請自行覆核）
-   ⇄ 同法在 divine-core.js DC.bazi——牌桌館零依賴故留精簡版 */
-function najiaTime(at) {
-  const day = Date.UTC(at.y, at.m - 1, at.d) + (at.h >= 23 ? 86400000 : 0);
-  const di = ((Math.round((day - Date.UTC(1949, 9, 1)) / 86400000) % 60) + 60) % 60;   /* 1949-10-01 甲子 */
-  const n = at.ms / 86400000 + 2440587.5 - 2451545, g = (357.529 + 0.98560028 * n) * Math.PI / 180;
-  const lam = 280.459 + 0.98564736 * n + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g);
-  const mB = (Math.floor((((lam - 315) % 360) + 360) % 360 / 30) + 2) % 12;   /* 立春起寅 */
-  const xun = Math.floor(di / 10);
-  return { dS: di % 10, dB: di % 12, mB, kong: [(10 - 2 * xun + 12) % 12, (11 - 2 * xun + 12) % 12] };
-}
+/* ── 六爻納甲：排盤在 divine-core.js DC.najia，此處只管起卦時刻與顯示格式 ── */
 function najiaChart(info) {
-  const bits = info.lines.map((v) => (v === 7 || v === 9 ? 1 : 0));
-  const g = najiaGong(bits), gwx = TRI_WX[g.gong];
-  const lineOf = (b, i) => {
-    const t = NAJIA[TRIGRAM[(i < 3 ? b.slice(0, 3) : b.slice(3)).join("")]];
-    const zhi = (i < 3 ? t[2] : t[3])[i % 3], wx = ZHI_WX[ZHI.indexOf(zhi)];
-    return { gan: i < 3 ? t[0] : t[1], zhi, wx, qin: liuQin(gwx, wx) };
-  };
-  const yao = bits.map((_, i) => lineOf(bits, i));
-  const zb = bits.map((b, i) => (info.moving.includes(i) ? 1 - b : b));
-  const bian = bits.map((_, i) => (info.moving.includes(i) ? lineOf(zb, i) : null));
-  /* 伏神：本卦缺的六親，取本宮純卦同位之爻伏於本卦該爻（飛神）之下 */
-  const pure = [...TRI_BITS[g.gong], ...TRI_BITS[g.gong]], have = yao.map((y) => y.qin);
-  const fu = pure.map((_, i) => { const p = lineOf(pure, i); return have.includes(p.qin) ? null : p; });
-  const T = najiaTime(info.at);
-  const ls = [0, 0, 1, 1, 2, 3, 4, 4, 5, 5][T.dS];   /* 甲乙青龍、丙丁朱雀、戊勾陳、己螣蛇、庚辛白虎、壬癸玄武，自初爻起 */
-  return {
-    ...g, gongName: TRI_NAME[g.gong], gwx, bits, yao, bian, fu, T,
-    shen: bits.map((_, i) => LIUSHEN[(ls + i) % 6]),
-    guaShen: ZHI[((bits[g.shi - 1] ? 0 : 6) + g.shi - 1) % 12],   /* 卦身：陽世從子、陰世從午，數至世爻 */
-  };
+  const at = info.at;
+  return DC.najia(info.lines, at.y, at.m, at.d, at.h, at.mi, at.tz ?? -new Date(at.ms).getTimezoneOffset() / 60);
 }
 function najiaLine(c, i) {
   const y = c.yao[i], b = c.bian[i], f = c.fu[i];
@@ -2089,7 +2025,7 @@ function najiaHead(c, info) {
   const at = info.at, p2 = (x) => String(x).padStart(2, "0");
   return {
     time: `${at.y}-${p2(at.m)}-${p2(at.d)} ${p2(at.h)}:${p2(at.mi)}`,
-    month: `${ZHI[c.T.mB]}月`, day: `${GAN[c.T.dS]}${ZHI[c.T.dB]}日`, kong: c.T.kong.map((k) => ZHI[k]).join(""),
+    month: `${c.month}月`, day: `${c.dayGZ}日`, kong: c.kong,
     gua: `${YI_CARDS[info.ben - 1].zh}（${c.gongName}宮${c.kind === "本宮" ? "本宮" : c.kind}卦，屬${c.gwx}）`,
   };
 }
@@ -2226,7 +2162,7 @@ function finishCast() {
   castInfo = { lines: castLines.map((l) => l.v), moving, ben, zhi, method: spread.method || "coins" };
   if (spread.najia) {   /* 納甲以成卦當刻（裝置當地時間）定月建日辰，存入紀錄供重看 */
     const d = new Date();
-    castInfo.at = { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate(), h: d.getHours(), mi: d.getMinutes(), ms: d.getTime() };
+    castInfo.at = { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate(), h: d.getHours(), mi: d.getMinutes(), ms: d.getTime(), tz: -d.getTimezoneOffset() / 60 };
   }
   const nj = spread.najia ? najiaChart(castInfo) : null, njh = nj && najiaHead(nj, castInfo);
   target = zhi ? 2 : 1;
@@ -2246,29 +2182,7 @@ function finishCast() {
   if (zhi) setTimeout(() => placeCard(zhi - 1), 1150);
 }
 
-/* ── 重複占問勸誡(⇄ 同法在 divine-ui.js DC.simQ——牌桌館零依賴故留複本，改演算法請兩邊同步) ── */
-function simQ(a, b) {
-  const norm = (s) => String(s || "").toLowerCase()
-    .replace(/[\s。，、？！?!.,;:「」『』()（）…~〜-]/g, "")
-    .replace(/[嗎呢啊吧了的呀喔哦欸捏嘛還再又就以我你妳個筆份]/g, "")
-    .replace(/[跟與]/g, "和").replace(/[會可]/g, "能");
-  a = norm(a); b = norm(b);
-  if (!a && !b) return 1;
-  if (!a || !b) return 0;
-  if (a === b) return 1;
-  if (a.length < 2 || b.length < 2) return 0;
-  const grams = (s) => { const m = {}; for (let i = 0; i < s.length - 1; i++) { const g = s.substr(i, 2); m[g] = (m[g] || 0) + 1; } return m; };
-  const ga = grams(a), gb = grams(b);
-  let inter = 0, ta = 0, tb = 0;
-  for (const k in ga) { ta += ga[k]; if (gb[k]) inter += Math.min(ga[k], gb[k]); }
-  for (const k in gb) tb += gb[k];
-  const dice = (2 * inter) / (ta + tb);
-  const dp = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
-  for (let x = 1; x <= a.length; x++) for (let y = 1; y <= b.length; y++)
-    dp[x][y] = a[x - 1] === b[y - 1] ? dp[x - 1][y - 1] + 1 : Math.max(dp[x - 1][y], dp[x][y - 1]);
-  const lcs = (2 * dp[a.length][b.length]) / (a.length + b.length);
-  return Math.max(dice, lcs);
-}
+/* ── 重複占問勸誡（同題比對用 divine-core.js DC.simQ） ── */
 /* 回傳 true（免勸誡，同步直通）或 Promise<boolean>（紙面對話框問過再說） */
 function repeatGuard() {
   if (location.search.includes("rwdtest")) return true;   /* 測試鉤子直通（無頭瀏覽器會卡在對話框） */
@@ -2276,7 +2190,7 @@ function repeatGuard() {
   try { arr = JSON.parse(localStorage.getItem("lenormand-history") || "[]"); } catch (e) {}
   const today = new Date().toDateString();
   const q = $("#q-input").value.trim();
-  const n = arr.filter((r) => new Date(r.id).toDateString() === today && r.deck === deckDef.id && simQ(r.q, q) >= 0.62).length;
+  const n = arr.filter((r) => new Date(r.id).toDateString() === today && r.deck === deckDef.id && DC.simQ(r.q, q) >= DC.SIMQ_TH).length;
   if (n < 2) return true;
   return say(`同一件事，你今天已用「${deckDef.name}」問過 ${n} 次。\n再抽，就只是在抽心安，不是在占卜。\n\n牌不會因為多問一次而換答案。答案不合意時，該換的是問題，或行動。`, { ok: "仍要抽", cancel: "先不抽" });
 }

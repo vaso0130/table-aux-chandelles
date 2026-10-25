@@ -534,7 +534,7 @@ var DC = {};
     ["雷天大壯", "雷澤歸妹", "雷火豐", "震為雷", "雷風恆", "雷水解", "雷山小過", "雷地豫"],
     ["風天小畜", "風澤中孚", "風火家人", "風雷益", "巽為風", "風水渙", "風山漸", "風地觀"],
     ["水天需", "水澤節", "水火既濟", "水雷屯", "水風井", "坎為水", "水山蹇", "水地比"],
-    ["山天大畜", "山澤損", "山火賁", "山雷頤", "山風蠱", "艮為山", "山水蒙", "山地剝"],
+    ["山天大畜", "山澤損", "山火賁", "山雷頤", "山風蠱", "山水蒙", "艮為山", "山地剝"],
     ["地天泰", "地澤臨", "地火明夷", "地雷復", "地風升", "地水師", "地山謙", "坤為地"]
   ];
   DC.meihua = function (uNum, lNum, movNum) { // 上卦數/下卦數/動爻數(古法：餘0作8、作6)
@@ -584,6 +584,57 @@ var DC = {};
     if (len <= 10) return { up: len, low: len + h, mov: len + len + h + h, note: "十字以內：字數為上卦、字數加時為下卦（筆畫法之簡式）" };
     const up = Math.floor(len / 2), low = len - up;
     return { up, low, mov: len + h, note: "十一字以上：字數平分，少者為上卦" };
+  };
+
+  /* ═══ 六爻納甲（京房八宮・《火珠林》法）═══
+     八宮世應、納甲干支、六親、六神、伏神、卦身；月建日辰旬空取自 DC.bazi（23 時換日） */
+  DC.NAJIA = [ // 依 TRIG 序：[內卦干, 外卦干, 內三支, 外三支]，支皆由下而上
+    ["甲", "壬", "子寅辰", "午申戌"], ["丁", "丁", "巳卯丑", "亥酉未"], ["己", "己", "卯丑亥", "酉未巳"], ["庚", "庚", "子寅辰", "午申戌"],
+    ["辛", "辛", "丑亥酉", "未巳卯"], ["戊", "戊", "寅辰午", "申戌子"], ["丙", "丙", "辰午申", "戌子寅"], ["乙", "癸", "未巳卯", "丑亥酉"]
+  ];
+  DC.LIUSHEN = ["青龍", "朱雀", "勾陳", "螣蛇", "白虎", "玄武"];
+  const ZHI_WX = "水土木木土火火土金金土水";
+  const trigIdx = ls => DC.TRIG_LINES.findIndex(t => t[0] === ls[0] && t[1] === ls[1] && t[2] === ls[2]);
+  DC.liuQin = (gongWx, wx) => ["兄弟", "子孫", "妻財", "官鬼", "父母"][(DC.WX.indexOf(wx) - DC.WX.indexOf(gongWx) + 5) % 5];
+  /* 八宮與世爻：「天同二世天變五，地同四世地變初，本宮六世三世異，人同遊魂人變歸」（地＝初四、人＝二五、天＝三上）；
+     一二三世宮在外卦，四五世與遊魂宮為內卦全反，歸魂宮在內卦 */
+  DC.najiaGong = function (bits) {
+    const lo = bits.slice(0, 3), up = bits.slice(3);
+    const di = lo[0] === up[0], ren = lo[1] === up[1], tian = lo[2] === up[2], inv = trigIdx(lo.map(b => 1 - b));
+    const [shi, gong, kind] =
+        di && ren && tian ? [6, trigIdx(up), "本宮"]
+      : !di && ren && tian ? [1, trigIdx(up), "一世"]
+      : !di && !ren && tian ? [2, trigIdx(up), "二世"]
+      : !di && !ren && !tian ? [3, trigIdx(up), "三世"]
+      : di && !ren && !tian ? [4, inv, "四世"]
+      : di && ren && !tian ? [5, inv, "五世"]
+      : !di && ren && !tian ? [4, inv, "遊魂"]
+      : [3, trigIdx(lo), "歸魂"];
+    return { shi, ying: (shi + 2) % 6 + 1, gong, kind };
+  };
+  /* lines：由下而上 6/7/8/9；起卦時刻 y m d h mi 與時區 tz（時） */
+  DC.najia = function (lines, y, m, d, h, mi, tz) {
+    const bits = lines.map(v => (v === 7 || v === 9 ? 1 : 0)), moving = lines.map((v, i) => (v === 6 || v === 9 ? i : -1)).filter(i => i >= 0);
+    const g = DC.najiaGong(bits), gwx = DC.TRIG_WX[g.gong];
+    const lineOf = (b, i) => {
+      const t = DC.NAJIA[trigIdx(i < 3 ? b.slice(0, 3) : b.slice(3))];
+      const zhi = (i < 3 ? t[2] : t[3])[i % 3], wx = ZHI_WX[DC.BRANCHES.indexOf(zhi)];
+      return { gan: i < 3 ? t[0] : t[1], zhi, wx, qin: DC.liuQin(gwx, wx) };
+    };
+    const yao = bits.map((_, i) => lineOf(bits, i));
+    const zb = bits.map((b, i) => (moving.includes(i) ? 1 - b : b));
+    /* 伏神：本卦缺的六親，取本宮純卦同位之爻伏於本卦該爻（飛神）之下 */
+    const pure = DC.TRIG_LINES[g.gong].concat(DC.TRIG_LINES[g.gong]);
+    const fu = pure.map((_, i) => { const p = lineOf(pure, i); return yao.some(x => x.qin === p.qin) ? null : p; });
+    const bz = DC.bazi(y, m, d, h, mi, tz, "lateZi"), day = bz.pillars[2];
+    const ls = [0, 0, 1, 1, 2, 3, 4, 4, 5, 5][day.s]; // 甲乙青龍、丙丁朱雀、戊勾陳、己螣蛇、庚辛白虎、壬癸玄武，自初爻起
+    return {
+      ...g, gongName: DC.TRIG[g.gong], gwx, bits, moving, yao,
+      bian: bits.map((_, i) => (moving.includes(i) ? lineOf(zb, i) : null)), fu,
+      shen: bits.map((_, i) => DC.LIUSHEN[(ls + i) % 6]),
+      guaShen: DC.BRANCHES[((bits[g.shi - 1] ? 0 : 6) + g.shi - 1) % 12], // 卦身：陽世從子、陰世從午，數至世爻
+      month: DC.BRANCHES[bz.pillars[1].b], monthGZ: bz.pillars[1].gz, dayGZ: day.gz, kong: bz.kong.join("")
+    };
   };
 
   /* ═══ 生命靈數 ═══ */
@@ -1369,3 +1420,31 @@ DC.humanDesign = function (y, m, d, h, mi, tz) {
   return { jdP, jdD, pers, des, gates, channels, defined, nComp, type, T: DC.HD_TYPES[type], auth,
     profile: pf, profileName: DC.HD_PROFILE[pf] || "", defName: defined.size ? DEFN[nComp] : "無定義（反映者）", cross, angle };
 };
+
+/* 重複占問勸誡的同題比對（各館與牌桌館共用） */
+DC.simQ = function (a, b) {
+  var norm = function (s) {
+    return String(s || "").toLowerCase()
+      .replace(/[\s。，、？！?!.,;:「」『』()（）…~〜-]/g, "")
+      .replace(/[嗎呢啊吧了的呀喔哦欸捏嘛還再又就以我你妳個筆份]/g, "")
+      .replace(/[跟與]/g, "和").replace(/[會可]/g, "能"); /* 同義摺疊：防「跟→和、會→能」式改寫 */
+  };
+  a = norm(a); b = norm(b);
+  if (!a && !b) return 1;              /* 都沒寫問題：同系統連抽視為同題 */
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if (a.length < 2 || b.length < 2) return 0;
+  var grams = function (s) { var m = {}; for (var i = 0; i < s.length - 1; i++) { var g = s.substr(i, 2); m[g] = (m[g] || 0) + 1; } return m; };
+  var ga = grams(a), gb = grams(b), inter = 0, ta = 0, tb = 0, k;
+  for (k in ga) { ta += ga[k]; if (gb[k]) inter += Math.min(ga[k], gb[k]); }
+  for (k in gb) tb += gb[k];
+  var dice = (2 * inter) / (ta + tb);
+  /* 中文短句改幾個虛字會讓 bigram 碎掉，輔以最長公共子序列比率，取較大者 */
+  var dp = [];
+  for (var i2 = 0; i2 <= a.length; i2++) { dp.push(new Array(b.length + 1).fill(0)); }
+  for (var x = 1; x <= a.length; x++) for (var y = 1; y <= b.length; y++)
+    dp[x][y] = a[x - 1] === b[y - 1] ? dp[x - 1][y - 1] + 1 : Math.max(dp[x - 1][y], dp[x][y - 1]);
+  var lcs = (2 * dp[a.length][b.length]) / (a.length + b.length);
+  return Math.max(dice, lcs);
+};
+DC.SIMQ_TH = 0.62; // 同題門檻（經例句校準：改虛字改語序抓得到，換主題抓不到）
