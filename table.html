@@ -905,6 +905,7 @@
   <nav class="halls-nav" aria-label="館別導覽">
     <a title="回到燭光入口" href="index.html" class="home">燭光</a>
     <a title="牌卡占卜：雷諾曼、塔羅、象棋等十一術" href="table.html" class="here">牌桌館</a>
+    <a title="象棋卜卦：單卦問事、年運、命盤、一子問事" href="xiangqi.html">象棋館</a>
     <a title="西洋/印度/卜卦占星與宿曜" href="astro.html">占星館</a>
     <a title="八字、紫微、九星、唐四柱、人類圖、生命靈數——看生辰" href="bazi.html">八字館</a>
     <a title="奇門、六壬、太乙、梅花、河洛——問此刻與時機" href="shi.html">式占館</a>
@@ -948,6 +949,7 @@
       <select id="xq-school"></select>
     </div>
     <p class="xq-school-note" id="xq-school-note" hidden></p>
+    <p class="xq-school-note" id="xq-hall-note" hidden>象棋已獨立成館：<a href="xiangqi.html" style="color:var(--gold-bright)">象棋館</a>有計算吃子與格局的單卦問事、年運、命盤，以及一子問事。</p>
     <div class="question-row xq-row" id="xq-sex-row" hidden>
       <label for="xq-sex">求問者</label>
       <select id="xq-sex"><option value="">請選擇（兵卒依此論正常或反常）</option><option value="女">女生</option><option value="男">男生</option></select>
@@ -2572,7 +2574,7 @@ function xqPair() { return XQ.PAIRS[+$("#xq-pair").value || 0]; }
 var xqChain = [];   /* 多占：前面幾問 {q, topic, pair, n}（var：載入時 selectDeck 就會讀到） */
 function syncXqSchool() {
   const on = deckDef.id === "xq";
-  $("#xq-school-row").hidden = $("#xq-school-note").hidden = !on;
+  $("#xq-school-row").hidden = $("#xq-school-note").hidden = $("#xq-hall-note").hidden = !on;
   if (on) {
     $("#xq-school").innerHTML = XQ.SCHOOLS.map((x) => `<option value="${x[0]}">${x[1]}</option>`).join("");
     $("#xq-school").value = xqSchool()[0];

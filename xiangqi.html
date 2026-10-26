@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="zh-Hant">
+<title>燭光棋閣 · 象棋館</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="hall.css?v=2026102503">
+<style>
+  /* ── 棋子 ── */
+  .qz {
+    --s: 46px; display: inline-grid; place-items: center; width: var(--s); height: var(--s); border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #f7e9c6, #e6cf9b 62%, #c9a76a);
+    border: 2px solid #9a7b45; box-shadow: inset 0 0 0 3px #f4e4bd, inset 0 0 0 4px rgba(120,85,40,.55), 0 3px 6px rgba(0,0,0,.45);
+    font-family: "Kaiti TC", "BiauKai", "STKaiti", "DFKai-SB", serif; font-size: calc(var(--s) * .52); font-weight: 700; line-height: 1;
+    color: #2a221a; user-select: none; flex: none;
+  }
+  .qz.r { color: #a8302a; }
+  .qz.sm { --s: 30px; }
+  .qz.dim { opacity: .45; }
+  .qz.back { background: radial-gradient(circle at 38% 32%, #b98c52, #8d6233 70%, #6d4823); border-color: #5b3c1c; box-shadow: inset 0 0 0 3px #a87a43, 0 3px 6px rgba(0,0,0,.45); color: transparent; }
+  .qz.slot { background: rgba(201,164,92,.05); border: 1px dashed var(--gold-dim); box-shadow: none; color: var(--gold-dim); font-size: 13px; font-family: inherit; font-weight: 400; }
+  .qz.slot.next { border-style: solid; border-color: var(--gold-bright); color: var(--gold-bright); box-shadow: 0 0 10px rgba(229,204,143,.35); }
+  @keyframes qz-flip { 0% { transform: rotateY(90deg) scale(.7); } 100% { transform: none; } }
+  .qz.flip { animation: qz-flip .35s ease-out; }
+  @media (prefers-reduced-motion: reduce) { .qz.flip { animation: none; } }
+
+  /* ── 棋堆（蓋著的 32 子） ── */
+  #pool { display: grid; grid-template-columns: repeat(8, auto); gap: 8px; justify-content: center; margin: 14px auto 6px; max-width: 520px; }
+  #pool button { padding: 0; border: none; background: none; cursor: pointer; border-radius: 50%; }
+  #pool button:disabled { cursor: default; }
+  #pool button:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+  #pool button.gone .qz { visibility: hidden; }
+  @keyframes pool-wash { 0% { transform: none; } 30% { transform: translate(var(--dx), var(--dy)) rotate(var(--dr)); } 100% { transform: none; } }
+  #pool.washing .qz { animation: pool-wash .55s ease-in-out; }
+  @media (max-width: 520px) { #pool { grid-template-columns: repeat(8, auto); gap: 5px; } #pool .qz { --s: 34px; } }
+
+  /* ── 十字盤與命盤 ── */
+  .cross { display: grid; grid-template-columns: repeat(3, auto); gap: 8px; justify-content: center; margin: 12px 0; }
+  .cross .cell { display: grid; place-items: center; min-width: 46px; min-height: 46px; position: relative; }
+  .cross .cell small { position: absolute; top: -2px; left: -4px; font-size: 10.5px; color: var(--gold-dim); }
+  .cross.big .qz { --s: 58px; }
+  .cross.big .cell { min-width: 58px; min-height: 58px; }
+  .chart { display: grid; grid-template-columns: auto repeat(3, auto); gap: 4px 6px; justify-content: center; align-items: center; margin: 10px 0; }
+  .chart .lab { font-size: 11.5px; color: var(--muted); text-align: right; padding-right: 6px; white-space: nowrap; }
+  .chart .cell { display: grid; place-items: center; min-width: 34px; min-height: 34px; }
+  .chart .qz { --s: 34px; }
+  .chart .now { outline: 2px solid var(--gold-bright); outline-offset: 2px; border-radius: 50%; }
+  .board-wrap { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+
+  #stage-cap { text-align: center; color: var(--ivory-shade); font-size: 14px; min-height: 1.5em; margin: 8px 0 0; }
+  #ritual { margin-top: 18px; border-top: 1px dashed rgba(201,164,92,.25); padding-top: 14px; }
+  #invocation { max-width: 620px; margin: 10px auto 0; text-align: center; color: var(--ivory-shade); font-size: 14px; line-height: 1.8; }
+  #invocation b { color: var(--gold-bright); font-weight: 600; }
+  #invocation small { color: var(--muted); }
+  .qwarn { color: var(--gold-bright); font-size: 13px; margin: 6px 0 0; }
+  #chain { margin: 12px 0 0; padding: 10px 14px; border: 1px dashed var(--gold-dim); font-size: 13px; color: var(--muted); }
+  #chain ol { margin: 4px 0 6px; padding-left: 1.4em; }
+  #chain b { color: var(--ivory); font-weight: 400; }
+
+  /* ── 結果 ── */
+  .verdict { font-size: 18px; color: var(--gold-bright); margin: 6px 0 10px; line-height: 1.6; }
+  .caps { list-style: none; padding: 0; margin: 6px 0; font-size: 14px; }
+  .caps li { padding: 3px 0; border-bottom: 1px dotted rgba(201,164,92,.18); color: var(--ivory-shade); }
+  .caps li .v { float: right; color: var(--gold); font-variant-numeric: tabular-nums; }
+  .caps li .v.neg { color: #E8A08F; }
+  .caps li small { color: var(--muted); }
+  .pat { margin: 8px 0; }
+  .pat b { color: var(--gold-bright); font-weight: 600; }
+  .pat .tag { font-size: 11px; border: 1px solid var(--gold-dim); color: var(--gold-dim); border-radius: 3px; padding: 0 4px; margin-left: 4px; }
+  .pat.warn b { color: #E8A08F; }
+  .round-card summary { cursor: pointer; }
+  .round-card .score { color: var(--gold); font-size: 13px; margin-left: 8px; }
+  .clean-list { padding-left: 1.3em; }
+  .clean-list li { margin: 4px 0; color: var(--ivory-shade); }
+  .clean-list li.key::marker { color: var(--gold-bright); }
+  .prayer { white-space: pre-line; background: rgba(201,164,92,.05); border-left: 3px solid var(--gold-dim); padding: 10px 14px; font-size: 14.5px; line-height: 1.9; color: var(--ivory); }
+  .opt-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .opt-row > .result-card { flex: 1 1 280px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="plate">
+      <p class="eyebrow">Le Pavillon des Échecs</p>
+      <h1>燭光棋閣</h1>
+      <p class="subtitle">三十二子蓋在桌上，由你親手翻開——吃與被吃之間，看見一件事、一年，乃至一生的形狀。</p>
+    </div>
+  </header>
+
+  <nav class="halls-nav">
+    <a title="回到燭光入口" href="index.html" class="home">燭光</a>
+    <a title="牌卡占卜：雷諾曼、塔羅等十一術" href="table.html">牌桌館</a>
+    <a title="象棋卜卦：單卦問事、年運、命盤、一子問事" href="xiangqi.html" class="here">象棋館</a>
+    <a title="西洋/印度/卜卦占星與宿曜" href="astro.html">占星館</a>
+    <a title="八字、紫微、九星、唐四柱、人類圖、生命靈數——看生辰" href="bazi.html">八字館</a>
+    <a title="奇門、六壬、太乙、梅花、河洛——問此刻與時機" href="shi.html">式占館</a>
+    <a title="緬甸八曜、爪哇威頓、泰國佛日" href="nanyang.html">南洋館</a>
+    <a title="一句、翹傳、靈籤——開卷即答" href="kaijuan.html">開卷館</a>
+    <a title="時輪占——依此刻自動取牌的原創牌占" href="shilun.html">鐘樓館</a>
+    <a title="MBTI 十六型人格測驗——照見偏好" href="mbti.html">鏡廳</a>
+    <a title="任選三術同問一事，合議作答" href="mix.html">MIX 三術合參</a>
+  </nav>
+
+  <nav class="views" id="views" aria-label="頁面切換">
+    <button class="view-btn active" data-view="divine">翻棋問事</button>
+    <button class="view-btn" data-view="learn">入門教學</button>
+  </nav>
+
+  <section id="view-learn"></section>
+
+  <p class="section-label divine-only">選擇卦式</p>
+  <div class="sys-row" id="sys"></div>
+
+
+  <section class="panel" id="panel">
+    <h2 id="p-title"></h2>
+    <span class="hint" id="p-hint"></span>
+    <div class="form-grid" style="margin-top:14px">
+      <div class="field full" id="f-type-w"><label for="f-type">題型</label><select id="f-type"></select>
+        <div class="note" id="f-type-note"></div></div>
+      <div class="field full" id="f-q"><label for="q-input">你的問題</label>
+        <input id="q-input" type="text" maxlength="200" placeholder="把問題問清楚，例如：我去這家公司上班好不好？">
+        <p class="qwarn" id="qwarn" hidden></p></div>
+      <div class="field"><label for="f-sex">求問者</label>
+        <select id="f-sex"><option value="">請選擇</option><option value="女">女生</option><option value="男">男生</option></select>
+        <div class="note">位置代表的人（左女右男、配偶）與兵卒的讀法都看這一欄</div></div>
+      <div class="field" id="f-mar-w"><label for="f-mar">婚姻</label>
+        <select id="f-mar"><option value="">單身（含離婚）</option><option value="1">已婚</option></select></div>
+      <div class="field" id="f-age-w" hidden><label for="f-age">今年虛歲（選填）</label>
+        <input id="f-age" type="number" min="1" max="110" placeholder="出生即一歲">
+        <div class="note">填了會標出你現在走到命盤的哪一格</div></div>
+      <div class="field" id="f-topic-w" hidden><label for="f-topic">問題類別</label><select id="f-topic"></select></div>
+      <div class="field" id="f-pair-w" hidden><label for="f-pair">紅黑約定</label><select id="f-pair"></select></div>
+    </div>
+    <div id="chain" hidden></div>
+
+    <div id="ritual">
+      <div id="invocation"></div>
+      <div class="btn-row" style="justify-content:center" id="qing-row" hidden>
+        <button class="ghost-btn" type="button" id="btn-qing">翻 棋 請 神</button>
+        <span class="hint" id="qing-out" aria-live="polite"></span>
+      </div>
+      <div class="board-wrap"><div id="slots"></div></div>
+      <div id="pool" aria-label="蓋著的棋子，點一下翻開"></div>
+      <p id="stage-cap" aria-live="polite"></p>
+      <div class="btn-row" style="justify-content:center">
+        <button class="gold-btn" id="btn-wash">洗 棋</button>
+        <button class="ghost-btn" id="btn-auto" disabled>替我翻完</button>
+        <button class="ghost-btn" id="btn-reset">重新開始</button>
+        <span class="hint" id="go-hint"></span>
+      </div>
+    </div>
+  </section>
+
+  <section id="out"></section>
+
+  <section class="prompt-sec" id="prompt-sec" hidden>
+    <p class="section-label">AI 解讀提示詞</p>
+    <div class="tone-row"><label for="tone-select">建議語氣</label><select id="tone-select"></select><input id="tone-custom" type="text" maxlength="40" placeholder="寫下你想要的語氣，例如：像老朋友一樣直說" hidden></div>
+    <textarea class="prompt-box" id="prompt-box" readonly></textarea>
+    <div class="btn-row">
+      <button class="gold-btn" id="btn-copy">複製提示詞</button>
+      <span class="copy-ok" id="copy-ok" hidden>已複製。貼給你信任的 AI 就行。</span>
+    </div>
+  </section>
+
+  <section id="hist-sec">
+    <p class="section-label">占卜歷史</p>
+    <div id="hist-list"></div>
+    <div class="btn-row" style="justify-content:center"><button class="ghost-btn" id="hist-clear">清空歷史</button></div>
+  </section>
+
+  <p class="footnote">
+    單卦、年運與命盤參考《改寫人生的象棋卜卦》的體系（棋子分數、吃子規則、格局與命盤排法），由本站程式計算；一子問事參考《象棋占卜祕笈》（聖元）。<br>
+    兩書文字未經授權，本館的解說皆為改寫。翻棋以 <b>crypto</b> 真隨機洗牌。僅供靜心與參考，健康與重大決定請以專業意見為準。
+  </p>
+</div>
+
+<script src="divine-core.js?v=2026102506"></script>
+<script src="divine-ui.js?v=2026102509"></script>
+<script src="divine-lore.js?v=2026102502"></script>
+<script src="xq-data.js?v=2026102503"></script>
+<script src="xq-engine.js?v=2026102601"></script>
+<script src="xiangqi-learn.js?v=2026102601"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const E = XQE, POSZ = E.POS_ZH, NUM = E.NUM;
+const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const BL = DC.bookLink;
+
+/* ═══ 題型（單卦）：書中依問題類型用不同的判法 ═══ */
+const QT = [
+  ["good", "好不好・工作事業", "我做這件事（這份工作）好不好？——看收穫與付出、格局，以及天人地。", "我去這家公司上班好不好？"],
+  ["money", "投資・賺錢", "投資、生意能不能獲利？建議設定期限。看收穫與付出；通吃會歸零、暴動有不可控變數。投機賭博之事不問。", "我買這間房子投資，五年內能不能獲利？"],
+  ["achieve", "會不會成・能不能達到", "升官、當選、官司、買到、業績達標：要「我們真的吃得到對方」才算成，只得好處不算。", "這一季的業績能不能達到目標？"],
+  ["deal", "成交・錄取（雙向）", "談生意、面試、甄試、申請：牽涉對方意願——我們吃到對方、或對方吃到我們，都算成。", "今天跟這位客戶談這張保單會成交嗎？"],
+  ["exam", "考試（筆試）", "單向的書面考試：一定要我們吃得到對方才考得上。", "我今年能考上這張證照嗎？"],
+  ["lost", "失物找不找得回", "吃得到對方就找得回；有好朋友格表示東西沒丟、還有機會。", "我遺失的戒指找得回來嗎？"],
+  ["moneyback", "錢拿不拿得回", "借出去、被欠的錢：吃得到就拿得回，只得好處表示拿回一部分。", "借給朋友的錢拿得回來嗎？"],
+  ["suit", "適不適合（物、屋、名、學校）", "這個東西、房子、名字、學校、課程適不適合我？看好朋友格或相鄰明君、陰陽與得失。", "這間房子適不適合我住？"],
+  ["love", "姻緣・正緣", "今年會不會結婚、交往？某人是不是正緣？看好朋友格、正桃花與互相欣賞。", "我今年會不會遇到結婚的對象？"],
+  ["relation", "人際・緣分・相處", "我跟某人的緣分、如何相處。不問「他是不是真心」——象棋看不出這個。", "我跟這位同事的緣分如何？"],
+  ["health", "健康", "目前的健康狀況、疾病原因。身體不舒服請先就醫，這裡只作參考。", "我目前的健康狀況如何？"],
+  ["event", "活動開不開心", "與利益無關的活動：不看得失，看卦象呈現的狀態。", "下週的畢業旅行會不會開心？"],
+  ["cause", "是不是這個原因（是非）", "問「這件事是不是因為○○？」——出現好朋友格就代表「是」。", "我最近不順，是不是因為搬家？"],
+  ["past", "前世關係", "我跟某人的前世關係：中間的顏色看前世性別，第一組同位階棋子看關係。", "我跟某人上一世是什麼關係？"],
+  ["clean", "清理效果", "祈請淨化之後，想知道效果如何：只看收穫，並看好朋友格。", "我清理「容易想太多」的效果如何？"],
+];
+const SYS = [
+  { id: "single", name: "單卦問事", sub: "十字五子・一事一卦", n: 5, modes: QT.map((q) => [q[0], q[1], q[2]]) },
+  { id: "year", name: "年運", sub: "十字五子・一年", n: 5, hint: "問「我今年（明年）的年運」，未指定以農曆年論，也可以問某個月。依狀態、互動關係、格局、收穫付出、健康五步讀。" },
+  { id: "chart", name: "命盤", sub: "三十二子・一生", n: 32, hint: "不需生辰。三十二子依序翻完排成八局：總格看一生的主結構，接著學習、情感、事業，與每十年的運勢。命盤以第一次排的為主，請慎重。" },
+  { id: "one", name: "一子問事", sub: "聖元派・多占", n: 1, hint: "一題翻一顆：問前先約定紅黑代表什麼，翻到哪顆就依約定回答。想問細，就用多占逐題縮小範圍。" },
+];
+let sysId = "single", modeId = "good", book = null;
+const sys = () => SYS.find((s) => s.id === sysId);
+
+/* ═══ 表單記憶 ═══ */
+const LS = { get: (k) => { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+$("f-sex").value = LS.get("dc-xq-sex");
+$("f-mar").value = LS.get("dc-xq-mar");
+$("f-age").value = LS.get("dc-xq-age");
+$("f-sex").onchange = () => { LS.set("dc-xq-sex", $("f-sex").value); renderSlots(); };
+$("f-mar").onchange = () => LS.set("dc-xq-mar", $("f-mar").value);
+$("f-age").onchange = () => LS.set("dc-xq-age", $("f-age").value);
+$("f-topic").innerHTML = XQ.TOPICS.map((t) => `<option value="${t}">${XQ.TOPIC_ZH[t]}</option>`).join("");
+$("f-pair").innerHTML = XQ.PAIRS.map((p, i) => `<option value="${i}">${p[0] ? `紅棋為「${p[0]}」，黑棋為「${p[1]}」` : "開放題（不論是非，直接看棋義）"}</option>`).join("");
+const sex = () => $("f-sex").value, married = () => !!$("f-mar").value;
+$("f-type").innerHTML = QT.map((q) => `<option value="${q[0]}">${q[1]}</option>`).join("");
+$("f-type").onchange = () => { modeId = $("f-type").value; optResults = []; updateForm(); };
+
+/* ═══ 卦式與題型 ═══ */
+function renderSys() {
+  $("sys").innerHTML = "";
+  SYS.forEach((s) => {
+    const b = document.createElement("button");
+    b.className = "sys-btn" + (s.id === sysId ? " active" : "");
+    b.innerHTML = '<span class="d-name">' + s.name + '</span><span class="d-sub">' + s.sub + "</span>";
+    b.onclick = () => { sysId = s.id; if (s.modes && !s.modes.some((m) => m[0] === modeId)) modeId = s.modes[0][0]; renderSys(); updateForm(); if (book) book.show(sysId); };
+    $("sys").appendChild(b);
+  });
+}
+function updateForm() {
+  const s = sys(), md = s.modes ? s.modes.find((m) => m[0] === modeId) : null;
+  $("f-type-w").hidden = !s.modes;
+  if (s.modes) { $("f-type").value = modeId; $("f-type-note").textContent = md[2]; }
+  $("p-title").textContent = s.name;
+  $("p-hint").textContent = s.modes ? "一個問題翻五子，排成十字：中、左、右、上、下。依題型用書中的判法。" : s.hint;
+  const qt = s.id === "single" ? QT.find((q) => q[0] === modeId) : null;
+  $("q-input").placeholder = qt ? "例如：" + qt[3] : s.id === "year" ? "例如：我想知道我今年的年運" : s.id === "chart" ? "選填：想特別看哪一方面" : "例如：我去這家公司上班好嗎？";
+  $("f-q").hidden = false;
+  $("f-age-w").hidden = s.id !== "chart";
+  $("f-topic-w").hidden = $("f-pair-w").hidden = s.id !== "one";
+  $("qing-row").hidden = s.id !== "one";
+  if (s.id !== "one") chain = [];
+  resetTable();
+}
+
+/* ═══ 翻棋儀式：32 子蓋著，洗過才能翻；由你親手依序挑 ═══ */
+const ALL = XQ.CARDS.map((c) => c.ch);
+let pool = [], picks = [], washed = 0, busy = false, done = false, optIdx = 0, optResults = [];
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = DC.rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const qz = (ch, cls) => `<span class="qz${"帥仕相俥傌炮兵".includes(ch) ? " r" : ""}${cls ? " " + cls : ""}">${ch}</span>`;
+function resetTable(keepPool) {
+  if (!keepPool) { pool = shuffle(ALL.slice()); washed = 0; optIdx = 0; optResults = []; }
+  picks = []; done = false; busy = false;
+  $("out").innerHTML = optResults.length ? $("out").innerHTML : "";
+  if (!optResults.length) $("prompt-sec").hidden = true;
+  $("go-hint").textContent = "";
+  $("qing-out").textContent = ""; $("btn-qing").textContent = "翻 棋 請 神"; $("btn-qing").disabled = false;
+  renderPool(); renderSlots(); updateInvocation(); checkQ(); renderChain();
+}
+function renderPool() {
+  $("pool").innerHTML = pool.map((ch, i) => `<button type="button" data-i="${i}"${ch === null ? ' class="gone" disabled' : ""} aria-label="蓋著的棋子">${qz("", "back")}</button>`).join("");
+  $("pool").querySelectorAll("button").forEach((b) => {
+    const s = b.querySelector(".qz"); s.style.setProperty("--dx", (DC.rand(41) - 20) + "px"); s.style.setProperty("--dy", (DC.rand(31) - 15) + "px"); s.style.setProperty("--dr", (DC.rand(61) - 30) + "deg");
+    b.onclick = () => pick(+b.dataset.i);
+  });
+  $("btn-auto").disabled = !washed || done;
+  $("stage-cap").textContent = done ? "棋已翻齊。" : !washed ? "先洗棋，把棋序交給你的手。"
+    : `第 ${picks.length + 1}／${sys().n} 子：憑直覺點一顆蓋著的棋` + (sysId === "chart" ? "（第 4 子之後依「中、左、右、下」一局一局排下去）" : "");
+}
+$("btn-wash").onclick = () => {
+  if (busy || done || picks.length) return;
+  shuffle(pool); washed++;
+  const p = $("pool"); p.classList.remove("washing"); void p.offsetWidth; p.classList.add("washing");
+  renderPool();
+  $("stage-cap").textContent = `洗了 ${washed} 次${washed < 3 ? "，可再洗幾次" : "，棋序已經夠亂了"}。點一顆蓋著的棋開始翻。`;
+};
+function pick(i) {
+  if (busy || done || pool[i] === null) return;
+  if (!washed) { $("stage-cap").textContent = "請先洗棋。"; return; }
+  if (!sex()) { $("stage-cap").textContent = "請先在上面選擇求問者是女生還是男生——位置代表誰、兵卒怎麼讀，都要看這一欄。"; $("f-sex").focus(); return; }
+  picks.push(pool[i]); pool[i] = null;
+  $("pool").querySelector(`[data-i="${i}"]`).classList.add("gone");
+  $("pool").querySelector(`[data-i="${i}"]`).disabled = true;
+  renderSlots(picks.length - 1);
+  if (picks.length >= sys().n) { done = true; renderPool(); finish(); }
+  else renderPool();
+}
+$("btn-auto").onclick = () => {
+  if (done || !washed) return;
+  if (!sex()) { $("f-sex").focus(); $("stage-cap").textContent = "請先選擇求問者。"; return; }
+  const left = pool.map((c, i) => (c === null ? -1 : i)).filter((i) => i >= 0);
+  while (picks.length < sys().n) { const i = left.splice(DC.rand(left.length), 1)[0]; picks.push(pool[i]); pool[i] = null; }
+  done = true; renderPool(); renderSlots(); finish();
+};
+$("btn-reset").onclick = () => { chain = []; optResults = []; $("out").innerHTML = ""; resetTable(); };
+
+/* 盤位：十字（中左右上下的擺放順序）；命盤 33 位 */
+const CROSS_GRID = [[null, 3, null], [1, 0, 2], [null, 4, null]];   /* 列×欄 → 抽出序（0 起） */
+function crossHtml(list, big, labels) {
+  return `<div class="cross${big ? " big" : ""}">` + CROSS_GRID.flat().map((k) => {
+    if (k === null) return '<div class="cell"></div>';
+    const ch = list[k];
+    return `<div class="cell">${labels ? `<small>${NUM[k]}</small>` : ""}${ch ? qz(ch.ch || ch) : `<span class="qz slot${k === list.filter(Boolean).length ? " next" : ""}">${NUM[k]}</span>`}</div>`;
+  }).join("") + "</div>";
+}
+/* 命盤：抽出序 → 33 位的 [列, 欄] */
+const CHART_POS = (() => {
+  const a = [[1, 1], [1, 0], [1, 2], [0, 1], [2, 1]];   // 1中 2左 3右 4上 5下（列, 欄）
+  for (let k = 2; k <= 8; k++) { const r = 2 * k - 1; a.push([r, 1], [r, 0], [r, 2]); if (k < 8) a.push([r + 1, 1]); }
+  return a;   // 32 個；第 33 位（列 16）補第 4 子
+})();
+function chartHtml(seq, nowAge) {
+  const grid = Array.from({ length: 17 }, () => [null, null, null]);
+  seq.forEach((ch, i) => { if (ch) { const [r, c] = CHART_POS[i]; grid[r][c] = ch; } });
+  if (seq[3] && seq.length >= 32) grid[16][1] = seq[3];
+  const lab = (r) => (r % 2 === 1 ? E.ROUND_NAME[(r - 1) / 2].replace("・", " ") : "");
+  let nowCell = null;
+  if (nowAge && seq.length >= 32) {
+    const k = nowAge >= 81 ? (nowAge <= 90 ? 1 : nowAge <= 100 ? 2 : 0) : Math.floor((nowAge - 1) / 10) + 1;
+    if (k >= 2 && k <= 8 && nowAge <= 80) {
+      const y = nowAge - (k - 1) * 10, idx = [3, 0, 1, 2, 4, 4, 0, 1, 2, 3][y - 1];   // 該局第幾年對應哪一位（上中左右下下中左右上）
+      const rc = [[2 * k - 1, 1], [2 * k - 1, 0], [2 * k - 1, 2], [2 * k - 2, 1], [2 * k, 1]][idx];
+      nowCell = rc[0] + "," + rc[1];
+    }
+  }
+  let h = '<div class="chart">';
+  for (let r = 0; r < 17; r++) {
+    h += `<div class="lab">${lab(r)}</div>`;
+    for (let c = 0; c < 3; c++) {
+      const ch = grid[r][c], isCell = r % 2 === 1 || c === 1;
+      const n = CHART_POS.findIndex(([rr, cc]) => rr === r && cc === c);
+      h += `<div class="cell${nowCell === r + "," + c ? " now" : ""}">${!isCell ? "" : ch ? qz(ch, r === 16 ? "dim" : "") : r === 16 ? `<span class="qz slot sm">④</span>` : `<span class="qz slot sm${n === seq.length ? " next" : ""}">${n + 1}</span>`}</div>`;
+    }
+  }
+  return h + "</div>";
+}
+function renderSlots(flipIdx) {
+  const s = sys();
+  $("slots").innerHTML = s.id === "chart" ? chartHtml(picks.concat(Array(32 - picks.length).fill(null)), +$("f-age").value || 0)
+    : s.id === "one" ? `<div class="cross big"><div class="cell"></div><div class="cell">${picks[0] ? qz(picks[0]) : '<span class="qz slot next">此事</span>'}</div><div class="cell"></div></div>`
+    : crossHtml(picks.concat(Array(5 - picks.length).fill(null)), true, true);
+  if (flipIdx !== undefined) { const all = $("slots").querySelectorAll(".qz:not(.slot):not(.dim)"); const el = all[s.id === "chart" ? [...all].length - 1 : all.length - 1]; if (el && !RM) el.classList.add("flip"); }
+}
+
+/* ═══ 起卜默念：單卦／年運／命盤靜心默念；一子問事用聖元派請神 ═══ */
+const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function updateInvocation() {
+  const q = $("q-input").value.trim(), qq = "「<b>" + (q ? esc(q) : sysId === "year" ? "今年的年運" : sysId === "chart" ? "這一生的命盤" : "心中默想之事") + "</b>」";
+  if (sysId === "one") {
+    const p = pair(), deal = p[0] ? `，約定紅棋為「${p[0]}」、黑棋為「${p[1]}」` : "";
+    $("invocation").innerHTML = `<b>一・請神</b>　弟子〔默唸姓名〕，今有一事，想藉象棋求得指引，誠心恭請南無大慈大悲千手千眼廣大圓滿無礙大悲心觀世音菩薩前來相助。菩薩若已來臨，請以紅棋指示。<br><small>翻一張：見帥、將、仕、相、俥、傌、炮即為菩薩來臨（可按「翻棋請神」）。</small><br><b>二・報名</b>　弟子〔姓名〕，住〔住址〕，今年〔農曆歲數〕歲。<br><b>三・問事</b>　雙手輕放在棋上：今問 ${qq}${deal}，請菩薩以棋示下。<br><small>投機、賭博之事，不以象棋相問。</small>`;
+  } else {
+    $("invocation").innerHTML = `靜心幾個呼吸，把問題在心裡說清楚：${qq}。<br>${sysId === "chart" ? "命盤由本人親手翻；" : "問事只問自己或直系血親的事，問別人的事請改從「我」出發（例如「我答應他去做，對我有沒有好處」）；"}一事不二卜。<br><small>投機、賭博之事，不以象棋相問。</small>`;
+  }
+}
+$("q-input").addEventListener("input", () => { updateInvocation(); checkQ(); });
+$("f-pair").onchange = () => { updateInvocation(); checkQ(); };
+$("f-age").addEventListener("input", () => { if (sysId === "chart") renderSlots(); });
+/* 問對問題：紅棋代表好、肯定，題目要用正面問法 */
+function checkQ() {
+  const q = $("q-input").value.trim().replace(/(.)不\1/g, "");
+  const yesno = sysId === "one" ? !!pair()[0] : sysId === "single";
+  const neg = yesno && /不(適合|要|想|該|會|能|可以|行|用|去|做|選|買|換|是)|別再|是否不|會不會不|是不是不|沒必要/.test(q);
+  $("qwarn").hidden = !neg;
+  if (neg) $("qwarn").textContent = "問法提醒：請用正面問法（例如「我去這家公司上班好嗎？」），不要問「是不是不適合」——否則讀出來的答案會反過來。";
+}
+
+/* ═══ 聖元派一子問事：請神、多占 ═══ */
+const pair = () => XQ.PAIRS[+$("f-pair").value || 0];
+let chain = [], qingN = 0;
+$("btn-qing").onclick = () => {
+  const c = ALL[DC.rand(32)], ok = "帥將仕相俥傌炮".includes(c);
+  qingN++;
+  $("qing-out").innerHTML = ok ? `翻到 ${qz(c, "sm")}——菩薩已來臨${qingN > 1 ? `（請了 ${qingN} 次）` : ""}，請報名、洗棋問事。` : `翻到 ${qz(c, "sm")}——菩薩尚未來臨，靜心再請一次。`;
+  $("btn-qing").textContent = ok ? "菩 薩 已 來 臨" : "再 請 一 次"; $("btn-qing").disabled = ok;
+};
+function renderChain() {
+  const box = $("chain");
+  box.hidden = !(sysId === "one" && chain.length);
+  if (box.hidden) { box.innerHTML = ""; return; }
+  box.innerHTML = "多占・前面幾問（這一問會接著問下去）：<ol>" + chain.map((r) => {
+    const y = XQ.SY[r.ch], p = XQ.PAIRS[r.pair];
+    return `<li>「${esc(r.q || "心中默想之事")}」→ ${qz(r.ch, "sm")}${p[0] ? `（${y.cls === 2 ? "答：" + ("帥仕相俥傌炮兵".includes(r.ch) ? p[0] : p[1]) : y.cls === 1 ? "神佛棋" : "事在人為"}）` : "（開放題）"}</li>`;
+  }).join("") + '</ol><button class="ghost-btn" type="button" id="chain-end">結束多占，從頭問</button>';
+  $("chain-end").onclick = () => { chain = []; renderChain(); };
+}
+
+/* ═══ 文字素材（改寫自書中的意涵） ═══ */
+const TRAIT = {
+  king: ["像皇帝：說話有分量、想掌控，不愛親自動手；重義氣，也容易憂國憂民", "能發揮影響力、掌權的位置最有成就"],
+  guard: ["像宰輔：有權、善運籌帷幄與溝通，帶名聲與智慧；但容易自以為是、多憂慮", "能成就大格局的事業"],
+  elephant: ["像宰相：足智多謀、熱情慈悲、重禮節，與修行有緣、常有好運帶來收穫；但較被動、慢半拍", "適合小本經營、穩中求成，名利雙收"],
+  chariot: ["像帶頭的人：規矩多、想管人卻不愛被管，心軟嘴直、吃軟不吃硬，衝勁十足", "適合帶團隊、自己經營；敢衝敢冒險，也容易大起大落"],
+  horse: ["遊走人群：熱心、心軟、會看場合說話，口才好，常在外奔波；在中間時走斜出不去，容易做沒效率的事", "要動才有錢：業務、口才相關的工作"],
+  cannon: ["想突破翻身：小聰明多、直覺強、人緣好、外貌出眾；受威脅時容易擔憂，在中間時飛不出去、容易好高騖遠", "用頭腦賺錢：流動性與看時機的事業、投資"],
+  soldier: ["腳踏實地、重信用、務實；兩隻以上就容易想太多", "一步一腳印，有理想、不投機，就能累積財富"],
+};
+const CONSUME = { king: "各自想掌控", guard: "容易自以為是、多憂慮", elephant: "情緒起伏、火氣大、行動力不足，總覺得自己在犧牲", chariot: "管太多、太衝動激進", horse: "心靜不下來、方向不定、選擇困難、心太軟",
+  cannon: "恐懼擔憂、想取巧、太想改變卻不知從何下手", soldier: "想太多、沒自信、被動，錢容易流失" };
+const CONSUME_REL = { guard: "互動時各自自以為是", elephant: "互動時火氣大", chariot: "各有主見、常爭執", horse: "很想互動卻不容易對頻", cannon: "很想互動卻帶著擔憂", soldier: "不太想互動，或互動起來覺得累" };
+const TROUBLE = { king: "各自想掌控", guard: "自以為是或名聲", elephant: "情緒起伏", chariot: "主觀想法", horse: "人情考量", cannon: "人情考量", soldier: "錢或利益" };
+const FRIEND_TXT = { king: "各自想掌控、不服輸", guard: "各有主見，但能互相切磋", elephant: "像一起修行的同學", chariot: "各自堅持主見", horse: "帶著浪漫的感覺", cannon: "互動能量強（異性間帶情慾）", soldier: "踏實穩定，像老夫老妻" };
+const BODY = ["胸腹（脖子以下、肚臍以上）", "身體右側", "身體左側", "頭部", "肚臍以下與下肢"];
+const PAT_TXT = {
+  2: "人緣不錯；好壞仍看得失", 3: "彼此欣賞對方的能力（非關感情）；問事業代表會喜歡這份工作", 5: "多出來的那一隻帶著消耗，會破壞彼此的關係",
+  6: "價值觀不同、想法相左；在十年運中，與那個位置的人緣分較淺、聚少離多", 8: "將帥身邊有兵卒，聽得進勸，事情做得好",
+  12: "會像拚事業一樣認真；但問感情時，太用力反而適得其反", 13: "想做什麼都有人幫，自己的行動力會弱一點", 19: "",
+  22: "想做的事容易成局；好壞仍看收穫", 23: "", 24: "有天助；但若本身會賠，天助也擋不住",
+};
+
+/* 位置：抽出序 0..4 ↔ 中左右上下 */
+const idxOf = (a, p) => a.pieces.findIndex((x) => x.id === p.id);
+const pz = (a, p) => POSZ[idxOf(a, p)] + qz(p.ch, "sm");
+const pzt = (a, p) => POSZ[idxOf(a, p)] + p.ch;
+function capsHtml(a, f) {
+  const own = a.own;
+  const row = (c) => `<li>${pz(a, c.by)}${c.full ? " 吃 " : " 得 "}${pz(a, c.target)}${c.full ? "" : " 的好處"}${c.chain ? "<small>（吃完接著走）</small>" : ""}${c.why.length ? `<small>　${c.why.join("、")}</small>` : ""}<span class="v${c.by.red === own ? "" : " neg"}">${c.by.red === own ? "+" : "−"}${c.v}</span></li>`;
+  const g = a.caps.filter((c) => c.by.red === own), k = a.caps.filter((c) => c.by.red !== own);
+  return `<p class="lead">收穫 <b style="color:var(--gold)">+${a.gain}</b>　付出 <b style="color:#E8A08F">−${a.cost}</b>${f && f.notes.length ? `　<small style="color:var(--muted)">（${f.notes.join("；")}）</small>` : ""}</p>`
+    + (g.length ? `<p>我方（${color(a.center)}）能吃、能得到好處的：</p><ul class="caps">${g.map(row).join("")}</ul>` : "<p>我方吃不到、也得不到對方的好處。</p>")
+    + (k.length ? `<p>對方（${a.own ? "黑" : "紅"}）能吃、能得到好處的：</p><ul class="caps">${k.map(row).join("")}</ul>` : "<p>對方吃不到我們。</p>")
+    + '<p style="color:var(--muted);font-size:12.5px">全吃得全分，「得好處」得一半；有保護、中間能抗衡、牽制、好朋友格時只得一半。分數僅供比較收穫與付出的大小。</p>';
+}
+const color = (p) => (p.red ? "紅" : "黑");
+function patText(a, p) {
+  const k = p.kind;
+  if (p.id === 1) return `好朋友在${p.text}：緣分深，整局只「得好處」不真吃；${FRIEND_TXT[k]}`;
+  if (p.id === 4) return `${p.text}：${CONSUME[k]}${p.side === "對方" ? "（是對方的狀態）" : ""}`;
+  if (p.id === 7) return `${p.text}：做選擇、下決定時多一層困擾，多半來自${p.kinds.map((x) => TROUBLE[x]).join("、")}`;
+  if (p.id === 9) return `${p.text}：${p.side === "自己" ? "容易因偏執的認知與情緒起伏而做錯決定" : "外在有不在預料中的變數或意外"}`;
+  if (p.id === 14) return `${p.text}：${p.zheng ? "正桃花，彼此互相喜歡、有機會交往" : "偏桃花，互相喜歡但力道較弱"}${p.bad ? "；但會因感情對象而損失" : ""}`;
+  if (p.id === 15) return p.text + "。單卦時代表「不會去做或做不成」，也可能是沒連上——可以靜心後再卜一次";
+  if (p.id === 17) return p.text + `：${a.reds === 4 ? "外界看好" : "外界不看好"}，但自己心裡容易鬱卒；收穫與付出約只算 50%`;
+  if (p.id === 18) return p.text + "；陰陽不協調，收穫與付出約只算 50%";
+  if (p.id === 19) return p.text + (p.side === "自己" ? "：自己已具備把事做好的條件" : "：外在的因緣已經俱足") + "；能不能賺錢仍看收穫";
+  if (p.id === 23) return p.text;
+  return p.text + (PAT_TXT[p.id] ? "：" + PAT_TXT[p.id] : "");
+}
+const BAD = new Set([4, 5, 6, 7, 9, 10, 11, 15, 17, 18]);
+function patsHtml(a, extra) {
+  const ps = a.pats.filter((p) => p.id !== 8 || true);
+  if (!ps.length && !(extra || []).length) return "<p>沒有特別的格局。</p>";
+  return ps.map((p) => `<p class="pat${BAD.has(p.id) || (p.id === 14 && p.bad) ? " warn" : ""}"><b>${p.name}</b>${p.side ? `<span class="tag">${p.side}</span>` : ""}　${patText(a, p)}</p>`).join("")
+    + (extra || []).map((x) => `<p class="pat"><b>${x.name}</b>　${x.text}</p>`).join("");
+}
+/* 天人地、陰陽、五行 */
+function triHtml(a) {
+  const miss = ["天", "人", "地"].filter((t) => !a.tri[t]);
+  return `<div class="kv"><span><b>天人地</b>${["天", "人", "地"].map((t) => (a.tri[t] ? t : `<s style="color:var(--muted)">${t}</s>`)).join("")}</span><span><b>陰陽</b>紅 ${a.reds}・黑 ${5 - a.reds}（${a.yinyang}）</span><span><b>五行</b>${Object.entries(a.wx).filter(([, n]) => n).map(([w, n]) => w + n).join(" ")}</span></div>`
+    + (miss.length ? `<p>${miss.map((t) => ({ 天: "缺天：天助較少", 人: "缺人：貴人較少、人際較表面", 地: "缺地：少了踏實感與有效執行的方法，可能拖延或難持續、錢較留不住" })[t]).join("；")}。</p>` : "");
+}
+/* 健康：中間受威脅最明顯，其次自己的消耗、暴動，再看陰陽 */
+function healthLines(a, full) {
+  const out = [], own = a.own;
+  const th = a.caps.filter((c) => c.target.id === a.center.id && c.by.red !== own);
+  if (th.length) out.push(`中間的${a.center.ch}受${th.map((c) => pzt(a, c.by)).join("、")}威脅：${E.ORGAN[a.center.kind]}較弱${th.every((c) => !c.full) ? "（不會被整隻吃，影響不大）" : ""}`);
+  a.pats.filter((p) => p.id === 4).forEach((p) => out.push(`${p.text.split("（")[0]}${p.side === "自己" ? "" : "（對方的消耗，影響較小）"}：${E.ORGAN[p.kind]}稍弱`));
+  a.pats.filter((p) => p.id === 9).forEach((p) => out.push(`${p.text.split("看")[0]}暴動在${POSZ[p.pos]}：${BODY[p.pos]}的氣血循環較不順${p.side === "對方" ? "（外在的暴動，影響約一半）" : ""}`));
+  if (a.reds !== 2 && a.reds !== 3) out.push(`陰陽不協調（${a.yinyang}）：氣血循環與情緒穩定度較差；${a.reds >= 4 ? "紅多，可多赤腳踩踩草地、泥土地，把多餘的能量放掉" : "黑多，氣較不足，可多曬曬太陽，尤其背部"}`);
+  if (full) {
+    Object.entries(a.wx).forEach(([w, n]) => { if (n >= 3) out.push(`五行${w}過多（${n} 隻）：${E.WX_ORGAN[w]}要留意`); if (!n) out.push(`五行缺${w}：${E.WX_ORGAN[w]}較弱`); });
+  }
+  return out;
+}
+/* 互動關係：各位置代表的人 */
+function rolesHtml(a, rl) {
+  const own = a.own, lines = [];
+  for (let i = 1; i < 5; i++) {
+    const p = a.pieces[i];
+    const weEat = a.caps.filter((c) => c.target.id === p.id && c.by.red === own), theyEat = a.caps.filter((c) => c.by.id === p.id && c.target.red === own);
+    const ourLost = a.caps.filter((c) => c.target.id === p.id && c.by.red !== own);
+    let t;
+    if (p.red === own) {
+      t = ourLost.length ? `同色，但這個位置會被${ourLost.map((c) => pzt(a, c.by)).join("、")}吃到或拿走好處——你會為他們付出、操心` : "同色，不特別論付出與收穫";
+    } else {
+      const s = [];
+      if (weEat.length) s.push(weEat.some((c) => c.full) ? "你能從他們身上得到幫助，是你的貴人" : "能得到他們一些好處，是小貴人");
+      if (theyEat.length) s.push(theyEat.some((c) => ["king", "guard", "chariot"].includes(c.by.kind) && c.target.id === a.center.id) ? "他們對你意見多、給你壓力，你也需要為他們付出" : "你需要為他們付出一些");
+      if (!s.length) s.push("彼此吃不到，互動平淡");
+      t = s.join("；");
+    }
+    lines.push(`<p><b>${POSZ[i]}${qz(p.ch, "sm")}　${rl[i]}</b>：${t}。</p>`);
+  }
+  return lines.join("");
+}
+/* 吃與被吃的衍伸解釋（年運、命盤） */
+function eatNotes(a) {
+  const own = a.own, out = new Set();
+  a.caps.forEach((c) => {
+    const N = E.EAT_NOTE;
+    if (c.by.red === own && N[c.target.kind] && N[c.target.kind].get) out.add(`吃到${c.target.ch}：${N[c.target.kind].get}`);
+    if (c.by.red !== own && c.target.red === own) {
+      if (N[c.by.kind] && N[c.by.kind].by) out.add(`被${c.by.ch}吃到：${N[c.by.kind].by}`);
+      if (N[c.target.kind] && N[c.target.kind].lose) out.add(`我們的${c.target.ch}被吃：${N[c.target.kind].lose}`);
+    }
+  });
+  if (a.caps.some((c) => c.by.red === own && (c.by.kind === "horse" || c.by.kind === "cannon") && c.target.red !== own)) out.add("我們的傌馬炮包吃得到對方：可以靠點子、善巧、整合資源或投資獲利");
+  return [...out];
+}
+
+/* ═══ 判讀：依題型 ═══ */
+function judge(a, type) {
+  const own = a.own, f = E.factor(a);
+  const ourFull = a.caps.filter((c) => c.by.red === own && c.target.red !== own && c.full);
+  const ourHalf = a.caps.filter((c) => c.by.red === own && c.target.red !== own && !c.full);
+  const theirFull = a.caps.filter((c) => c.by.red !== own && c.target.red === own && c.full);
+  const ownSmallConsume = a.pats.some((p) => p.id === 4 && p.side === "自己" && (p.kind === "soldier" || p.kind === "cannon"));
+  const restrained = ourHalf.some((c) => c.why.includes("牽制"));
+  const has = (id) => a.pats.some((p) => p.id === id);
+  const adjMing = a.pats.some((p) => p.id === 8 && p.adj);
+  const extra = [];
+  if (has(7)) extra.push("過程會有一些困擾"); if (has(6)) extra.push("結果和預期會有落差"); if (has(9)) extra.push("會出現不可控的狀況");
+  const net = a.gain * f.gain - a.cost * f.cost;
+  const allColor = a.reds === 0 || a.reds === 5;
+  const v = { verdict: "", notes: [] };
+  const achieve = (yes, maybeFriend, no) => {
+    if (ourFull.length) {
+      v.verdict = yes + (ownSmallConsume ? "——但自己想太多或擔憂，可能遲遲不去做，要先放下顧慮" : "");
+      if (extra.length) v.notes.push("能成，只是" + extra.join("、") + "；最後仍會成");
+    } else if (a.friend) v.verdict = maybeFriend;
+    else if (restrained) v.verdict = "不一定——會因為某些考量而卻步";
+    else v.verdict = no;
+  };
+  if (allColor && type !== "year") v.notes.push("五隻同色：可能表示你其實不會去做、或做不成；也可能是沒連上，可以靜心後再卜一次");
+  switch (type) {
+    case "good": case "money":
+      v.verdict = (net > 0 ? "收穫大於付出" : net < 0 ? "付出大於收穫" : "收穫與付出差不多") + (a.beitong ? "——但這是被通吃格，可能因一個外境就全部歸零，最好別做" : a.tongchi ? "——但這是通吃格，開頭很好、最後容易歸零" : "");
+      if (a.beitongMaybe) v.notes.push("有被通吃的可能（機率較低），要留意外在的不確定因素");
+      if (a.tongchiMaybe) v.notes.push("有通吃的可能：順利時也要記得留後路");
+      if (["horse", "cannon"].includes(a.center.kind)) v.notes.push(`中間是${a.center.ch}：很想做、很想擴展，但以目前的人脈、資源與能力，還不容易如願`);
+      if (type === "money" && has(9)) v.notes.push("有暴動格：存在不可控的變數");
+      if (type === "good") { const miss = ["天", "人", "地"].filter((t) => !a.tri[t]); if (miss.length) v.notes.push("缺" + miss.join("、") + "：" + miss.map((t) => ({ 天: "天助較少", 人: "貴人較少", 地: "做起來不踏實、可能難以持續" })[t]).join("，")); }
+      break;
+    case "achieve": achieve("會成", "有機會——對方認同，但要主動促成才會成", "機率很低"); break;
+    case "exam": achieve("考得上", "有機會——還要再加把勁", "這次較難考上"); break;
+    case "deal":
+      if (ourFull.length || theirFull.length) { v.verdict = "會成" + (ourFull.length ? "（你這邊主動可成）" : "（對方主動想成）") + (ownSmallConsume ? "——但自己的顧慮可能讓你不去行動" : ""); if (extra.length) v.notes.push(extra.join("、")); }
+      else if (a.friend) v.verdict = "有機會——對方認同你，但還要主動促成";
+      else if (restrained) v.verdict = "不一定——雙方都有考量";
+      else v.verdict = "這次較難成";
+      if (!a.tri.地) v.notes.push("缺地：可能會拖一些時間"); if (!a.tri.人) v.notes.push("缺人：多找人幫忙牽線");
+      break;
+    case "lost": achieve("找得回來", "東西沒丟，有機會找到，只是時間難說", "恐怕找不回來"); break;
+    case "moneyback": v.verdict = ourFull.length ? "拿得回來" : ourHalf.length ? "可以拿回一部分" : "恐怕拿不回來"; v.notes.push("不論結果，這都提醒你有容易破財的模式，值得留意與清理"); break;
+    case "suit": {
+      const fit = (a.friend || adjMing) && a.yinyang === "協調" && a.gain >= a.cost && !a.pats.some((p) => BAD.has(p.id));
+      v.verdict = fit ? "很適合" : (a.friend || adjMing) ? "符合你在乎的需求，但有些狀態要留意" : net > 0 ? "不算最合你意，但實際上對你有幫助" : "不太適合";
+      if (!a.tri.地) v.notes.push("缺地：用起來、住起來較不踏實");
+      break;
+    }
+    case "love": {
+      const zheng = a.pats.some((p) => p.id === 14 && p.zheng), adjApp = a.pats.some((p) => p.id === 3 && p.adj);
+      v.verdict = a.friend || zheng ? "有結婚（交往）的緣分" : adjApp ? "有機會" : has(2) ? "有一點緣分，但要加把勁、主動一點才會成" : adjMing ? "比較像互為貴人，不是婚姻的緣分" : "這段時間看不到明顯的緣分";
+      if (!a.tri.地) v.notes.push("缺地：相處起來較少安定、踏實的感覺");
+      v.notes.push("正緣代表有結婚的緣分，不代表一定結婚，也不等於好姻緣");
+      break;
+    }
+    case "cause": v.verdict = a.friend ? "是" : "不是（或不是主要原因）"; break;
+    case "health": v.verdict = "健康參考如下（不舒服請先就醫）"; break;
+    case "event": {
+      const bads = a.pats.filter((p) => BAD.has(p.id) && p.id !== 10).map((p) => p.name);
+      const pressure = a.caps.some((c) => c.target.id === a.center.id && c.by.red !== own);
+      v.verdict = allColor ? "可能去不成，或去了不太開心" : bads.length || pressure ? "大致可以，但會有一些讓你不太開心的事" : "會開心";
+      if (bads.length) v.notes.push("留意：" + bads.join("、")); if (pressure) v.notes.push("中間受威脅：會有一些外來的壓力");
+      break;
+    }
+    case "past": {
+      const ROLE = { king: "君王、元帥、高層領袖", guard: "官員、老師、將軍或將士", elephant: "修行人、宰相、員外", chariot: "團隊領導人、老闆", horse: "業務、講師、顧問、謀士", cannon: "帥哥美女、演藝或風塵中人、商人", soldier: "工人、農民、士兵、小生意人" };
+      const ps = a.pieces;
+      let rel = null;
+      outer: for (let i = 0; i < 5; i++) for (let j = i + 1; j < 5; j++) if (ps[i].kind === ps[j].kind && ps[i].red !== ps[j].red) { rel = [i, j]; break outer; }
+      v.verdict = `前世的你是${a.center.red ? "男" : "女"}性，可能是${ROLE[a.center.kind]}`;
+      if (!rel) v.notes.push("沒有同位階的一對：一般朋友的緣分，看收穫與付出");
+      else v.notes.push(pastRel(ps, rel));
+      if (a.friend && a.lone) v.notes.push("一枝獨秀又是好朋友格：可能是同一個靈魂分出來的（俗稱雙生火焰，不等於靈魂伴侶）——很多特質相似，卻常互看不順眼");
+      break;
+    }
+    case "clean": {
+      const bz = a.pats.some((p) => p.id === 1 && p.kind === "soldier"), allSol = a.pieces.every((p) => p.kind === "soldier");
+      const g = a.gain;
+      let score;
+      if (bz) score = allSol ? 90 : g <= 10 ? 80 : g < 50 ? 85 : 90;
+      else if (a.friend || adjMing) score = g <= 10 ? 70 : g < 50 ? 75 : g < 70 ? 80 : g < 90 ? 85 : 90;
+      else score = g < 20 ? 0 : g < 40 ? 60 : g < 60 ? 65 : g < 80 ? 70 : g < 100 ? 75 : g < 120 ? 80 : g < 140 ? 85 : 90;
+      const minus = [4, 7, 9, 6, 11, 18, 17].filter((id) => a.pats.some((p) => p.id === id && !p.maybe)).length + (a.xiaoren.length ? 1 : 0);
+      if (allColor) { v.verdict = "五隻同色：請靜心重卜一次"; break; }
+      if (!score) { v.verdict = "方向與方法可以再調整"; break; }
+      score = Math.min(90, score - 2 * minus);
+      v.verdict = `清理成效約 ${score} 分` + (bz ? "——方法正確，而且清到了根源" : a.friend || adjMing ? "——方向是對的" : "——方向與方法還可以再調整，但已看得到改善");
+      v.notes.push("只看收穫、不算付出；每出現一項消耗、困擾、暴動、分離、被通吃、陰陽不協調或犯小人扣 2 分，最高 90 分。90 分以上這一項可以先放下");
+      break;
+    }
+  }
+  return { v, f, net };
+}
+function pastRel(ps, [i, j]) {
+  const k = ps[i].kind, set = [i, j].sort().join("");
+  const R = { "01": "中左", "02": "中右", "03": "中上", "04": "中下", "12": "左右", "34": "上下", "13": "斜", "14": "斜", "23": "斜", "24": "斜" }[set];
+  const T = {
+    soldier: { 中左: ps[0].red ? "對方是你的妻子" : "對方是你的兄弟姊妹", 中右: ps[0].red ? "對方是你的兄弟姊妹" : "對方是你的丈夫", 中上: "對方是你的父母", 中下: "對方是你的子女", 上下: "祖父母與孫子", 左右: "堂表兄弟姊妹", 斜: "叔伯姑嬸舅姨與姪甥" },
+    cannon: { 中左: "短暫的情人", 中右: "短暫的情人", 中上: "短暫的情人", 中下: "短暫的情人", 左右: "外遇的對象或情人", 上下: "外遇的對象或情人", 斜: "有情意卻沒有真正交流的人" },
+    horse: { 中左: "短暫的情人", 中右: "短暫的情人", 中上: "彼此有情愫的長輩晚輩", 中下: "彼此有情愫的長輩晚輩", 斜: "長時間的情人", 左右: "喜歡卻沒有真正交流的人", 上下: "喜歡卻沒有真正交流的人" },
+    chariot: { 中左: "工作或事業的合作夥伴", 中右: "工作或事業的合作夥伴", 中上: "職場的上司、下屬或上下游", 中下: "職場的上司、下屬或上下游", 上下: "職場隔代的上司下屬", 左右: "非直接合作的夥伴", 斜: "非直接的上司下屬" },
+    elephant: { 中左: "同學、同修", 中右: "同學、同修", 中上: "師父與徒弟", 中下: "師父與徒弟", 上下: "師公與徒孫", 左右: "不同師父的同學", 斜: "師叔師伯與徒弟" },
+    guard: { 中左: "同僚", 中右: "同僚", 中上: "官場的上司下屬", 中下: "官場的上司下屬", 上下: "隔代的上司下屬", 左右: "非直屬的同僚", 斜: "非直屬的上司下屬" },
+  };
+  if (k === "king") return "第一組是帥將：可能性太多，建議另外再起一卦";
+  return `第一組同位階是${E.PAIR[k]}（${POSZ[i]}、${POSZ[j]}）：${T[k][R]}`;
+}
+
+/* ═══ 清理建議與祈請（改寫自書中的慈悲祈禱；不需任何器物） ═══ */
+function cleanItems(a, ctx) {
+  const out = [], own = a.own, has = (id) => a.pats.filter((p) => p.id === id && !p.maybe);
+  if (["horse", "cannon"].includes(a.center.kind)) out.push(["很想擴展、突破，卻無法如願", true]);
+  if (a.xiaoren.length) out.push(["容易犯小人、做錯決定而損失", true]);
+  if (["king", "guard", "chariot"].includes(a.center.kind) && !(a.center.red && a.center.kind !== "king")) out.push(["對做人做事有許多強烈的執著與「應該」", false]);
+  has(9).forEach((p) => out.push([p.side === "自己" ? "容易有偏執的想法、情緒起伏大" : "外在不可控的變數造成損失", true]));
+  has(4).filter((p) => p.side === "自己").forEach((p) => out.push([CONSUME[p.kind], true]));
+  if (has(6).length) out.push(["與人價值觀不同、緣分較淺、聚少離多", false]);
+  if (has(7).length) out.push(["做選擇、下決定時常有困擾", false]);
+  if (has(10).length || a.tongchiMaybe) out.push(["一開始不錯，最後容易歸零、得重來", true]);
+  if (has(11).length) out.push(["常因外境或外在的人事物，讓努力白費", true]);
+  if (a.reds !== 2 && a.reds !== 3) out.push(["意識顯化的動能不足、情緒穩定度不高", true]);
+  if (a.cost > a.gain) out.push(["常有付出大於收穫的狀態", true]);
+  if (ctx && ctx.missing) ["天", "人", "地"].filter((t) => !a.tri[t]).forEach((t) => out.push([{ 天: "天助較少", 人: "貴人較少", 地: "缺乏踏實感、錢留不下來" }[t], false]));
+  return out;
+}
+function prayerHtml(items) {
+  if (!items.length) return "";
+  return DC.card("清理與祈請", "可以怎麼做",
+    "<p>書中的看法是：卦象呈現的困境，是累世與祖先留下的執著與傷痛經驗所致，可以為它祈請、清理。下列是這一卦值得清理的項目（★ 為重點），一次一項：</p>"
+    + `<ul class="clean-list">${items.map(([t, k]) => `<li class="${k ? "key" : ""}">${k ? "★ " : ""}${t}</li>`).join("")}</ul>`
+    + `<p>祈請時把自己當成需要被療癒的「他」，用名字稱呼效果較好：</p><div class="prayer">我知道〔名字〕的本質是圓滿、健康、豐盛的，
+他之所以經歷「〔上面的某一項〕」，只是過去留下的印記使然。
+這些印記，想必來自過去世的他或他的祖先，
+在生命中曾有許多我所不知道的執著與傷痛。
+祈請慈悲的諸佛菩薩（或：慈愛的上帝與耶穌／慈悲的神性智慧），
+以慈悲之愛，幫助那些仍在其他時空、帶著執著與傷痛的〔名字〕和他的祖先，
+開啟智慧，療癒傷痛，得到清淨與解脫。</div>
+<p>結束時可以迴向：</p><div class="prayer">願以此功德供養十方諸佛菩薩，迴向法界一切眾生，
+迴向所有為相同處境受苦的眾生，也迴向過去世的〔名字〕與他的祖先。嗡啊吽。</div>
+<p style="color:var(--muted);font-size:12.5px">基督信仰可改為「願一切榮耀歸給神，願恩典祝福〔名字〕早日脫離正在經歷的痛苦」。想迎來助力時，可以祈請「讓〔名字〕＿＿的貴人與機緣出現在生命裡」。清理一段時間後，可在「單卦問事・清理效果」卜一卦看看。</p>`);
+}
+
+/* ═══ 結果：單卦／年運 ═══ */
+let lastPrompt = [];
+function finish() {
+  const q = $("q-input").value.trim();
+  try {
+    if (sysId === "chart") runChart(q);
+    else if (sysId === "one") runOne(q);
+    else runCross(q);
+  } catch (e) { $("go-hint").textContent = "判讀失敗：" + e.message; console.error(e); return; }
+}
+function runCross(q) {
+  const a = E.analyzeCross(picks), year = sysId === "year", type = year ? "year" : modeId;
+  const rl = E.roles(sex(), married()), J = judge(a, type), f = J.f;
+  const qt = QT.find((x) => x[0] === modeId);
+  const label = year ? "年運" : qt[1];
+  const cards = [];
+  const board = crossHtml(a.pieces, true, true);
+  const head = year
+    ? `<p class="verdict">今年的你是${qz(a.center.ch, "sm")}：${TRAIT[a.center.kind][0]}。</p>`
+    : `<p class="verdict">${J.v.verdict}</p>` + J.v.notes.map((x) => `<p>・${x}</p>`).join("");
+  const same = a.pieces.slice(1).filter((p) => p.red === a.own).map((p) => p.ch);
+  cards.push(DC.card(year ? "年運" : "卦象", label + (q ? "・" + esc(q) : ""),
+    board + head + `<p>中間的${qz(a.center.ch, "sm")}代表你自己${same.length ? `，帶著${same.join("、")}的特質` : ""}；與中間不同色的，是外在的環境、對象。</p>`));
+  if (year || ["good", "relation", "money"].includes(type)) cards.push(DC.card("互動關係", "各位置代表的人", rolesHtml(a, rl)));
+  cards.push(DC.card("收穫與付出", "吃與被吃", capsHtml(a, f)));
+  cards.push(DC.card("格局", "26 格局中出現的", patsHtml(a) + (["good", "suit"].includes(type) || year ? triHtml(a) : "")));
+  if (year) { const en = eatNotes(a); if (en.length) cards.push(DC.card("吃與被吃的意思", "年運衍伸", en.map((x) => "<p>・" + x + "</p>").join(""))); }
+  if (year || type === "health") { const hl = healthLines(a, false); cards.push(DC.card("健康", "參考", hl.length ? hl.map((x) => "<p>・" + x + "</p>").join("") : "<p>中間沒有受威脅，也沒有消耗、暴動或陰陽不協調，沒什麼要特別留意的。</p>")); }
+  if (type === "health" && a.xiaoren.length) cards.push(DC.card("另一種可能", "", "<p>被傌馬炮包吃到，書中認為原因可能不在生理，而在其他層面；可以先祈請清理，同時照常就醫。</p>"));
+  const items = cleanItems(a, { missing: ["good", "suit"].includes(type) });
+  if (type !== "clean") cards.push(prayerHtml(items));
+  /* 選擇題：同一副棋不放回，再起一卦並排比較 */
+  const cmp = !year && ["good", "money", "suit", "relation"].includes(type);
+  const html = cards.join("") + (cmp && optResults.length < 2 ? `<div class="btn-row" style="justify-content:center"><button class="ghost-btn" id="btn-opt">比較另一個選項（棋不放回，再翻五子）</button></div>` : "");
+  const pr = crossPrompt(a, q, type, J, rl);
+  if (cmp && optResults.length) {
+    optResults.push({ q, html: cards.slice(0, 3).join(""), pr });
+    $("out").innerHTML = '<div class="opt-row">' + optResults.map((o, i) => `<div class="result-card"><h3>選項 ${"ABC"[i]}${o.q ? "・" + esc(o.q) : ""}</h3>${o.html}</div>`).join("") + "</div>"
+      + (optResults.length < 3 ? `<div class="btn-row" style="justify-content:center"><button class="ghost-btn" id="btn-opt">再比較一個選項</button></div>` : "");
+    showPrompt(optResults.map((o, i) => `【選項 ${"ABC"[i]}】\n` + o.pr.join("\n")).concat(["請比較以上幾個選項的收穫、付出與格局，告訴我哪個比較好、各自要注意什麼。"]), label + "（比較）", q);
+  } else {
+    if (cmp) optResults = [{ q, html: cards.slice(0, 3).join(""), pr }];
+    $("out").innerHTML = html;
+    showPrompt(pr, label, q);
+  }
+  const ob = $("btn-opt");
+  if (ob) ob.onclick = () => {
+    if (!optResults.length) optResults = [{ q, html: cards.slice(0, 3).join(""), pr }];
+    $("q-input").value = ""; $("q-input").placeholder = "下一個選項，例如：我去那家公司上班好不好？";
+    resetTable(true); $("panel").scrollIntoView({ behavior: RM ? "auto" : "smooth" });
+  };
+}
+function crossPrompt(a, q, type, J, rl) {
+  const L = [], own = a.own, cp = (c) => `${pzt(a, c.by)}${c.full ? "吃" : "得"}${pzt(a, c.target)}${c.full ? "" : "的好處"}${c.why.length ? "（" + c.why.join("、") + "）" : ""} ${c.by.red === own ? "+" : "−"}${c.v}`;
+  L.push(`卦象（十字五子；①中＝我自己、②左、③右、④上、⑤下）：${a.pieces.map((p, i) => NUM[i] + POSZ[i] + color(p) + p.ch).join("、")}`);
+  L.push(`位置代表的人（求問者${sex()}生、${married() ? "已婚" : "單身"}）：${rl.slice(1).map((r, i) => POSZ[i + 1] + "＝" + r).join("；")}`);
+  L.push(`我方＝中間的${color(a.center)}方。收穫 +${a.gain}、付出 −${a.cost}（全吃得全分，得好處得一半）`);
+  a.caps.forEach((c) => L.push("  " + cp(c)));
+  if (J.f.notes.length) L.push("倍率：" + J.f.notes.join("；"));
+  L.push("格局：" + (a.pats.length ? a.pats.map((p) => p.name + (p.side ? "（" + p.side + "）" : "") + "——" + p.text).join("；") : "無"));
+  L.push(`天人地：${["天", "人", "地"].map((t) => t + (a.tri[t] ? "有" : "缺")).join("、")}；陰陽：${a.yinyang}；五行：${Object.entries(a.wx).map(([w, n]) => w + n).join(" ")}`);
+  if (a.xiaoren.length) L.push("對方的傌馬炮包吃到或得到我們的好處：書中讀作犯小人、做錯決定而損失，或「卡到陰」（請以溫和、不恐嚇的語氣說明，並以心理與實際層面的建議為主）");
+  const hl = healthLines(a, false); if (hl.length) L.push("健康：" + hl.join("；"));
+  if (type === "year") eatNotes(a).forEach((x) => L.push("衍伸：" + x));
+  if (type !== "year") L.push(`題型：${QT.find((x) => x[0] === type)[1]}——本站依書中判法得出：${J.v.verdict}${J.v.notes.length ? "（" + J.v.notes.join("；") + "）" : ""}`);
+  return L;
+}
+function showPrompt(lines, label, q) {
+  const s = sys();
+  const head = [
+    "你是熟悉台灣象棋卜卦的解讀師。以下棋局由本站依《改寫人生的象棋卜卦》的體系算好（棋子分數：帥將 80、仕士 60、相象 40、俥車 30、傌馬 20、炮包 15、兵卒 10；同色不互吃；帥仕相走直、大吃小，將帥與兵卒互不吃；俥走直、傌走斜、炮隔一子；兵卒不能往下；保護、抗衡、牽制只得一半），請以這些計算為準深入解讀，不要自行重算吃子。" + DC.toneHead(),
+    "",
+  ];
+  if (q) head.push("我的問題：" + q, "");
+  const tail = ["", sysId === "chart"
+    ? "請依序解讀：1. 總格（特質、與身邊的人、格局、收穫付出、健康、天人地）；2. 學習格、情感格、事業格；3. 41 歲之後每十年的運勢（含過局往上吃的收穫與損失）；4. 值得留意與清理的重點；5. 具體建議。重大關卡請以溫和的方式提醒，不談死期。"
+    : sysId === "year" ? "請依「狀態、互動關係、格局與需注意的狀態、收穫與付出、健康」五步解讀這一年，最後給出具體建議。"
+    : "請先直接回答我的問題（依上面的判法），再說明理由、要注意的地方，以及具體建議。"];
+  $("prompt-box").value = head.concat(lines, tail).join("\n");
+  $("prompt-sec").hidden = false;
+  DC.histSave("象棋館", s.name + (s.modes ? "・" + label : ""), q, $("out").innerHTML, $("prompt-box").value);
+}
+
+/* ═══ 命盤 ═══ */
+const ROUND_ASPECT = {
+  2: { name: "學習", ability: (a) => ["king", "guard", "elephant", "chariot"].includes(a.center.kind) ? "學習能力好" : ["horse", "cannon"].includes(a.center.kind) ? "對學習很有興趣，但不容易抓到重點、學以致用" : "一步一腳印地學" },
+  3: { name: "情感（深交）", ability: (a) => ({ king: "對人有許多執著與「應該」，想掌控", guard: "有不少自以為是的道理，不易親近", elephant: "面對深交的人較被動，情緒易起伏", chariot: "積極，但期待別人照自己的樣子", horse: "對情感有浪漫的渴望，卻難如願", cannon: "浪漫、偏重情慾，卻難如願", soldier: "務實踏實，浪漫較少" })[a.center.kind] },
+  4: { name: "事業", ability: (a) => ({ king: "有能力、有影響力，愛指揮不愛動手", guard: "工作能力佳、能領導，帶著自以為是的堅持", elephant: "能力不錯但較被動，常因好運帶來收穫", chariot: "敢衝敢冒險，要留意大起大落；自己經營最佳", horse: "肯跑肯做，但容易做沒產值的事", cannon: "想突破、想取巧，飛不出去時易好高騖遠", soldier: "務實踏實、一步一腳印" })[a.center.kind] },
+};
+function runChart(q) {
+  const c = E.analyzeChart(picks), T = c.total, sx = sex();
+  const tf = { gain: 1, notes: [] };
+  if (T.tongchiChart || T.beitongChart) { tf.gain *= 0.2; tf.notes.push(T.beitongChart ? "總格被通吃" : "總格通吃"); }
+  if (T.reds === 1 || T.reds === 4) { tf.gain *= 0.5; tf.notes.push("總格陰陽不協調"); }
+  if (T.reds === 0 || T.reds === 5) { tf.gain *= 0.2; tf.notes.push("總格全紅全黑"); }
+  const rl = E.roles(sx, married());
+  const nowAge = +$("f-age").value || 0;
+  const cards = [], pr = [], allItems = [];
+  const totalExtra = E.chartTotalPats(T, sx);
+  /* 總格 */
+  const hl = healthLines(T, true);
+  cards.push(DC.card("命盤", "三十二子・八局", `<div class="board-wrap">${chartHtml(picks, nowAge)}<div style="flex:1 1 260px;max-width:460px">`
+    + `<p class="verdict">你是${qz(T.center.ch, "sm")}：${TRAIT[T.center.kind][0]}。</p><p>做事的能量：${TRAIT[T.center.kind][1]}。</p>`
+    + (tf.notes.length ? `<p>總格是一生的「土壤」：${tf.notes.join("、")}，之後每十年的收穫都要打折（約剩 ${Math.round(tf.gain * 100)}%）。</p>` : "<p>總格沒有打折的格局，是一塊不錯的土壤。</p>")
+    + (c.weakFromY !== null ? `<p>命盤中間一直排下來，連續五隻以上同色：${weakAge(c.weakFromY)}起，體質會轉弱，要多保養。</p>` : "") + "</div></div>"));
+  cards.push(DC.card("總格", "一生的主結構", rolesHtml(T, rl) + `<p class="section-label" style="margin-top:12px">收穫與付出</p>` + capsHtml(T)
+    + `<p class="section-label">格局</p>` + patsHtml(T, totalExtra) + triHtml(T)
+    + (T.tri.地 ? "" : "<p>總格沒有兵卒：錢比較留不下來。</p>") + (T.pieces.some((p) => p.kind === "elephant") ? "<p>總格有相象：有「庫」，利於置產。</p>" : "")
+    + `<p class="section-label">健康</p>` + (hl.length ? hl.map((x) => "<p>・" + x + "</p>").join("") : "<p>沒有特別要留意的。</p>")));
+  cleanItems(T, { missing: true }).forEach(([t, k]) => allItems.push(["總格", t, k]));
+  pr.push(`命盤（三十二子；抽出順序 1中 2左 3右 4上 5下，之後每局中左右下，第 33 位補第 4 子）：`);
+  pr.push(`求問者${sx}生、${married() ? "已婚" : "單身"}${nowAge ? "、今年虛歲 " + nowAge : ""}；位置代表的人：${rl.slice(1).map((r, i) => POSZ[i + 1] + "＝" + r).join("；")}`);
+  c.rounds.forEach((r) => {
+    const a = r.a, k = r.k;
+    pr.push("");
+    pr.push(`【第${k}局・${r.name}】${a.pieces.map((p, i) => POSZ[i] + color(p) + p.ch).join(" ")}　收穫 +${a.gain} 付出 −${a.cost}`);
+    a.caps.forEach((x) => pr.push(`  ${pzt(a, x.by)}${x.full ? "吃" : "得"}${pzt(a, x.target)}${x.full ? "" : "的好處"}${x.why.length ? "（" + x.why.join("、") + "）" : ""}`));
+    if (r.up.length) pr.push("  過局往上：" + r.up.map((u) => `${POSZ[u.fromPos]}${u.by.ch}吃上局${u.target.ch}(${u.by.red === a.own ? "+" : "−"}${u.v})`).join("、"));
+    pr.push("  格局：" + (a.pats.map((p) => p.name + (p.side ? "（" + p.side + "）" : "")).join("、") || "無") + (k === 1 && totalExtra.length ? "；" + totalExtra.map((x) => x.name + "：" + x.text).join("；") : ""));
+    if (k === 1) { pr.push(`  天人地：${["天", "人", "地"].map((t) => t + (a.tri[t] ? "有" : "缺")).join("、")}；陰陽：${a.yinyang}；五行：${Object.entries(a.wx).map(([w, n]) => w + n).join(" ")}`); if (hl.length) pr.push("  健康：" + hl.join("；")); return; }
+    /* 十年運勢卡 */
+    const ages = r.ages, posAge = a.pieces.map((p, i) => `${POSZ[i]}${p.ch}${ages[i].join("、")}歲`).join("　");
+    const g = (a.gain + r.upGain), cst = (a.cost + r.upCost);
+    const notes = [];
+    if (ROUND_ASPECT[k]) notes.push(`${ROUND_ASPECT[k].name}：${ROUND_ASPECT[k].ability(a)}`);
+    notes.push(`做事效率（當局）：收穫 +${a.gain}、付出 −${a.cost}${a.gain >= a.cost ? "，效率不錯" : "，事倍功半"}`);
+    const upOwn = r.up.filter((u) => u.by.red === a.own), upOpp = r.up.filter((u) => u.by.red !== a.own);
+    if (upOwn.length) notes.push(`過局往上吃（${upOwn.map((u) => POSZ[u.fromPos] + u.by.ch + "→" + u.target.ch).join("、")}）：${upWhy(upOwn)}，有額外收穫 +${r.upGain}`);
+    if (upOpp.length) notes.push(`對方往上吃（${upOpp.map((u) => POSZ[u.fromPos] + u.by.ch + "→" + u.target.ch).join("、")}）：容易因某些因素或做錯決定而損失 −${r.upCost}`);
+    if (upOwn.some((u) => u.by.kind === "cannon" && u.target.kind === "guard")) notes.push("炮包往上吃到仕士：有出國讀書的機會");
+    if (upOwn.some((u) => u.by.kind === "cannon" && (u.target.kind === "cannon" || u.target.kind === "king"))) notes.push("炮包往上吃到炮包或將帥：有投資獲利的機會，也可能是正緣");
+    if (upOpp.some((u) => u.by.kind === "cannon" && u.target.kind === "king")) notes.push("對方的炮包往上吃到我們的將帥：留意投資破財與爛桃花");
+    if (k >= 3) {   /* 結婚的時間點：好朋友格、相鄰的互相欣賞或明君、桃花、仕士斜對 */
+      const marry = a.pats.some((p) => p.id === 1 || (p.id === 3 && p.adj) || (p.id === 8 && p.adj) || p.id === 14 || (p.id === 2 && p.kind === "guard"));
+      if (marry) notes.push("這十年有結婚的緣分（好朋友格、相鄰的互相欣賞或明君、桃花、仕士斜對之一）");
+    }
+    if (a.beitong) notes.push("<b style='color:#E8A08F'>重大關卡提醒</b>：中間出不去又無人保護，這十年要特別留意健康、安全與重大變故，多保養、多清理");
+    if (k === 8 && (a.reds === 0 || a.reds === 5)) notes.push("最後一局全紅或全黑：晚年走得安詳");
+    else if (k === 8 && a.pats.some((p) => [4, 5, 7, 17, 18].includes(p.id))) notes.push("最後一局有消耗、破壞、困擾或陰陽不協調：晚年要多照顧身心");
+    if (k >= 6 && a.pats.some((p) => p.id === 9 && p.side === "對方") && a.caps.some((x) => x.by.kind === "king" && x.target.id === a.center.id)) notes.push("五十歲後有外在暴動的將帥會吃中間：人生若一路不順，要特別保重");
+    if (k === 8 && a.pats.some((p) => p.id === 6)) notes.push("晚年有分離格：要多留意身心狀態");
+    const dhl = healthLines(a, false);
+    const nowHere = nowAge >= ages[3][0] && nowAge <= ages[3][1];
+    cards.push(`<details class="result-card round-card"${nowHere || (k === 2 && !nowAge) ? " open" : ""}><summary><h3 style="display:inline">${r.name}${nowHere ? "（你現在在這裡）" : ""}<span class="score">+${g}／−${cst}${tf.gain < 1 ? `（打折後收穫約 +${Math.round(g * tf.gain)}）` : ""}</span></h3></summary>`
+      + crossHtml(a.pieces, false, true) + `<p style="color:var(--muted);font-size:12.5px">各位置對應的年歲（虛歲）：${posAge}</p>`
+      + `<p>這十年的你是${qz(a.center.ch, "sm")}${a.pieces.slice(1).filter((p) => p.red === a.own).length ? "，帶著" + a.pieces.slice(1).filter((p) => p.red === a.own).map((p) => p.ch).join("、") + "的特質" : ""}。</p>`
+      + notes.map((x) => "<p>・" + x + "</p>").join("") + rolesHtml(a, rl) + `<p class="section-label">格局</p>` + patsHtml(a)
+      + (dhl.length ? `<p class="section-label">健康</p>` + dhl.map((x) => "<p>・" + x + "</p>").join("") : "")
+      + `<details><summary style="color:var(--muted);font-size:13px">吃子明細</summary>${capsHtml(a)}</details></details>`);
+    cleanItems(a).forEach(([t, kk]) => allItems.push([r.name, t, kk]));
+    if (a.beitong) allItems.push([r.name, "重大關卡", true]);
+    notes.forEach((x) => pr.push("  " + x.replace(/<[^>]+>/g, "")));
+    if (dhl.length) pr.push("  健康：" + dhl.join("；"));
+  });
+  /* 81 歲之後回到總格、91 歲之後回到學習格 */
+  /* 清理清單：同一項跨多個十年合併 */
+  const merged = new Map();
+  allItems.forEach(([where, t, k]) => { const m = merged.get(t) || { where: [], k: false }; if (!m.where.includes(where)) m.where.push(where); m.k = m.k || k; merged.set(t, m); });
+  const list = [...merged].map(([t, m]) => [`${t}<small style="color:var(--muted)">　${m.where.join("、")}</small>`, m.k]);
+  cards.push(prayerHtml(list));
+  $("out").innerHTML = cards.join("");
+  pr.push("", `總格倍率：${tf.notes.length ? tf.notes.join("、") + "，之後各十年收穫約剩 " + Math.round(tf.gain * 100) + "%" : "無"}`);
+  showPrompt(pr, "命盤", q);
+}
+function weakAge(y) {   /* 中欄第 y 列：奇數列＝第 (y+1)/2 局的中間，偶數列＝第 y/2+1 局的上方 */
+  const k = y % 2 ? (y + 1) / 2 : y / 2 + 1, ag = E.ages(k);
+  return ag ? `大約虛歲 ${ag[y % 2 ? 0 : 3][0]} 歲那一年` : "很早";
+}
+function upWhy(ups) {
+  const k = ups.map((u) => u.by.kind);
+  if (k.includes("cannon") && ups.some((u) => u.by.kind === "cannon")) return "可透過投資、善巧獲利";
+  if (k.includes("horse") || k.includes("chariot")) return "可透過整合資源、貴人而賺錢";
+  return "靠自己的能力與努力，也可能得長輩上司之助";
+}
+
+/* ═══ 一子問事（聖元派） ═══ */
+function runOne(q) {
+  const ch = picks[0], y = XQ.SY[ch], p = pair(), topic = $("f-topic").value || XQ.TOPICS[0];
+  const red = "帥仕相俥傌炮兵".includes(ch), sx = XQ.sexNote(ch, sex());
+  const black = y.cls === 2 && !red;
+  const ps = [
+    p[0] ? `<p class="verdict">${XQ.verdict(ch, p)}</p>` : `<p class="verdict">開放題：直接讀${ch}的棋義。</p>`,
+    `<p>${y.core}</p>`, `<p>問${XQ.TOPIC_ZH[topic]}：${y.t[topic]}</p>`, sx ? `<p>${sx}</p>` : "",
+    y.turn ? `<p>由黑翻紅：${y.turn}</p>` : "", y.note ? `<p>${y.note}</p>` : "",
+    `<div class="kv"><span><b>分類</b>${XQ.CLS_ZH[y.cls]}</span><span><b>能量強度</b>${XQ.power(ch)}</span><span><b>神佛</b>${y.god}</span><span><b>人物</b>${y.fig}</span><span><b>數字</b>${y.num}</span></div>`,
+    `<p style="color:var(--muted)">${p[0] && black ? "依多占法，翻到黑棋可以停在這裡；也可以改問開放題，例如「要怎麼做才會好轉？」" : "想問得更細，可以縮小範圍再問一題。"}</p>`,
+  ];
+  $("out").innerHTML = DC.card("一子問事", "聖元派", `<div class="cross big"><div class="cell"></div><div class="cell">${qz(ch)}</div><div class="cell"></div></div>` + ps.join(""))
+    + '<div class="btn-row" style="justify-content:center"><button class="ghost-btn" id="btn-more">多占・縮小範圍再問一題</button></div>';
+  $("btn-more").onclick = () => { chain.push({ q, ch, pair: +$("f-pair").value || 0, topic }); $("q-input").value = ""; resetTable(); $("panel").scrollIntoView({ behavior: RM ? "auto" : "smooth" }); };
+  const L = ["依聖元《象棋占卜祕笈》的體系：帥將屬天（神佛棋）、兵卒屬人（事在人為；兵代表女性、卒代表男性，與求問者性別相反為反常），皆不以紅黑論好壞；其餘紅好黑不好，看能量強度（仕士 100%、相象 90%、俥車 80%、傌馬 70%、炮包 60%）。",
+    `求問者：${sex()}生；問題類別：${XQ.TOPIC_ZH[topic]}。`,
+    p[0] ? `問前約定：紅棋為「${p[0]}」，黑棋為「${p[1]}」。` : "這一問是開放題：直接以棋義回答。"];
+  if (chain.length) { L.push("【多占・前面幾問】"); chain.forEach((r, i) => { const p2 = XQ.PAIRS[r.pair]; L.push(`${i + 1}. 「${r.q || "心中默想之事"}」→ ${r.ch}${p2[0] ? "：" + XQ.verdict(r.ch, p2) : ""}`); }); }
+  L.push(`這一問翻到：${ch}——${y.core}`, "聖元派資料：" + XQ.syLine({ ch, sy: y }, topic));
+  if (sx) L.push(sx);
+  L.push("", "請先依問前約定直接回答，再以棋義、字音字形取象細化，強度當作把握程度；若是黑棋說明怎麼由黑翻紅；若有多占前題，把整串串起來；最後建議下一個可以縮小範圍再問的題目（用正面問法）。");
+  $("prompt-box").value = ["你是熟悉台灣民間象棋占卜的解讀師。" + DC.toneHead(), "", ...(q ? ["我的問題：" + q, ""] : []), ...L].join("\n");
+  $("prompt-sec").hidden = false;
+  DC.histSave("象棋館", "一子問事", q, $("out").innerHTML, $("prompt-box").value);
+}
+
+$("btn-copy").onclick = async () => {
+  try { await navigator.clipboard.writeText($("prompt-box").value); }
+  catch (e) { $("prompt-box").select(); document.execCommand("copy"); }
+  $("copy-ok").hidden = false; setTimeout(() => ($("copy-ok").hidden = true), 2500);
+};
+DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣：「[^」]*」/, "語氣：「" + DC.toneValue() + "」"); });
+DC.histBind("象棋館");
+renderSys(); updateForm();
+
+/* 入門教學：棋子、格局、判法（內容在 xiangqi-learn.js） */
+DC.learnInit(() => '<div id="learn-book"></div>', (learn) => {
+  book = DC.learnBook(learn.querySelector("#learn-book"), xiangqiBook(), (id) => { sysId = id; if (sys().modes && !sys().modes.some((m) => m[0] === modeId)) modeId = sys().modes[0][0]; renderSys(); updateForm(); });
+  book.show(sysId);
+});
+
+/* 開發測試：?test=sysId[:modeId] 自動洗棋翻完 */
+(function () {
+  const t = new URLSearchParams(location.search).get("test");
+  if (!t) return;
+  const [s, m] = t.split(":");
+  if (!SYS.some((x) => x.id === s)) return;
+  sysId = s; if (m) modeId = m; renderSys(); updateForm();
+  $("f-sex").value = $("f-sex").value || "女"; $("f-age").value = "45";
+  $("q-input").value = "測試提問：這件事會順利嗎";
+  setTimeout(() => { try { $("btn-wash").onclick(); $("btn-auto").onclick(); document.title = $("prompt-sec").hidden ? "XQ-TEST-FAIL:" + $("go-hint").textContent : "XQ-TEST-OK"; } catch (e) { document.title = "XQ-TEST-FAIL " + e.message; } }, 80);
+})();
+</script>
+</html>

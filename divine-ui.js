@@ -100,7 +100,7 @@ DC.renderModes = function (modes, activeId, onPick) { // 盤式／題目按鈕�
   (modes || []).forEach(function (md, i) {
     var b = document.createElement("button");
     b.className = "mode-btn" + (md[0] === activeId ? " active" : "");
-    b.innerHTML = '<span class="s-row"><span class="s-idx">' + "壹貳參肆伍陸柒捌"[i] + '</span><span class="s-name">' + md[1] +
+    b.innerHTML = '<span class="s-row"><span class="s-idx">' + ["壹", "貳", "參", "肆", "伍", "陸", "柒", "捌", "玖", "拾", "拾壹", "拾貳", "拾參", "拾肆", "拾伍", "拾陸"][i] + '</span><span class="s-name">' + md[1] +
       '</span><span class="s-leader"></span></span><span class="s-desc">' + md[2] + '</span>';
     b.onclick = function () { onPick(md[0]); };
     box.appendChild(b);

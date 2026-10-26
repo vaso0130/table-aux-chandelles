@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <title>燭光 · La Lumière des Chandelles</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="燭光——點一支蠟燭，走進十館：牌桌、占星、八字、式占、南洋、開卷、鐘樓、鏡廳與三術合參。">
+<meta name="description" content="燭光——點一支蠟燭，走進十一館：牌桌、象棋、占星、八字、式占、南洋、開卷、鐘樓、鏡廳與三術合參。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Noto+Serif+TC:wght@500;700&display=swap">
@@ -232,13 +232,14 @@
   }
   .subtitle small { display: block; color: var(--muted); font-size: 13px; letter-spacing: .1em; margin-top: 6px; }
 
-  /* 十館門廊（九扇門，3×3） */
+  /* 十一館門廊（十扇門，3×3＋置中的 MIX） */
   .halls {
     list-style: none; margin: 46px 0 0; padding: 0;
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
     width: 100%; max-width: 980px;
   }
   .halls li { animation-delay: calc(var(--t-flame) + 2.1s + var(--i) * .13s); }
+  @media (min-width: 861px) { .halls li:last-child { grid-column: 2; } }
   .door {
     display: flex; flex-direction: column; align-items: center; text-align: center;
     text-decoration: none; color: var(--ivory);
@@ -326,7 +327,7 @@
 
   @media (max-width: 860px) {
     .halls { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-    .halls li:last-child { grid-column: 1 / -1; }   /* 九扇門排兩欄，末扇橫跨免落單 */
+    .halls li:last-child { grid-column: auto; }   /* 十扇門排兩欄剛好成雙 */
     .corner { width: 84px; height: 84px; }
   }
   @media (max-width: 420px) {
@@ -398,44 +399,48 @@
     <p class="eyebrow reveal">La Lumière des Chandelles</p>
     <h1 class="reveal">燭光</h1>
     <div class="plate-line reveal"><span>占 卜 殿 堂</span></div>
-    <p class="subtitle reveal">燭已點好。<br>十館各燃一盞，照你尚未聽見的答案。
+    <p class="subtitle reveal">燭已點好。<br>十一館各燃一盞，照你尚未聽見的答案。
       <small>僅供靜心與娛樂，不代醫療、法律與財務之斷。</small></p>
   </header>
 
-  <ul class="halls" aria-label="十館門廊">
+  <ul class="halls" aria-label="十一館門廊">
     <li class="reveal" style="--i:0"><a class="door prime" href="table.html">
       <span class="glyph" aria-hidden="true">❖</span>
       <span class="name">牌桌館</span><span class="fr">La Table aux Chandelles</span>
       <span class="desc">雷諾曼、西碧拉、貝林、奇卜、盧恩、易經、紫微、東方塔羅、象棋——十一術，真洗真切</span></a></li>
-    <li class="reveal" style="--i:1"><a class="door" href="astro.html">
+    <li class="reveal" style="--i:1"><a class="door" href="xiangqi.html">
+      <span class="glyph" aria-hidden="true">♜</span>
+      <span class="name">象棋館</span><span class="fr">燭光棋閣</span>
+      <span class="desc">單卦問事、年運、命盤、一子問事——三十二子吃與被吃之間</span></a></li>
+    <li class="reveal" style="--i:2"><a class="door" href="astro.html">
       <span class="glyph" aria-hidden="true">☾</span>
       <span class="name">占星館</span><span class="fr">燭光星壇</span>
       <span class="desc">西洋本命與行運、卜卦、印度、宿曜——抬頭看星</span></a></li>
-    <li class="reveal" style="--i:2"><a class="door" href="bazi.html">
+    <li class="reveal" style="--i:3"><a class="door" href="bazi.html">
       <span class="glyph" aria-hidden="true">☰</span>
       <span class="name">八字館</span><span class="fr">燭光命房</span>
       <span class="desc">八字、紫微、九星、唐四柱、人類圖、生命靈數——看生辰</span></a></li>
-    <li class="reveal" style="--i:3"><a class="door" href="shi.html">
+    <li class="reveal" style="--i:4"><a class="door" href="shi.html">
       <span class="glyph" aria-hidden="true">☷</span>
       <span class="name">式占館</span><span class="fr">燭光式閣</span>
       <span class="desc">奇門、六壬、太乙、梅花、河洛——問此刻與時機</span></a></li>
-    <li class="reveal" style="--i:4"><a class="door" href="nanyang.html">
+    <li class="reveal" style="--i:5"><a class="door" href="nanyang.html">
       <span class="glyph" aria-hidden="true">✺</span>
       <span class="name">南洋館</span><span class="fr">燭光南苑</span>
       <span class="desc">緬甸八曜、爪哇威頓、泰國佛日——曜日看命</span></a></li>
-    <li class="reveal" style="--i:5"><a class="door" href="kaijuan.html">
+    <li class="reveal" style="--i:6"><a class="door" href="kaijuan.html">
       <span class="glyph" aria-hidden="true">❦</span>
       <span class="name">開卷館</span><span class="fr">燭光卷樓</span>
       <span class="desc">燭光一句、翹傳、靈籤——開卷即答</span></a></li>
-    <li class="reveal" style="--i:6"><a class="door" href="shilun.html">
+    <li class="reveal" style="--i:7"><a class="door" href="shilun.html">
       <span class="glyph" aria-hidden="true">✥</span>
       <span class="name">鐘樓館</span><span class="fr">燭光鐘樓</span>
       <span class="desc">時輪占——你洗牌切牌，月日星期時分替你取牌</span></a></li>
-    <li class="reveal" style="--i:7"><a class="door" href="mbti.html">
+    <li class="reveal" style="--i:8"><a class="door" href="mbti.html">
       <span class="glyph" aria-hidden="true">◐</span>
       <span class="name">鏡廳</span><span class="fr">燭光鏡廳</span>
       <span class="desc">MBTI 十六型人格——照見偏好，不算命</span></a></li>
-    <li class="reveal" style="--i:8"><a class="door" href="mix.html">
+    <li class="reveal" style="--i:9"><a class="door" href="mix.html">
       <span class="glyph" aria-hidden="true">⁂</span>
       <span class="name">MIX 合參</span><span class="fr">燭光合參</span>
       <span class="desc">任選三術同問一事，合議作答</span></a></li>

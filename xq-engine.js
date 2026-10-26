@@ -270,7 +270,7 @@
     if (tongchi) add(10, "通吃格", "自己", "能把對方全部吃掉：開頭不錯、最後容易歸零");
     else if (tongchiMaybe) add(10, "通吃格（可能）", "自己", "若先吃掉對方的保護者，就能把對方全吃——存在通吃的可能", { maybe: true });
     if (beitong) add(11, "被通吃格", "自己", centerEaten ? "中間的棋子會被整隻吃掉" : "自己的棋子都會被吃光");
-    else if (beitongMaybe) add(11, "被通吃格（可能）", "自己", "外在有不確定的能量：若對方不顧牽制先吃掉保護者，中間有被吃的可能", { maybe: true });
+    else if (beitongMaybe) add(11, "被通吃格（可能）", "自己", "若對方不顧牽制硬吃、或先吃掉保護者，中間有被吃的可能（機率較低）", { maybe: true });
     if (["chariot", "horse", "cannon"].every((k) => byKind[k])) add(12, "事業格", null, "俥傌炮／車馬包同時出現");
     if (["king", "guard", "elephant"].every((k) => byKind[k])) add(13, "富貴格", null, "帥仕相／將士象同時出現");
     for (let i = 0; i < 5; i++) for (let j = i + 1; j < 5; j++) {
@@ -290,7 +290,7 @@
       add(22, "勝利格", null, "左右下同色成 V 字：事情容易成局" + (self ? "（靠自己的能耐）" : "（靠他人協助）"));
     }
     if (sameC([1, 2, 3])) add(23, "雨傘格", null, (at(1).red ? "紅" : "黑") + "雨傘：有天助但心情悶；" + (at(1).red ? "外界看好" : "外界不看好"));
-    if (sameC([0, 1, 2]) || sameC([0, 3, 4])) add(24, "十字天助格", null, "十字同色：有天助");
+    if (sameC([0, 1, 2]) || sameC([0, 3, 4])) add(24, "十字天助格", null, sameC([0, 1, 2]) ? "中左右同色" : "中上下同色");
 
     /* 犯小人：對方的傌馬炮包吃到或得到我們的好處 */
     const xiaoren = caps.filter((c) => c.by.red !== own && (c.by.kind === "horse" || c.by.kind === "cannon") && c.target.red === own);
