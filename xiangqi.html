@@ -161,7 +161,7 @@
         <select id="f-sex"><option value="">請選擇</option><option value="女">女生</option><option value="男">男生</option></select>
         <div class="note">位置代表的人（左女右男、配偶）與兵卒的讀法都看這一欄</div></div>
       <div class="field"><label for="f-faith">信仰</label>
-        <select id="f-faith"><option value="bud">佛教・恭請觀世音菩薩</option><option value="chr">基督信仰・禱告耶和華</option></select>
+        <select id="f-faith"></select>
         <div class="note">決定占卜前的請神儀式與清理祈請文</div></div>
       <div class="field" id="f-mar-w"><label for="f-mar">婚姻</label>
         <select id="f-mar"><option value="">單身（含離婚）</option><option value="1">已婚</option></select></div>
@@ -212,7 +212,7 @@
   </section>
 
   <p class="footnote">
-    單卦、年運與命盤參考《改寫人生的象棋卜卦》的體系（棋子分數、吃子規則、格局與命盤排法），由本站程式計算；一子問事參考《象棋占卜祕笈》（聖元）。<br>
+    單卦、年運與命盤參考《改寫人生的象棋卜卦》的體系（棋子分數、吃子規則、格局與命盤排法），由本站程式計算；一張問事參考《象棋占卜祕笈》（聖元）。<br>
     兩書文字未經授權，本館的解說皆為改寫。翻牌以 <b>crypto</b> 真隨機洗牌。僅供靜心與參考，健康與重大決定請以專業意見為準。
   </p>
 </div>
@@ -220,9 +220,9 @@
 <script src="divine-core.js?v=2026102506"></script>
 <script src="divine-ui.js?v=2026102610"></script>
 <script src="divine-lore.js?v=2026102502"></script>
-<script src="xq-data.js?v=2026102604"></script>
+<script src="xq-data.js?v=2026102605"></script>
 <script src="xq-engine.js?v=2026102602"></script>
-<script src="xiangqi-learn.js?v=2026102605"></script>
+<script src="xiangqi-learn.js?v=2026102606"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const E = XQE, POSZ = E.POS_ZH, NUM = E.NUM;
@@ -264,15 +264,30 @@ const LS = { get: (k) => { try { return localStorage.getItem(k) || ""; } catch (
 $("f-sex").value = LS.get("dc-xq-sex");
 $("f-mar").value = LS.get("dc-xq-mar");
 $("f-age").value = LS.get("dc-xq-age");
-$("f-faith").value = LS.get("dc-xq-faith") || "bud";
+/* 請神的對象：佛教、民間信仰、基督信仰（翻牌確認的方式相同） */
+const DEITY = {
+  kwanyin: { grp: "佛教", name: "觀世音菩薩", full: "南無大慈大悲救苦救難廣大靈感千手千眼觀世音菩薩", call: "菩薩", come: "來臨" },
+  manjusri: { grp: "佛教", name: "文殊師利菩薩", full: "南無大智文殊師利菩薩", call: "菩薩", come: "來臨" },
+  guangong: { grp: "民間信仰", name: "關聖帝君", full: "恩主公關聖帝君", call: "帝君", come: "降臨" },
+  mazu: { grp: "民間信仰", name: "媽祖", full: "天上聖母媽祖", call: "聖母", come: "降臨" },
+  hanxin: { grp: "民間信仰", name: "韓信爺", full: "韓信爺", call: "韓信爺", come: "降臨" },
+  kongming: { grp: "民間信仰", name: "孔明先師", full: "孔明先師諸葛武侯", call: "先師", come: "降臨" },
+  chr: { grp: "基督信仰", name: "耶和華", full: "天父耶和華", call: "主", come: "垂聽" },
+};
+$("f-faith").innerHTML = ["佛教", "民間信仰", "基督信仰"].map((g) => `<optgroup label="${g}">` + Object.entries(DEITY).filter(([, d]) => d.grp === g)
+  .map(([k, d]) => `<option value="${k}">${g === "基督信仰" ? "禱告" : "恭請"}${d.name}</option>`).join("") + "</optgroup>").join("");
+$("f-faith").value = { bud: "kwanyin" }[LS.get("dc-xq-faith")] || LS.get("dc-xq-faith") || "kwanyin";
+if (!$("f-faith").value) $("f-faith").value = "kwanyin";
+const deity = () => DEITY[$("f-faith").value] || DEITY.kwanyin;
+const folk = () => deity().grp === "民間信仰";
 $("f-sex").onchange = () => { LS.set("dc-xq-sex", $("f-sex").value); renderSlots(); };
 $("f-mar").onchange = () => LS.set("dc-xq-mar", $("f-mar").value);
 $("f-age").onchange = () => LS.set("dc-xq-age", $("f-age").value);
 const chr = () => $("f-faith").value === "chr";
-/* 依信仰換用語：佛教恭請觀世音菩薩，基督信仰禱告耶和華（翻牌確認的方式相同） */
-const FT = () => chr()
+/* 依請神對象換用語 */
+const FT = () => { const d = deity(); return chr()
   ? { btn: "翻 牌 禱 告", come: "主已垂聽", again: "再 禱 告 一 次", done: "主 已 垂 聽", wait: "主尚未回應，安靜心再禱告一次", first: "洗牌前，請先向耶和華禱告。", who: "耶和華" }
-  : { btn: "翻 牌 請 神", come: "菩薩已來臨", again: "再 請 一 次", done: "菩 薩 已 來 臨", wait: "菩薩尚未來臨，靜心再請一次", first: "洗牌前，請先恭請觀世音菩薩。", who: "菩薩" };
+  : { btn: "翻 牌 請 神", come: d.call + "已" + d.come, again: "再 請 一 次", done: (d.call + "已" + d.come).split("").join(" "), wait: d.call + "尚未" + d.come + "，靜心再請一次", first: "洗牌前，請先恭請" + d.name + "。", who: d.call }; };
 $("f-faith").onchange = () => {   /* 還沒開始翻牌時，換信仰就重新請神；已翻完的結果不動 */
   LS.set("dc-xq-faith", $("f-faith").value);
   updateInvocation();
@@ -306,7 +321,7 @@ function updateForm() {
   $("f-type-w").querySelector("label").textContent = s.id === "gate" ? "卦陣" : "題型";
   $("p-title").textContent = s.name;
   $("p-hint").textContent = s.id === "single" ? "一個問題翻五張，排成十字：中、左、右、上、下。依題型用書中的判法。"
-    : s.id === "gate" ? "台灣民間常見的象棋卦陣，可選三種讀法：聖元派、一般讀法、宮廟派。" : s.hint;
+    : s.id === "gate" ? "台灣民間常見的象棋卦陣，可選三種讀法：三才強度法、一般讀法、宮廟派。" : s.hint;
   $("f-school-w").hidden = s.id !== "gate";
   $("f-school-note").textContent = school()[2];
   const qt = s.id === "single" ? QT.find((q) => q[0] === modeId) : null;
@@ -343,7 +358,7 @@ function renderPool() {
     b.onclick = () => pick(+b.dataset.i);
   });
   $("btn-auto").disabled = !washed || done;
-  $("stage-cap").textContent = done ? "牌已翻齊。" : !qingOk ? (chr() ? "先翻牌禱告，主垂聽後再洗牌。" : "先翻牌請神，菩薩來臨後再洗牌。") : !washed ? "先洗牌，把牌序交給你的手。"
+  $("stage-cap").textContent = done ? "牌已翻齊。" : !qingOk ? (chr() ? "先翻牌禱告，主垂聽後再洗牌。" : `先翻牌請神，${deity().call}${deity().come}後再洗牌。`) : !washed ? "先洗牌，把牌序交給你的手。"
     : `第 ${picks.length + 1}／${need()} 張：憑直覺點一張蓋著的牌（牌堆剩 ${pool.filter((c) => c !== null).length} 張）` + (sysId === "chart" ? "（第 4 張之後依「中、左、右、下」一局一局排下去）" : "");
 }
 /* 洗棋：一、收攏到盤心疊成一堆；二、雙手反向搓轉（一半順時針、一半逆時針，像真的在桌上搓象棋）；
@@ -382,7 +397,7 @@ async function washAnim() {
 }
 $("btn-wash").onclick = async () => {
   if (busy || done || picks.length) return;
-  if (!qingOk) { $("stage-cap").textContent = chr() ? "請先「翻牌禱告」：翻到帥、將、仕、相、俥、傌、炮，即為主已垂聽。" : "請先「翻牌請神」：翻到帥、將、仕、相、俥、傌、炮，即為菩薩來臨。"; $("btn-qing").focus(); return; }
+  if (!qingOk) { $("stage-cap").textContent = chr() ? "請先「翻牌禱告」：翻到帥、將、仕、相、俥、傌、炮，即為主已垂聽。" : `請先「翻牌請神」：翻到帥、將、仕、相、俥、傌、炮，即為${deity().call}${deity().come}。`; $("btn-qing").focus(); return; }
   busy = true; $("btn-wash").disabled = true;
   $("stage-cap").textContent = "雙手在棋盤上搓動三十二張牌……";
   shuffle(pool); washed++;
@@ -477,7 +492,8 @@ function updateInvocation() {
   const tail = `<br><small>${sysId === "chart" ? "命盤由本人親手翻；" : "只問自己或直系血親的事，問別人的事請改從「我」出發；"}一事不二卜。投機、賭博之事，不以象棋相問。</small>`;
   $("invocation").innerHTML = chr()
     ? `<b>一・禱告</b>　慈愛的天父耶和華，我〔默唸姓名〕今有一事，想藉這副牌尋求祢的帶領。求祢與我同在，若祢垂聽，求以紅牌指示。<br><small>按「翻牌禱告」翻一張：見帥、將、仕、相、俥、傌、炮即為主已垂聽，否則安靜心再禱告一次。</small><br><b>二・報名</b>　我是〔姓名〕，住〔住址，睡覺的地方〕，今年〔歲數〕歲。<br><b>三・問事</b>　雙手輕放在牌上：今求問 ${qq}${deal}，求主藉這副牌指引我。奉耶穌的名禱告，阿們。` + tail
-    : `<b>一・請神</b>　弟子〔默唸姓名〕，今有一事，想藉象棋求得指引，誠心恭請南無大慈大悲千手千眼廣大圓滿無礙大悲心觀世音菩薩前來相助。菩薩若已來臨，請以紅牌指示。<br><small>按「翻牌請神」翻一張：見帥、將、仕、相、俥、傌、炮即為菩薩來臨，否則再請一次。</small><br><b>二・報名</b>　弟子〔姓名〕，住〔住址，睡覺的地方〕，今年〔農曆歲數〕歲。<br><b>三・問事</b>　雙手輕放在牌上：今問 ${qq}${deal}，請菩薩以牌示下。` + tail;
+    : (() => { const d = deity(), F = folk();
+      return `<b>一・請神</b>　弟子〔默唸姓名〕，今有一事，想藉象棋求得指引，誠心恭請${d.full}${F ? "降臨指點" : "前來相助"}。${d.call}若已${d.come}，請以紅牌指示。<br><small>按「翻牌請神」翻一張：見帥、將、仕、相、俥、傌、炮即為${d.call}${d.come}，否則再請一次。</small><br><b>二・報名</b>　弟子〔姓名〕，住〔住址，睡覺的地方〕，今年〔農曆歲數〕歲。<br><b>三・問事</b>　雙手輕放在牌上：今問 ${qq}${deal}，請${d.call}以牌示下。` + tail; })();
 }
 $("q-input").addEventListener("input", () => { updateInvocation(); checkQ(); });
 $("f-pair").onchange = () => { updateInvocation(); checkQ(); };
@@ -767,17 +783,23 @@ function prayerHtml(items) {
 使他們脫離這些重擔，回到祢純淨的光與愛中。
 奉耶穌的名禱告，阿們。</div>
 <div class="prayer">（祝福）願一切榮耀歸給耶和華，願恩典祝福〔名字〕早日脫離正在經歷的痛苦。哈利路亞。</div>
-<p style="color:var(--muted);font-size:12.5px">想迎來助力時，可以禱告求耶和華「為〔名字〕預備＿＿的貴人與道路」。` : `<p class="section-label" style="text-align:left">佛教・祈請觀世音菩薩</p><div class="prayer">我知道〔名字〕的本質是圓滿、健康、豐盛的，
+<p style="color:var(--muted);font-size:12.5px">想迎來助力時，可以禱告求耶和華「為〔名字〕預備＿＿的貴人與道路」。` : folk() ? `<p class="section-label" style="text-align:left">民間信仰・祈請${deity().name}</p><div class="prayer">弟子〔名字〕，誠心叩請${deity().full}：
+〔名字〕之所以經歷「〔上面的某一項〕」，想必是過去留下的執著與傷痛，
+或許也來自他的祖先，那些弟子所不知道的冤結與遺憾。
+懇請${deity().call}慈悲護佑，化解〔名字〕與祖先身上的這些重擔，
+讓他們得到清淨與安寧，也讓〔名字〕往後的路平安順遂。</div>
+<div class="prayer">（謝神）弟子〔名字〕叩謝${deity().full}慈悲護佑。願此誠心迴向〔名字〕的歷代祖先，與所有為相同處境受苦的人。</div>
+<p style="color:var(--muted);font-size:12.5px">想迎來助力時，可以祈請${deity().name}「讓〔名字〕＿＿的貴人與機緣出現在生命裡」；若到廟裡，可依廟方的方式上香稟告。` : `<p class="section-label" style="text-align:left">佛教・祈請${deity().name}</p><div class="prayer">我知道〔名字〕的本質是圓滿、健康、豐盛的，
 他之所以經歷「〔上面的某一項〕」，只是過去留下的印記使然。
 這些印記，想必來自過去世的他或他的祖先，
 在生命中曾有許多我所不知道的執著與傷痛。
-祈請大慈大悲觀世音菩薩，以慈悲之愛，
+祈請${deity().full}，以慈悲${deity().name === "文殊師利菩薩" ? "與智慧" : ""}之力，
 幫助那些仍在其他時空、帶著執著與傷痛的〔名字〕和他的祖先，
 開啟智慧，療癒傷痛，得到清淨與解脫。</div>
-<div class="prayer">（迴向）願以此功德供養觀世音菩薩與十方諸佛菩薩，迴向法界一切眾生，
+<div class="prayer">（迴向）願以此功德供養${deity().name}與十方諸佛菩薩，迴向法界一切眾生，
 迴向所有為相同處境受苦的眾生，也迴向過去世的〔名字〕與他的祖先。嗡啊吽。</div>
-<p style="color:var(--muted);font-size:12.5px">想迎來助力時，可以祈請觀世音菩薩「讓〔名字〕＿＿的貴人與機緣出現在生命裡」。`)
-    + `清理一段時間後，可在「單卦問事・清理效果」卜一卦看看。祈請文依上方「信仰」的選擇（佛教或基督信仰）。</p>`);
+<p style="color:var(--muted);font-size:12.5px">想迎來助力時，可以祈請${deity().name}「讓〔名字〕＿＿的貴人與機緣出現在生命裡」。`)
+    + `清理一段時間後，可在「單卦問事・清理效果」卜一卦看看。祈請文依上方「信仰」選的對象。</p>`);
 }
 
 /* ═══ 歷史：存下重算所需的狀態；重看時依新版規則重新產生結果與提示詞 ═══ */
@@ -1034,7 +1056,7 @@ function upWhy(ups) {
   return "靠自己的能力與努力，也可能得長輩上司之助";
 }
 
-/* ═══ 傳統卦陣：開門卦、三才（聖元派／一般讀法／宮廟派） ═══ */
+/* ═══ 傳統卦陣：開門卦、三才（三才強度法／一般讀法／宮廟派） ═══ */
 function runGate(q) {
   const ps = picks.map((ch) => XQ.CARDS.find((c) => c.ch === ch)), sch = school(), sy = sch[0] === "", topic = $("f-topic").value || XQ.TOPICS[0];
   const names = posNames(), hints = need() === 5 ? XQ.HINTS : ["你這一方的樣子", "對方或外在環境", "事情成不成的關鍵與過程"];
@@ -1050,9 +1072,9 @@ function runGate(q) {
     + DC.card("棋局", need() === 5 ? "紅黑、成組與起承轉收" : "紅黑與成組", ana.map((t) => "<p>・" + t + "</p>").join("")
       + '<p style="color:var(--muted);font-size:12.5px">標「本站讀法」的棋型與卦陣擺法為本站自訂，請當參考。</p>');
   const L = [
-    sy ? "你是一位熟悉台灣民間象棋占卜的解讀師，依聖元《象棋占卜祕笈》的體系斷事：三大類（天、天人之間、人）、紅黑陰陽、能量強度、字音字形取象。"
+    sy ? "你是一位熟悉台灣民間象棋占卜的解讀師，參考《象棋占卜祕笈》的體系（本站改寫）斷事：三大類（天、天人之間、人）、紅黑陰陽、能量強度、字音字形取象。"
       : "你是一位熟悉台灣民間象棋卦（象棋占卜）的解讀師，懂得以紅黑陰陽、將士象車馬炮兵的兵種象意、成組棋型與棋子所在的位置來斷事。",
-    sy ? "讀法補充（聖元派）：帥將屬天（神佛棋）、兵卒屬人（事在人為；兵代表女性、卒代表男性，與求問者性別相反為反常），皆不以紅黑論好壞；其餘紅好黑不好，看能量強度：仕士 100%、相象 90%、俥車 80%、傌馬 70%、炮包 60%。紅黑兩兩相對，能量相同、吉凶相反。字音字形取象是核心技法。"
+    sy ? "讀法補充（三才強度法）：帥將屬天（神佛棋）、兵卒屬人（事在人為；兵代表女性、卒代表男性，與求問者性別相反為反常），皆不以紅黑論好壞；其餘紅好黑不好，看能量強度：仕士 100%、相象 90%、俥車 80%、傌馬 70%、炮包 60%。紅黑兩兩相對，能量相同、吉凶相反。字音字形取象是核心技法。"
       : "讀法補充（象棋卦）：紅為陽、為明、為吉，黑為陰、為暗、為凶；但帥將與兵卒不以紅黑論吉凶——帥將看主事的核心在明處還是幕後，兵卒看小事與眾人的多寡。兵種象意：將帥＝主事者、仕士＝貼身之人、相象＝家宅守成、車＝主力強勢、馬＝奔波轉折、炮包＝借力或口舌、兵卒＝小事與眾人。也可依字音字形取象。",
     ...(sch[3] ? ["解讀流派：" + sch[3]] : []),
     DC.toneHead(), "",

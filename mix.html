@@ -154,7 +154,7 @@
 <script src="divine-core.js?v=2026102506"></script>
 <script src="divine-ui.js?v=2026102610"></script>
 <script src="divine-lore.js?v=2026102502"></script>
-<script src="xq-data.js?v=2026102604"></script>
+<script src="xq-data.js?v=2026102605"></script>
 <script src="shilun-data.js?v=2026102503"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -564,11 +564,11 @@ for (const [id, dk, nm] of [["c-len", "len", "雷諾曼"], ["c-sib", "sib", "西
 GEN["c-xq"] = () => {
   const a = XQ.CARDS.slice();
   for (let k = a.length - 1; k > 0; k--) { const j = DC.rand(k + 1); [a[k], a[j]] = [a[j], a[k]]; }
-  const ps = a.slice(0, 5), sy = DC.schoolGet("xq") === "";   /* 預設聖元派 */
+  const ps = a.slice(0, 5), sy = DC.schoolGet("xq") === "";   /* 預設三才強度法 */
   const sex = $("form-birth").hidden ? "" : $("b-gender").value === "m" ? "男" : "女";   /* 兵卒論正常／反常，用生辰表單的性別 */
   return { title: "象棋占卜・五張開門卦",
     html: "<p>" + ps.map((p, i) => '<span class="badge' + (p.red ? "" : " dim") + '">' + XQ.POS[i].split("・")[0] + ":" + p.name + "</span>").join(" ") + "</p>",
-    lines: sy ? ["象棋占卜（32 張棋牌蓋著洗勻翻五張；中為主位，四角依右上起、左上承、左下轉、右下收，擺法為本站讀法。棋義依聖元派：帥將屬天為神佛棋、兵卒屬人事在人為〔兵代表女性、卒代表男性，與求問者性別相反為反常〕，皆不以紅黑論好壞；其餘紅好黑不好，看能量強度）：",
+    lines: sy ? ["象棋占卜（32 張棋牌蓋著洗勻翻五張；中為主位，四角依右上起、左上承、左下轉、右下收，擺法為本站讀法。棋義依三才強度法：帥將屬天為神佛棋、兵卒屬人事在人為〔兵代表女性、卒代表男性，與求問者性別相反為反常〕，皆不以紅黑論好壞；其餘紅好黑不好，看能量強度）：",
       ...ps.map((p, i) => "  " + XQ.POS[i] + ":" + p.name + "(" + p.keys + ")——" + p.text + "〔" + XQ.syLine(p) + "〕"),
       ...ps.map((p) => XQ.sexNote(p.ch, sex)).filter(Boolean).map((t) => "  " + t),
       ...(sex ? [] : ["  (求問者性別未填:兵卒只論事在人為,不論正常反常)"]),
