@@ -64,7 +64,9 @@
   #pool button { padding: 0; border: none; background: none; cursor: pointer; border-radius: 50%; }
   #pool button:disabled { cursor: default; }
   #pool button:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
-  #pool button.gone .qz { visibility: hidden; }
+  #pool button .xcard { transition: opacity .35s, transform .35s, visibility 0s .35s; }
+  #pool button.gone .xcard { opacity: 0; transform: translateY(-16px) scale(.85); visibility: hidden; }   /* 被選走的牌離開牌堆 */
+  #pool button.gone { cursor: default; }
   #pool .xcard { --w: 44px; }
   @media (max-width: 520px) { #pool { gap: 5px; } #pool .xcard { --w: 36px; } .cross.big .xcard { --w: 70px; } }
 
@@ -342,7 +344,7 @@ function renderPool() {
   });
   $("btn-auto").disabled = !washed || done;
   $("stage-cap").textContent = done ? "牌已翻齊。" : !qingOk ? (chr() ? "先翻牌禱告，主垂聽後再洗牌。" : "先翻牌請神，菩薩來臨後再洗牌。") : !washed ? "先洗牌，把牌序交給你的手。"
-    : `第 ${picks.length + 1}／${need()} 張：憑直覺點一張蓋著的牌` + (sysId === "chart" ? "（第 4 張之後依「中、左、右、下」一局一局排下去）" : "");
+    : `第 ${picks.length + 1}／${need()} 張：憑直覺點一張蓋著的牌（牌堆剩 ${pool.filter((c) => c !== null).length} 張）` + (sysId === "chart" ? "（第 4 張之後依「中、左、右、下」一局一局排下去）" : "");
 }
 /* 洗棋：一、收攏到盤心疊成一堆；二、雙手反向搓轉（一半順時針、一半逆時針，像真的在桌上搓象棋）；
    三、由盤心往外一圈圈排回棋盤，落定時輕輕一頓。和鐘樓館的扇形、光環、對插洗牌刻意不同 */
