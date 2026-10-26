@@ -23,6 +23,19 @@
   .qz.flip { animation: qz-flip .35s ease-out; }
   @media (prefers-reduced-motion: reduce) { .qz.flip { animation: none; } }
 
+  /* ── 象棋卡：卡面圖＋底部名牌上的棋子 ── */
+  .xcard { --w: 84px; position: relative; display: inline-block; width: var(--w); aspect-ratio: 600 / 894; border-radius: 6px; overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,.5); background: #2a1d12; flex: none; }
+  .xcard img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .xcard > .qz { --s: calc(var(--w) * .36); position: absolute; left: 50%; bottom: 3%; transform: translateX(-50%); }
+  .xcard:not(:has(img)) > .qz { --s: calc(var(--w) * .62); bottom: 50%; transform: translate(-50%, 50%); }
+  .xcard.back > .qz { display: none; }
+  .xcard.back:not(:has(img)) > .qz { display: inline-grid; }
+  .xcard.slot { display: inline-grid; place-items: center; border-radius: 6px; width: var(--w); height: auto; }
+  .xcard.flip { animation: qz-flip .35s ease-out; }
+  @media (prefers-reduced-motion: reduce) { .xcard.flip { animation: none; } }
+
+  .be-glyph:has(img) { width: auto; height: auto; border: none; }
   /* ── 棋堆（蓋著的 32 子） ── */
   #pool { display: grid; grid-template-columns: repeat(8, auto); gap: 8px; justify-content: center; margin: 14px auto 6px; max-width: 520px; }
   #pool button { padding: 0; border: none; background: none; cursor: pointer; border-radius: 50%; }
@@ -30,15 +43,16 @@
   #pool button:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
   #pool button.gone .qz { visibility: hidden; }
   @keyframes pool-wash { 0% { transform: none; } 30% { transform: translate(var(--dx), var(--dy)) rotate(var(--dr)); } 100% { transform: none; } }
-  #pool.washing .qz { animation: pool-wash .55s ease-in-out; }
-  @media (max-width: 520px) { #pool { grid-template-columns: repeat(8, auto); gap: 5px; } #pool .qz { --s: 34px; } }
+  #pool .xcard { --w: 44px; }
+  #pool.washing .xcard { animation: pool-wash .55s ease-in-out; }
+  @media (max-width: 520px) { #pool { gap: 5px; } #pool .xcard { --w: 36px; } .cross.big .xcard { --w: 70px; } }
 
   /* ── 十字盤與命盤 ── */
   .cross { display: grid; grid-template-columns: repeat(3, auto); gap: 8px; justify-content: center; margin: 12px 0; }
   .cross .cell { display: grid; place-items: center; min-width: 46px; min-height: 46px; position: relative; }
   .cross .cell small { position: absolute; top: -2px; left: -4px; font-size: 10.5px; color: var(--gold-dim); }
-  .cross.big .qz { --s: 58px; }
   .cross.big .cell { min-width: 58px; min-height: 58px; }
+  .cross.big .cell small { z-index: 1; top: 2px; left: 4px; color: var(--gold-bright); text-shadow: 0 0 3px #000; }
   .chart { display: grid; grid-template-columns: auto repeat(3, auto); gap: 4px 6px; justify-content: center; align-items: center; margin: 10px 0; }
   .chart .lab { font-size: 11.5px; color: var(--muted); text-align: right; padding-right: 6px; white-space: nowrap; }
   .chart .cell { display: grid; place-items: center; min-width: 34px; min-height: 34px; }
@@ -259,6 +273,9 @@ function updateForm() {
 const ALL = XQ.CARDS.map((c) => c.ch);
 let pool = [], picks = [], washed = 0, busy = false, done = false, optIdx = 0, optResults = [];
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = DC.rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const IMG = {}; XQ.CARDS.forEach((c) => (IMG[c.ch] = c.img));
+/* 你的象棋卡：翻開的棋以卡面呈現（圖載不到就只剩棋子） */
+const xcard = (ch, cls) => `<span class="xcard${cls ? " " + cls : ""}"><img src="${IMG[ch]}" alt="${ch}" loading="lazy" onerror="this.remove()">${qz(ch)}</span>`;
 const qz = (ch, cls) => `<span class="qz${"帥仕相俥傌炮兵".includes(ch) ? " r" : ""}${cls ? " " + cls : ""}">${ch}</span>`;
 function resetTable(keepPool) {
   if (!keepPool) { pool = shuffle(ALL.slice()); washed = 0; optIdx = 0; optResults = []; }
@@ -270,9 +287,9 @@ function resetTable(keepPool) {
   renderPool(); renderSlots(); updateInvocation(); checkQ(); renderChain();
 }
 function renderPool() {
-  $("pool").innerHTML = pool.map((ch, i) => `<button type="button" data-i="${i}"${ch === null ? ' class="gone" disabled' : ""} aria-label="蓋著的棋子">${qz("", "back")}</button>`).join("");
+  $("pool").innerHTML = pool.map((ch, i) => `<button type="button" data-i="${i}"${ch === null ? ' class="gone" disabled' : ""} aria-label="蓋著的棋卡"><span class="xcard back"><img src="cards-xq/back.jpg" alt="" onerror="this.remove()">${qz("", "back")}</span></button>`).join("");
   $("pool").querySelectorAll("button").forEach((b) => {
-    const s = b.querySelector(".qz"); s.style.setProperty("--dx", (DC.rand(41) - 20) + "px"); s.style.setProperty("--dy", (DC.rand(31) - 15) + "px"); s.style.setProperty("--dr", (DC.rand(61) - 30) + "deg");
+    const s = b.querySelector(".xcard"); s.style.setProperty("--dx", (DC.rand(41) - 20) + "px"); s.style.setProperty("--dy", (DC.rand(31) - 15) + "px"); s.style.setProperty("--dr", (DC.rand(61) - 30) + "deg");
     b.onclick = () => pick(+b.dataset.i);
   });
   $("btn-auto").disabled = !washed || done;
@@ -312,7 +329,7 @@ function crossHtml(list, big, labels) {
   return `<div class="cross${big ? " big" : ""}">` + CROSS_GRID.flat().map((k) => {
     if (k === null) return '<div class="cell"></div>';
     const ch = list[k];
-    return `<div class="cell">${labels ? `<small>${NUM[k]}</small>` : ""}${ch ? qz(ch.ch || ch) : `<span class="qz slot${k === list.filter(Boolean).length ? " next" : ""}">${NUM[k]}</span>`}</div>`;
+    return `<div class="cell">${labels && ch ? `<small>${NUM[k]}</small>` : ""}${ch ? (big ? xcard(ch.ch || ch) : qz(ch.ch || ch)) : `<span class="${big ? "xcard " : ""}qz slot${k === list.filter(Boolean).length ? " next" : ""}">${NUM[k]}</span>`}</div>`;
   }).join("") + "</div>";
 }
 /* 命盤：抽出序 → 33 位的 [列, 欄] */
@@ -349,9 +366,9 @@ function chartHtml(seq, nowAge) {
 function renderSlots(flipIdx) {
   const s = sys();
   $("slots").innerHTML = s.id === "chart" ? chartHtml(picks.concat(Array(32 - picks.length).fill(null)), +$("f-age").value || 0)
-    : s.id === "one" ? `<div class="cross big"><div class="cell"></div><div class="cell">${picks[0] ? qz(picks[0]) : '<span class="qz slot next">此事</span>'}</div><div class="cell"></div></div>`
+    : s.id === "one" ? `<div class="cross big"><div class="cell"></div><div class="cell">${picks[0] ? xcard(picks[0]) : '<span class="xcard qz slot next">此事</span>'}</div><div class="cell"></div></div>`
     : crossHtml(picks.concat(Array(5 - picks.length).fill(null)), true, true);
-  if (flipIdx !== undefined) { const all = $("slots").querySelectorAll(".qz:not(.slot):not(.dim)"); const el = all[s.id === "chart" ? [...all].length - 1 : all.length - 1]; if (el && !RM) el.classList.add("flip"); }
+  if (flipIdx !== undefined) { const all = $("slots").querySelectorAll(s.id === "chart" ? ".qz:not(.slot):not(.dim)" : ".xcard:not(.slot)"); const el = all[s.id === "chart" ? [...all].length - 1 : all.length - 1]; if (el && !RM) el.classList.add("flip"); }
 }
 
 /* ═══ 起卜默念：單卦／年運／命盤靜心默念；一子問事用聖元派請神 ═══ */
@@ -642,16 +659,25 @@ function prayerHtml(items) {
   return DC.card("清理與祈請", "可以怎麼做",
     "<p>書中的看法是：卦象呈現的困境，是累世與祖先留下的執著與傷痛經驗所致，可以為它祈請、清理。下列是這一卦值得清理的項目（★ 為重點），一次一項：</p>"
     + `<ul class="clean-list">${items.map(([t, k]) => `<li class="${k ? "key" : ""}">${k ? "★ " : ""}${t}</li>`).join("")}</ul>`
-    + `<p>祈請時把自己當成需要被療癒的「他」，用名字稱呼效果較好：</p><div class="prayer">我知道〔名字〕的本質是圓滿、健康、豐盛的，
+    + `<p>祈請時把自己當成需要被療癒的「他」，用名字稱呼效果較好。依你的信仰擇一：</p>
+<p class="section-label" style="text-align:left">佛教・祈請觀世音菩薩</p><div class="prayer">我知道〔名字〕的本質是圓滿、健康、豐盛的，
 他之所以經歷「〔上面的某一項〕」，只是過去留下的印記使然。
 這些印記，想必來自過去世的他或他的祖先，
 在生命中曾有許多我所不知道的執著與傷痛。
-祈請慈悲的諸佛菩薩（或：慈愛的上帝與耶穌／慈悲的神性智慧），
-以慈悲之愛，幫助那些仍在其他時空、帶著執著與傷痛的〔名字〕和他的祖先，
+祈請大慈大悲觀世音菩薩，以慈悲之愛，
+幫助那些仍在其他時空、帶著執著與傷痛的〔名字〕和他的祖先，
 開啟智慧，療癒傷痛，得到清淨與解脫。</div>
-<p>結束時可以迴向：</p><div class="prayer">願以此功德供養十方諸佛菩薩，迴向法界一切眾生，
+<div class="prayer">（迴向）願以此功德供養觀世音菩薩與十方諸佛菩薩，迴向法界一切眾生，
 迴向所有為相同處境受苦的眾生，也迴向過去世的〔名字〕與他的祖先。嗡啊吽。</div>
-<p style="color:var(--muted);font-size:12.5px">基督信仰可改為「願一切榮耀歸給神，願恩典祝福〔名字〕早日脫離正在經歷的痛苦」。想迎來助力時，可以祈請「讓〔名字〕＿＿的貴人與機緣出現在生命裡」。清理一段時間後，可在「單卦問事・清理效果」卜一卦看看。</p>`);
+<p class="section-label" style="text-align:left">基督信仰・祈求耶和華</p><div class="prayer">慈愛的天父耶和華，
+〔名字〕是祢所造、本是美好健全的，
+他之所以經歷「〔上面的某一項〕」，是過去留下的傷痛所致，
+或許也來自他的先人，那些我所不知道的執著與傷痛。
+求祢以慈愛醫治〔名字〕和他的先人，
+使他們脫離這些重擔，回到祢純淨的光與愛中。
+奉耶穌的名禱告，阿們。</div>
+<div class="prayer">（祝福）願一切榮耀歸給耶和華，願恩典祝福〔名字〕早日脫離正在經歷的痛苦。哈利路亞。</div>
+<p style="color:var(--muted);font-size:12.5px">想迎來助力時，可以祈請觀世音菩薩（或求耶和華）「讓〔名字〕＿＿的貴人與機緣出現在生命裡」。清理一段時間後，可在「單卦問事・清理效果」卜一卦看看。</p>`);
 }
 
 /* ═══ 結果：單卦／年運 ═══ */
@@ -841,7 +867,7 @@ function runOne(q) {
     `<div class="kv"><span><b>分類</b>${XQ.CLS_ZH[y.cls]}</span><span><b>能量強度</b>${XQ.power(ch)}</span><span><b>神佛</b>${y.god}</span><span><b>人物</b>${y.fig}</span><span><b>數字</b>${y.num}</span></div>`,
     `<p style="color:var(--muted)">${p[0] && black ? "依多占法，翻到黑棋可以停在這裡；也可以改問開放題，例如「要怎麼做才會好轉？」" : "想問得更細，可以縮小範圍再問一題。"}</p>`,
   ];
-  $("out").innerHTML = DC.card("一子問事", "聖元派", `<div class="cross big"><div class="cell"></div><div class="cell">${qz(ch)}</div><div class="cell"></div></div>` + ps.join(""))
+  $("out").innerHTML = DC.card("一子問事", "聖元派", `<div class="cross big"><div class="cell"></div><div class="cell">${xcard(ch)}</div><div class="cell"></div></div>` + ps.join(""))
     + '<div class="btn-row" style="justify-content:center"><button class="ghost-btn" id="btn-more">多占・縮小範圍再問一題</button></div>';
   $("btn-more").onclick = () => { chain.push({ q, ch, pair: +$("f-pair").value || 0, topic }); $("q-input").value = ""; resetTable(); $("panel").scrollIntoView({ behavior: RM ? "auto" : "smooth" }); };
   const L = ["依聖元《象棋占卜祕笈》的體系：帥將屬天（神佛棋）、兵卒屬人（事在人為；兵代表女性、卒代表男性，與求問者性別相反為反常），皆不以紅黑論好壞；其餘紅好黑不好，看能量強度（仕士 100%、相象 90%、俥車 80%、傌馬 70%、炮包 60%）。",

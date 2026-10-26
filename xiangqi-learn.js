@@ -11,6 +11,7 @@ function xiangqiBook() {
   const ul = (xs) => "<ul>" + xs.map((x) => "<li>" + x + "</li>").join("") + "</ul>";
   const tip = (x) => '<p class="g-tip"><b>讀法要領</b>　' + x + "</p>";
   const qz = (ch) => '<span class="qz sm' + ("帥仕相俥傌炮兵".includes(ch) ? " r" : "") + '">' + ch + "</span>";
+  const img = (ch) => '<img src="' + XQ.CARDS.find((c) => c.ch === ch).img + '" alt="' + ch + '" loading="lazy" style="width:64px;border-radius:4px;margin-right:4px;vertical-align:middle">';
   const RANK = { king: "天的上格", guard: "天的中格", elephant: "天的下格", chariot: "人的上格", horse: "人的中格", cannon: "人的下格", soldier: "地格（兵為上、卒為下）" };
   const PERSONA = {
     king: ["像皇帝：一句話就有人去做，說話有分量、想掌控，不愛親自動手。要人挺他就得重義氣；扛著國家興亡，所以也容易憂慮。", "大腦中樞、神經傳導、氣血運行", "能發揮影響力、掌權的位置，最能成事。"],
@@ -28,7 +29,7 @@ function xiangqiBook() {
   const pieceItems = X.KINDS.map((k) => {
     const [r, b] = X.CH[k], [persona, body, work] = PERSONA[k], y1 = XQ.SY[r], y2 = XQ.SY[b];
     return { no: X.VAL[k] + " 分", key: X.PAIR[k], t: r + b, s: X.WX[k] + "・" + X.TRI[k], html: E({
-      glyph: qz(r) + qz(b), sub: "《改寫人生》・" + RANK[k], title: X.PAIR[k] + "・" + X.VAL[k] + " 分", keys: "五行屬" + X.WX[k] + "・" + X.TRI[k] + "格・" + MNEMO[k],
+      glyph: img(r) + img(b), sub: "《改寫人生》・" + RANK[k], title: X.PAIR[k] + "・" + X.VAL[k] + " 分", keys: "五行屬" + X.WX[k] + "・" + X.TRI[k] + "格・" + MNEMO[k],
       sections: [
         ["人格特質", persona],
         ["做事的能量", work],
@@ -99,14 +100,14 @@ function xiangqiBook() {
   const syItems = Object.keys(XQ.SY).map((ch) => {
     const y = XQ.SY[ch];
     return { no: XQ.power(ch).split("，")[0], key: ch, t: ch, s: XQ.CLS_ZH[y.cls].split("・")[1], html: E({
-      glyph: qz(ch), sub: "聖元派・" + XQ.CLS_ZH[y.cls], title: ch + "・" + XQ.power(ch), keys: y.keys,
+      glyph: img(ch), sub: "聖元派・" + XQ.CLS_ZH[y.cls], title: ch + "・" + XQ.power(ch), keys: y.keys,
       sections: [["總論", y.core], ["神佛・人物・數字", y.god + "／" + y.fig + "／" + y.num], ["字形字音", y.xing],
         ["五類問題", ul(XQ.TOPICS.map((t) => XQ.TOPIC_ZH[t] + "：" + y.t[t]))], y.turn ? ["由黑翻紅", y.turn] : null, y.note ? ["提醒", y.note] : null, ["投資標的", y.inv]] }) };
   });
 
   const common = [{ cat: "棋子", items: pieceItems }, { cat: "格局", items: patItems }, { cat: "規則", items: ruleItems }];
   const CLEAN = { name: "清理與祈請", sub: "書中的做法（改寫）", html: P("書中的看法：卦象呈現的困境，是累世與祖先留下的執著與傷痛經驗所致；看到了，就可以為它祈請、清理。過去發生過的、未來可能發生的，都可以清。",
-    "做法很簡單：靜下來，一次只處理一個項目，把自己當成需要被療癒的「他」，用名字稱呼；也可以把項目寫在紙上，一項一張，祈請後燒掉。結果頁的「清理與祈請」卡會列出這一卦值得清理的項目與祈請文。",
+    "做法很簡單：佛教徒祈請觀世音菩薩，基督徒祈求耶和華。靜下來，一次只處理一個項目，把自己當成需要被療癒的「他」，用名字稱呼；也可以把項目寫在紙上，一項一張，祈請後燒掉。結果頁的「清理與祈請」卡會列出這一卦值得清理的項目與祈請文。",
     "清理一段時間後，可在單卦問事選「清理效果」卜一卦：出現兵卒好朋友格表示方法對、清到了根源；其他好朋友格或相鄰明君表示方向對；最高 90 分，90 分以上這一項可以先放下。") + tip("書中另有販售器物的做法，本館不採；祈請不需要任何器物，也不需要上任何課程。") };
 
   return {
