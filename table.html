@@ -453,7 +453,7 @@
   }
   /* 擲錢：三枚古銅錢 3D 拋旋（只動 transform,transition 旋轉+keyframes 起落） */
   #coin-stage { display: flex; justify-content: center; gap: 30px; padding: 16px 0 6px; perspective: 700px; }
-  .coin { width: 62px; height: 62px; }
+  .coin { width: 62px; height: 62px; perspective: 260px; }   /* 透視放在每枚錢上：.coin 跳動時有 transform，會把外層 perspective 壓平 */
   .coin.tossing { animation: coin-hop .8s cubic-bezier(.3, .6, .4, 1); }
   @keyframes coin-hop {
     0% { transform: translateY(0); }
