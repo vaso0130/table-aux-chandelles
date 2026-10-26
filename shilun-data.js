@@ -293,5 +293,5 @@
     return L;
   }
 
-  window.SHILUN = { LAYERS, CARDS, RULER, SHICHEN, M_KIND, BIRTHSTONE, GAN, GAN_WX, positionsAt, newDecks, wash, cut, cutAt, draw, parseOld, resonance, promptLines, extraNote };
+  window.SHILUN = { LAYERS, CARDS, RULER, SHICHEN, M_KIND, BIRTHSTONE, GAN, GAN_WX, positionsAt, newDecks, wash, cut, cutAt, draw, cardOf, parseOld, resonance, promptLines, extraNote };
 })();

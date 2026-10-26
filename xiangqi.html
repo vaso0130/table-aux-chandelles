@@ -222,6 +222,7 @@
 
 <script src="divine-core.js?v=2026102506"></script>
 <script src="divine-ui.js?v=2026102610"></script>
+<script src="divine-io.js?v=2026102601"></script>
 <script src="divine-lore.js?v=2026102502"></script>
 <script src="xq-data.js?v=2026102605"></script>
 <script src="xq-engine.js?v=2026102602"></script>
@@ -1136,6 +1137,70 @@ DC.learnInit(() => '<div id="learn-book"></div>', (learn) => {
   book = DC.learnBook(learn.querySelector("#learn-book"), xiangqiBook(), (id) => { sysId = id; if (sys().modes && !sys().modes.some((m) => m[0] === modeId)) modeId = sys().modes[0][0]; renderSys(); updateForm(); });
   book.show(sysId);
 });
+
+/* ═══ 手動輸入：實體牌已請神、洗好、翻好，依翻牌順序點進來（由 divine-io.js 的「匯入」叫出） ═══ */
+const XQ_MAX = {}; ALL.forEach((ch) => (XQ_MAX[ch] = (XQ_MAX[ch] || 0) + 1));
+const XQ_ALIAS = { 帅: "帥", 将: "將", 砲: "包" };   /* 车、马紅黑難分，不代換 */
+function manualOrder() {
+  if (sysId === "single" || sysId === "year") return "依翻牌順序：中、左、右、上、下。";
+  if (sysId === "chart") return "依翻牌順序填滿 32 張（第 1 局中左右上下，之後每局中、左、右、下）。";
+  if (sysId === "gate") return "依翻牌順序：" + posNames().map((x) => x.split("・")[0]).join("、") + "。";
+  return "一問一張：填入這一問翻到的牌。";
+}
+function manualEntry() {
+  if (busy) return;
+  const n = need();
+  const btn = (ch) => `<button type="button" class="ghost-btn" data-ch="${ch}" style="padding:4px 8px;min-width:0">${qz(ch, "sm")}</button>`;
+  const lab = "display:block;font-size:12.5px;letter-spacing:.06em;margin:10px 0 3px;opacity:.85";
+  const inp = "display:block;width:100%;box-sizing:border-box;padding:8px 9px;font:inherit;font-size:16px;letter-spacing:.12em;border:1px solid rgba(138,114,69,.6);border-radius:3px;background:rgba(255,255,255,.55);color:inherit";
+  const dlg = document.createElement("dialog");
+  dlg.className = "note";
+  dlg.innerHTML = `<form method="dialog" style="max-height:80vh;overflow:auto">
+    <p style="margin-bottom:6px">手動輸入・${esc(sys().name)}${sys().modes ? "・" + esc((sys().modes.find((m) => m[0] === modeId) || [])[1] || "") : ""}</p>
+    <p style="font-size:13px;opacity:.8;margin:0">在實體牌上已經請神、洗牌、翻好了，就把翻到的 ${n} 張依序點進來。${manualOrder()}<br>卦式、題型、求問者等設定，用頁面上目前選的。</p>
+    <label style="${lab}">問題（可留空）</label><input data-q style="${inp};font-size:15px;letter-spacing:0">
+    <label style="${lab}">紅牌</label><div style="display:flex;flex-wrap:wrap;gap:6px">${[..."帥仕相俥傌炮兵"].map(btn).join("")}</div>
+    <label style="${lab}">黑牌</label><div style="display:flex;flex-wrap:wrap;gap:6px">${[..."將士象車馬包卒"].map(btn).join("")}</div>
+    <label style="${lab}">翻到的牌（<span data-cnt>0</span>／${n}）</label><input data-seq style="${inp}" placeholder="點上面的棋子，或直接打字">
+    <div style="display:flex;gap:8px;margin-top:6px"><button type="button" class="ghost-btn" data-undo style="padding:4px 10px">退一張</button><button type="button" class="ghost-btn" data-clear style="padding:4px 10px">清空</button></div>
+    <p class="m-err" style="color:#A8302A;font-size:13px;margin:10px 0 0" hidden></p>
+    <div class="note-actions" style="margin-top:16px"><button class="ghost-btn" value="cancel">取消</button><button class="ghost-btn m-ok" value="ok">排上桌</button></div>
+  </form>`;
+  document.body.appendChild(dlg);
+  dlg.addEventListener("close", () => dlg.remove());
+  dlg.querySelector("[data-q]").value = $("q-input").value;
+  const seqEl = dlg.querySelector("[data-seq]"), cnt = dlg.querySelector("[data-cnt]");
+  const parse = () => [...seqEl.value].map((c) => (c in XQ_ALIAS ? XQ_ALIAS[c] : c)).filter((c) => XQ_MAX[c]);
+  const sync = () => (cnt.textContent = parse().length);
+  seqEl.addEventListener("input", sync);
+  dlg.querySelectorAll("[data-ch]").forEach((b) => b.addEventListener("click", () => { if (parse().length < n) { seqEl.value = parse().join("") + b.dataset.ch; sync(); } }));
+  dlg.querySelector("[data-undo]").addEventListener("click", () => { seqEl.value = parse().slice(0, -1).join(""); sync(); });
+  dlg.querySelector("[data-clear]").addEventListener("click", () => { seqEl.value = ""; sync(); });
+  dlg.querySelector(".m-ok").addEventListener("click", (e) => {
+    const err = (m) => { e.preventDefault(); const p = dlg.querySelector(".m-err"); p.textContent = m; p.hidden = false; };
+    const seq = parse();
+    if (!sex()) return err("請先在頁面上選擇求問者是女生還是男生。");
+    if (seq.length !== n) return err(`需要 ${n} 張，現在是 ${seq.length} 張。`);
+    const used = {}; seq.forEach((c) => (used[c] = (used[c] || 0) + 1));
+    const over = Object.keys(used).find((c) => used[c] > XQ_MAX[c]);
+    if (over) return err(`「${over}」整副只有 ${XQ_MAX[over]} 張，這裡出現了 ${used[over]} 次。`);
+    $("q-input").value = dlg.querySelector("[data-q]").value.trim();
+    setTimeout(() => {
+      if (sysId !== "one") chain = [];
+      optResults = [];
+      qingOk = true; washed = 1;
+      pool = ALL.slice(); seq.forEach((ch) => { const i = pool.indexOf(ch); if (i >= 0) pool[i] = null; });
+      picks = seq.slice(); done = true;
+      renderPool(); renderSlots(); finish();
+      renderChain(); updateInvocation();
+      $("stage-cap").textContent = "手動輸入的牌面。";
+      $("out").scrollIntoView({ behavior: "smooth" });
+    }, 0);
+  });
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+}
+window.DIO = window.DIO || {};
+DIO.manual = { label: "手動輸入翻到的牌", what: "象棋牌", run: manualEntry };
 
 /* 開發測試：?test=sysId[:modeId] 自動洗棋翻完 */
 (function () {

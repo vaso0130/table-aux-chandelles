@@ -197,6 +197,7 @@
 
 <script src="divine-core.js?v=2026102506"></script>
 <script src="divine-ui.js?v=2026102610"></script>
+<script src="divine-io.js?v=2026102601"></script>
 <script src="divine-lore.js?v=2026102502"></script>
 <script src="qs-data.js?v=2026091402"></script>
 <script src="kaijuan-learn.js?v=2026102501"></script>
@@ -242,14 +243,14 @@ function updateForm() {
 
 
 /* ═══ 燭光一句 ═══ */
-function runYiju() {
+function runYiju(pick) {   /* pick：手動輸入的句序（0 起） */
   const q = $("q-input").value.trim();
-  const i = DC.rand(DC.YIJU.length);
+  const i = pick ?? DC.rand(DC.YIJU.length);
   const s = DC.YIJU[i];
   $("out").innerHTML = '<div class="yiju-card"><div class="yiju-no">' + BL("yiju", "原創百句", "燭光一句") + "・" + BL("yiju", "第" + (i + 1) + "句", "第 " + (i + 1) + " 句") + '</div>' +
     '<div class="yiju-text">' + s + '</div>' +
     '<div class="yiju-tail">' + BL("yiju", "此樓無神", "此樓無神・司卷者機緣") + '</div></div>';
-  const pr = ["「燭光一句」開卷（本站原創答案之書,crypto 真隨機，百句取一）。" + DC.toneHead(), ""];
+  const pr = ["「燭光一句」開卷（本站原創答案之書，" + (pick == null ? "crypto 真隨機，百句取一" : "百句取一，手動輸入") + "）。" + DC.toneHead(), ""];
   if (q) pr.push("我的問題:" + q, "");
   pr.push("翻得第 " + (i + 1) + " 句：「" + s + "」", "");
   pr.push("請把這一句當作神諭展開:1. 這句話對我的問題最直接的讀法。2. 它可能在提醒我忽略了什麼。3. 依這句話，接下來一週我該做的一件具體小事。請簡短，一句神諭不需要長篇大論。");
@@ -267,11 +268,11 @@ function kieuDetail(i) {
     '<p class="lead" style="font-style:italic;line-height:2">' + viet.replace(/\n/g, "<br>") + "</p>" +
     '<p style="color:var(--ivory)">' + hant + "</p><p>" + gloss + "</p></div>";
 }
-function runKieu() {
+function runKieu(pick) {
   const q = $("q-input").value.trim();
   if (!q) { $("go-hint").textContent = "開卷前，先寫下你的問題"; return; }
   $("go-hint").textContent = "";
-  const i = DC.rand(DC.KIEU.length);
+  const i = pick ?? DC.rand(DC.KIEU.length);
   const [viet, hant, title, gloss, pol] = DC.KIEU[i];
   const polTxt = pol === "good" ? "吉" : pol === "bad" ? "慎" : "平";
   $("out").innerHTML = DC.card(BL("kieu", "焚香拜請"), BL("kieu", "Bói Kiều"),
@@ -279,7 +280,7 @@ function runKieu() {
     DC.card(BL("kieu", "第" + (i + 1) + "句", "第 " + (i + 1) + " 句・" + title), '<span class="badge' + (pol === "bad" ? " red" : pol === "good" ? "" : " dim") + '">' + BL("kieu", polTxt) + "</span>",
     '<p class="lead" style="font-style:italic;line-height:2">' + viet.replace(/\n/g, "<br>") + "</p>" +
     '<p style="color:var(--ivory)">' + hant + "</p><p>" + gloss + "</p>");
-  const pr = ["越南翹傳開卷(Bói Kiều,《金雲翹傳》選句卅五之第 " + (i + 1) + " 句,crypto 真隨機開卷)。" + DC.toneHead(), ""];
+  const pr = ["越南翹傳開卷(Bói Kiều,《金雲翹傳》選句卅五之第 " + (i + 1) + " 句," + (pick == null ? "crypto 真隨機開卷" : "手動輸入") + ")。" + DC.toneHead(), ""];
   pr.push("我的問題:" + q, "");
   pr.push("詩句:" + viet.replace(/\n/g, " / "));
   pr.push("中譯:" + hant);
@@ -512,6 +513,57 @@ DC.learnInit(() => '<div id="learn-book"></div>', (learn) => {
   }
 });
 if (/[?&]peek=(yiju|kieu|qs)-\d+/.test(location.search) && !/[?&]learn=1/.test(location.search)) document.querySelector('.view-btn[data-view="learn"]').click();
+
+/* ═══ 手動輸入：實體上已翻到的句子、求到的籤，直接填號碼（由 divine-io.js 的「匯入」叫出） ═══ */
+function manualEntry() {
+  const MAX = { yiju: DC.YIJU.length, kieu: DC.KIEU.length, qs: QS_CARDS.length };
+  const UNIT = { yiju: "句", kieu: "句", qs: "籤" };
+  const st = "display:block;width:100%;box-sizing:border-box;padding:8px 9px;font:inherit;font-size:15px;border:1px solid rgba(138,114,69,.6);border-radius:3px;background:rgba(255,255,255,.55);color:inherit";
+  const lab = "display:block;font-size:12.5px;letter-spacing:.06em;margin:10px 0 3px;opacity:.85";
+  const dlg = document.createElement("dialog");
+  dlg.className = "note";
+  dlg.innerHTML = `<form method="dialog">
+    <p style="margin-bottom:6px">手動輸入</p>
+    <p style="font-size:13px;opacity:.8;margin:0">在別處已經翻到的句子、求到的籤，直接填號碼。</p>
+    <label style="${lab}">術</label><select data-sys style="${st}">${SYS.map((x) => `<option value="${x.id}">${x.name}</option>`).join("")}</select>
+    <label style="${lab}">第幾<span data-unit></span>（1–<span data-max></span>）</label><input data-n type="number" min="1" inputmode="numeric" style="${st}">
+    <label style="${lab}">問題<span data-qreq></span></label><input data-q style="${st}">
+    <p class="m-err" style="color:#A8302A;font-size:13px;margin:10px 0 0" hidden></p>
+    <div class="note-actions" style="margin-top:16px"><button class="ghost-btn" value="cancel">取消</button><button class="ghost-btn m-ok" value="ok">打開</button></div>
+  </form>`;
+  document.body.appendChild(dlg);
+  dlg.addEventListener("close", () => dlg.remove());
+  const sel = dlg.querySelector("[data-sys]"), num = dlg.querySelector("[data-n]");
+  const sync = () => {
+    dlg.querySelector("[data-unit]").textContent = UNIT[sel.value];
+    dlg.querySelector("[data-max]").textContent = MAX[sel.value];
+    dlg.querySelector("[data-qreq]").textContent = sel.value === "kieu" ? "（翹傳必填）" : "（可留空）";
+    num.max = MAX[sel.value];
+  };
+  sel.value = sysId; sync(); sel.onchange = sync;
+  dlg.querySelector("[data-q]").value = $("q-input").value;
+  dlg.querySelector(".m-ok").addEventListener("click", (e) => {
+    const err = (m) => { e.preventDefault(); const p = dlg.querySelector(".m-err"); p.textContent = m; p.hidden = false; };
+    const id = sel.value, n = Math.round(+num.value), q = dlg.querySelector("[data-q]").value.trim();
+    if (!(n >= 1 && n <= MAX[id])) return err(`請填 1 到 ${MAX[id]} 之間的號碼。`);
+    if (id === "kieu" && !q) return err("翹傳開卷要先寫下問題。");
+    setTimeout(() => {
+      if (sysId !== id) { sysId = id; renderSys(); updateForm(); if (book) book.show(sysId); }
+      $("q-input").value = q;
+      if (id === "yiju") runYiju(n - 1);
+      else if (id === "kieu") runKieu(n - 1);
+      else {
+        qiuInit(); qiuStick = n; qiuLog = [`手動輸入：已在別處求得第${cnNum(n)}籤`];
+        $("qiu-log").textContent = qiuLog.join("　");
+        confirmQian();
+      }
+      $("out").scrollIntoView({ behavior: "smooth" });
+    }, 0);
+  });
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+}
+window.DIO = window.DIO || {};
+DIO.manual = { label: "手動輸入號碼", what: "句子或籤號", run: manualEntry };
 
 /* 開發測試:?test=yiju|kieu|qs(qs 直接定籤) */
 (function () {

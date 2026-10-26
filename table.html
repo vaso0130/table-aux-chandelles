@@ -1072,6 +1072,7 @@
 
 <script src="divine-core.js?v=2026102506"></script>
 <script src="cards-data.js?v=2026102601"></script>
+<script src="divine-io.js?v=2026102601"></script>
 <script>
 "use strict";
 
@@ -3041,7 +3042,7 @@ $("#btn-hist-clear").addEventListener("click", () => {
 });
 
 /* 重看：把紀錄還原到牌桌與解讀帳冊（不重新保存） */
-function replayReading(rec) {
+function replayReading(rec, manual) {   /* manual：手動輸入的牌面——照常保存為新紀錄 */
   if (rec.deck === "qs") { say("靈籤已經搬到開卷館。這筆舊紀錄在這裡重看不了，請到開卷館重新求籤。"); return; }
   const dk = DECKS.find((x) => x.id === (rec.deck || "len"));
   if (!dk) return;
@@ -3080,7 +3081,7 @@ function replayReading(rec) {
   elCaption.hidden = false;
   elFanScroll.hidden = true;   /* 重看不需要牌堆 */
 
-  suppressSave = true;
+  suppressSave = !manual;
   const revAt = (i) => (rec.revs ? !!rec.revs[i] : false);
   const base = Math.min(rec.cards.length, s.count);
   for (let i = 0; i < base; i++) placeCard(rec.cards[i] - 1, revAt(i));
@@ -3091,13 +3092,79 @@ function replayReading(rec) {
   }
   suppressSave = false;
 
-  currentRecId = null;         /* 重看狀態下不再更新舊紀錄 */
+  if (!manual) currentRecId = null;   /* 重看狀態下不再更新舊紀錄 */
   elExtend.hidden = true;      /* 重看模式沒有牌堆，不提供補牌 */
   elAuto.hidden = true;
-  elCaption.textContent = `重看紀錄 ── ${rec.when}`;
+  elCaption.textContent = manual ? "手動輸入的牌面" : `重看紀錄 ── ${rec.when}`;
   elTable.classList.add("on");
   elTable.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+/* ── 手動輸入：實體牌桌上已抽好的牌，照盤面逐位填入，產生解讀與提示詞（由 divine-io.js 的「匯入」叫出） ── */
+const YAO_OPTS = [[7, "少陽 ⚊"], [8, "少陰 ⚋"], [9, "老陽 ○（動）"], [6, "老陰 ×（動）"]];
+function manualEntry() {
+  if (!spread) { say("先在上方選好牌組與盤面，再手動輸入抽到的牌。"); return; }
+  const sel = "display:block;width:100%;box-sizing:border-box;padding:7px 8px;font:inherit;font-size:14px;border:1px solid rgba(138,114,69,.6);border-radius:3px;background:rgba(255,255,255,.55);color:inherit";
+  const lab = "display:block;font-size:12.5px;letter-spacing:.06em;margin:10px 0 3px;opacity:.85";
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  let rows = "";
+  if (spread.cast) {
+    rows = [5, 4, 3, 2, 1, 0].map((i) => `<label style="${lab}">${YAO_NAMES[i]}</label><select data-yao="${i}" style="${sel}">${YAO_OPTS.map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select>`).join("");
+    if (spread.najia) {
+      const d = new Date(), p2 = (x) => String(x).padStart(2, "0");
+      rows = `<label style="${lab}">起卦時刻（定月建、日辰）</label><input type="datetime-local" data-at style="${sel}" value="${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}">` + rows;
+    }
+  } else {
+    const opts = `<option value="">— 選牌 —</option>` + CARDS.map((c, i) => `<option value="${i}">${esc(c.pks || "№ " + c.n)}　${esc(c.zh)}</option>`).join("");
+    const savedSig = sigPicked; sigPicked = null;
+    for (let i = 0; i < spread.count; i++) {
+      rows += `<label style="${lab}">${i + 1}. ${esc(posName(i))}</label><div style="display:flex;gap:8px;align-items:center"><select data-pos="${i}" style="${sel};flex:1">${opts}</select>` +
+        (deckDef.reversible ? `<label style="white-space:nowrap;font-size:13px"><input type="checkbox" data-rev="${i}"> 逆位</label>` : "") + "</div>";
+    }
+    sigPicked = savedSig;
+  }
+  const dlg = document.createElement("dialog");
+  dlg.className = "note";
+  dlg.innerHTML = `<form method="dialog" style="max-height:78vh;overflow:auto">
+    <p style="margin-bottom:6px">手動輸入・${esc(deckDef.name)}・${esc(spread.name)}</p>
+    <p style="font-size:13px;opacity:.8;margin:0 0 4px">${spread.cast ? "依實際擲出的結果，由初爻往上填（表上由上爻排到初爻）。" : "依抽牌順序，把每個位置的牌填上。"}</p>
+    <label style="${lab}">問題（可留空）</label><input data-q style="${sel}" value="${esc($("#q-input").value)}">
+    ${rows}
+    <p class="m-err" style="color:#A8302A;font-size:13px;margin:10px 0 0" hidden></p>
+    <div class="note-actions" style="margin-top:16px"><button class="ghost-btn dark" value="cancel">取消</button><button class="ghost-btn dark m-ok" value="ok">排上桌</button></div>
+  </form>`;
+  document.body.appendChild(dlg);
+  dlg.addEventListener("close", () => dlg.remove());
+  dlg.querySelector(".m-ok").addEventListener("click", (e) => {
+    const err = (m) => { e.preventDefault(); const p = dlg.querySelector(".m-err"); p.textContent = m; p.hidden = false; };
+    const rec = { id: Date.now(), deck: deckDef.id, spread: spread.id, q: dlg.querySelector("[data-q]").value.trim() };
+    if (spread.cast) {
+      const lines = [0, 1, 2, 3, 4, 5].map((i) => +dlg.querySelector(`[data-yao="${i}"]`).value);
+      const bits = lines.map((v) => (v === 7 || v === 9 ? 1 : 0));
+      const moving = lines.map((v, i) => (v === 6 || v === 9 ? i : -1)).filter((i) => i >= 0);
+      const ben = DC.hexNum(bits), zhi = moving.length ? DC.hexNum(bits.map((b, i) => (moving.includes(i) ? 1 - b : b))) : null;
+      rec.cast = { lines, moving, ben, zhi, method: spread.method || "coins" };
+      if (spread.najia) {
+        const v = dlg.querySelector("[data-at]").value, m = v.match(/^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d)/);
+        if (!m) return err("請填起卦時刻。");
+        const d = new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5]);
+        rec.cast.at = { y: +m[1], m: +m[2], d: +m[3], h: +m[4], mi: +m[5], ms: d.getTime(), tz: -d.getTimezoneOffset() / 60 };
+      }
+      rec.cards = zhi ? [ben, zhi] : [ben];
+    } else {
+      const idx = [...dlg.querySelectorAll("[data-pos]")].map((x) => x.value);
+      const miss = idx.findIndex((v) => v === "");
+      if (miss >= 0) return err(`第 ${miss + 1} 個位置還沒選牌。`);
+      if (new Set(idx).size !== idx.length) return err("同一張牌出現了兩次，請再檢查一下。");
+      rec.cards = idx.map((v) => +v + 1);
+      if (deckDef.reversible) rec.revs = idx.map((_, i) => (dlg.querySelector(`[data-rev="${i}"]`).checked ? 1 : 0));
+    }
+    setTimeout(() => replayReading(rec, true), 0);
+  });
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+}
+window.DIO = window.DIO || {};
+DIO.manual = { label: "手動輸入抽到的牌", what: "牌（易經可逐爻輸入）", run: manualEntry };
 
 renderHistory();
 

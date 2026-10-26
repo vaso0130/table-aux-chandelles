@@ -217,8 +217,9 @@
 
 <script src="divine-core.js?v=2026102506"></script>
 <script src="divine-ui.js?v=2026102610"></script>
+<script src="divine-io.js?v=2026102601"></script>
 <script src="divine-lore.js?v=2026102502"></script>
-<script src="shilun-data.js?v=2026102503"></script>
+<script src="shilun-data.js?v=2026102601"></script>
 <script src="shilun-learn.js?v=2026102501"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -545,6 +546,57 @@ $("btn-copy").onclick = async () => {
 };
 window.addEventListener("resize", () => { if (!busy && els.length && els[0].isConnected) { geo = measure(els.length); $("table").style.height = geo.H + "px"; $("table").style.setProperty("--sw", geo.sw + "px"); layoutFan(0); } });
 DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣：「[^」]*」/, "語氣：「" + DC.toneValue() + "」"); });
+/* ═══ 手動輸入：實體牌已依起占時刻取好六張，逐層選牌（由 divine-io.js 的「匯入」叫出） ═══ */
+function manualEntry() {
+  if (busy) return;
+  const st = "display:block;width:100%;box-sizing:border-box;padding:7px 8px;font:inherit;font-size:14px;border:1px solid rgba(138,114,69,.6);border-radius:3px;background:rgba(255,255,255,.55);color:inherit";
+  const lab = "display:block;font-size:12.5px;letter-spacing:.06em;margin:10px 0 3px;opacity:.85";
+  const dlg = document.createElement("dialog");
+  dlg.className = "note";
+  dlg.innerHTML = `<form method="dialog" style="max-height:80vh;overflow:auto">
+    <p style="margin-bottom:6px">手動輸入・時輪占</p>
+    <p style="font-size:13px;opacity:.8;margin:0">起占時刻決定每層取第幾張；把實際取到的六張依層填上。</p>
+    <label style="${lab}">起占時刻</label><div style="display:flex;gap:8px"><input data-d type="date" style="${st}"><input data-t type="time" style="${st}"></div>
+    <label style="${lab}">問題（可留空）</label><input data-q style="${st}">
+    ${S.LAYERS.map((L, i) => `<label style="${lab}">${L.pos}（${L.name}）</label><div style="display:flex;gap:8px;align-items:center"><select data-c="${i}" style="${st};flex:1"><option value="">— 選牌 —</option>${S.CARDS[L.id].map((c, k) => `<option value="${k + 1}">${k + 1}. ${c[1]}</option>`).join("")}</select><label style="white-space:nowrap;font-size:13px"><input type="checkbox" data-r="${i}"> 逆位</label></div>`).join("")}
+    <p class="m-err" style="color:#A8302A;font-size:13px;margin:10px 0 0" hidden></p>
+    <div class="note-actions" style="margin-top:16px"><button class="ghost-btn" value="cancel">取消</button><button class="ghost-btn m-ok" value="ok">排上桌</button></div>
+  </form>`;
+  document.body.appendChild(dlg);
+  dlg.addEventListener("close", () => dlg.remove());
+  dlg.querySelector("[data-d]").value = $("w-date").value;
+  dlg.querySelector("[data-t]").value = $("w-time").value;
+  dlg.querySelector("[data-q]").value = $("q-input").value;
+  dlg.querySelector(".m-ok").addEventListener("click", (e) => {
+    const err = (m) => { e.preventDefault(); const p = dlg.querySelector(".m-err"); p.textContent = m; p.hidden = false; };
+    const dv = dlg.querySelector("[data-d]").value, tv = dlg.querySelector("[data-t]").value;
+    if (!dv || !tv) return err("請填起占日期與時間。");
+    const ns = S.LAYERS.map((_, i) => +dlg.querySelector(`[data-c="${i}"]`).value);
+    const miss = ns.findIndex((n) => !n);
+    if (miss >= 0) return err(`「${S.LAYERS[miss].pos}」還沒選牌。`);
+    const revs = S.LAYERS.map((_, i) => dlg.querySelector(`[data-r="${i}"]`).checked);
+    const q = dlg.querySelector("[data-q]").value.trim();
+    setTimeout(async () => {
+      await resetAll();
+      $("n-follow").checked = false;
+      $("w-date").value = dv; $("w-time").value = tv; $("q-input").value = q;
+      lockTime();
+      const R = { t: lockedT, P, cards: S.LAYERS.map((L, i) => S.cardOf(L, P, ns[i], revs[i])) };
+      lastR = R; revealed = true; drawnN = S.LAYERS.length; li = S.LAYERS.length - 1;
+      renderSteps();
+      fillFaces(R);
+      [...$("spread").children].forEach((s, k) => { s.querySelector(".scard").classList.add("filled", "open"); s.classList.add("shown"); s.querySelector(".sw").textContent = P.why[S.LAYERS[k].id] + "・手動輸入"; });
+      $("table").innerHTML = ""; $("table").style.height = "60px";
+      $("stage-title").textContent = "手動輸入的牌面"; $("stage-sub").textContent = ""; $("stage-cap").textContent = "";
+      $("stage").querySelector(".btn-row").hidden = true; $("bell").hidden = true;
+      finish(R);
+      $("out").scrollIntoView({ behavior: "smooth" });
+    }, 0);
+  });
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+}
+window.DIO = window.DIO || {};
+DIO.manual = { label: "手動輸入抽到的牌", what: "六張時輪牌", run: manualEntry };
 DC.histBind("鐘樓館");
 const testMode = new URLSearchParams(location.search).get("test") === "shilun";
 if (!testMode) resetAll();
