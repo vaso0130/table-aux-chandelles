@@ -242,14 +242,6 @@
     display: flex; align-items: center; gap: 14px;
     margin: 0 0 26px;
   }
-  #xq-school-row, .xq-row { margin-top: -12px; }
-  .xq-qwarn { color: var(--gold-bright); }
-  #xq-chain { margin: -8px 0 22px; padding: 10px 14px; border: 1px dashed var(--gold-dim); font-size: 13px; color: var(--muted); }
-  #xq-chain ol { margin: 4px 0 6px; padding-left: 1.4em; }
-  #xq-chain b { color: var(--ivory); font-weight: 400; }
-  .xq-row select, #xq-school { flex: 1; min-width: 0; font-family: var(--serif); font-size: 14px; background: transparent; color: var(--ivory); border: none; border-bottom: 1px solid var(--gold-dim); padding: 6px 2px; }
-  #xq-school option, .xq-row option { color: #222; }
-  .xq-school-note { margin: -14px 0 22px; color: var(--muted); font-size: 12.5px; }
   .question-row label {
     flex: 0 0 auto; font-size: 12px; letter-spacing: .35em; text-indent: .35em;
     color: var(--gold);
@@ -527,9 +519,7 @@
     background: rgba(201,164,92,.04);
   }
   #inv-text b { color: var(--gold-bright); font-weight: 600; }
-  #invocation.folded #inv-text, #invocation.folded #xq-qing { display: none; }
-  #xq-qing { margin: 6px 0 4px; }
-  #xq-qing-out { margin: 6px 0 0; font-size: 13px; color: var(--muted); min-height: 1em; }
+  #invocation.folded #inv-text { display: none; }
 
   /* 洗牌金光：交錯回插時一道斜光掠過牌疊（只動 opacity/transform,一次性） */
   #stack::after {
@@ -643,20 +633,6 @@
   }
   body.has-back .cface.back::after { content: none; }
 
-  /* ── 象棋占卜：木紋圓棋（無牌面圖，CSS 繪製）── */
-  .xqp {
-    display: inline-grid; place-items: center; vertical-align: middle;
-    width: 1.9em; height: 1.9em; border-radius: 50%;
-    font-weight: 700; font-size: 1em; line-height: 1;
-    background: radial-gradient(circle at 35% 30%, #F6DFAE, #E2BC7C 55%, #C9995A);
-    box-shadow: inset 0 0 0 .1em #E9CF9C, inset 0 0 0 .16em currentColor, inset 0 0 0 .22em #E9CF9C, 0 .08em .18em rgba(0,0,0,.45);
-    filter: none;
-  }
-  .xqp.r { color: #A8302A; }
-  .xqp.b { color: #2A2420; }
-  .cface.front .c-art:has(.xqp), .e-glyph:has(.xqp), .tip-glyph:has(.xqp) { filter: none; }
-  .cface.front .c-art .xqp { font-size: calc(var(--cw) * .3); }
-  .dc-glyph .xqp, .dd-glyph .xqp { font-size: 30px; }
 
   /* ── 解讀帳冊（象牙紙） ────────────────────── */
   #reading { display: none; margin-top: 48px; }
@@ -904,7 +880,7 @@
 
   <nav class="halls-nav" aria-label="館別導覽">
     <a title="回到燭光入口" href="index.html" class="home">燭光</a>
-    <a title="牌卡占卜：雷諾曼、塔羅、象棋等十一術" href="table.html" class="here">牌桌館</a>
+    <a title="牌卡占卜：雷諾曼、塔羅、易經等十術" href="table.html" class="here">牌桌館</a>
     <a title="象棋卜卦：單卦問事、年運、命盤、一子問事" href="xiangqi.html">象棋館</a>
     <a title="西洋/印度/卜卦占星與宿曜" href="astro.html">占星館</a>
     <a title="八字、紫微、九星、唐四柱、人類圖、生命靈數——看生辰" href="bazi.html">八字館</a>
@@ -944,35 +920,11 @@
       <input id="q-input" type="text" maxlength="200"
         placeholder="默想，寫下你想問的事（選填）">
     </div>
-    <div class="question-row" id="xq-school-row" hidden>
-      <label for="xq-school">解讀流派</label>
-      <select id="xq-school"></select>
-    </div>
-    <p class="xq-school-note" id="xq-school-note" hidden></p>
-    <p class="xq-school-note" id="xq-hall-note" hidden>象棋已獨立成館：<a href="xiangqi.html" style="color:var(--gold-bright)">象棋館</a>有計算吃子與格局的單卦問事、年運、命盤，以及一子問事。</p>
-    <div class="question-row xq-row" id="xq-sex-row" hidden>
-      <label for="xq-sex">求問者</label>
-      <select id="xq-sex"><option value="">請選擇（兵卒依此論正常或反常）</option><option value="女">女生</option><option value="男">男生</option></select>
-    </div>
-    <div class="question-row xq-row" id="xq-topic-row" hidden>
-      <label for="xq-topic">問題類別</label>
-      <select id="xq-topic"></select>
-    </div>
-    <div class="question-row xq-row" id="xq-pair-row" hidden>
-      <label for="xq-pair">紅黑約定</label>
-      <select id="xq-pair"></select>
-    </div>
-    <p class="xq-school-note xq-qwarn" id="xq-qwarn" hidden></p>
-    <div id="xq-chain" hidden></div>
 
     <div id="deck-area">
       <div id="invocation" hidden>
         <button id="inv-head" type="button" aria-expanded="true">起 卜 默 唸</button>
         <p id="inv-text"></p>
-        <div id="xq-qing" hidden>
-          <button class="ghost-btn" type="button" id="xq-qing-btn">翻 棋 請 神</button>
-          <p id="xq-qing-out" aria-live="polite"></p>
-        </div>
       </div>
       <div id="sigpick" hidden>
         <p class="deck-caption">要以指示牌開陣嗎？指定的牌代表這一問的主體，將置於陣中央——也可以不指定，全憑抽。</p>
@@ -1116,8 +1068,7 @@
 </dialog>
 
 <script src="divine-core.js?v=2026102506"></script>
-<script src="xq-data.js?v=2026102503"></script>
-<script src="cards-data.js?v=2026102506"></script>
+<script src="cards-data.js?v=2026102601"></script>
 <script>
 "use strict";
 
@@ -1278,8 +1229,6 @@ function selectDeck(d) {
   document.title = `燭光牌桌 ─ ${d.title}`;
   $(".subtitle").textContent = d.sub;
   buildSpreadMenu();
-  xqChain = [];
-  syncXqSchool();
   applyDeckBack();
   spread = null;
   elTable.classList.remove("on");
@@ -1350,9 +1299,7 @@ function selectSpread(s, btn) {
   btn.classList.add("active");
   spread = s;
   /* 問題保留——換盤面不清空（換牌組才清） */
-  xqChain = [];
   resetTable();
-  syncXqRows();
   preloadCards();
   elTable.classList.add("on");
   elTable.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1434,10 +1381,6 @@ function resetTable() {
   elAiPrompt.value = "";
   $("#btn-copy").hidden = true;
   $("#ai-links").hidden = true;
-  xqQingN = 0;
-  $("#xq-qing-out").textContent = "";
-  $("#xq-qing-btn").textContent = "翻 棋 請 神";
-  $("#xq-qing-btn").disabled = false;
   updateInvocation();
 }
 
@@ -1454,28 +1397,7 @@ const INVOCATIONS = {
   esp: (q) => `四十張古牌，金杯劍棒。今問：${q}——請以古伊比利的直白，賜我一句準話。`,
   zw:  (q) => `斗數眾星，各安其垣。今以 ${q} 叩問——願星曜借牌現身，明示吉凶。`,
   dt:  (q) => `四象環列，青龍白虎朱雀玄武。今問：${q}——願陰陽有應，卦象有靈。`,
-  xq:  (q) => `楚河漢界，三十二子蓋棋待翻。今問：${q}——願紅黑分明，一步一步，走給我看。`,
 };
-/* 聖元派起卜儀軌（依《象棋占卜祕笈》）：一、恭請千手千眼觀世音菩薩，翻棋見帥將仕相俥傌炮即為菩薩來臨；
-   二、默念姓名、住址（睡覺的地方）、農曆歲數；三、說出問題（一子問事並約定紅黑） */
-function xqInvocation(q) {
-  const p = xqPair(), deal = xqOne() && p[0] ? `，約定紅棋為「${p[0]}」、黑棋為「${p[1]}」` : "";
-  return `<b>一・請神</b><br>弟子〔默唸姓名〕，今有一事，想藉象棋求得指引，誠心恭請南無大慈大悲千手千眼廣大圓滿無礙大悲心觀世音菩薩前來相助。菩薩若已來臨，請以紅棋指示。<br><small>翻一張棋：見帥、將、仕、相、俥、傌、炮，即為菩薩來臨；否則再請一次。</small>`
-    + `<br><b>二・報名</b><br>弟子〔默唸姓名〕，住〔默唸住址，睡覺的地方〕，今年〔農曆歲數〕歲。`
-    + `<br><b>三・問事</b><br>雙手輕放在棋上：今問 ${q}${deal}，請菩薩以棋示下。<br><small>投機、賭博之事，不以象棋相問。</small>`;
-}
-/* 翻棋請神：只是儀式，不動牌堆；翻到第一類或紅色第二類（帥將仕相俥傌炮）才算菩薩來臨 */
-var xqQingN = 0;   /* var：resetTable 會重設 */
-function xqQing() {
-  const c = CARDS[Math.floor(DC.rand01() * CARDS.length)];
-  const ok = "帥將仕相俥傌炮".includes(c.ch);
-  xqQingN++;
-  $("#xq-qing-out").innerHTML = ok
-    ? `翻到 ${c.glyph} ${c.zh}——菩薩已來臨${xqQingN > 1 ? `（請了 ${xqQingN} 次）` : ""}。請默念姓名、住址、歲數，再洗牌問事。`
-    : `翻到 ${c.glyph} ${c.zh}——菩薩尚未來臨，靜心再請一次。`;
-  $("#xq-qing-btn").textContent = ok ? "菩 薩 已 來 臨" : "再 請 一 次";
-  $("#xq-qing-btn").disabled = ok;
-}
 const elInv = $("#invocation"), elInvText = $("#inv-text"), elInvHead = $("#inv-head");
 function updateInvocation() {
   if (!spread || !deckDef) { elInv.hidden = true; return; }
@@ -1483,12 +1405,10 @@ function updateInvocation() {
   const q = raw
     ? "「<b>" + raw.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</b>」"
     : "「<b>心中默想之事</b>」";
-  elInvText.innerHTML = xqSy() ? xqInvocation(q) : (INVOCATIONS[deckDef.id] || INVOCATIONS.len)(q);
-  $("#xq-qing").hidden = !xqSy();
+  elInvText.innerHTML = (INVOCATIONS[deckDef.id] || INVOCATIONS.len)(q);
   elInv.hidden = false;
 }
 $("#q-input").addEventListener("input", () => { if (!elInv.hidden) updateInvocation(); });
-$("#xq-qing-btn").addEventListener("click", xqQing);
 try { if (localStorage.getItem("lenormand-inv-fold") === "1") { elInv.classList.add("folded"); elInvHead.setAttribute("aria-expanded", "false"); } } catch (e) {}
 elInvHead.addEventListener("click", () => {
   const folded = elInv.classList.toggle("folded");
@@ -1645,7 +1565,7 @@ btnCut.addEventListener("click", () => {
 
 /* 一鍵完成儀式：洗七次+隨機一切——給趕時間的人，牌序仍是真隨機 */
 btnQuick.addEventListener("click", () => {
-  if (ritualBusy || phase !== "ritual" || !xqReady()) return;
+  if (ritualBusy || phase !== "ritual") return;
   ritualBusy = true;
   if (!elCutPiles.hidden || !elCutFanScroll.hidden) exitCutView();
   for (let k = 0; k < 7; k++) { deck = riffle(deck); }
@@ -1954,7 +1874,7 @@ function beginDraw() {
   ritualSteps();
 }
 btnBegin.addEventListener("click", () => {
-  if (btnBegin.disabled || phase !== "ritual" || !xqReady()) return;
+  if (btnBegin.disabled || phase !== "ritual") return;
   const ok = repeatGuard();
   if (ok === true) { beginDraw(); return; }
   ok.then((yes) => { if (yes && phase === "ritual") beginDraw(); });
@@ -2192,7 +2112,7 @@ function placeCard(cardIdx, forcedRev) {
     reveal();
   });
   if (card.img) { img.src = card.img; front.appendChild(img); }
-  else { clearTimeout(failsafe); reveal(); }   /* 象棋：棋子以 CSS 繪製，無圖 */
+  else { clearTimeout(failsafe); reveal(); }
 
   /* 牌義跟著牌走：滑過顯示、點按切換（觸控）、聚焦亦可（鍵盤/讀屏） */
   c3.classList.add("clickable");
@@ -2251,8 +2171,8 @@ function addEntry(card, slotIdx) {
       ${oTag}
       <span class="pol ${card.pol}">${POL_MARK[card.pol]}</span>
     </div>
-    <div class="e-keys">${card.gkeys && !xqSy() ? card.gkeys : card.keys}</div>
-    <p class="e-text">${rev && card.rtext ? card.rtext : card.gtext && !xqSy() ? card.gtext : card.text}${gtHouseNote(card, slotIdx)}${deckNote(card, slotIdx)}</p>`;
+    <div class="e-keys">${card.keys}</div>
+    <p class="e-text">${rev && card.rtext ? card.rtext : card.text}${gtHouseNote(card, slotIdx)}${deckNote(card, slotIdx)}</p>`;
   elEntries.appendChild(e);
 }
 
@@ -2350,10 +2270,6 @@ function deckNote(card, slotIdx) {
   if (deckDef.id === "bel") return belFamilyNote(card, slotIdx);
   if (deckDef.id === "zw") return zwGongNote(card, slotIdx);
   if (deckDef.id === "dt") return dtWxNote(card, slotIdx);
-  if (xqSy()) {   /* 聖元派：分類、能量強度與所問類別的讀法 */
-    const sx = XQ.sexNote(card.ch, xqSex());
-    return `<br><em>${XQ.CLS_ZH[card.sy.cls]}・能量強度 ${XQ.power(card.ch)}。問${XQ.TOPIC_ZH[xqTopic()]}：${card.sy.t[xqTopic()]}</em>${sx ? `<br><em>${sx}</em>` : ""}`;
-  }
   return "";
 }
 /* 奇卜小陣近遠法：人物牌讀四鄰（整齊網格陣適用） */
@@ -2513,124 +2429,9 @@ function finishReading() {
     elCombos.appendChild(block);
   }
 
-  if (xqSy()) elCombos.appendChild(xqSyBlock());
 
   elClosing.hidden = false;
 }
-
-/* 聖元派的解讀區塊：一子問事先依紅黑約定回答，再看強度、所問類別與由黑翻紅；可接著多占 */
-function xqSyBlock() {
-  const topic = xqTopic(), sex = xqSex(), block = document.createElement("div");
-  block.className = "combo-block";
-  if (spread.id === "xq-one") {
-    const c = drawn[0], y = c.sy, p = xqPair(), sx = XQ.sexNote(c.ch, sex);
-    const black = y.cls === 2 && !c.red;
-    const ps = [
-      p[0] ? `<b>${XQ.verdict(c.ch, p)}</b>` : `<b>開放題：不論是非，直接讀${c.zh}的棋義。</b>`,
-      `${y.core}`,
-      `問${XQ.TOPIC_ZH[topic]}：${y.t[topic]}`,
-      sx,
-      y.turn ? `由黑翻紅：${y.turn}` : "",
-      y.note || "",
-      `<span style="color:var(--ink-soft)">${p[0] && black
-        ? "依多占法，翻到黑棋可以停在這裡；也可以改問開放題，例如「要怎麼做才會好轉？」"
-        : "想問得更細，可以縮小範圍再問一題——例如先問「適合投資嗎」，再問「投資股票好嗎」。"}</span>`,
-    ].filter(Boolean);
-    block.innerHTML = `<div class="cb-title">聖 元 讀 法</div>` + ps.map((t) => `<p class="combo">${t}</p>`).join("")
-      + `<div class="deck-tools"><button class="ghost-btn dark" type="button" id="xq-more">多占・縮小範圍再問一題</button></div>`;
-    block.querySelector("#xq-more").addEventListener("click", xqMore);
-    return block;
-  }
-  block.innerHTML = `<div class="cb-title">聖 元 讀 法 ・ 逐 子</div>` + drawn.map((c, i) => {
-    const sx = XQ.sexNote(c.ch, sex);
-    return `<p class="combo"><b>${posName(i)}・${c.zh}</b>　<small style="color:var(--ink-soft)">${XQ.CLS_ZH[c.sy.cls]}・${XQ.power(c.ch)}</small><br>問${XQ.TOPIC_ZH[topic]}：${c.sy.t[topic]}${sx ? `<br>${sx}` : ""}</p>`;
-  }).join("") + `<p class="combo" style="color:var(--ink-soft)">棋義依聖元派；${spread.name}的位置擺法為本站讀法，請當參考。</p>`;
-  return block;
-}
-/* 多占：把這一問收進前面幾問，重新洗牌接著問下一題（一題一棋，逐步縮小範圍） */
-function xqMore() {
-  xqChain.push({ q: $("#q-input").value.trim(), topic: xqTopic(), pair: +$("#xq-pair").value || 0, n: drawn[0].n });
-  resetTable();
-  $("#q-input").value = "";
-  xqCheckQ();
-  updateInvocation();
-  renderXqChain();
-  elTable.scrollIntoView({ behavior: "smooth", block: "start" });
-  $("#q-input").focus({ preventScroll: true });
-}
-
-/* ── 象棋解讀流派（清單在 xq-data.js XQ.SCHOOLS；以 dc-bazi-school-xq 記住，與 MIX 共用）
-   預設聖元派：多了求問者性別（兵卒論正常／反常）、問題類別、一子問事的紅黑約定，與多占連問 ── */
-function xqSchool() {
-  let v = ""; try { v = localStorage.getItem("dc-bazi-school-xq") || ""; } catch (e) {}
-  return XQ.SCHOOLS.find((x) => x[0] === v) || XQ.SCHOOLS[0];
-}
-/* 以函式宣告寫：載入時 selectDeck（在本段之前執行）就會呼叫到 */
-function xqSy() { return deckDef.id === "xq" && xqSchool()[0] === ""; }
-function xqOne() { return xqSy() && !!spread && spread.id === "xq-one"; }
-function xqSex() { return $("#xq-sex").value; }
-function xqTopic() { return $("#xq-topic").value || XQ.TOPICS[0]; }
-function xqPair() { return XQ.PAIRS[+$("#xq-pair").value || 0]; }
-var xqChain = [];   /* 多占：前面幾問 {q, topic, pair, n}（var：載入時 selectDeck 就會讀到） */
-function syncXqSchool() {
-  const on = deckDef.id === "xq";
-  $("#xq-school-row").hidden = $("#xq-school-note").hidden = $("#xq-hall-note").hidden = !on;
-  if (on) {
-    $("#xq-school").innerHTML = XQ.SCHOOLS.map((x) => `<option value="${x[0]}">${x[1]}</option>`).join("");
-    $("#xq-school").value = xqSchool()[0];
-    $("#xq-school-note").textContent = xqSchool()[2];
-  }
-  syncXqRows();
-}
-function syncXqRows() {
-  const sy = xqSy();
-  $("#xq-sex-row").hidden = $("#xq-topic-row").hidden = !sy;
-  $("#xq-pair-row").hidden = !xqOne();
-  xqCheckQ();
-  renderXqChain();
-}
-/* 問對問題：紅棋代表約定的前者，所以題目要用正面問法；「是不是不適合」這類問法翻到紅棋會讀反 */
-function xqCheckQ() {
-  const p = xqPair(), q = $("#q-input").value.trim().replace(/(.)不\1/g, "");
-  const neg = xqOne() && p[0] && /不(適合|要|想|該|會|能|可以|行|用|去|做|選|買|換|是)|別再|是否不|會不會不|是不是不|沒必要/.test(q);
-  const w = $("#xq-qwarn");
-  w.hidden = !neg;
-  if (neg) w.textContent = `問法提醒：紅棋代表「${p[0]}」，題目請改用正面問法（例如「我去這家公司上班好嗎？」），不要問「是不是不適合」——否則翻到紅棋會把答案讀反。`;
-}
-function renderXqChain() {
-  const box = $("#xq-chain");
-  const on = xqOne() && xqChain.length > 0;
-  box.hidden = !on;
-  if (!on) { box.innerHTML = ""; return; }
-  box.innerHTML = `多占・前面幾問（這一問會接著問下去）：<ol>${xqChain.map((r) => {
-    const c = CARDS[r.n - 1], p = XQ.PAIRS[r.pair];
-    return `<li>「${(r.q || "心中默想之事").replace(/</g, "&lt;")}」→ <b>${c.zh}</b>${p[0] ? `（${c.sy.cls === 2 ? `答：${c.red ? p[0] : p[1]}` : c.sy.cls === 1 ? "神佛棋" : "事在人為"}）` : "（開放題）"}</li>`;
-  }).join("")}</ol><button class="ghost-btn" type="button" id="xq-chain-end">結束多占，從頭問</button>`;
-  $("#xq-chain-end").addEventListener("click", () => { xqChain = []; renderXqChain(); });
-}
-/* 聖元派要先知道求問者性別（兵卒依此論正常或反常） */
-function xqReady() {
-  if (!xqSy() || xqSex()) return true;
-  say("請先在上方選擇求問者是女生還是男生——翻到兵、卒時，要依此論「正常」或「反常」。");
-  $("#xq-sex").focus();
-  return false;
-}
-$("#xq-topic").innerHTML = XQ.TOPICS.map((t) => `<option value="${t}">${XQ.TOPIC_ZH[t]}</option>`).join("");
-$("#xq-pair").innerHTML = XQ.PAIRS.map((p, i) => `<option value="${i}">${p[0] ? `紅棋為「${p[0]}」，黑棋為「${p[1]}」` : "開放題（不論是非，直接看棋義）"}</option>`).join("");
-try { $("#xq-sex").value = localStorage.getItem("dc-xq-sex") || ""; } catch (e) {}
-const xqRefresh = () => { if (!elAiPrompt.hidden) elAiPrompt.value = buildAiPrompt(); };   /* 提示詞已產生就即時更新 */
-$("#xq-school").addEventListener("change", () => {
-  try { localStorage.setItem("dc-bazi-school-xq", $("#xq-school").value); } catch (e) {}
-  $("#xq-school-note").textContent = xqSchool()[2];
-  syncXqRows();
-  updateInvocation();
-  xqRefresh();
-});
-$("#xq-sex").addEventListener("change", () => { try { localStorage.setItem("dc-xq-sex", xqSex()); } catch (e) {} xqRefresh(); });
-$("#xq-topic").addEventListener("change", xqRefresh);
-$("#xq-pair").addEventListener("change", () => { xqCheckQ(); updateInvocation(); xqRefresh(); });
-$("#q-input").addEventListener("input", xqCheckQ);
-syncXqSchool();
 
 /* ── AI 解讀提示詞 ────────────────────────── */
 function buildAiPrompt() {
@@ -2647,12 +2448,8 @@ function buildAiPrompt() {
       : "你是一位精通周易的占卜解讀者，熟悉六十四卦的卦辭、象傳與義理，能將卦義落實到現代處境。請以繁體中文為我解讀以下卦陣。",
     zw:"你是一位經驗豐富的紫微斗數老師，熟悉十四主星、六吉六煞、四化與諸雜曜的星情，以及廟旺落陷的差異。請以繁體中文為我解讀以下星陣（正位視為入廟得力，逆位視為落陷失輝）。",
     dt:"你是一位經驗豐富的塔羅解讀師，眼前是一副以華夏意象重詮的東方塔羅（四象為花色：青龍財帛、朱雀行動、白虎思辨、玄武情感），結構對應標準塔羅。請以繁體中文為我解讀以下牌陣。",
-    xq: xqSy()
-      ? "你是一位熟悉台灣民間象棋占卜的解讀師，依聖元《象棋占卜祕笈》的體系斷事：三大類（天、天人之間、人）、紅黑陰陽、能量強度、字音字形取象，以及一子問事、多占的問法。請以繁體中文為我解讀以下棋局。"
-      : "你是一位熟悉台灣民間象棋卦（象棋占卜）的解讀師，懂得以紅黑陰陽、將士象車馬炮兵的兵種象意、成組棋型與棋子所在的位置來斷事。請以繁體中文為我解讀以下棋局。",
     esp:"你是一位承襲西班牙與拉丁美洲民間紙牌占卜（cartomancia con baraja española）的解讀師，熟悉四十張牌的花色語彙、人頭牌的人物指認與同數成對的傳統斷法。請以繁體中文為我解讀以下牌陣。",
   }[deckDef.id]);
-  if (deckDef.id === "xq" && xqSchool()[3]) L.push("解讀流派：" + xqSchool()[3]);
   if (deckDef.reversible) {
     const norevs = CARDS.filter((c) => c.norev).map((c) => `「${c.zh}」`).join("、");
     L.push(`本牌陣使用正逆位：逆位請解讀為該牌能量的受阻、延遲、內化或反面。${norevs ? `唯${norevs}不分正逆位，請恆以其本義解讀，勿作逆位發揮。` : ""}`);
@@ -2669,9 +2466,6 @@ function buildAiPrompt() {
     run: "讀法補充（三族）：符文分三族——弗雷族(1-8)司生計豐饒、海姆達爾族(9-16)司變局考驗、提爾族(17-24)司人事天命；某族過半即為本問重心。正逆同形之符所言為常數，非一時之運。",
     dt: "讀法補充（四象生剋）：小牌兼讀四象五行——木生火、火生土、土生金、金生水、水生木；同象得位氣旺、相生得助、相剋受制；大牌不拘五行、權重最重。",
     esp: "讀法補充（花色與人物）：人頭牌請逐一指認為問卜者身邊的真實人物（sota＝晚輩或消息、caballo＝在路上的人事、rey＝拍板者；花色定領域）；同數成對依傳統斷法；並統計四花色多寡定全局基調（金幣論財、聖杯論情、寶劍論非、棍杖論勞）。",
-    xq: xqSy()
-      ? "讀法補充（聖元派）：棋分三大類——第一類「天」是帥、將，為神佛棋（帥屬佛、代表觀世音菩薩；將屬道、代表道德天尊），不以紅黑論好壞；第二類「天人之間」是仕相俥傌炮與士象車馬包，紅為好、為肯定，黑為不好、為否定，並看能量強度：仕士 100%、相象 90%、俥車 80%、傌馬 70%、炮包 60%（紅為「X% 的好」、黑為「X% 的不好」），強度可當作把握程度；第三類「人」是兵、卒，事在人為、平平（50%），兵代表女性、卒代表男性，求問者性別與之相反時為「反常」，要細心找出異狀。紅黑兩兩相對（帥將、仕士、相象、俥車、傌馬、炮包、兵卒），能量相同、吉凶相反，可對照著讀。字音、字形取象是核心技法（如仕音同是、士少了人而孤單、相加心成想、俥台語音近機、包音近保）。棋子不分正逆。"
-      : "讀法補充（象棋卦）：紅為陽、為明、為吉，黑為陰、為暗、為凶；但帥將與兵卒不以紅黑論吉凶——帥將看主事的人或核心力量在明處還是幕後，兵卒看小事與眾人的多寡。兵種象意：將帥＝主事者或關鍵力量、仕士＝貼身之人、相象＝家宅守成、車＝主力強勢、馬＝奔波轉折、炮包＝借力或口舌、兵卒＝小事與眾人。也可依字音字形取象（如「士」通「仕」，主官位）。標「本站讀法」的棋型為本站自訂，請當參考。棋子不分正逆。",
     gra: "讀法補充（神話五系列）：每張牌屬一系列——同系列多張相鄰或成列，請串成該神話的一段情節（金羊毛＝求取、特洛伊＝攻守、煉金＝轉化、時序＝時機、意外＝變數）。",
   };
   if (DECK_TIPS[deckDef.id]) L.push(DECK_TIPS[deckDef.id]);
@@ -2686,20 +2480,6 @@ function buildAiPrompt() {
     if (mx >= Math.ceil(drawn.length / 3)) {
       const verdicts = ["金幣過秤：此問終究是錢的事。", "聖杯滿桌：感情與人情是底色。", "寶劍林立：是非當道，先避其鋒。", "棍杖成林：一切要靠做，空想無益。"];
       L.push(`花色盤點：${["金幣", "聖杯", "寶劍", "棍杖"].map((s, i) => s + sc[i]).join("、")}——${verdicts[sc.indexOf(mx)]}`);
-    }
-  }
-  if (xqSy()) {
-    L.push(`求問者：${xqSex() ? xqSex() + "生" : "未填"}；問題類別：${XQ.TOPIC_ZH[xqTopic()]}。`);
-    if (spread.id === "xq-one") {
-      const p = xqPair();
-      L.push(p[0] ? `問前約定：紅棋為「${p[0]}」，黑棋為「${p[1]}」（一子問事：一題翻一顆棋，依約定直接回答）。` : "這一問是開放題：不論是非，直接以翻出那顆棋的棋義回答。");
-      if (xqChain.length) {
-        L.push("【多占・前面幾問】（多占法：一題一棋，逐步縮小範圍；這一問是接著問下去的）");
-        xqChain.forEach((r, i) => {
-          const c = CARDS[r.n - 1], p2 = XQ.PAIRS[r.pair];
-          L.push(`${i + 1}. 問「${r.q || "心中默想之事"}」（${XQ.TOPIC_ZH[r.topic]}；${p2[0] ? `紅＝${p2[0]}、黑＝${p2[1]}` : "開放題"}）→ 翻到${c.zh}（${XQ.power(c.ch)}）${p2[0] ? `：${XQ.verdict(c.ch, p2)}` : ""}`);
-        });
-      }
     }
   }
   if (spread.gong) L.push("宮位讀法：入廟之星在該宮得力（煞星則煞為我用）；落陷之星示該宮的破口（吉星則助力打折）。");
@@ -2817,33 +2597,21 @@ function buildAiPrompt() {
     }
   }
   L.push("");
-  L.push(deckDef.id === "xq"
-    ? xqSy() ? "【翻棋結果】（聖元派：帥將屬天、兵卒屬人，不以紅黑論好壞；其餘紅好黑不好，看能量強度）"
-      : "【翻棋結果】（依翻出順序；✦吉／✧挑戰／◦中性——仕相車馬炮紅吉黑凶，帥將與兵卒不以紅黑論吉凶）"
-    : "【抽牌結果】（依抽出順序；✦吉／✧挑戰／◦中性）");
+  L.push("【抽牌結果】（依抽出順序；✦吉／✧挑戰／◦中性）");
   const polMark = (c) => ({ good: "✦吉", bad: "✧挑戰", mid: "◦中性" }[c.pol]);
   drawn.forEach((c, i) => {
     const myth = deckDef.id === "gra" && c.myth ? `・${c.myth[0]}系列` : "";
     L.push(deckDef.reversible
       ? `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（${c.pk}，${c.norev ? "不分正逆位" : drawnRev[i] ? "逆位" : "正位"}）〔${polMark(c)}〕— 關鍵詞：${c.keys}`
-      : deckDef.id === "xq" ? (xqSy() ? `${i + 1}. ${posName(i)}：${c.zh}（${c.pk}）— 關鍵詞：${c.keys}`
-        : `${i + 1}. ${posName(i)}：${c.zh}（${c.latin.split("・")[1]}，${c.pk}）〔${polMark(c)}〕— 關鍵詞：${c.gkeys}`)
       /* № 只留給以牌號為傳統名的雷諾曼；易經卦序、奇卜牌號已在 pk 中，西班牙牌的 № 是站內排序 */
-      : `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（${deckDef.id === "len" || deckDef.id === "gra" ? `№${c.n}，` : ""}${{ len: "撲克對應 ", gra: "撲克對應 ", yi: "卦序 ", kip: "牌號 ", esp: "花色點數 ", xq: "" }[deckDef.id] || ""}${c.pk}${myth}）〔${polMark(c)}〕— 關鍵詞：${c.keys}`);
-    if ((deckDef.id === "gra" || deckDef.id === "zw" || deckDef.id === "dt" || deckDef.id === "xq") && !spread.gt)
-      L.push(`   ${deckDef.id === "xq" ? "棋義" : "牌義"}：${drawnRev[i] && c.rtext ? c.rtext : c.gtext && !xqSy() ? c.gtext : c.text}`);
-    if (xqSy()) {
-      L.push(`   聖元派：${XQ.syLine(c, xqTopic())}`);
-      const sx = XQ.sexNote(c.ch, xqSex());
-      if (sx) L.push(`   ${sx}`);
-    }
+      : `${i + 1}. ${posName(i)}：${c.zh} ${c.latin}（${deckDef.id === "len" || deckDef.id === "gra" ? `№${c.n}，` : ""}${{ len: "撲克對應 ", gra: "撲克對應 ", yi: "卦序 ", kip: "牌號 ", esp: "花色點數 "}[deckDef.id] || ""}${c.pk}${myth}）〔${polMark(c)}〕— 關鍵詞：${c.keys}`);
+    if ((deckDef.id === "gra" || deckDef.id === "zw" || deckDef.id === "dt") && !spread.gt)
+      L.push(`   牌義：${drawnRev[i] && c.rtext ? c.rtext : c.text}`);
   });
   const cb = spread.combos(drawn.slice(0, spread.count));
   if (cb.length) {
     L.push("");
-    L.push(deckDef.id === "xq"
-      ? "【棋局判讀】（依棋型規則判出；標「本站讀法」者為本站自訂。請以此為底深化）"
-      : "【牌與牌之間】（已依組合語法成句，請以此為底深化）");
+    L.push("【牌與牌之間】（已依組合語法成句，請以此為底深化）");
     cb.forEach((c) => L.push(c.a ? `- ${c.a.zh} ✦ ${c.b.zh}（${c.label}）：${c.text}` : `- ${c.label}：${c.text}`));
     if (deckDef.id === "len" || deckDef.id === "gra") L.push("組合文法：前牌為名詞、後牌為修飾——可依此自行擴讀其他相鄰牌。");
   }
@@ -2851,8 +2619,6 @@ function buildAiPrompt() {
   L.push("【請提供】");
   if (deckDef.id === "yi") {
     yiRequests().forEach((t, i) => L.push(`${i + 1}. ${t}`));
-  } else if (deckDef.id === "xq") {
-    xqRequests().forEach((t, i) => L.push(`${i + 1}. ${t}`));
   } else {
     L.push("1. 整體牌陣的基調與核心訊息");
     L.push("2. 逐一位置的解讀（牌義結合位置意義）");
@@ -2921,51 +2687,6 @@ function yiRequests() {
     "整體卦象的基調：各卦卦辭與大象合觀，點出核心訊息",
     "逐一位置的解讀：卦辭、大象結合位置意義（象徵抽籤，無動爻，不論爻辭與之卦）",
     "卦與卦之間的關聯：上下卦的重疊或對反、卦序先後、互錯綜相連之處",
-    advice,
-  ];
-}
-
-/* 象棋卦的【請提供】：以紅黑、兵種、棋型與位置（起承轉收／天人地）斷事，不套牌陣的「相鄰牌組合」模板 */
-function xqRequests() {
-  const advice = `給問卜者的具體建議（${currentTone()}）`;
-  if (xqSy() && spread.id === "xq-one") {
-    const p = xqPair(), c = drawn[0];
-    const sx = c && (c.ch === "兵" || c.ch === "卒") ? [`這顆是${c.ch}：依求問者性別說明是「正常」還是「反常」，反常要提醒留意什麼`] : [];
-    const chain = xqChain.length ? ["把【多占・前面幾問】的結果串起來：範圍縮小到哪裡、這一問補上了什麼"] : [];
-    return p[0] ? [
-      `先依問前約定直接回答：紅棋為「${p[0]}」、黑棋為「${p[1]}」（帥將屬天、兵卒屬人，不以紅黑論，請改依棋義說明）`,
-      "再以這顆棋的棋義、字音字形取象細化答案，能量強度當作把握程度",
-      `依我的問題類別（${XQ.TOPIC_ZH[xqTopic()]}）帶出這顆棋的讀法；若是黑棋，說明怎麼「由黑翻紅」`,
-      ...sx, ...chain, advice,
-      "依多占法建議下一個可以縮小範圍再問的題目（用正面問法；若翻到黑棋，可停在這裡，或改問「要怎麼做才會好轉」）",
-    ] : [
-      "開放題：不論是非，直接以這顆棋的棋義、字音字形取象與能量強度回答我的問題",
-      `依我的問題類別（${XQ.TOPIC_ZH[xqTopic()]}）帶出這顆棋的讀法`,
-      ...sx, ...chain, advice,
-    ];
-  }
-  const shape = "若上列【棋局判讀】有王見王、成組、雙車雙馬雙炮或兵卒多等棋型，說明它們如何互相印證；沒有就略過";
-  const syLines = xqSy() ? [`各棋依聖元派的三大類與能量強度定好壞輕重（帥將屬天、兵卒屬人且依求問者性別論正常或反常），並帶出問題類別（${XQ.TOPIC_ZH[xqTopic()]}）的讀法；棋陣擺法為本站讀法`] : [];
-  if (spread.id === "xq-gate") return [
-    "看主位（本體）的顏色與兵種，以及紅黑多寡，定全局明暗與吉凶基調",
-    ...syLines,
-    "逐位解讀：主位與起、承、轉、收四角，各以兵種象意結合位置意涵",
-    shape,
-    "起承轉收串讀：把四角讀成一段連貫的過程，看收位落在何處",
-    "就我所問之事的斷語：可否、順逆與時機",
-    advice,
-  ];
-  if (spread.id === "xq-three") return [
-    "三才法逐一解讀：天（己方）、地（對方與環境）、人（關鍵與過程），兵種象意結合各自的身分",
-    ...syLines,
-    "三者的關係：己方與對方誰強誰弱、關鍵落在哪一邊、過程順不順",
-    shape,
-    "就我所問之事的斷語",
-    advice,
-  ];
-  return [
-    "紅為明、為吉、為可，黑為暗、為凶、為緩（帥將、兵卒不以紅黑論）——此事可否、快慢",
-    "兵種象意落到所問之事：是誰、什麼力量在主導",
     advice,
   ];
 }
@@ -3106,13 +2827,6 @@ function drawSpreadImage(imgs) {   /* imgs：{牌序 n → 已載入的 Image}�
       g.save(); g.beginPath(); g.roundRect(x, y, CW, CH, 9); g.clip();
       g.drawImage(im, x, y, CW, CH); g.restore();
       g.strokeStyle = GOLD; g.lineWidth = 1.4; g.beginPath(); g.roundRect(x, y, CW, CH, 9); g.stroke();
-    } else if (c.ch) {   /* 象棋：木紋圓棋 */
-      const cx = x + CW / 2, cy = y + CH / 2 - 14, r = CW * .3;
-      g.fillStyle = "#E9C98F"; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
-      g.strokeStyle = c.red ? "#A8302A" : "#2A2420"; g.lineWidth = 2;
-      g.beginPath(); g.arc(cx, cy, r - 5, 0, Math.PI * 2); g.stroke();
-      g.fillStyle = c.red ? "#A8302A" : "#2A2420"; g.font = `700 ${Math.round(r * 1.1)}px ${serif}`;
-      g.fillText(c.ch, cx, cy + r * .38);
     } else {
       g.fillStyle = IVORY; g.font = `44px ${serif}`;
       g.fillText(c.glyph, x + CW / 2, y + CH / 2 - 8);
@@ -3257,7 +2971,6 @@ function saveHistoryRecord() {
     revs: deckDef.reversible ? drawnRev.map((r) => (r ? 1 : 0)) : undefined,
     cast: spread.cast && castInfo ? castInfo : undefined,
     sigd: spread.sig && sigPicked !== null ? 1 : undefined,
-    xq: xqSy() ? { sex: xqSex(), topic: xqTopic(), pair: +$("#xq-pair").value || 0, chain: xqChain.slice() } : undefined,
   };
   currentRecId = rec.id;
   const list = loadHist();
@@ -3336,13 +3049,6 @@ function replayReading(rec) {
   spread = s;
   resetTable();
   $("#q-input").value = rec.q || "";
-  if (rec.xq) {   /* 聖元派：還原當時的性別、類別、約定與多占（只改畫面，不改記住的選擇） */
-    $("#xq-sex").value = rec.xq.sex || "";
-    $("#xq-topic").value = rec.xq.topic || XQ.TOPICS[0];
-    $("#xq-pair").value = String(rec.xq.pair || 0);
-    xqChain = (rec.xq.chain || []).slice();
-  } else xqChain = [];
-  syncXqRows();
   phase = "draw";
   elRitual.hidden = true;
   elCast.hidden = true;        /* 重看不需要重擲 */
@@ -3395,27 +3101,12 @@ renderHistory();
 /* ── 牌義字典 ─────────────────────────────── */
 const elDictGrid = $("#dict-grid"), elDictDetail = $("#dict-detail");
 
-/* 象棋：依本館三個盤面的實際位置示範讀法（開門卦五位＋三才三位） */
-function xqPosLines(c) {
-  const K = c.keys.split("・"), lead = K[0], tone = c.pol === "good" ? "吉" : c.pol === "bad" ? "凶" : "中性";
-  const neutral = c.kind === "king" || c.kind === "soldier";
-  return [
-    ["主位・本體", `事情的本體是「${lead}」——${c.red ? "攤在明處" : "藏在暗處"}${neutral ? "；帥將兵卒不以紅黑論吉凶，看它是誰、做了什麼" : `，全局偏${tone}`}。`],
-    ["起・開端", `事情從「${lead}」開始${neutral ? "" : c.red ? "，開頭就順" : "，開頭就有阻力"}。`],
-    ["承・發展", `眼下的走勢帶著「${K[1] || lead}」——${c.red ? "看得見、可順勢而為" : "有看不見的部分，邊走邊看"}。`],
-    ["轉・變數", `轉折落在「${K[2] || lead}」：最容易出狀況、也最可能出現轉機的地方。`],
-    ["收・結果", neutral ? `收在「${lead}」：結局繫於${c.kind === "king" ? "主事的人怎麼拍板" : "小事一件件做完"}。` : `收在${c.red ? "紅" : "黑"}子「${lead}」：結局偏${tone}${c.red ? "，可期" : "，多留後手"}。`],
-    ["天・己方（三才）", `你這一方的樣子是「${lead}」——${c.text}`],
-    ["地・對方與環境（三才）", `對面或環境呈現「${lead}」：${c.red ? "外在條件明朗" : "外在有暗處未明"}，${neutral ? "看是誰在主事" : `對你偏${tone}`}。`],
-    ["人・關鍵與過程（三才）", `關鍵在「${K[1] || lead}」：事情成不成，看這一點怎麼走。`],
-  ];
-}
 /* 八種常見位置的讀法：依牌的關鍵詞與吉凶組句 */
 function dictPosLines(c) {
   const K = c.keys.split("・");
   const last = deckDef.id === "yi" ? (K[1] || K[0]) : K[K.length - 1]; /* 易經末詞常為卦辭截語，改取次詞 */
   const isLen = deckDef.id === "len";
-  const unit = { yi: "這一卦", run: "這枚符文", zw: "這顆星", xq: "這張牌" }[deckDef.id] || "這張牌";
+  const unit = { yi: "這一卦", run: "這枚符文", zw: "這顆星" }[deckDef.id] || "這張牌";
   const isPerson = /當事人|指示牌/.test(c.keys) || (deckDef.id === "sib" && SIB_PERSONS[c.n]);
   const rows = [
     ["過去・根源", isLen
@@ -3466,8 +3157,6 @@ function renderDict() {
   elDictDetail.hidden = true;
   elDictGrid.innerHTML = "";
   CARDS.forEach((c, i) => {
-    /* 象棋 32 子有重複（兵卒各五、仕相車馬炮各二），字典每種只列一次 */
-    if (deckDef.id === "xq" && CARDS.findIndex((x) => x.kind === c.kind && x.red === c.red) !== i) return;
     const b = document.createElement("button");
     b.className = "dict-card";
     b.innerHTML = `
@@ -3478,7 +3167,7 @@ function renderDict() {
     img.addEventListener("error", () => {
       const g = document.createElement("div");
       g.className = "dc-glyph";
-      g.innerHTML = c.glyph;   /* 牌組靜態資料；象棋的 glyph 是棋子標記 */
+      g.innerHTML = c.glyph;   /* 牌組靜態資料 */
       img.replaceWith(g);
     });
     b.addEventListener("click", () => showDictCard(i));
@@ -3505,39 +3194,13 @@ function showDictCard(i) {
         <p class="combo">第 ${c.n} 宮・${c.zh}宮（${c.keys.split("・")[0]}之所）——大版圖中落入此宮的牌，都${c.mod}。</p>
       </div>`;
   }
-  if (deckDef.id === "xq") {
-    const n = CARDS.filter((x) => x.kind === c.kind && x.red === c.red).length;
-    const temple = { king: c.red ? "帥讀作神明或神助（如觀音）" : "將讀作神明或神助", guard: "仕士讀作無形的力量或護持", chariot: c.red ? "" : "黑車讀作業障或無形干擾" }[c.kind];
-    const y = c.sy, mate = CARDS.find((x) => x.kind === c.kind && x.red !== c.red);
-    const row = (k, v) => `<p class="combo"><b>${k}</b>　${v}</p>`;
-    extra = `
-      <div class="dict-sec"><div class="cb-title">聖 元 派 ・ 速 讀</div>
-        ${row("分類", XQ.CLS_ZH[y.cls])}${row("陰陽", c.red ? "陽（紅棋）" : "陰（黑棋）")}${row("能量強度", XQ.power(c.ch))}
-        ${row("神佛代表", y.god)}${row("代表人物", y.fig)}${row("代表數字", y.num)}
-        ${row("字形字音", y.xing)}${row("對照", `與${mate.zh}成對，能量相同、${y.cls === 2 ? "好壞相反" : "各有定義"}。`)}
-        ${y.turn ? row("由黑翻紅", y.turn) : ""}${y.note ? row("提醒", y.note) : ""}${row("投資標的", y.inv)}
-      </div>
-      <div class="dict-sec"><div class="cb-title">聖 元 派 ・ 五 類 問 題</div>
-        ${XQ.TOPICS.map((t) => row(XQ.TOPIC_ZH[t], y.t[t])).join("")}
-        <p class="combo" style="color:var(--ink-soft)">參考聖元《象棋占卜祕笈》的體系，文字為本站改寫。共 ${n} 張${c.zh}。</p>
-      </div>
-      <div class="dict-sec"><div class="cb-title">一 般 讀 法</div>
-        <p class="combo"><b>${c.gkeys}</b><br>${c.gtext}</p>
-        <p class="combo">${c.kind === "king" || c.kind === "soldier"
-          ? "帥將與兵卒<b>不以紅黑論吉凶</b>：帥將看主事的核心在明處還是幕後，兵卒看小事與眾人的多寡。"
-          : `仕相車馬炮依<b>紅吉黑凶</b>論：紅${c.ch}偏吉、黑${c.ch}偏凶，再看位置。`}</p>
-        ${temple ? `<p class="combo" style="color:var(--ink-soft)">宮廟派讀法：${temple}。</p>` : ""}
-        <p class="combo" style="color:var(--ink-soft)">「一般讀法」「宮廟派」可在占卜牌桌的「解讀流派」切換。</p>
-      </div>`;
-  }
   const revBlock = deckDef.reversible && c.rtext
     ? `<div class="dict-sec"><div class="cb-title">${c.norev ? "正 逆 之 辨" : "逆 位 牌 義"}</div><p class="e-text">${c.rtext}</p></div>`
     : "";
-  const posRows = (deckDef.id === "xq" ? xqPosLines(c) : dictPosLines(c))
+  const posRows = dictPosLines(c)
     .map(([p, t]) => `<p class="combo"><b>${p}</b><br>${t}</p>`).join("");
   const corr = deckDef.id === "len"
     ? `№ ${c.n} ・ 撲克對應 ${c.pk}`
-    : deckDef.id === "xq" ? c.pk   /* 象棋的 pks（紅方／黑方）已含在 pk 裡 */
     : [c.pks, c.pk].filter(Boolean).join(" ・ ") || `№ ${c.n}`;
   elDictDetail.innerHTML = `
     <div class="dict-head">
@@ -3549,11 +3212,11 @@ function showDictCard(i) {
         <div style="margin-top:8px"><span class="pol ${c.pol}">${POL_MARK[c.pol]}</span></div>
       </div>
     </div>
-    <div class="dict-sec"><div class="cb-title">${deckDef.id === "xq" ? "棋 義" : deckDef.reversible && !c.norev ? "正 位 牌 義" : "牌 義"}</div><p class="e-text">${c.text}</p></div>
+    <div class="dict-sec"><div class="cb-title">${deckDef.reversible && !c.norev ? "正 位 牌 義" : "牌 義"}</div><p class="e-text">${c.text}</p></div>
     ${revBlock}
     ${extra}
     <div class="dict-sec"><div class="cb-title">位 置 解 讀</div>
-      <p class="ai-note" style="margin:0 0 4px">${deckDef.id === "xq" ? "同一張牌落在不同位置，說的是不同層面的話。依本館盤面的位置各示範一種讀法。" : "同一張牌落在不同位置，說的是不同層面的話。八種常見位置，各示範一種讀法。"}</p>
+      <p class="ai-note" style="margin:0 0 4px">同一張牌落在不同位置，說的是不同層面的話。八種常見位置，各示範一種讀法。</p>
       ${posRows}
     </div>`;
   const img = elDictDetail.querySelector(".dd-img");
@@ -3580,9 +3243,6 @@ function guideTip(s) {
   if (deckDef.id === "yi") return `<b>牌卦沒有動爻</b>，以卦辭、大象為斷，不擬爻辭、不論之卦。各位置是象徵抽籤的框架，把每一卦的象放進該位置的問題裡讀。${rev}`;
   if (s.id === "houses") return `<b>每宮一張</b>，以牌義對應該宮的人生領域；先看命宮（自我）、財帛、夫妻、官祿四宮，再看其餘。同一張牌落不同宮，說的是不同層面。${rev}`;
   if (s.sig) return `<b>指示牌代表這一問的主體</b>，置於中央。先讀 它相鄰的牌：左為來路、右為去向、上為所思（懸於心頭）、下為所踏（已在掌握）；再看左右鏡影與對角。不指定而全洗入抽，指示牌自然落陣的位置本身就是訊息。${rev}`;
-  if (s.id === "xq-one") return `<b>聖元派一子問事</b>：先選問題類別，約定紅黑各代表什麼（例如紅為「好」、黑為「不好」），題目用正面問法——問「我去這家公司上班好嗎」，不要問「是不是不適合」，否則翻到紅棋會讀反。先恭請千手千眼觀世音菩薩（全稱「南無大慈大悲千手千眼廣大圓滿無礙大悲心觀世音菩薩」），翻一張見帥、將、仕、相、俥、傌、炮即為菩薩來臨（可按「翻棋請神」）；再默念姓名、住址、農曆歲數，雙手放在棋上說出問題，翻一張：紅給前者、黑給後者，能量強度當作把握程度（仕士 100%、相象 90%、俥車 80%、傌馬 70%、炮包 60%）。帥將是神佛棋、兵卒事在人為，不以紅黑論；兵代表女性、卒代表男性，和求問者性別相反為「反常」。想問細，就用<b>多占</b>：一題一棋，逐步縮小範圍；翻到黑棋可以停，或改問「要怎麼做才會好轉」。投機、賭博之事不問。`;
-  if (s.id === "xq-gate") return `<b>先看主位那張</b>：顏色定明暗，兵種定主角；再看紅黑多寡、有沒有王見王（帥將同現）或成組。最後依右上起、左上承、左下轉、右下收，把四角讀成一段過程（「收位定結局」為本站讀法）。仕相車馬炮紅吉黑凶，帥將與兵卒不以紅黑論吉凶。選聖元派時，每顆棋另依三大類與能量強度論輕重（五張的擺法仍是本站讀法）。`;
-  if (deckDef.id === "xq") return `<b>先看紅黑</b>：紅為明、為吉，黑為暗、為凶——但帥將與兵卒不以紅黑論吉凶。再看兵種：將帥主事、仕士近身、相象守家、車是主力、馬主奔波、炮包借力或口舌、兵卒是小事與眾人。${s.id === "xq-three" ? "三才法：天是己方、地是對方與環境、人是關鍵與過程。選聖元派時，每顆棋另依三大類與能量強度論輕重。" : ""}`;
   if (s.count === 1) return `<b>一張牌一句話</b>。先讀關鍵詞，再把牌義放進你的問題裡。今日指引不必求全，記一句就夠。${rev}`;
   if (s.count <= 3) return `<b>先各讀一張</b>，再把相鄰兩張連成一句：前牌為主詞，後牌為修飾。三張讀出一條線，中央那張是重心。${rev}`;
   if (s.count >= 9) return `<b>先掃全局</b>：吉牌多還是挑戰牌多，人物牌落在哪。再依位置逐張讀，最後讀相鄰組合；同欄上下可讀「所思／所踏」。${rev}`;
@@ -3666,7 +3326,6 @@ if (location.search.includes("rwdtest")) {
     } else {
       if (spread.sig) $("#sigpick-btns .sig-btn").click();   /* 十字陣：選第一個指示牌選項 */
       deck = riffle(deck); shuffleCount++;
-      if (xqSy() && !xqSex()) $("#xq-sex").value = "女";   /* 象棋聖元派須先選性別 */
       btnBegin.disabled = false;
       btnBegin.click();
       [...elFan.querySelectorAll(".fan-card")].slice(0, target - drawn.length).forEach((el, i) => {
@@ -3695,7 +3354,7 @@ if (location.search.includes("rwdtest")) {
 if (location.search.includes("selftest")) {
   const out = [];
   const t = (name, cond, detail) => out.push((cond ? "✓ " : "✗ ") + name + (detail ? " → " + detail : ""));
-  const MC = { len: 36, sib: 52, bel: 53, kip: 36, gra: 54, run: 24, esp: 40, yi: 64, zw: 36, dt: 78, xq: 32 };
+  const MC = { len: 36, sib: 52, bel: 53, kip: 36, gra: 54, run: 24, esp: 40, yi: 64, zw: 36, dt: 78 };
   DECKS.forEach((d) => {
     t(`${d.id} 張數`, d.cards.length === MC[d.id], `${d.cards.length}≠${MC[d.id]}`);
     const badC = d.cards.filter((c, i) => !(c.n === i + 1 && c.zh && c.keys && c.text && ["good", "bad", "mid"].includes(c.pol) && (!d.reversible || c.rtext || c.norev)));

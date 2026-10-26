@@ -2338,28 +2338,9 @@ const DECKS = [
     cards: DT_CARDS, spreads: DT_SPREADS, reversible:true, preload:true,
     back:"cards-dongtarot/back.jpg" },
 ];
-/* ── 象棋占卜：棋子資料與組合判讀在 xq-data.js（MIX 共用），須先於本檔載入 ── */
-if (typeof XQ !== "undefined") {
-  const xqCombos = (d) => XQ.analyze(d).map((t) => ({ label: "棋局", text: t }));
-  DECKS.push({ id:"xq", hall:"east", name:"象棋占卜", short:"象棋卦 · 32 子",
-    title:"象棋占卜",
-    sub:"三十二張棋牌蓋在桌上——翻開哪一張，命運就走到哪一步。",
-    cards: XQ.CARDS, reversible:false, preload:true, back:"cards-xq/back.jpg",
-    spreads: [
-      { id:"xq-gate", name:"五張開門卦", count:5, cols:3,
-        desc:"中間主位看本體，四角依右上、左上、左下、右下讀起承轉收——常見的象棋卦入門卦法。",
-        positions: XQ.POS, hints: XQ.HINTS, place: XQ.PLACE, combos: xqCombos },
-      { id:"xq-one", name:"一子問事", count:1, cols:1,
-        desc:"聖元派的基本問法：問前約定紅黑（如紅為好、黑為不好），一題翻一張；想問細，就用多占逐題縮小範圍。",
-        positions:["此事"], combos: () => [] },
-      { id:"xq-three", name:"三子・天地人", count:3, cols:3,
-        desc:"三才法：天為己方、地為對方與環境、人為關鍵與過程——三張牌看你、對面與兩者之間。",
-        positions:["天・己方","地・對方與環境","人・關鍵與過程"], combos: xqCombos },
-    ] });
-}
-/* ── 六牌陣・全景：各牌組通用盤面（易經以擲卦為本體、象棋以開門卦為本體，不加） ── */
+/* ── 六牌陣・全景：各牌組通用盤面（易經以擲卦為本體，不加） ── */
 DECKS.forEach((d) => {
-  if (d.id === "yi" || d.id === "xq") return;
+  if (d.id === "yi") return;
   const hasNoun = d.id === "len" || d.id === "gra";
   d.spreads.push({
     id: "six-" + d.id, name: "六牌陣・全景", count: 6, cols: 3,

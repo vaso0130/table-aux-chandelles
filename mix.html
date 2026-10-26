@@ -40,7 +40,7 @@
 
   <nav class="halls-nav">
     <a title="回到燭光入口" href="index.html" class="home">燭光</a>
-    <a title="牌卡占卜：雷諾曼、塔羅、象棋等十一術" href="table.html">牌桌館</a>
+    <a title="牌卡占卜：雷諾曼、塔羅、易經等十術" href="table.html">牌桌館</a>
     <a title="象棋卜卦：單卦問事、年運、命盤、一子問事" href="xiangqi.html">象棋館</a>
     <a title="西洋/印度/卜卦占星與宿曜" href="astro.html">占星館</a>
     <a title="八字、紫微、九星、唐四柱、人類圖、生命靈數——看生辰" href="bazi.html">八字館</a>
@@ -560,7 +560,7 @@ function drawCards(deckId, deckName) {
 for (const [id, dk, nm] of [["c-len", "len", "雷諾曼"], ["c-sib", "sib", "西碧拉"], ["c-bel", "bel", "貝林神諭"], ["c-kip", "kip", "奇卜"],
   ["c-gra", "gra", "大雷諾曼"], ["c-run", "run", "盧恩符文"], ["c-zw", "zw", "紫微星曜"], ["c-dt", "dt", "東方塔羅"], ["c-esp", "esp", "西班牙牌"]])
   GEN[id] = () => drawCards(dk, nm);
-/* 象棋占卜：32 張棋牌洗勻翻五張開門卦（同牌桌館讀法，xq-data.js） */
+/* 象棋占卜：32 張棋牌洗勻翻五張開門卦（同象棋館傳統卦陣讀法，xq-data.js） */
 GEN["c-xq"] = () => {
   const a = XQ.CARDS.slice();
   for (let k = a.length - 1; k > 0; k--) { const j = DC.rand(k + 1); [a[k], a[j]] = [a[j], a[k]]; }
