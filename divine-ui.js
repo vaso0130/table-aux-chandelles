@@ -168,6 +168,7 @@ DC.histBind = function (page) { // 各館歷史各自獨立（同一儲存鍵，
       var act = document.createElement("div"); act.className = "h-actions";
       var bv = document.createElement("button"); bv.className = "ghost-btn"; bv.textContent = "重看";
       bv.onclick = function () {
+        if (DC.histReplay && DC.histReplay(r)) { $id("out").scrollIntoView({ behavior: "smooth" }); return; }   /* 能重算的館（象棋館）依紀錄重新產生結果與提示詞 */
         $id("out").innerHTML = r.html;
         $id("prompt-box").value = r.prompt;
         $id("prompt-sec").hidden = false;
@@ -188,7 +189,7 @@ DC.histBind = function (page) { // 各館歷史各自獨立（同一儲存鍵，
     clr.textContent = "清空本館歷史";
     clr.onclick = function () { save(all().filter(function (r) { return !mine(r); })); render(); };
   }
-  DC.histSave = function (pg, title, q, html, prompt) {
+  DC.histSave = function (pg, title, q, html, prompt, state) {
     var a = all();
     /* 重複占問勸誡：系統=館+術名(title 第一段);今日同系統同題（模糊）第三次起提醒 */
     var sysKey = pg + "|" + String(title).split("・")[0];
@@ -200,7 +201,7 @@ DC.histBind = function (page) { // 各館歷史各自獨立（同一儲存鍵，
       if (DC.simQ(r.q, q) >= DC.SIMQ_TH) n++;
     });
     if (n >= 2) setTimeout(function () { DC.say(DC.REPEAT_MSG.replace("{n}", n + 1)); }, 400);
-    a.unshift({ t: Date.now(), page: pg, title: title, q: q || "", html: html, prompt: prompt });
+    a.unshift({ t: Date.now(), page: pg, title: title, q: q || "", html: html, prompt: prompt, state: state });
     var kept = 0;   /* 每館各留最近 30 筆，不再互相擠掉 */
     a = a.filter(function (r) { return DC.histPageOf(r) !== pg || ++kept <= PER_PAGE; });
     save(a); render();
