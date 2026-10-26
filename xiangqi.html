@@ -117,14 +117,14 @@
     <div class="plate">
       <p class="eyebrow">Le Pavillon des Échecs</p>
       <h1>燭光棋閣</h1>
-      <p class="subtitle">三十二子蓋在桌上，由你親手翻開——吃與被吃之間，看見一件事、一年，乃至一生的形狀。</p>
+      <p class="subtitle">三十二張象棋牌蓋在桌上，由你親手翻開——吃與被吃之間，看見一件事、一年，乃至一生的形狀。</p>
     </div>
   </header>
 
   <nav class="halls-nav">
     <a title="回到燭光入口" href="index.html" class="home">燭光</a>
     <a title="牌卡占卜：雷諾曼、塔羅、易經等十術" href="table.html">牌桌館</a>
-    <a title="象棋卜卦：單卦問事、年運、命盤、一子問事" href="xiangqi.html" class="here">象棋館</a>
+    <a title="象棋卜卦：單卦問事、年運、命盤、一張問事" href="xiangqi.html" class="here">象棋館</a>
     <a title="西洋/印度/卜卦占星與宿曜" href="astro.html">占星館</a>
     <a title="八字、紫微、九星、唐四柱、人類圖、生命靈數——看生辰" href="bazi.html">八字館</a>
     <a title="奇門、六壬、太乙、梅花、河洛——問此刻與時機" href="shi.html">式占館</a>
@@ -136,7 +136,7 @@
   </nav>
 
   <nav class="views" id="views" aria-label="頁面切換">
-    <button class="view-btn active" data-view="divine">翻棋問事</button>
+    <button class="view-btn active" data-view="divine">翻牌問事</button>
     <button class="view-btn" data-view="learn">入門教學</button>
   </nav>
 
@@ -172,15 +172,15 @@
 
     <div id="ritual">
       <div id="invocation"></div>
-      <div class="btn-row" style="justify-content:center" id="qing-row" hidden>
-        <button class="ghost-btn" type="button" id="btn-qing">翻 棋 請 神</button>
+      <div class="btn-row" style="justify-content:center" id="qing-row">
+        <button class="gold-btn" type="button" id="btn-qing">翻 牌 請 神</button>
         <span class="hint" id="qing-out" aria-live="polite"></span>
       </div>
       <div class="board-wrap"><div id="slots"></div></div>
-      <div id="pool" aria-label="蓋著的棋子，點一下翻開"></div>
+      <div id="pool" aria-label="蓋著的牌，點一下翻開"></div>
       <p id="stage-cap" aria-live="polite"></p>
       <div class="btn-row" style="justify-content:center">
-        <button class="gold-btn" id="btn-wash">洗 棋</button>
+        <button class="gold-btn" id="btn-wash">洗 牌</button>
         <button class="ghost-btn" id="btn-auto" disabled>替我翻完</button>
         <button class="ghost-btn" id="btn-reset">重新開始</button>
         <span class="hint" id="go-hint"></span>
@@ -208,7 +208,7 @@
 
   <p class="footnote">
     單卦、年運與命盤參考《改寫人生的象棋卜卦》的體系（棋子分數、吃子規則、格局與命盤排法），由本站程式計算；一子問事參考《象棋占卜祕笈》（聖元）。<br>
-    兩書文字未經授權，本館的解說皆為改寫。翻棋以 <b>crypto</b> 真隨機洗牌。僅供靜心與參考，健康與重大決定請以專業意見為準。
+    兩書文字未經授權，本館的解說皆為改寫。翻牌以 <b>crypto</b> 真隨機洗牌。僅供靜心與參考，健康與重大決定請以專業意見為準。
   </p>
 </div>
 
@@ -217,7 +217,7 @@
 <script src="divine-lore.js?v=2026102502"></script>
 <script src="xq-data.js?v=2026102503"></script>
 <script src="xq-engine.js?v=2026102602"></script>
-<script src="xiangqi-learn.js?v=2026102602"></script>
+<script src="xiangqi-learn.js?v=2026102603"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const E = XQE, POSZ = E.POS_ZH, NUM = E.NUM;
@@ -239,17 +239,17 @@ const QT = [
   ["health", "健康", "目前的健康狀況、疾病原因。身體不舒服請先就醫，這裡只作參考。", "我目前的健康狀況如何？"],
   ["event", "活動開不開心", "與利益無關的活動：不看得失，看卦象呈現的狀態。", "下週的畢業旅行會不會開心？"],
   ["cause", "是不是這個原因（是非）", "問「這件事是不是因為○○？」——出現好朋友格就代表「是」。", "我最近不順，是不是因為搬家？"],
-  ["past", "前世關係", "我跟某人的前世關係：中間的顏色看前世性別，第一組同位階棋子看關係。", "我跟某人上一世是什麼關係？"],
+  ["past", "前世關係", "我跟某人的前世關係：中間的顏色看前世性別，第一組同位階的牌看關係。", "我跟某人上一世是什麼關係？"],
   ["clean", "清理效果", "祈請淨化之後，想知道效果如何：只看收穫，並看好朋友格。", "我清理「容易想太多」的效果如何？"],
 ];
 const SYS = [
-  { id: "single", name: "單卦問事", sub: "十字五子・一事一卦", n: 5, modes: QT.map((q) => [q[0], q[1], q[2]]) },
-  { id: "year", name: "年運", sub: "十字五子・一年", n: 5, hint: "問「我今年（明年）的年運」，未指定以農曆年論，也可以問某個月。依狀態、互動關係、格局、收穫付出、健康五步讀。" },
-  { id: "chart", name: "命盤", sub: "三十二子・一生", n: 32, hint: "不需生辰。三十二子依序翻完排成八局：總格看一生的主結構，接著學習、情感、事業，與每十年的運勢。命盤以第一次排的為主，請慎重。" },
+  { id: "single", name: "單卦問事", sub: "十字五張・一事一卦", n: 5, modes: QT.map((q) => [q[0], q[1], q[2]]) },
+  { id: "year", name: "年運", sub: "十字五張・一年", n: 5, hint: "問「我今年（明年）的年運」，未指定以農曆年論，也可以問某個月。依狀態、互動關係、格局、收穫付出、健康五步讀。" },
+  { id: "chart", name: "命盤", sub: "三十二張・一生", n: 32, hint: "不需生辰。三十二張依序翻完排成八局：總格看一生的主結構，接著學習、情感、事業，與每十年的運勢。命盤以第一次排的為主，請慎重。" },
   { id: "gate", name: "傳統卦陣", sub: "開門卦・三才・三種讀法", n: 5,
     modes: [["gate", "五張開門卦", "中間主位看本體，四角依右上起、左上承、左下轉、右下收——常見的象棋卦入門卦法（擺法為本站讀法）。"],
-      ["three", "三子・天地人", "三才法：天為己方、地為對方與環境、人為關鍵與過程——三張看你、對面與兩者之間。"]] },
-  { id: "one", name: "一子問事", sub: "聖元派・多占", n: 1, hint: "一題翻一顆：問前先約定紅黑代表什麼，翻到哪顆就依約定回答。想問細，就用多占逐題縮小範圍。" },
+      ["three", "三張・天地人", "三才法：天為己方、地為對方與環境、人為關鍵與過程——三張看你、對面與兩者之間。"]] },
+  { id: "one", name: "一張問事", sub: "聖元派・多占", n: 1, hint: "一題翻一張：問前先約定紅黑代表什麼，翻到哪張就依約定回答。想問細，就用多占逐題縮小範圍。" },
 ];
 let sysId = "single", modeId = "good", book = null;
 const sys = () => SYS.find((s) => s.id === sysId);
@@ -289,7 +289,7 @@ function updateForm() {
   if (s.modes) { $("f-type").innerHTML = s.modes.map((m) => `<option value="${m[0]}">${m[1]}</option>`).join(""); $("f-type").value = modeId; $("f-type-note").textContent = md[2]; }
   $("f-type-w").querySelector("label").textContent = s.id === "gate" ? "卦陣" : "題型";
   $("p-title").textContent = s.name;
-  $("p-hint").textContent = s.id === "single" ? "一個問題翻五子，排成十字：中、左、右、上、下。依題型用書中的判法。"
+  $("p-hint").textContent = s.id === "single" ? "一個問題翻五張，排成十字：中、左、右、上、下。依題型用書中的判法。"
     : s.id === "gate" ? "台灣民間常見的象棋卦陣，可選三種讀法：聖元派、一般讀法、宮廟派。" : s.hint;
   $("f-school-w").hidden = s.id !== "gate";
   $("f-school-note").textContent = school()[2];
@@ -299,7 +299,7 @@ function updateForm() {
   $("f-age-w").hidden = s.id !== "chart";
   $("f-pair-w").hidden = s.id !== "one";
   $("f-topic-w").hidden = !(s.id === "one" || (s.id === "gate" && school()[0] === ""));
-  $("qing-row").hidden = s.id !== "one";
+  qingOk = false; qingN = 0;
   if (s.id !== "one") chain = [];
   resetTable();
 }
@@ -318,17 +318,17 @@ function resetTable(keepPool) {
   $("out").innerHTML = optResults.length ? $("out").innerHTML : "";
   if (!optResults.length) $("prompt-sec").hidden = true;
   $("go-hint").textContent = "";
-  $("qing-out").textContent = ""; $("btn-qing").textContent = "翻 棋 請 神"; $("btn-qing").disabled = false;
+  if (!qingOk) { $("qing-out").textContent = "洗牌前，請先恭請觀世音菩薩。"; $("btn-qing").textContent = "翻 牌 請 神"; $("btn-qing").disabled = false; }
   renderPool(); renderSlots(); updateInvocation(); checkQ(); renderChain();
 }
 function renderPool() {
-  $("pool").innerHTML = pool.map((ch, i) => `<button type="button" data-i="${i}"${ch === null ? ' class="gone" disabled' : ""} aria-label="蓋著的棋卡"><span class="xcard back"><img src="cards-xq/back.jpg" alt="" onerror="this.remove()">${qz("", "back")}</span></button>`).join("");
+  $("pool").innerHTML = pool.map((ch, i) => `<button type="button" data-i="${i}"${ch === null ? ' class="gone" disabled' : ""} aria-label="蓋著的象棋牌"><span class="xcard back"><img src="cards-xq/back.jpg" alt="" onerror="this.remove()">${qz("", "back")}</span></button>`).join("");
   $("pool").querySelectorAll("button").forEach((b) => {
     b.onclick = () => pick(+b.dataset.i);
   });
   $("btn-auto").disabled = !washed || done;
-  $("stage-cap").textContent = done ? "棋已翻齊。" : !washed ? "先洗棋，把棋序交給你的手。"
-    : `第 ${picks.length + 1}／${need()} 子：憑直覺點一顆蓋著的棋` + (sysId === "chart" ? "（第 4 子之後依「中、左、右、下」一局一局排下去）" : "");
+  $("stage-cap").textContent = done ? "牌已翻齊。" : !qingOk ? "先翻牌請神，菩薩來臨後再洗牌。" : !washed ? "先洗牌，把牌序交給你的手。"
+    : `第 ${picks.length + 1}／${need()} 張：憑直覺點一張蓋著的牌` + (sysId === "chart" ? "（第 4 張之後依「中、左、右、下」一局一局排下去）" : "");
 }
 /* 洗棋：一、收攏到盤心疊成一堆；二、雙手反向搓轉（一半順時針、一半逆時針，像真的在桌上搓象棋）；
    三、由盤心往外一圈圈排回棋盤，落定時輕輕一頓。和鐘樓館的扇形、光環、對插洗牌刻意不同 */
@@ -366,17 +366,18 @@ async function washAnim() {
 }
 $("btn-wash").onclick = async () => {
   if (busy || done || picks.length) return;
+  if (!qingOk) { $("stage-cap").textContent = "請先「翻牌請神」：翻到帥、將、仕、相、俥、傌、炮，即為菩薩來臨。"; $("btn-qing").focus(); return; }
   busy = true; $("btn-wash").disabled = true;
-  $("stage-cap").textContent = "雙手在棋盤上搓動三十二子……";
+  $("stage-cap").textContent = "雙手在棋盤上搓動三十二張牌……";
   shuffle(pool); washed++;
   await washAnim();
   busy = false; $("btn-wash").disabled = false;
   renderPool();
-  $("stage-cap").textContent = `洗了 ${washed} 次${washed < 3 ? "，可再洗幾次" : "，棋序已經夠亂了"}。點一顆蓋著的棋開始翻。`;
+  $("stage-cap").textContent = `洗了 ${washed} 次${washed < 3 ? "，可再洗幾次" : "，牌序已經夠亂了"}。點一張蓋著的牌開始翻。`;
 };
 function pick(i) {
   if (busy || done || pool[i] === null) return;
-  if (!washed) { $("stage-cap").textContent = "請先洗棋。"; return; }
+  if (!washed) { $("stage-cap").textContent = "請先洗牌。"; return; }
   if (!sex()) { $("stage-cap").textContent = "請先在上面選擇求問者是女生還是男生——位置代表誰、兵卒怎麼讀，都要看這一欄。"; $("f-sex").focus(); return; }
   picks.push(pool[i]); pool[i] = null;
   $("pool").querySelector(`[data-i="${i}"]`).classList.add("gone");
@@ -392,7 +393,7 @@ $("btn-auto").onclick = () => {
   while (picks.length < need()) { const i = left.splice(DC.rand(left.length), 1)[0]; picks.push(pool[i]); pool[i] = null; }
   done = true; renderPool(); renderSlots(); finish();
 };
-$("btn-reset").onclick = () => { chain = []; optResults = []; $("out").innerHTML = ""; resetTable(); };
+$("btn-reset").onclick = () => { chain = []; optResults = []; qingOk = false; qingN = 0; $("out").innerHTML = ""; resetTable(); };
 
 /* 盤位：十字（中左右上下的擺放順序）；命盤 33 位 */
 const CROSS_GRID = [[null, 3, null], [1, 0, 2], [null, 4, null]];   /* 列×欄 → 抽出序（0 起） */
@@ -452,16 +453,12 @@ function renderSlots(flipIdx) {
   if (flipIdx !== undefined) { const all = $("slots").querySelectorAll(s.id === "chart" ? ".qz:not(.slot):not(.dim)" : ".xcard:not(.slot)"); const el = all[s.id === "chart" ? [...all].length - 1 : all.length - 1]; if (el && !RM) el.classList.add("flip"); }
 }
 
-/* ═══ 起卜默念：單卦／年運／命盤靜心默念；一子問事用聖元派請神 ═══ */
+/* ═══ 起卜儀軌（聖元派）：所有卦式都先請神、報名、問事 ═══ */
 const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 function updateInvocation() {
   const q = $("q-input").value.trim(), qq = "「<b>" + (q ? esc(q) : sysId === "year" ? "今年的年運" : sysId === "chart" ? "這一生的命盤" : "心中默想之事") + "</b>」";
-  if (sysId === "one") {
-    const p = pair(), deal = p[0] ? `，約定紅棋為「${p[0]}」、黑棋為「${p[1]}」` : "";
-    $("invocation").innerHTML = `<b>一・請神</b>　弟子〔默唸姓名〕，今有一事，想藉象棋求得指引，誠心恭請南無大慈大悲千手千眼廣大圓滿無礙大悲心觀世音菩薩前來相助。菩薩若已來臨，請以紅棋指示。<br><small>翻一張：見帥、將、仕、相、俥、傌、炮即為菩薩來臨（可按「翻棋請神」）。</small><br><b>二・報名</b>　弟子〔姓名〕，住〔住址〕，今年〔農曆歲數〕歲。<br><b>三・問事</b>　雙手輕放在棋上：今問 ${qq}${deal}，請菩薩以棋示下。<br><small>投機、賭博之事，不以象棋相問。</small>`;
-  } else {
-    $("invocation").innerHTML = `靜心幾個呼吸，把問題在心裡說清楚：${qq}。<br>${sysId === "chart" ? "命盤由本人親手翻；" : "問事只問自己或直系血親的事，問別人的事請改從「我」出發（例如「我答應他去做，對我有沒有好處」）；"}一事不二卜。<br><small>投機、賭博之事，不以象棋相問。</small>`;
-  }
+  const p = pair(), deal = sysId === "one" && p[0] ? `，約定紅牌為「${p[0]}」、黑牌為「${p[1]}」` : "";
+  $("invocation").innerHTML = `<b>一・請神</b>　弟子〔默唸姓名〕，今有一事，想藉象棋求得指引，誠心恭請南無大慈大悲千手千眼廣大圓滿無礙大悲心觀世音菩薩前來相助。菩薩若已來臨，請以紅牌指示。<br><small>按「翻牌請神」翻一張：見帥、將、仕、相、俥、傌、炮即為菩薩來臨，否則再請一次。</small><br><b>二・報名</b>　弟子〔姓名〕，住〔住址，睡覺的地方〕，今年〔農曆歲數〕歲。<br><b>三・問事</b>　雙手輕放在牌上：今問 ${qq}${deal}，請菩薩以牌示下。<br><small>${sysId === "chart" ? "命盤由本人親手翻；" : "只問自己或直系血親的事，問別人的事請改從「我」出發；"}一事不二卜。投機、賭博之事，不以象棋相問。</small>`;
 }
 $("q-input").addEventListener("input", () => { updateInvocation(); checkQ(); });
 $("f-pair").onchange = () => { updateInvocation(); checkQ(); };
@@ -475,14 +472,15 @@ function checkQ() {
   if (neg) $("qwarn").textContent = "問法提醒：請用正面問法（例如「我去這家公司上班好嗎？」），不要問「是不是不適合」——否則讀出來的答案會反過來。";
 }
 
-/* ═══ 聖元派一子問事：請神、多占 ═══ */
+/* ═══ 請神與多占 ═══ */
 const pair = () => XQ.PAIRS[+$("f-pair").value || 0];
-let chain = [], qingN = 0;
+var chain = [], qingN = 0, qingOk = false;   /* 每次占卜前都要請神：菩薩來臨才能洗牌（同一題的多占、比較選項沿用） */
 $("btn-qing").onclick = () => {
   const c = ALL[DC.rand(32)], ok = "帥將仕相俥傌炮".includes(c);
   qingN++;
-  $("qing-out").innerHTML = ok ? `翻到 ${qz(c, "sm")}——菩薩已來臨${qingN > 1 ? `（請了 ${qingN} 次）` : ""}，請報名、洗棋問事。` : `翻到 ${qz(c, "sm")}——菩薩尚未來臨，靜心再請一次。`;
+  $("qing-out").innerHTML = ok ? `翻到 ${qz(c, "sm")}——菩薩已來臨${qingN > 1 ? `（請了 ${qingN} 次）` : ""}，請報名、問事，再洗牌。` : `翻到 ${qz(c, "sm")}——菩薩尚未來臨，靜心再請一次。`;
   $("btn-qing").textContent = ok ? "菩 薩 已 來 臨" : "再 請 一 次"; $("btn-qing").disabled = ok;
+  if (ok) { qingOk = true; renderPool(); }
 };
 function renderChain() {
   const box = $("chain");
@@ -795,7 +793,7 @@ function runCross(q) {
   if (type !== "clean") cards.push(prayerHtml(items));
   /* 選擇題：同一副棋不放回，再起一卦並排比較 */
   const cmp = !year && ["good", "money", "suit", "relation"].includes(type);
-  const html = cards.join("") + (cmp && optResults.length < 2 ? `<div class="btn-row" style="justify-content:center"><button class="ghost-btn" id="btn-opt">比較另一個選項（棋不放回，再翻五子）</button></div>` : "");
+  const html = cards.join("") + (cmp && optResults.length < 2 ? `<div class="btn-row" style="justify-content:center"><button class="ghost-btn" id="btn-opt">比較另一個選項（牌不放回，再翻五張）</button></div>` : "");
   const pr = crossPrompt(a, q, type, J, rl);
   if (cmp && optResults.length) {
     optResults.push({ q, html: cards.slice(0, 3).join(""), pr });
@@ -816,7 +814,7 @@ function runCross(q) {
 }
 function crossPrompt(a, q, type, J, rl) {
   const L = [], own = a.own, cp = (c) => `${pzt(a, c.by)}${c.full ? "吃" : "得"}${pzt(a, c.target)}${c.full ? "" : "的好處"}${c.why.length ? "（" + c.why.join("、") + "）" : ""} ${c.by.red === own ? "+" : "−"}${c.v}`;
-  L.push(`卦象（十字五子；①中＝我自己、②左、③右、④上、⑤下）：${a.pieces.map((p, i) => NUM[i] + POSZ[i] + color(p) + p.ch).join("、")}`);
+  L.push(`卦象（十字五張；①中＝我自己、②左、③右、④上、⑤下）：${a.pieces.map((p, i) => NUM[i] + POSZ[i] + color(p) + p.ch).join("、")}`);
   L.push(`位置代表的人（求問者${sex()}生、${married() ? "已婚" : "單身"}）：${rl.slice(1).map((r, i) => POSZ[i + 1] + "＝" + r).join("；")}`);
   L.push(`我方＝中間的${color(a.center)}方。收穫 +${a.gain}、付出 −${a.cost}（全吃得全分，得好處得一半）`);
   a.caps.forEach((c) => L.push("  " + cp(c)));
@@ -863,7 +861,7 @@ function runChart(q) {
   const totalExtra = E.chartTotalPats(T, sx);
   /* 總格 */
   const hl = healthLines(T, true);
-  cards.push(DC.card("命盤", "三十二子・八局", `<div class="board-wrap">${chartHtml(picks, nowAge)}<div style="flex:1 1 260px;max-width:460px">`
+  cards.push(DC.card("命盤", "三十二張・八局", `<div class="board-wrap">${chartHtml(picks, nowAge)}<div style="flex:1 1 260px;max-width:460px">`
     + `<p class="verdict">你是${qz(T.center.ch, "sm")}：${TRAIT[T.center.kind][0]}。</p><p>做事的能量：${TRAIT[T.center.kind][1]}。</p>`
     + (tf.notes.length ? `<p>總格是一生的「土壤」：${tf.notes.join("、")}，之後每十年的收穫都要打折（約剩 ${Math.round(tf.gain * 100)}%）。</p>` : "<p>總格沒有打折的格局，是一塊不錯的土壤。</p>")
     + (c.weakFromY !== null ? `<p>命盤中間一直排下來，連續五隻以上同色：${weakAge(c.weakFromY)}起，體質會轉弱，要多保養。</p>` : "") + "</div></div>"));
@@ -872,7 +870,7 @@ function runChart(q) {
     + (T.tri.地 ? "" : "<p>總格沒有兵卒：錢比較留不下來。</p>") + (T.pieces.some((p) => p.kind === "elephant") ? "<p>總格有相象：有「庫」，利於置產。</p>" : "")
     + `<p class="section-label">健康</p>` + (hl.length ? hl.map((x) => "<p>・" + x + "</p>").join("") : "<p>沒有特別要留意的。</p>")));
   cleanItems(T, { missing: true }).forEach(([t, k]) => allItems.push(["總格", t, k]));
-  pr.push(`命盤（三十二子；抽出順序 1中 2左 3右 4上 5下，之後每局中左右下，第 33 位補第 4 子）：`);
+  pr.push(`命盤（三十二張；抽出順序 1中 2左 3右 4上 5下，之後每局中左右下，第 33 位補第 4 張）：`);
   pr.push(`求問者${sx}生、${married() ? "已婚" : "單身"}${nowAge ? "、今年虛歲 " + nowAge : ""}；位置代表的人：${rl.slice(1).map((r, i) => POSZ[i + 1] + "＝" + r).join("；")}`);
   c.rounds.forEach((r) => {
     const a = r.a, k = r.k;
@@ -948,7 +946,7 @@ function runGate(q) {
       + (sy ? `${XQ.CLS_ZH[y.cls]}・${XQ.power(c.ch)}。${y.core}<br>問${XQ.TOPIC_ZH[topic]}：${y.t[topic]}${sx ? "<br>" + sx : ""}`
         : `<span style="color:var(--gold)">${c.gkeys}</span>〔${XQ.POL_ZH[c.pol]}〕——${c.gtext}`) + "</div>";
   }).join("");
-  const label = (need() === 5 ? "五張開門卦" : "三子・天地人") + "・" + sch[1];
+  const label = (need() === 5 ? "五張開門卦" : "三張・天地人") + "・" + sch[1];
   $("out").innerHTML = DC.card("傳統卦陣", label + (q ? "・" + esc(q) : ""), gateHtml(picks) + rows)
     + DC.card("棋局", need() === 5 ? "紅黑、成組與起承轉收" : "紅黑與成組", ana.map((t) => "<p>・" + t + "</p>").join("")
       + '<p style="color:var(--muted);font-size:12.5px">標「本站讀法」的棋型與卦陣擺法為本站自訂，請當參考。</p>');
@@ -985,7 +983,7 @@ function runOne(q) {
     `<div class="kv"><span><b>分類</b>${XQ.CLS_ZH[y.cls]}</span><span><b>能量強度</b>${XQ.power(ch)}</span><span><b>神佛</b>${y.god}</span><span><b>人物</b>${y.fig}</span><span><b>數字</b>${y.num}</span></div>`,
     `<p style="color:var(--muted)">${p[0] && black ? "依多占法，翻到黑棋可以停在這裡；也可以改問開放題，例如「要怎麼做才會好轉？」" : "想問得更細，可以縮小範圍再問一題。"}</p>`,
   ];
-  $("out").innerHTML = DC.card("一子問事", "聖元派", `<div class="cross big"><div class="cell"></div><div class="cell">${xcard(ch)}</div><div class="cell"></div></div>` + ps.join(""))
+  $("out").innerHTML = DC.card("一張問事", "聖元派", `<div class="cross big"><div class="cell"></div><div class="cell">${xcard(ch)}</div><div class="cell"></div></div>` + ps.join(""))
     + '<div class="btn-row" style="justify-content:center"><button class="ghost-btn" id="btn-more">多占・縮小範圍再問一題</button></div>';
   $("btn-more").onclick = () => { chain.push({ q, ch, pair: +$("f-pair").value || 0, topic }); $("q-input").value = ""; resetTable(); $("panel").scrollIntoView({ behavior: RM ? "auto" : "smooth" }); };
   const L = ["依聖元《象棋占卜祕笈》的體系：帥將屬天（神佛棋）、兵卒屬人（事在人為；兵代表女性、卒代表男性，與求問者性別相反為反常），皆不以紅黑論好壞；其餘紅好黑不好，看能量強度（仕士 100%、相象 90%、俥車 80%、傌馬 70%、炮包 60%）。",
@@ -997,7 +995,7 @@ function runOne(q) {
   L.push("", "請先依問前約定直接回答，再以棋義、字音字形取象細化，強度當作把握程度；若是黑棋說明怎麼由黑翻紅；若有多占前題，把整串串起來；最後建議下一個可以縮小範圍再問的題目（用正面問法）。");
   $("prompt-box").value = ["你是熟悉台灣民間象棋占卜的解讀師。" + DC.toneHead(), "", ...(q ? ["我的問題：" + q, ""] : []), ...L].join("\n");
   $("prompt-sec").hidden = false;
-  DC.histSave("象棋館", "一子問事", q, $("out").innerHTML, $("prompt-box").value);
+  DC.histSave("象棋館", "一張問事", q, $("out").innerHTML, $("prompt-box").value);
 }
 
 $("btn-copy").onclick = async () => {
@@ -1024,7 +1022,7 @@ DC.learnInit(() => '<div id="learn-book"></div>', (learn) => {
   sysId = s; if (m) modeId = m; renderSys(); updateForm();
   $("f-sex").value = $("f-sex").value || "女"; $("f-age").value = "45";
   $("q-input").value = "測試提問：這件事會順利嗎";
-  setTimeout(async () => { try { await $("btn-wash").onclick(); $("btn-auto").onclick(); document.title = $("prompt-sec").hidden ? "XQ-TEST-FAIL:" + $("go-hint").textContent : "XQ-TEST-OK"; } catch (e) { document.title = "XQ-TEST-FAIL " + e.message; } }, 80);
+  setTimeout(async () => { try { qingOk = true; await $("btn-wash").onclick(); $("btn-auto").onclick(); document.title = $("prompt-sec").hidden ? "XQ-TEST-FAIL:" + $("go-hint").textContent : "XQ-TEST-OK"; } catch (e) { document.title = "XQ-TEST-FAIL " + e.message; } }, 80);
 })();
 </script>
 </html>
