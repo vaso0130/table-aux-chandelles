@@ -158,6 +158,9 @@
       <div class="field"><label for="f-sex">求問者</label>
         <select id="f-sex"><option value="">請選擇</option><option value="女">女生</option><option value="男">男生</option></select>
         <div class="note">位置代表的人（左女右男、配偶）與兵卒的讀法都看這一欄</div></div>
+      <div class="field"><label for="f-faith">信仰</label>
+        <select id="f-faith"><option value="bud">佛教・恭請觀世音菩薩</option><option value="chr">基督信仰・禱告耶和華</option></select>
+        <div class="note">決定占卜前的請神儀式與清理祈請文</div></div>
       <div class="field" id="f-mar-w"><label for="f-mar">婚姻</label>
         <select id="f-mar"><option value="">單身（含離婚）</option><option value="1">已婚</option></select></div>
       <div class="field" id="f-age-w" hidden><label for="f-age">今年虛歲（選填）</label>
@@ -173,7 +176,7 @@
     <div id="ritual">
       <div id="invocation"></div>
       <div class="btn-row" style="justify-content:center" id="qing-row">
-        <button class="gold-btn" type="button" id="btn-qing">翻 牌 請 神</button>
+        <button class="gold-btn" type="button" id="btn-qing"></button>
         <span class="hint" id="qing-out" aria-live="polite"></span>
       </div>
       <div class="board-wrap"><div id="slots"></div></div>
@@ -217,7 +220,7 @@
 <script src="divine-lore.js?v=2026102502"></script>
 <script src="xq-data.js?v=2026102503"></script>
 <script src="xq-engine.js?v=2026102602"></script>
-<script src="xiangqi-learn.js?v=2026102603"></script>
+<script src="xiangqi-learn.js?v=2026102604"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const E = XQE, POSZ = E.POS_ZH, NUM = E.NUM;
@@ -259,9 +262,20 @@ const LS = { get: (k) => { try { return localStorage.getItem(k) || ""; } catch (
 $("f-sex").value = LS.get("dc-xq-sex");
 $("f-mar").value = LS.get("dc-xq-mar");
 $("f-age").value = LS.get("dc-xq-age");
+$("f-faith").value = LS.get("dc-xq-faith") || "bud";
 $("f-sex").onchange = () => { LS.set("dc-xq-sex", $("f-sex").value); renderSlots(); };
 $("f-mar").onchange = () => LS.set("dc-xq-mar", $("f-mar").value);
 $("f-age").onchange = () => LS.set("dc-xq-age", $("f-age").value);
+const chr = () => $("f-faith").value === "chr";
+/* 依信仰換用語：佛教恭請觀世音菩薩，基督信仰禱告耶和華（翻牌確認的方式相同） */
+const FT = () => chr()
+  ? { btn: "翻 牌 禱 告", come: "主已垂聽", again: "再 禱 告 一 次", done: "主 已 垂 聽", wait: "主尚未回應，安靜心再禱告一次", first: "洗牌前，請先向耶和華禱告。", who: "耶和華" }
+  : { btn: "翻 牌 請 神", come: "菩薩已來臨", again: "再 請 一 次", done: "菩 薩 已 來 臨", wait: "菩薩尚未來臨，靜心再請一次", first: "洗牌前，請先恭請觀世音菩薩。", who: "菩薩" };
+$("f-faith").onchange = () => {   /* 還沒開始翻牌時，換信仰就重新請神；已翻完的結果不動 */
+  LS.set("dc-xq-faith", $("f-faith").value);
+  updateInvocation();
+  if (!picks.length && !done) { qingOk = false; qingN = 0; $("qing-out").textContent = FT().first; $("btn-qing").textContent = FT().btn; $("btn-qing").disabled = false; renderPool(); }
+};
 $("f-topic").innerHTML = XQ.TOPICS.map((t) => `<option value="${t}">${XQ.TOPIC_ZH[t]}</option>`).join("");
 $("f-pair").innerHTML = XQ.PAIRS.map((p, i) => `<option value="${i}">${p[0] ? `紅棋為「${p[0]}」，黑棋為「${p[1]}」` : "開放題（不論是非，直接看棋義）"}</option>`).join("");
 const sex = () => $("f-sex").value, married = () => !!$("f-mar").value;
@@ -318,7 +332,7 @@ function resetTable(keepPool) {
   $("out").innerHTML = optResults.length ? $("out").innerHTML : "";
   if (!optResults.length) $("prompt-sec").hidden = true;
   $("go-hint").textContent = "";
-  if (!qingOk) { $("qing-out").textContent = "洗牌前，請先恭請觀世音菩薩。"; $("btn-qing").textContent = "翻 牌 請 神"; $("btn-qing").disabled = false; }
+  if (!qingOk) { $("qing-out").textContent = FT().first; $("btn-qing").textContent = FT().btn; $("btn-qing").disabled = false; }
   renderPool(); renderSlots(); updateInvocation(); checkQ(); renderChain();
 }
 function renderPool() {
@@ -327,7 +341,7 @@ function renderPool() {
     b.onclick = () => pick(+b.dataset.i);
   });
   $("btn-auto").disabled = !washed || done;
-  $("stage-cap").textContent = done ? "牌已翻齊。" : !qingOk ? "先翻牌請神，菩薩來臨後再洗牌。" : !washed ? "先洗牌，把牌序交給你的手。"
+  $("stage-cap").textContent = done ? "牌已翻齊。" : !qingOk ? (chr() ? "先翻牌禱告，主垂聽後再洗牌。" : "先翻牌請神，菩薩來臨後再洗牌。") : !washed ? "先洗牌，把牌序交給你的手。"
     : `第 ${picks.length + 1}／${need()} 張：憑直覺點一張蓋著的牌` + (sysId === "chart" ? "（第 4 張之後依「中、左、右、下」一局一局排下去）" : "");
 }
 /* 洗棋：一、收攏到盤心疊成一堆；二、雙手反向搓轉（一半順時針、一半逆時針，像真的在桌上搓象棋）；
@@ -366,7 +380,7 @@ async function washAnim() {
 }
 $("btn-wash").onclick = async () => {
   if (busy || done || picks.length) return;
-  if (!qingOk) { $("stage-cap").textContent = "請先「翻牌請神」：翻到帥、將、仕、相、俥、傌、炮，即為菩薩來臨。"; $("btn-qing").focus(); return; }
+  if (!qingOk) { $("stage-cap").textContent = chr() ? "請先「翻牌禱告」：翻到帥、將、仕、相、俥、傌、炮，即為主已垂聽。" : "請先「翻牌請神」：翻到帥、將、仕、相、俥、傌、炮，即為菩薩來臨。"; $("btn-qing").focus(); return; }
   busy = true; $("btn-wash").disabled = true;
   $("stage-cap").textContent = "雙手在棋盤上搓動三十二張牌……";
   shuffle(pool); washed++;
@@ -458,7 +472,10 @@ const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 function updateInvocation() {
   const q = $("q-input").value.trim(), qq = "「<b>" + (q ? esc(q) : sysId === "year" ? "今年的年運" : sysId === "chart" ? "這一生的命盤" : "心中默想之事") + "</b>」";
   const p = pair(), deal = sysId === "one" && p[0] ? `，約定紅牌為「${p[0]}」、黑牌為「${p[1]}」` : "";
-  $("invocation").innerHTML = `<b>一・請神</b>　弟子〔默唸姓名〕，今有一事，想藉象棋求得指引，誠心恭請南無大慈大悲千手千眼廣大圓滿無礙大悲心觀世音菩薩前來相助。菩薩若已來臨，請以紅牌指示。<br><small>按「翻牌請神」翻一張：見帥、將、仕、相、俥、傌、炮即為菩薩來臨，否則再請一次。</small><br><b>二・報名</b>　弟子〔姓名〕，住〔住址，睡覺的地方〕，今年〔農曆歲數〕歲。<br><b>三・問事</b>　雙手輕放在牌上：今問 ${qq}${deal}，請菩薩以牌示下。<br><small>${sysId === "chart" ? "命盤由本人親手翻；" : "只問自己或直系血親的事，問別人的事請改從「我」出發；"}一事不二卜。投機、賭博之事，不以象棋相問。</small>`;
+  const tail = `<br><small>${sysId === "chart" ? "命盤由本人親手翻；" : "只問自己或直系血親的事，問別人的事請改從「我」出發；"}一事不二卜。投機、賭博之事，不以象棋相問。</small>`;
+  $("invocation").innerHTML = chr()
+    ? `<b>一・禱告</b>　慈愛的天父耶和華，我〔默唸姓名〕今有一事，想藉這副牌尋求祢的帶領。求祢與我同在，若祢垂聽，求以紅牌指示。<br><small>按「翻牌禱告」翻一張：見帥、將、仕、相、俥、傌、炮即為主已垂聽，否則安靜心再禱告一次。</small><br><b>二・報名</b>　我是〔姓名〕，住〔住址，睡覺的地方〕，今年〔歲數〕歲。<br><b>三・問事</b>　雙手輕放在牌上：今求問 ${qq}${deal}，求主藉這副牌指引我。奉耶穌的名禱告，阿們。` + tail
+    : `<b>一・請神</b>　弟子〔默唸姓名〕，今有一事，想藉象棋求得指引，誠心恭請南無大慈大悲千手千眼廣大圓滿無礙大悲心觀世音菩薩前來相助。菩薩若已來臨，請以紅牌指示。<br><small>按「翻牌請神」翻一張：見帥、將、仕、相、俥、傌、炮即為菩薩來臨，否則再請一次。</small><br><b>二・報名</b>　弟子〔姓名〕，住〔住址，睡覺的地方〕，今年〔農曆歲數〕歲。<br><b>三・問事</b>　雙手輕放在牌上：今問 ${qq}${deal}，請菩薩以牌示下。` + tail;
 }
 $("q-input").addEventListener("input", () => { updateInvocation(); checkQ(); });
 $("f-pair").onchange = () => { updateInvocation(); checkQ(); };
@@ -478,8 +495,8 @@ var chain = [], qingN = 0, qingOk = false;   /* 每次占卜前都要請神：�
 $("btn-qing").onclick = () => {
   const c = ALL[DC.rand(32)], ok = "帥將仕相俥傌炮".includes(c);
   qingN++;
-  $("qing-out").innerHTML = ok ? `翻到 ${qz(c, "sm")}——菩薩已來臨${qingN > 1 ? `（請了 ${qingN} 次）` : ""}，請報名、問事，再洗牌。` : `翻到 ${qz(c, "sm")}——菩薩尚未來臨，靜心再請一次。`;
-  $("btn-qing").textContent = ok ? "菩 薩 已 來 臨" : "再 請 一 次"; $("btn-qing").disabled = ok;
+  $("qing-out").innerHTML = ok ? `翻到 ${qz(c, "sm")}——${FT().come}${qingN > 1 ? `（請了 ${qingN} 次）` : ""}，請報名、問事，再洗牌。` : `翻到 ${qz(c, "sm")}——${FT().wait}。`;
+  $("btn-qing").textContent = ok ? FT().done : FT().again; $("btn-qing").disabled = ok;
   if (ok) { qingOk = true; renderPool(); }
 };
 function renderChain() {
@@ -738,8 +755,15 @@ function prayerHtml(items) {
   return DC.card("清理與祈請", "可以怎麼做",
     "<p>書中的看法是：卦象呈現的困境，是累世與祖先留下的執著與傷痛經驗所致，可以為它祈請、清理。下列是這一卦值得清理的項目（★ 為重點），一次一項：</p>"
     + `<ul class="clean-list">${items.map(([t, k]) => `<li class="${k ? "key" : ""}">${k ? "★ " : ""}${t}</li>`).join("")}</ul>`
-    + `<p>祈請時把自己當成需要被療癒的「他」，用名字稱呼效果較好。依你的信仰擇一：</p>
-<p class="section-label" style="text-align:left">佛教・祈請觀世音菩薩</p><div class="prayer">我知道〔名字〕的本質是圓滿、健康、豐盛的，
+    + `<p>祈請時把自己當成需要被療癒的「他」，用名字稱呼效果較好：</p>` + (chr() ? `<p class="section-label" style="text-align:left">基督信仰・禱告耶和華</p><div class="prayer">慈愛的天父耶和華，
+〔名字〕是祢所造、本是美好健全的，
+他之所以經歷「〔上面的某一項〕」，是過去留下的傷痛所致，
+或許也來自他的先人，那些我所不知道的執著與傷痛。
+求祢以慈愛醫治〔名字〕和他的先人，
+使他們脫離這些重擔，回到祢純淨的光與愛中。
+奉耶穌的名禱告，阿們。</div>
+<div class="prayer">（祝福）願一切榮耀歸給耶和華，願恩典祝福〔名字〕早日脫離正在經歷的痛苦。哈利路亞。</div>
+<p style="color:var(--muted);font-size:12.5px">想迎來助力時，可以禱告求耶和華「為〔名字〕預備＿＿的貴人與道路」。` : `<p class="section-label" style="text-align:left">佛教・祈請觀世音菩薩</p><div class="prayer">我知道〔名字〕的本質是圓滿、健康、豐盛的，
 他之所以經歷「〔上面的某一項〕」，只是過去留下的印記使然。
 這些印記，想必來自過去世的他或他的祖先，
 在生命中曾有許多我所不知道的執著與傷痛。
@@ -748,15 +772,8 @@ function prayerHtml(items) {
 開啟智慧，療癒傷痛，得到清淨與解脫。</div>
 <div class="prayer">（迴向）願以此功德供養觀世音菩薩與十方諸佛菩薩，迴向法界一切眾生，
 迴向所有為相同處境受苦的眾生，也迴向過去世的〔名字〕與他的祖先。嗡啊吽。</div>
-<p class="section-label" style="text-align:left">基督信仰・祈求耶和華</p><div class="prayer">慈愛的天父耶和華，
-〔名字〕是祢所造、本是美好健全的，
-他之所以經歷「〔上面的某一項〕」，是過去留下的傷痛所致，
-或許也來自他的先人，那些我所不知道的執著與傷痛。
-求祢以慈愛醫治〔名字〕和他的先人，
-使他們脫離這些重擔，回到祢純淨的光與愛中。
-奉耶穌的名禱告，阿們。</div>
-<div class="prayer">（祝福）願一切榮耀歸給耶和華，願恩典祝福〔名字〕早日脫離正在經歷的痛苦。哈利路亞。</div>
-<p style="color:var(--muted);font-size:12.5px">想迎來助力時，可以祈請觀世音菩薩（或求耶和華）「讓〔名字〕＿＿的貴人與機緣出現在生命裡」。清理一段時間後，可在「單卦問事・清理效果」卜一卦看看。</p>`);
+<p style="color:var(--muted);font-size:12.5px">想迎來助力時，可以祈請觀世音菩薩「讓〔名字〕＿＿的貴人與機緣出現在生命裡」。`)
+    + `清理一段時間後，可在「單卦問事・清理效果」卜一卦看看。祈請文依上方「信仰」的選擇（佛教或基督信仰）。</p>`);
 }
 
 /* ═══ 結果：單卦／年運 ═══ */
