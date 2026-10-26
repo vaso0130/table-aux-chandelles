@@ -535,6 +535,8 @@ const PAT_TXT = {
   22: "想做的事容易成局；好壞仍看收穫", 23: "", 24: "有天助；但若本身會賠，天助也擋不住",
 };
 
+/* 「會不會成」類的題目：書中只看吃不吃得到；可成時，通吃、被通吃、陰陽不協調等格局與倍率都不必解釋 */
+const YESNO = new Set(["achieve", "deal", "exam", "lost", "moneyback", "cause"]);
 /* 位置：抽出序 0..4 ↔ 中左右上下 */
 const idxOf = (a, p) => a.pieces.findIndex((x) => x.id === p.id);
 const pz = (a, p) => POSZ[idxOf(a, p)] + qz(p.ch, "sm");
@@ -803,7 +805,8 @@ function runCross(q) {
   cards.push(DC.card(year ? "年運" : "卦象", label + (q ? "・" + esc(q) : ""),
     board + head + `<p>中間的${qz(a.center.ch, "sm")}代表你自己${same.length ? `，帶著${same.join("、")}的特質` : ""}；與中間不同色的，是外在的環境、對象。</p>`));
   if (year || ["good", "relation", "money"].includes(type)) cards.push(DC.card("互動關係", "各位置代表的人", rolesHtml(a, rl)));
-  cards.push(DC.card("收穫與付出", "吃與被吃", capsHtml(a, f)));
+  cards.push(DC.card("收穫與付出", "吃與被吃", capsHtml(a, YESNO.has(type) ? null : f)
+    + (YESNO.has(type) ? '<p style="color:var(--muted);font-size:12.5px">這類題目只看吃不吃得到，分數與倍率不影響「會不會成」。</p>' : "")));
   cards.push(DC.card("格局", "26 格局中出現的", patsHtml(a) + (["good", "suit"].includes(type) || year ? triHtml(a) : "")));
   if (year) { const en = eatNotes(a); if (en.length) cards.push(DC.card("吃與被吃的意思", "年運衍伸", en.map((x) => "<p>・" + x + "</p>").join(""))); }
   if (year || type === "health") { const hl = healthLines(a, false); cards.push(DC.card("健康", "參考", hl.length ? hl.map((x) => "<p>・" + x + "</p>").join("") : "<p>中間沒有受威脅，也沒有消耗、暴動或陰陽不協調，沒什麼要特別留意的。</p>")); }
@@ -837,8 +840,13 @@ function crossPrompt(a, q, type, J, rl) {
   L.push(`位置代表的人（求問者${sex()}生、${married() ? "已婚" : "單身"}）：${rl.slice(1).map((r, i) => POSZ[i + 1] + "＝" + r).join("；")}`);
   L.push(`我方＝中間的${color(a.center)}方。收穫 +${a.gain}、付出 −${a.cost}（全吃得全分，得好處得一半）`);
   a.caps.forEach((c) => L.push("  " + cp(c)));
-  if (J.f.notes.length) L.push("倍率：" + J.f.notes.join("；"));
-  L.push("格局：" + (a.pats.length ? a.pats.map((p) => p.name + (p.side ? "（" + p.side + "）" : "") + "——" + p.text).join("；") : "無"));
+  const yesno = YESNO.has(type);
+  if (J.f.notes.length && !yesno) L.push("倍率：" + J.f.notes.join("；"));
+  /* 會不會成的題目：可成時，通吃、被通吃與陰陽不協調不另解釋（書中判法），只留會影響過程的格局 */
+  const skip = yesno ? new Set([10, 11, 15, 17, 18]) : new Set();
+  const pl = a.pats.filter((p) => !skip.has(p.id));
+  L.push("格局：" + (pl.length ? pl.map((p) => p.name + (p.side ? "（" + p.side + "）" : "") + "——" + p.text).join("；") : "無"));
+  if (yesno) L.push("判法說明：這類「會不會成」的題目只看我方吃不吃得到對方（雙向的題目，對方吃得到我方也算成）；分數僅供參考。依書中判法，可成時不必解釋通吃、被通吃或陰陽不協調，也不要據此推翻「會成」的結論；牽制、自己的兵卒炮包消耗、好朋友格、困擾、分離、暴動才會影響過程。");
   L.push(`天人地：${["天", "人", "地"].map((t) => t + (a.tri[t] ? "有" : "缺")).join("、")}；陰陽：${a.yinyang}；五行：${Object.entries(a.wx).map(([w, n]) => w + n).join(" ")}`);
   if (a.xiaoren.length) L.push("對方的傌馬炮包吃到或得到我們的好處：書中讀作犯小人、做錯決定而損失，或「卡到陰」（請以溫和、不恐嚇的語氣說明，並以心理與實際層面的建議為主）");
   const hl = healthLines(a, false); if (hl.length) L.push("健康：" + hl.join("；"));
