@@ -1,4 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><radialGradient id="g" cx="50%" cy="38%" r="65%"><stop offset="0" stop-color="#2a3d31"/><stop offset="1" stop-color="#0d1712"/></radialGradient></defs>
-<rect x="2" y="2" width="60" height="60" rx="14" fill="url(#g)" stroke="#C9A45C" stroke-width="3"/><rect x="15" y="15" width="22" height="32" rx="3" fill="#7a2418" stroke="#E5CC8F" stroke-width="2" transform="rotate(-14 26 31)"/>
-<rect x="27" y="16" width="22" height="32" rx="3" fill="#F2E8D5" stroke="#C9A45C" stroke-width="2" transform="rotate(10 38 32)"/>
-<path d="M38 26l3 6-3 6-3-6z" fill="#A8302A" transform="rotate(10 38 32)"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><radialGradient id="g" cx="50%" cy="30%" r="70%"><stop offset="0" stop-color="#3a4a2e"/><stop offset=".45" stop-color="#1c2b21"/><stop offset="1" stop-color="#0d1712"/></radialGradient></defs>
+<rect x="2" y="2" width="60" height="60" rx="14" fill="url(#g)" stroke="#C9A45C" stroke-width="3"/>
+<path d="M32 6c5 7 7 11 3.5 16.5-1.8 2.6-5.2 2.6-7 0C25 17 27 13 32 6z" fill="#F2A33A"/><path d="M32 12.5c2.6 4.3 2.6 7 .9 9.5-.9.9-1.8.9-2.6 0-1.7-2.5-.9-5.2 1.7-9.5z" fill="#FFE9A8"/>
+<path d="M32 23.5v3" stroke="#3a2a18" stroke-width="1.4"/>
+<rect x="20.0" y="27" width="24" height="27" rx="2.5" fill="#F2E8D5"/><path d="M20.0 29.5q6.0 2.5 12.0 0t12.0 0" fill="none" stroke="#E0D2B4" stroke-width="1.2"/>
+<text x="32" y="45" text-anchor="middle" font-size="17" font-family="Noto Serif TC, Songti TC, PMingLiU, serif" font-weight="700" fill="#7a2418">牌</text>
+<ellipse cx="32" cy="55" rx="16" ry="4" fill="#C9A45C"/></svg>
