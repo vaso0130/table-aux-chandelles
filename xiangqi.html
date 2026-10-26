@@ -220,9 +220,9 @@
 <script src="divine-core.js?v=2026102506"></script>
 <script src="divine-ui.js?v=2026102610"></script>
 <script src="divine-lore.js?v=2026102502"></script>
-<script src="xq-data.js?v=2026102503"></script>
+<script src="xq-data.js?v=2026102604"></script>
 <script src="xq-engine.js?v=2026102602"></script>
-<script src="xiangqi-learn.js?v=2026102604"></script>
+<script src="xiangqi-learn.js?v=2026102605"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const E = XQE, POSZ = E.POS_ZH, NUM = E.NUM;
@@ -254,7 +254,7 @@ const SYS = [
   { id: "gate", name: "傳統卦陣", sub: "開門卦・三才・三種讀法", n: 5,
     modes: [["gate", "五張開門卦", "中間主位看本體，四角依右上起、左上承、左下轉、右下收——常見的象棋卦入門卦法（擺法為本站讀法）。"],
       ["three", "三張・天地人", "三才法：天為己方、地為對方與環境、人為關鍵與過程——三張看你、對面與兩者之間。"]] },
-  { id: "one", name: "一張問事", sub: "聖元派・多占", n: 1, hint: "一題翻一張：問前先約定紅黑代表什麼，翻到哪張就依約定回答。想問細，就用多占逐題縮小範圍。" },
+  { id: "one", name: "一張問事", sub: "紅黑約定・多占", n: 1, hint: "一題翻一張：問前先約定紅黑代表什麼，翻到哪張就依約定回答。想問細，就用多占逐題縮小範圍。" },
 ];
 let sysId = "single", modeId = "good", book = null;
 const sys = () => SYS.find((s) => s.id === sysId);
@@ -469,7 +469,7 @@ function renderSlots(flipIdx) {
   if (flipIdx !== undefined) { const all = $("slots").querySelectorAll(s.id === "chart" ? ".qz:not(.slot):not(.dim)" : ".xcard:not(.slot)"); const el = all[s.id === "chart" ? [...all].length - 1 : all.length - 1]; if (el && !RM) el.classList.add("flip"); }
 }
 
-/* ═══ 起卜儀軌（聖元派）：所有卦式都先請神、報名、問事 ═══ */
+/* ═══ 起卜儀軌（參考《象棋占卜祕笈》改寫）：所有卦式都先請神、報名、問事 ═══ */
 const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 function updateInvocation() {
   const q = $("q-input").value.trim(), qq = "「<b>" + (q ? esc(q) : sysId === "year" ? "今年的年運" : sysId === "chart" ? "這一生的命盤" : "心中默想之事") + "</b>」";
@@ -1070,7 +1070,7 @@ function runGate(q) {
   histSave("傳統卦陣・" + label, q);
 }
 
-/* ═══ 一子問事（聖元派） ═══ */
+/* ═══ 一張問事（參考《象棋占卜祕笈》改寫） ═══ */
 function runOne(q) {
   const ch = picks[0], y = XQ.SY[ch], p = pair(), topic = $("f-topic").value || XQ.TOPICS[0];
   const red = "帥仕相俥傌炮兵".includes(ch), sx = XQ.sexNote(ch, sex());
@@ -1082,14 +1082,14 @@ function runOne(q) {
     `<div class="kv"><span><b>分類</b>${XQ.CLS_ZH[y.cls]}</span><span><b>能量強度</b>${XQ.power(ch)}</span><span><b>神佛</b>${y.god}</span><span><b>人物</b>${y.fig}</span><span><b>數字</b>${y.num}</span></div>`,
     `<p style="color:var(--muted)">${p[0] && black ? "依多占法，翻到黑棋可以停在這裡；也可以改問開放題，例如「要怎麼做才會好轉？」" : "想問得更細，可以縮小範圍再問一題。"}</p>`,
   ];
-  $("out").innerHTML = DC.card("一張問事", "聖元派", `<div class="cross big"><div class="cell"></div><div class="cell">${xcard(ch)}</div><div class="cell"></div></div>` + ps.join(""))
+  $("out").innerHTML = DC.card("一張問事", "紅黑約定", `<div class="cross big"><div class="cell"></div><div class="cell">${xcard(ch)}</div><div class="cell"></div></div>` + ps.join(""))
     + '<div class="btn-row" style="justify-content:center"><button class="ghost-btn" id="btn-more">多占・縮小範圍再問一題</button></div>';
   $("btn-more").onclick = () => { chain.push({ q, ch, pair: +$("f-pair").value || 0, topic }); $("q-input").value = ""; resetTable(); $("panel").scrollIntoView({ behavior: RM ? "auto" : "smooth" }); };
-  const L = ["依聖元《象棋占卜祕笈》的體系：帥將屬天（神佛棋）、兵卒屬人（事在人為；兵代表女性、卒代表男性，與求問者性別相反為反常），皆不以紅黑論好壞；其餘紅好黑不好，看能量強度（仕士 100%、相象 90%、俥車 80%、傌馬 70%、炮包 60%）。",
+  const L = ["參考《象棋占卜祕笈》的體系（本站改寫）：帥將屬天（神佛棋）、兵卒屬人（事在人為；兵代表女性、卒代表男性，與求問者性別相反為反常），皆不以紅黑論好壞；其餘紅好黑不好，看能量強度（仕士 100%、相象 90%、俥車 80%、傌馬 70%、炮包 60%）。",
     `求問者：${sex()}生；問題類別：${XQ.TOPIC_ZH[topic]}。`,
     p[0] ? `問前約定：紅棋為「${p[0]}」，黑棋為「${p[1]}」。` : "這一問是開放題：直接以棋義回答。"];
   if (chain.length) { L.push("【多占・前面幾問】"); chain.forEach((r, i) => { const p2 = XQ.PAIRS[r.pair]; L.push(`${i + 1}. 「${r.q || "心中默想之事"}」→ ${r.ch}${p2[0] ? "：" + XQ.verdict(r.ch, p2) : ""}`); }); }
-  L.push(`這一問翻到：${ch}（五行屬${E.WX[XQ.CARDS.find((c) => c.ch === ch).kind]}）——${y.core}`, "聖元派資料：" + XQ.syLine({ ch, sy: y }, topic));
+  L.push(`這一問翻到：${ch}（五行屬${E.WX[XQ.CARDS.find((c) => c.ch === ch).kind]}）——${y.core}`, "此牌資料：" + XQ.syLine({ ch, sy: y }, topic));
   if (sx) L.push(sx);
   L.push("", "請先依問前約定直接回答，再以棋義、字音字形取象細化，強度當作把握程度；若是黑棋說明怎麼由黑翻紅；若有多占前題，把整串串起來；最後建議下一個可以縮小範圍再問的題目（用正面問法）。");
   $("prompt-box").value = ["你是熟悉台灣民間象棋占卜的解讀師。" + DC.toneHead(), "", ...(q ? ["我的問題：" + q, ""] : []), ...L].join("\n");
