@@ -11,6 +11,7 @@ function xiangqiBook() {
   const ul = (xs) => "<ul>" + xs.map((x) => "<li>" + x + "</li>").join("") + "</ul>";
   const tip = (x) => '<p class="g-tip"><b>讀法要領</b>　' + x + "</p>";
   const qz = (ch) => '<span class="qz sm' + ("帥仕相俥傌炮兵".includes(ch) ? " r" : "") + '">' + ch + "</span>";
+  const src = (ch) => XQ.CARDS.find((c) => c.ch === ch).img;
   const img = (ch) => '<img src="' + XQ.CARDS.find((c) => c.ch === ch).img + '" alt="' + ch + '" loading="lazy" style="width:64px;border-radius:4px;margin-right:4px;vertical-align:middle">';
   const RANK = { king: "天的上格", guard: "天的中格", elephant: "天的下格", chariot: "人的上格", horse: "人的中格", cannon: "人的下格", soldier: "地格（兵為上、卒為下）" };
   const PERSONA = {
@@ -28,7 +29,7 @@ function xiangqiBook() {
   /* ── 棋子（七種，紅黑成對） ── */
   const pieceItems = X.KINDS.map((k) => {
     const [r, b] = X.CH[k], [persona, body, work] = PERSONA[k], y1 = XQ.SY[r], y2 = XQ.SY[b];
-    return { no: X.VAL[k] + " 分", key: X.PAIR[k], t: r + b, s: X.WX[k] + "・" + X.TRI[k], html: E({
+    return { no: X.VAL[k] + " 分", key: X.PAIR[k], t: r + b, s: X.WX[k] + "・" + X.TRI[k], img: [src(r), src(b)], html: E({
       glyph: img(r) + img(b), sub: "《改寫人生》・" + RANK[k], title: X.PAIR[k] + "・" + X.VAL[k] + " 分", keys: "五行屬" + X.WX[k] + "・" + X.TRI[k] + "格・" + MNEMO[k],
       sections: [
         ["人格特質", persona],
@@ -99,7 +100,7 @@ function xiangqiBook() {
   /* ── 聖元派十四子 ── */
   const syItems = Object.keys(XQ.SY).map((ch) => {
     const y = XQ.SY[ch];
-    return { no: XQ.power(ch).split("，")[0], key: ch, t: ch, s: XQ.CLS_ZH[y.cls].split("・")[1], html: E({
+    return { no: XQ.power(ch).split("，")[0], key: ch, t: ch, s: XQ.CLS_ZH[y.cls].split("・")[1], img: src(ch), html: E({
       glyph: img(ch), sub: "一張問事・" + XQ.CLS_ZH[y.cls], title: ch + "・" + XQ.power(ch), keys: y.keys,
       sections: [["總論", y.core], ["神佛・人物・數字", y.god + "／" + y.fig + "／" + y.num], ["字形字音", y.xing],
         ["五類問題", ul(XQ.TOPICS.map((t) => XQ.TOPIC_ZH[t] + "：" + y.t[t]))], y.turn ? ["由黑翻紅", y.turn] : null, y.note ? ["提醒", y.note] : null, ["投資標的", y.inv]] }) };
@@ -156,7 +157,7 @@ function xiangqiBook() {
     gate: { name: "傳統卦陣", intro: "台灣民間常見的象棋卦陣：<b>五張開門卦</b>與<b>三張・天地人</b>。同一副棋，可選三種讀法：三才強度法（三大類與能量強度）、一般讀法（紅吉黑凶、兵種象意）、宮廟派（帥將讀作神明、仕士讀作護持）。",
       dict: [{ cat: "一般讀法", items: X.KINDS.flatMap((k) => [true, false].map((red) => {
         const c = XQ.CARDS.find((x) => x.kind === k && x.red === red);
-        return { no: XQ.POL_ZH[c.pol], key: "g" + c.ch, t: c.ch, s: c.gkeys.split("・")[0], html: E({ glyph: img(c.ch), sub: "一般讀法・" + (red ? "紅方・陽・明" : "黑方・陰・暗"), title: c.zh, keys: c.gkeys,
+        return { no: XQ.POL_ZH[c.pol], key: "g" + c.ch, t: c.ch, s: c.gkeys.split("・")[0], img: c.img, html: E({ glyph: img(c.ch), sub: "一般讀法・" + (red ? "紅方・陽・明" : "黑方・陰・暗"), title: c.zh, keys: c.gkeys,
           sections: [["棋義", c.gtext], ["吉凶", k === "king" || k === "soldier" ? "帥將與兵卒不以紅黑論吉凶：帥將看主事的核心在明處還是幕後，兵卒看小事與眾人的多寡。" : (red ? "紅" : "黑") + c.ch + "偏" + XQ.POL_ZH[c.pol] + "，再看所在的位置。"]] }) };
       })) }, { cat: "十四張牌義", items: syItems }],
       guide: [RITUAL,

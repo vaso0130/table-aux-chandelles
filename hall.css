@@ -431,6 +431,14 @@ table.data td.red { color: #E8A08F; }
 .dict-nav .ghost-btn { padding: 7px 14px; font-size: 12.5px; }
 .dn-pos { color: var(--muted); font-size: 13px; letter-spacing: .1em; }
 .dict-detail-scroll { overflow-x: auto; text-align: center; }
+/* 牌面磚牆（有圖的字典）：牌面一覽留著，點一張在下面展開 */
+.card-grid { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; }
+.card-tile { padding: 8px 6px 8px; }
+.card-tile .ct-imgs { display: flex; justify-content: center; gap: 4px; }
+.card-tile img { width: 80px; height: 120px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(201,164,92,.35); }   /* 固定寬高：行動版 WebKit 的 aspect-ratio 曾把牌面壓扁 */
+.card-tile img:first-child:nth-last-child(2), .card-tile img:first-child:nth-last-child(2) ~ img { width: 48px; height: 72px; }
+.card-tile.on { border-color: var(--gold); background: rgba(201,164,92,.1); box-shadow: 0 0 0 1px var(--gold-dim); }
+.card-detail { margin-top: 12px; border-top: 1px solid var(--felt-line); padding-top: 4px; scroll-margin-top: 12px; }
 
 /* ── 教學書（DC.learnBook）：符號字典＋盤面讀法 ── */
 .book-intro { margin: 18px 0 4px; }

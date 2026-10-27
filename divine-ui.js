@@ -271,8 +271,10 @@ DC.learnInit = function (build, after) {
   if (/[?&]learn=1/.test(location.search)) show(true);
 };
 
-/* 一覽/逐張瀏覽元件(仿牌桌館字典 UX):磚牆一覽 → 點一張看一張，可前後翻頁 */
+/* 一覽/逐張瀏覽元件(仿牌桌館字典 UX):磚牆一覽 → 點一張看一張，可前後翻頁
+   有牌面圖的項目（item.img：一張或多張圖的網址）改用牌桌館的版型：牌面磚牆留著，點一張就在磚牆下面展開那一張 */
 DC.browser = function (mount, items, renderDetail) {
+  if (items.some(function (it) { return it.img; })) return cardBrowser(mount, items, renderDetail);
   var view = -1;
   var draw = function (scroll) {
     if (view < 0) {
@@ -301,6 +303,37 @@ DC.browser = function (mount, items, renderDetail) {
   draw(false);
   return { open: function (i) { view = i; draw(false); } };
 };
+function cardBrowser(mount, items, renderDetail) {
+  var view = -1;
+  mount.innerHTML = '<div class="dict-grid card-grid">' + items.map(function (it, i) {
+    var imgs = [].concat(it.img || []);
+    return '<button class="dict-tile card-tile" type="button" aria-expanded="false" data-i="' + i + '"><span class="ct-imgs">' +
+      imgs.map(function (s) { return '<img src="' + s + '" alt="" loading="lazy" onerror="this.remove()">'; }).join("") + "</span>" +
+      '<span class="dt-t">' + it.t + "</span>" + (it.s ? '<span class="dt-s">' + it.s + "</span>" : "") + "</button>";
+  }).join("") + '</div><div class="card-detail" hidden></div>';
+  var grid = mount.querySelector(".card-grid"), box = mount.querySelector(".card-detail");
+  var tiles = [].slice.call(grid.querySelectorAll(".card-tile"));
+  var open = function (i, scroll) {
+    view = i;
+    tiles.forEach(function (b, j) { b.classList.toggle("on", j === i); b.setAttribute("aria-expanded", j === i ? "true" : "false"); });
+    if (i < 0) { box.hidden = true; box.innerHTML = ""; return; }
+    box.innerHTML = '<div class="dict-nav">' +
+      '<button class="ghost-btn dn-prev" type="button">← 上一</button>' +
+      '<span class="dn-pos">' + (i + 1) + " / " + items.length + "　" + items[i].t + "</span>" +
+      '<button class="ghost-btn dn-next" type="button">下一 →</button>' +
+      '<button class="ghost-btn dn-close" type="button">收起</button></div>' +
+      '<div class="dict-detail-body">' + renderDetail(i) + "</div>";
+    box.hidden = false;
+    box.querySelector(".dn-prev").onclick = function () { open((view + items.length - 1) % items.length, false); };
+    box.querySelector(".dn-next").onclick = function () { open((view + 1) % items.length, false); };
+    box.querySelector(".dn-close").onclick = function () { var t = tiles[view]; open(-1); if (t) t.focus(); };
+    if (scroll) box.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  tiles.forEach(function (b, i) { b.onclick = function () { open(view === i ? -1 : i, view !== i); }; });
+  var peek = /[?&]cardpeek=(\d+)/.exec(location.search);   /* 開發測試：?learn=1&cardpeek=n 直接展開第 n 張 */
+  if (peek && !cardBrowser.peeked) { cardBrowser.peeked = true; open(+peek[1], false); }
+  return { open: function (i) { open(i, false); } };
+}
 /* 教學卡：可摺疊的 details，第一張預設展開；learnInit 會在頂端補一列目次 */
 /* ── 教學書（仿牌桌館：符號字典一覽＋逐項細讀、盤面讀法逐項可摺疊）──
    spec[sysId] = { name, intro, dict: [{ cat, items: [{ no, t, s, html, key? }] }], guide: [{ name, sub, html }] }
