@@ -86,6 +86,15 @@
   .chart .lab { font-size: 11.5px; color: var(--muted); text-align: right; padding-right: 6px; white-space: nowrap; }
   .chart .cell { display: grid; place-items: center; min-width: 34px; min-height: 34px; }
   .chart .qz { --s: 34px; }
+  .bz { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; max-width: 420px; margin: 10px auto; }
+  .bz-palace { border: 1px solid rgba(201,164,92,.28); border-radius: 8px; padding: 6px 4px 8px; text-align: center; min-height: 92px; display: grid; gap: 4px; align-content: start; justify-items: center; }
+  .bz-center { align-content: center; border-style: dashed; }
+  .bz-taiji { font-size: 30px; line-height: 1; color: var(--gold); }
+  .bz-name { font-size: 12px; color: var(--gold-dim); letter-spacing: .08em; }
+  .bz-main .qz { --s: 40px; }
+  .bz-aux { display: flex; gap: 3px; justify-content: center; }
+  .bz-aux .qz { --s: 24px; }
+  .bz-hl { border-left: 3px solid var(--gold); padding-left: 10px; }
   .chart .now { outline: 2px solid var(--gold-bright); outline-offset: 2px; border-radius: 50%; }
   .board-wrap { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
 
@@ -178,6 +187,7 @@
       <div class="field full" id="f-school-w" hidden><label for="f-school">解讀流派</label><select id="f-school"></select>
         <div class="note" id="f-school-note"></div></div>
       <div class="field" id="f-topic-w" hidden><label for="f-topic">問題類別</label><select id="f-topic"></select></div>
+      <div class="field" id="f-palace-w" hidden><label for="f-palace">問事類別（主宮）</label><select id="f-palace"></select></div>
       <div class="field" id="f-pair-w" hidden><label for="f-pair">紅黑約定</label><select id="f-pair"></select></div>
     </div>
     <div id="chain" hidden></div>
@@ -230,9 +240,10 @@
 <script src="divine-ui.js?v=2026102801"></script>
 <script src="divine-io.js?v=2026102601"></script>
 <script src="divine-lore.js?v=2026102502"></script>
-<script src="xq-data.js?v=2026102703"></script>
+<script src="xq-data.js?v=2026102704"></script>
+<script src="xq-bazhen.js?v=2026102701"></script>
 <script src="xq-engine.js?v=2026102602"></script>
-<script src="xiangqi-learn.js?v=2026102705"></script>
+<script src="xiangqi-learn.js?v=2026102706"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const E = XQE, POSZ = E.POS_ZH, NUM = E.NUM;
@@ -265,6 +276,7 @@ const SYS = [
     modes: [["gate", "五張開門卦", "中間主位看本體，四角依右上起、左上承、左下轉、右下收——常見的象棋卦入門卦法（擺法為本站讀法）。"],
       ["three", "三張・天地人", "三才法：天為己方、地為對方與環境、人為關鍵與過程——三張看你、對面與兩者之間。"],
       ["five", "五子單卦", "五張由左至右排成一列：本命、事業、主事、人際、結果——第三張主事位是全卦的核心。常與陰陽測字法搭配。"]] },
+  { id: "bazhen", name: "八陣大卦", sub: "三十二張・八卦陣", n: 32, hint: "觀棋知命一派：先翻 8 張依乾、兌、離、震、巽、坎、艮、坤各放一宮，再翻 24 張照同樣順序繞三圈補滿，排成先天八卦陣。不分男女；可選問事類別定主宮。陣圖與棋子歸卦依該派，其餘讀法為本站依易理推出。" },
   { id: "one", name: "一張問事", sub: "紅黑約定・多占", n: 1, hint: "一題翻一張：問前先約定紅黑代表什麼，翻到哪張就依約定回答。想問細，就用多占逐題縮小範圍。" },
 ];
 let sysId = "single", modeId = "good", book = null;
@@ -304,6 +316,7 @@ $("f-faith").onchange = () => {   /* 還沒開始翻牌時，換信仰就重新�
   updateInvocation();
   if (!picks.length && !done) { qingOk = false; qingN = 0; $("qing-out").textContent = FT().first; $("btn-qing").textContent = FT().btn; $("btn-qing").disabled = false; renderPool(); }
 };
+$("f-palace").innerHTML = BZ.TOPICS.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
 $("f-topic").innerHTML = XQ.TOPICS.map((t) => `<option value="${t}">${XQ.TOPIC_ZH[t]}</option>`).join("");
 $("f-pair").innerHTML = XQ.PAIRS.map((p, i) => `<option value="${i}">${p[0] ? `紅棋為「${p[0]}」，黑棋為「${p[1]}」` : "開放題（不論是非，直接看棋義）"}</option>`).join("");
 const sex = () => $("f-sex").value, married = () => !!$("f-mar").value;
@@ -343,6 +356,7 @@ function updateForm() {
   $("q-input").placeholder = qt ? "例如：" + qt[3] : s.id === "year" ? "例如：我想知道我今年的年運" : s.id === "chart" ? "選填：想特別看哪一方面" : "例如：我去這家公司上班好嗎？";
   $("f-q").hidden = false;
   $("f-age-w").hidden = s.id !== "chart";
+  $("f-palace-w").hidden = s.id !== "bazhen";
   $("f-pair-w").hidden = s.id !== "one";
   $("f-topic-w").hidden = !(s.id === "one" || (s.id === "gate" && school()[0] === ""));
   qingOk = false; qingN = 0;
@@ -374,7 +388,7 @@ function renderPool() {
   });
   $("btn-auto").disabled = !washed || done;
   $("stage-cap").textContent = done ? "牌已翻齊。" : !qingOk ? (chr() ? "先翻牌禱告，主垂聽後再洗牌。" : `先翻牌請神，${deity().call}${deity().come}後再洗牌。`) : !washed ? "先洗牌，把牌序交給你的手。"
-    : `第 ${picks.length + 1}／${need()} 張：憑直覺點一張蓋著的牌（牌堆剩 ${pool.filter((c) => c !== null).length} 張）` + (sysId === "chart" ? "（第 4 張之後依「中、左、右、下」一局一局排下去）" : "");
+    : `第 ${picks.length + 1}／${need()} 張：憑直覺點一張蓋著的牌（牌堆剩 ${pool.filter((c) => c !== null).length} 張）` + (sysId === "chart" ? "（第 4 張之後依「中、左、右、下」一局一局排下去）" : sysId === "bazhen" ? "（依乾、兌、離、震、巽、坎、艮、坤的順序，一圈放一張）" : "");
 }
 /* 洗棋：一、收攏到盤心疊成一堆；二、雙手反向搓轉（一半順時針、一半逆時針，像真的在桌上搓象棋）；
    三、由盤心往外一圈圈排回棋盤，落定時輕輕一頓。和鐘樓館的扇形、光環、對插洗牌刻意不同 */
@@ -424,7 +438,7 @@ $("btn-wash").onclick = async () => {
 function pick(i) {
   if (busy || done || pool[i] === null) return;
   if (!washed) { $("stage-cap").textContent = "請先洗牌。"; return; }
-  if (!sex()) { $("stage-cap").textContent = "請先在上面選擇求問者是女生還是男生——位置代表誰、兵卒怎麼讀，都要看這一欄。"; $("f-sex").focus(); return; }
+  if (!sex() && sysId !== "bazhen") { $("stage-cap").textContent = "請先在上面選擇求問者是女生還是男生——位置代表誰、兵卒怎麼讀，都要看這一欄。"; $("f-sex").focus(); return; }
   picks.push(pool[i]); pool[i] = null;
   $("pool").querySelector(`[data-i="${i}"]`).classList.add("gone");
   $("pool").querySelector(`[data-i="${i}"]`).disabled = true;
@@ -434,7 +448,7 @@ function pick(i) {
 }
 $("btn-auto").onclick = () => {
   if (done || !washed) return;
-  if (!sex()) { $("f-sex").focus(); $("stage-cap").textContent = "請先選擇求問者。"; return; }
+  if (!sex() && sysId !== "bazhen") { $("f-sex").focus(); $("stage-cap").textContent = "請先選擇求問者。"; return; }
   const left = pool.map((c, i) => (c === null ? -1 : i)).filter((i) => i >= 0);
   while (picks.length < need()) { const i = left.splice(DC.rand(left.length), 1)[0]; picks.push(pool[i]); pool[i] = null; }
   done = true; renderPool(); renderSlots(); finish();
@@ -494,11 +508,11 @@ function chartHtml(seq, nowAge) {
 }
 function renderSlots(flipIdx) {
   const s = sys();
-  $("slots").innerHTML = s.id === "chart" ? chartHtml(picks.concat(Array(32 - picks.length).fill(null)), +$("f-age").value || 0)
+  $("slots").innerHTML = s.id === "bazhen" ? bazhenHtml(picks) : s.id === "chart" ? chartHtml(picks.concat(Array(32 - picks.length).fill(null)), +$("f-age").value || 0)
     : s.id === "gate" ? gateHtml(picks)
     : s.id === "one" ? `<div class="cross big"><div class="cell"></div><div class="cell">${picks[0] ? xcard(picks[0]) : '<span class="xcard qz slot next">此事</span>'}</div><div class="cell"></div></div>`
     : crossHtml(picks.concat(Array(5 - picks.length).fill(null)), true, true);
-  if (flipIdx !== undefined) { const all = $("slots").querySelectorAll(s.id === "chart" ? ".qz:not(.slot):not(.dim)" : ".xcard:not(.slot)"); const el = all[s.id === "chart" ? [...all].length - 1 : all.length - 1]; if (el && !RM) el.classList.add("flip"); }
+  if (flipIdx !== undefined && s.id !== "bazhen") { const all = $("slots").querySelectorAll(s.id === "chart" ? ".qz:not(.slot):not(.dim)" : ".xcard:not(.slot)"); const el = all[s.id === "chart" ? [...all].length - 1 : all.length - 1]; if (el && !RM) el.classList.add("flip"); }
 }
 
 /* ═══ 起卜儀軌（參考《象棋占卜祕笈》改寫）：所有卦式都先請神、報名、問事 ═══ */
@@ -822,7 +836,7 @@ function prayerHtml(items) {
 /* ═══ 歷史：存下重算所需的狀態；重看時依新版規則重新產生結果與提示詞 ═══ */
 let replaying = false;
 const curState = () => ({ sys: sysId, mode: modeId, picks: picks.slice(), q: $("q-input").value.trim(), sex: sex(), mar: $("f-mar").value, age: $("f-age").value,
-  faith: $("f-faith").value, school: $("f-school").value, topic: $("f-topic").value, pair: $("f-pair").value,
+  faith: $("f-faith").value, school: $("f-school").value, topic: $("f-topic").value, pair: $("f-pair").value, palace: $("f-palace").value,
   chain: chain.slice(), opts: optResults.map((o) => ({ q: o.q, picks: o.picks })) });
 function histSave(title, q) {
   if (replaying) return;
@@ -875,7 +889,7 @@ DC.histReplay = (r) => {
   renderSys(); updateForm();
   const set = (id, v) => { if (v !== undefined && v !== null && v !== "") $(id).value = v; };
   set("f-sex", st.sex); $("f-mar").value = st.mar || ""; set("f-age", st.age); set("f-faith", st.faith);
-  if (st.school !== undefined) $("f-school").value = st.school; set("f-topic", st.topic); set("f-pair", st.pair);
+  if (st.school !== undefined) $("f-school").value = st.school; set("f-topic", st.topic); set("f-pair", st.pair); if (st.palace !== undefined) $("f-palace").value = st.palace;
   updateForm();
   chain = (st.chain || []).slice();
   replaying = true; qingOk = true; washed = 1;
@@ -897,6 +911,7 @@ function finish() {
   const q = $("q-input").value.trim();
   try {
     if (sysId === "chart") runChart(q);
+    else if (sysId === "bazhen") runBazhen(q);
     else if (sysId === "one") runOne(q);
     else if (sysId === "gate") runGate(q);
     else runCross(q);
@@ -1107,7 +1122,7 @@ function runGate(q) {
     DC.toneHead(), "",
     ...(q ? ["我的問題：" + q, ""] : []),
     `【卦陣】${label}${row ? "（五張由左至右排成一列）" : ""}；求問者${sex()}生${sy ? "；問題類別：" + XQ.TOPIC_ZH[topic] : ""}`,
-    ...ps.map((c, i) => `${i + 1}. ${names[i]}（${hints[i]}）：${c.ch}${yy || zy ? "" : `（${E.WX[c.kind]}）`}——` + (sy ? c.text + "〔" + XQ.syLine(c, topic) + "〕" + (XQ.sexNote(c.ch, sex()) ? " " + XQ.sexNote(c.ch, sex()) : "")
+    ...ps.map((c, i) => `${i + 1}. ${names[i]}（${hints[i]}）：${c.ch}（${E.WX[c.kind]}）——` + (sy ? c.text + "〔" + XQ.syLine(c, topic) + "〕" + (XQ.sexNote(c.ch, sex()) ? " " + XQ.sexNote(c.ch, sex()) : "")
       : yy ? XQ.yyLine(c) : zy ? XQ.zyLine(c) : `${c.gkeys}〔${XQ.POL_ZH[c.pol]}〕${c.gtext}`)),
     "", "【棋局判讀】（標「本站讀法」者為本站自訂）", ...ana.map((t) => "- " + t), "",
     "【請提供】",
@@ -1121,6 +1136,59 @@ function runGate(q) {
   $("prompt-box").value = L.join("\n");
   $("prompt-sec").hidden = false;
   histSave("傳統卦陣・" + label, q);
+}
+
+/* ═══ 八陣大卦（觀棋知命一派；計算在 xq-bazhen.js，除陣圖與棋子歸卦外皆為本站讀法） ═══ */
+function bazhenHtml(list) {
+  const g = Array.from({ length: 3 }, () => Array(3).fill(""));
+  BZ.T.forEach((name, k) => {
+    const [r, c] = BZ.CELL[k];
+    const pc = (i, cls) => { const ch = list[i]; return ch ? qz(ch, cls) : `<span class="qz slot ${cls}${i === list.filter(Boolean).length ? " next" : ""}">${i + 1}</span>`; };
+    g[r][c] = `<div class="bz-palace"><div class="bz-name">${DC.TRIG_SYM[k]} ${name}</div><div class="bz-main">${pc(k, "")}</div><div class="bz-aux">${[1, 2, 3].map((n) => pc(n * 8 + k, "sm")).join("")}</div></div>`;
+  });
+  g[1][1] = `<div class="bz-palace bz-center"><div class="bz-taiji">☯</div><div class="bz-name">太極・此事</div></div>`;
+  return `<div class="bz">${g.flat().join("")}</div>`;
+}
+function runBazhen(q) {
+  const mv = $("f-palace").value, main = mv === "" ? null : +mv;
+  const R = BZ.analyze(picks, XQ.CARDS, main);
+  const nm = (k) => DC.TRIG[k];
+  const pRow = (p) => {
+    const flags = [p.rel.k === "歸位" ? "歸位" : "", p.opp ? "對宮落位" : "", p.shiHe ? "勢合" : "", p.shiNi ? "勢逆" : ""].filter(Boolean);
+    return `<div class="pat${main === p.k ? " bz-hl" : ""}"><b>${p.sym} ${p.name}宮${main === p.k ? "（主宮）" : ""}</b>　<small style="color:var(--muted)">${BZ.PALACE[p.k].t}</small><br>`
+      + `主子 ${qz(p.m.ch, "sm")}（屬${nm(p.mg)}・${DC.TRIG_WX[p.mg]}）→ 宮卦<b>${p.hex}</b>；${p.rel.txt}${flags.length ? "　<span style=\"color:var(--gold)\">" + flags.join("、") + "</span>" : ""}<br>`
+      + `<small>輔子 ${p.ps.slice(1).map((c) => qz(c.ch, "sm")).join("")}：${p.auxRel.map((x) => x.k).join("、")}；陣卦${nm(p.zhen)}（紅陽黑陰由下而上）</small></div>`;
+  };
+  const order = main === null ? R.P : [R.P[main], R.P[BZ.OPP[main]], ...R.P.filter((p) => p.k !== main && p.k !== BZ.OPP[main])];
+  $("out").innerHTML = DC.card("八陣大卦", "觀棋知命" + (q ? "・" + esc(q) : ""), bazhenHtml(picks)
+      + `<p style="color:var(--muted);font-size:12.5px">先天八卦陣與棋子歸卦依觀棋知命圖；排子順序、宮卦、體用生剋、陣卦、計分與應期為本站依《說卦傳》與易理推出的讀法，查無此派原規則，請當參考。</p>`)
+    + DC.card("總卦", "乾宮主子為上、坤宮主子為下", `<p class="verdict">總卦 ${R.zong.name}　互卦 ${R.hu.name}</p>`
+      + `<p>全局${R.verdict}（計分 ${R.total > 0 ? "+" : ""}${R.total}${main !== null ? "，主宮加倍" : ""}）。${R.kings.length ? "帥將落為" + R.kings.join("、") + "宮主子：此事有貴人或主事者介入。" : ""}</p>`
+      + (R.ying ? `<p>應期傾向：${R.ying.text}。</p>` : `<p style="color:var(--muted)">未選問事類別：主宮與應期交給 AI 依問題判斷。</p>`))
+    + DC.card("八宮", main === null ? "依先天序" : "主宮、對宮，再看其餘", order.map(pRow).join(""));
+  const line = (p) => `${p.name}宮（${BZ.PALACE[p.k].t}）：主子${p.m.ch}（${p.m.red ? "紅" : "黑"}，屬${nm(p.mg)}，五行${DC.TRIG_WX[p.mg]}）→ 宮卦${p.hex}；${p.rel.txt}`
+    + `；輔子 ${p.ps.slice(1).map((c, i) => c.ch + (c.red ? "紅" : "黑") + "（" + p.auxRel[i].k + "）").join("、")}；陣卦${nm(p.zhen)}${p.shiHe ? "（勢合）" : p.shiNi ? "（勢逆）" : ""}${p.opp ? "；對宮落位" : ""}`;
+  const L = [
+    "你是一位熟悉易經八卦類象與象棋占卜的解讀師。以下是「八陣大卦」（觀棋知命一派）：三十二張象棋牌全翻，排在先天八卦陣上。" + DC.toneHead(),
+    "規則說明：陣圖（乾上坤下、離左坎右）與棋子歸卦（帥將乾、仕士兌、相象離、俥車震、傌馬巽、炮包坎、兵艮、卒坤）依觀棋知命圖；其餘為本站讀法——前 8 張依先天序乾兌離震巽坎艮坤各為一宮「主子」，後 24 張照同序繞三圈為「輔子」（初、二、三輔）；宮卦＝宮為上卦、主子之卦為下卦；宮為體、子為用論五行生剋；三輔紅陽黑陰由下而上成「陣卦」，同主子之卦為勢合、為其對宮為勢逆；總卦＝乾宮主子為上、坤宮主子為下。",
+    "", ...(q ? ["我的問題：" + q, ""] : []),
+    `【主宮】${main === null ? "未指定——請依我的問題從八宮挑出最相關的一宮當主宮" : nm(main) + "宮（" + BZ.TOPICS.find((t) => t[0] === mv)[1].replace(/（.宮）$/, "") + "）"}`,
+    `【總卦】${R.zong.name}；互卦${R.hu.name}；全局${R.verdict}（本站計分 ${R.total}）${R.kings.length ? "；帥將落為" + R.kings.join("、") + "宮主子" : ""}`,
+    ...(R.ying ? [`【應期傾向】${R.ying.text}（本站讀法：數取主宮主子之先天數，輔子紅多以日旬計、黑多以月計；方位時節取《說卦傳》「帝出乎震」一段）`] : []),
+    "", "【八宮】", ...order.map(line), "",
+    "【八宮《說卦傳》】", ...R.P.map((p) => `${p.name}：「${BZ.PALACE[p.k].q}」`), "",
+    "【請提供】",
+    "1. 總卦與互卦：這件事的大局與過程",
+    "2. 主宮細讀：宮卦卦義、體用生剋、三輔的起中結與陣卦",
+    "3. 主宮的對宮：外在的牽制或助力",
+    "4. 其餘宮只挑特別的（歸位、受壓、勢逆、對宮落位）點評",
+    "5. 字音字形：主宮與特別宮的主子，可依棋字的字音、字形（拆字）取象，並配合五行",
+    "6. 就我所問之事的斷語與應期傾向，以及具體建議",
+    "每個判斷請說明依據；《說卦傳》只引用上面列出的原文。這是本站推出的讀法，請當參考，不要說成傳統古法；也不要套用其他象棋流派的規則（例如三大類、能量強度、十字吃子、命盤八局、男紅女黑、地支應期）。",
+  ];
+  $("prompt-box").value = L.join("\n");
+  $("prompt-sec").hidden = false;
+  histSave("八陣大卦" + (main === null ? "" : "・" + nm(main) + "宮"), q);
 }
 
 /* ═══ 一張問事（參考《象棋占卜祕笈》改寫） ═══ */
@@ -1170,6 +1238,7 @@ const XQ_MAX = {}; ALL.forEach((ch) => (XQ_MAX[ch] = (XQ_MAX[ch] || 0) + 1));
 const XQ_ALIAS = { 帅: "帥", 将: "將", 砲: "包" };   /* 车、马紅黑難分，不代換 */
 function manualOrder() {
   if (sysId === "single" || sysId === "year") return "依翻牌順序：中、左、右、上、下。";
+  if (sysId === "bazhen") return "依翻牌順序填滿 32 張：前 8 張依乾、兌、離、震、巽、坎、艮、坤各放一宮，後 24 張照同樣順序繞三圈。";
   if (sysId === "chart") return "依翻牌順序填滿 32 張（第 1 局中左右上下，之後每局中、左、右、下）。";
   if (sysId === "gate") return "依翻牌順序：" + posNames().map((x) => x.split("・")[0]).join("、") + "。";
   return "一問一張：填入這一問翻到的牌。";
@@ -1206,7 +1275,7 @@ function manualEntry() {
   dlg.querySelector(".m-ok").addEventListener("click", (e) => {
     const err = (m) => { e.preventDefault(); const p = dlg.querySelector(".m-err"); p.textContent = m; p.hidden = false; };
     const seq = parse();
-    if (!sex()) return err("請先在頁面上選擇求問者是女生還是男生。");
+    if (!sex() && sysId !== "bazhen") return err("請先在頁面上選擇求問者是女生還是男生。");
     if (seq.length !== n) return err(`需要 ${n} 張，現在是 ${seq.length} 張。`);
     const used = {}; seq.forEach((c) => (used[c] = (used[c] || 0) + 1));
     const over = Object.keys(used).find((c) => used[c] > XQ_MAX[c]);
