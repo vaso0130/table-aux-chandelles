@@ -1821,8 +1821,20 @@ function loadDrawnImages() {
     im.src = c.img;
   }))).then(() => imgs);
 }
-$("#btn-download").addEventListener("click", async () => {
-  if (!drawn.length) { say("先抽完牌，再下載盤面。"); return; }
+/* 解讀分享圖：牌面列＋整份解讀（share-image.js）；沒載到模組時退回舊的純牌面圖 */
+$("#btn-download").addEventListener("click", () => {
+  if (!drawn.length) { say("先抽完牌，再做分享圖。"); return; }
+  if (!window.ShareImage) { downloadSpreadPng(); return; }
+  ShareImage.run({
+    title: HALL.titlePrefix,
+    lines: [HALL_DECKS.length > 1 ? `${deckDef.name}・${spread.name}` : spread.name],
+    q: $("#q-input").value.trim(),
+    cards: drawn.map((c, i) => ({ img: c.img, glyph: c.glyph, name: c.zh, pos: posName(i).replace(/（.*?）/g, ""), rev: drawnRev[i] })),
+    body: [$("#reading")],
+    file: HALL.titlePrefix
+  });
+});
+async function downloadSpreadPng() {
   let cv = drawSpreadImage(await loadDrawnImages()), note = "";
   try { cv.toDataURL("image/png").slice(0, 1); }
   catch (e) {   /* 直接以檔案開啟網頁時，瀏覽器不准把圖片寫進畫布——退回符號版 */
@@ -1838,7 +1850,7 @@ $("#btn-download").addEventListener("click", async () => {
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }, "image/png");
-});
+}
 
 $("#btn-copy").addEventListener("click", async () => {
   const btn = $("#btn-copy");

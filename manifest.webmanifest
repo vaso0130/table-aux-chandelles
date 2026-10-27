@@ -1,0 +1,15 @@
+{
+  "name": "燭光 · La Lumière des Chandelles",
+  "short_name": "燭光",
+  "description": "點一支蠟燭，走進十二館：牌桌、易經、象棋、占星、八字、式占、南洋、開卷、鐘樓、鏡廳與三術合參。",
+  "lang": "zh-Hant",
+  "start_url": "./index.html?skip=1",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0A110D",
+  "theme_color": "#0A110D",
+  "icons": [
+    { "src": "icons/app-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/app-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

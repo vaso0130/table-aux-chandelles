@@ -6,6 +6,9 @@
 <link rel="icon" href="icons/yijing-32.png?v=1" sizes="32x32">
 <link rel="apple-touch-icon" href="icons/yijing-180.png?v=1">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0A110D">
+<script src="pwa.js?v=2026102801" defer></script>
 <meta name="description" content="燭光易經館：大衍揲蓍、三錢擲卦、六爻納甲與六十四卦牌，附可以親手操作的起卦入門教學。">
 <link rel="stylesheet" href="table.css?v=2026102702">
 <link rel="stylesheet" href="yijing-learn.css?v=2026102701">
@@ -160,7 +163,7 @@
         </div>
         <div class="ai-tools">
           <button class="ghost-btn dark" id="btn-ai">寫成提示詞</button>
-          <button class="ghost-btn dark" id="btn-download">下載盤面圖</button>
+          <button class="ghost-btn dark" id="btn-download">解讀分享圖</button>
           <button class="ghost-btn dark" id="btn-share">分享文字</button>
           <button class="ghost-btn dark" id="btn-copy" hidden>複製全文</button>
           <span id="ai-links" hidden>
@@ -211,12 +214,13 @@
   </form>
 </dialog>
 
+<script src="share-image.js?v=2026102801"></script>
 <script src="card-zoom.js?v=2026102701"></script>
 <script src="divine-core.js?v=2026102506"></script>
 <script src="cards-data.js?v=2026102702"></script>
 <script src="divine-io.js?v=2026102601"></script>
 <script>window.TABLE_HALL = { decks: ["yi"], lastKey: "yijing-last", titlePrefix: "燭光易齋" };</script>
 <script src="yilin-data.js?v=2026102701"></script>
-<script src="table-engine.js?v=2026102702"></script>
+<script src="table-engine.js?v=2026102801"></script>
 <script src="yijing-learn.js?v=2026102702"></script>
 </html>

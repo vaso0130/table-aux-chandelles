@@ -565,6 +565,16 @@ DC.renderPanImage = function (cb) {
   img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 };
 DC.downloadPan = function () {
+  var out = document.getElementById("out");
+  if (!out || !out.innerHTML.trim()) out = document.getElementById("slip-scroll");
+  if (!out || !out.innerHTML.trim()) { DC.say("先起盤，再做分享圖。"); return; }
+  if (window.ShareImage) {   /* 新版：高解析分享圖＋預覽（share-image.js）；iPhone 也做得出來 */
+    var h1 = document.querySelector("h1"), board = document.querySelector(".board-wrap");
+    var q = document.getElementById("q-input");
+    ShareImage.run({ title: h1 ? h1.textContent.trim() : document.title, q: q && q.value ? q.value.trim() : "",
+      body: [board && board.offsetParent && board.querySelector("img") ? board : null, out], file: h1 ? h1.textContent.trim() : "燭光" });
+    return;
+  }
   DC.renderPanImage(function (cv, err) {
     if (!cv) { DC.say(err === "empty" ? "先起盤，再下載。" : "這個瀏覽器做不出盤面圖。可改用列印存成 PDF，或直接截圖。"); return; }
     cv.toBlob(function (blob) {
@@ -584,7 +594,7 @@ DC.downloadPan = function () {
   var copyBtn = document.getElementById("btn-copy");
   if (copyBtn && !document.getElementById("btn-panshot")) {
     var b = document.createElement("button");
-    b.className = "ghost-btn"; b.id = "btn-panshot"; b.textContent = "下載盤面圖";
+    b.className = "ghost-btn"; b.id = "btn-panshot"; b.textContent = "解讀分享圖";
     b.addEventListener("click", DC.downloadPan);
     copyBtn.parentElement.insertBefore(b, copyBtn.nextSibling);
   }

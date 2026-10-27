@@ -6,6 +6,9 @@
 <link rel="icon" href="icons/index-32.png?v=4" sizes="32x32">
 <link rel="apple-touch-icon" href="icons/index-180.png?v=4">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0A110D">
+<script src="pwa.js?v=2026102801" defer></script>
 <meta name="description" content="燭光——點一支蠟燭，走進十二館：牌桌、易經、象棋、占星、八字、式占、南洋、開卷、鐘樓、鏡廳與三術合參。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -291,6 +294,41 @@
   .door.prime { border-color: var(--gold-dim); }
   .door.prime .glyph { border-color: var(--gold); }
 
+  /* 今日一牌／今日一卦（每天各抽一次，當天固定） */
+  .today {
+    width: 100%; max-width: 760px; margin: 40px 0 0;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+    animation-delay: calc(var(--t-flame) + 1.9s);
+  }
+  .today-card {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 16px; border: 1px solid var(--felt-line); border-radius: 4px;
+    background: linear-gradient(rgba(20,32,27,.85), rgba(10,17,13,.85));
+    box-shadow: 0 10px 26px rgba(0,0,0,.35); min-height: 168px;
+  }
+  .today-card img {
+    width: 88px; height: 131px; flex: none; object-fit: cover; border-radius: 6px;
+    box-shadow: 0 0 0 1px var(--gold-dim), 0 8px 18px rgba(0,0,0,.45); cursor: zoom-in;
+  }
+  .today-card .tl { font-size: 12px; letter-spacing: .3em; color: var(--gold-dim); }
+  .today-card .tn { font-size: 19px; color: var(--gold-bright); letter-spacing: .08em; line-height: 1.4; margin-top: 2px; }
+  .today-card .tk { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .today-card .tt { font-size: 13.5px; color: var(--ivory-shade); line-height: 1.65; margin-top: 6px; }
+  .today-card a.tg { display: inline-block; margin-top: 8px; font-size: 12.5px; letter-spacing: .12em; color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(201,164,92,.4); }
+  .today-card a.tg:hover, .today-card a.tg:focus-visible { color: var(--gold-bright); outline: none; border-bottom-color: var(--gold-bright); }
+  .today-note { grid-column: 1 / -1; text-align: center; font-size: 12px; color: var(--muted); letter-spacing: .08em; margin: -4px 0 0; }
+  .today[hidden] { display: none; }
+  @media (max-width: 620px) { .today { grid-template-columns: 1fr; } }
+
+  /* 離線版 */
+  .offline { margin-top: 22px; text-align: center; font-size: 12.5px; color: var(--muted); letter-spacing: .06em; animation-delay: calc(var(--t-flame) + 3.5s); }
+  .offline button {
+    font: inherit; font-size: 12.5px; letter-spacing: .12em; color: var(--gold); cursor: pointer;
+    background: rgba(10,17,13,.5); border: 1px solid var(--felt-line); border-radius: 2px; padding: 5px 12px 4px; margin-left: 6px;
+  }
+  .offline button:hover, .offline button:focus-visible { color: var(--gold-bright); border-color: var(--gold-dim); outline: none; }
+  .offline button[disabled] { opacity: .6; cursor: default; }
+
   .enter-row { margin-top: 34px; animation-delay: calc(var(--t-flame) + 3.3s); text-align: center; }
   .enter-btn {
     display: inline-block; text-decoration: none;
@@ -409,6 +447,8 @@
       <small>僅供靜心與娛樂，不代醫療、法律與財務之斷。</small></p>
   </header>
 
+  <section class="today reveal" id="today" aria-label="今日一牌與今日一卦" hidden></section>
+
   <ul class="halls" aria-label="十二館門廊">
     <li class="reveal" style="--i:0"><a class="door prime" href="table.html">
       <span class="glyph" aria-hidden="true">❖</span>
@@ -457,6 +497,8 @@
   </ul>
 
   <p class="enter-row reveal"><a class="enter-btn" href="table.html">入 座 牌 桌</a></p>
+
+  <p class="offline reveal" id="offline" hidden></p>
 
   <footer class="reveal">燭光 La Lumière des Chandelles<br>牌面依十九世紀式樣重繪，牌序由你的手決定。</footer>
 </div>
@@ -509,6 +551,82 @@
   }
   document.getElementById("skip").addEventListener("click", skip);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" || e.key === " ") { skip(); } }, { once: true });
+})();
+</script>
+<script src="card-zoom.js?v=2026102701"></script>
+<script>
+"use strict";
+/* 今日一牌／今日一卦：每天第一次打開時隨機抽（牌從牌桌館八副有圖的牌裡抽，卦從六十四卦抽），存在本機，當天再開都是同一張 */
+(function () {
+  const box = document.getElementById("today");
+  const p = (n) => String(n).padStart(2, "0");
+  const d = new Date(), day = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  const s = document.createElement("script");
+  s.src = "cards-data.js?v=2026102702";
+  s.onload = () => {
+    if (typeof DECKS === "undefined") return;
+    const pool = DECKS.filter((k) => k.id !== "yi" && k.cards.some((c) => c.img));
+    const yi = DECKS.find((k) => k.id === "yi");
+    let pick = null;
+    try { pick = JSON.parse(localStorage.getItem("dc-today") || "null"); } catch (e) {}
+    const valid = pick && pick.day === day && pool.some((k) => k.id === pick.deck);
+    if (!valid) {
+      const dk = pool[Math.floor(Math.random() * pool.length)];
+      const withImg = dk.cards.filter((c) => c.img);
+      pick = { day, deck: dk.id, n: withImg[Math.floor(Math.random() * withImg.length)].n, yi: 1 + Math.floor(Math.random() * 64) };
+      try { localStorage.setItem("dc-today", JSON.stringify(pick)); } catch (e) {}
+    }
+    const dk = pool.find((k) => k.id === pick.deck);
+    const card = dk.cards.find((c) => c.n === pick.n) || dk.cards[0];
+    const gua = yi && (yi.cards.find((c) => c.n === pick.yi) || yi.cards[0]);
+    const tile = (label, sub, c, href, go) => {
+      const el = document.createElement("div"); el.className = "today-card";
+      const img = document.createElement("img"); img.src = c.img; img.alt = c.zh; img.className = "no-zoom";
+      img.addEventListener("click", () => window.CardZoom && CardZoom.open({ src: c.img, title: c.zh, sub: `${sub}・${c.keys || ""}`, text: c.text }));
+      const t = document.createElement("div");
+      t.innerHTML = `<div class="tl"></div><div class="tn"></div><div class="tk"></div><div class="tt"></div><a class="tg"></a>`;
+      t.querySelector(".tl").textContent = label;
+      t.querySelector(".tn").textContent = c.zh;
+      t.querySelector(".tk").textContent = `${sub}・${c.keys || ""}`;
+      t.querySelector(".tt").textContent = c.text || "";
+      const a = t.querySelector(".tg"); a.href = href; a.textContent = go;
+      el.appendChild(img); el.appendChild(t);
+      return el;
+    };
+    box.appendChild(tile("今 日 一 牌", dk.name, card, "table.html", "到牌桌館問一件事 →"));
+    if (gua) box.appendChild(tile("今 日 一 卦", `第 ${gua.n} 卦`, gua, "yijing.html", "到易經館親手起一卦 →"));
+    const note = document.createElement("p"); note.className = "today-note";
+    note.textContent = "每天第一次點燈時隨機抽出，當天都是這一張；明天再來，換新的。點牌面看大圖。";
+    box.appendChild(note);
+    box.hidden = false;
+    if (/[?&]todaytest=1/.test(location.search)) document.title = "TODAY-OK " + dk.id + "-" + card.n + " yi" + (gua && gua.n);
+  };
+  document.head.appendChild(s);
+})();
+
+/* 離線版：網頁本身裝好就能離線；牌面圖可一次存齊 */
+(function () {
+  const el = document.getElementById("offline");
+  const mb = (b) => Math.round(b / 1048576);
+  function render() {
+    Offline.status().then((st) => {
+      el.hidden = false;
+      el.textContent = "";
+      if (st.saved >= st.total) { el.textContent = `✓ 離線版已就緒：網頁與全部 ${st.total} 張牌面圖都存在這台裝置上，沒網路也能用。`; return; }
+      el.append(`離線版：網頁已存好，牌面圖存了 ${st.saved}／${st.total} 張（看過的會自動存）。`);
+      const b = document.createElement("button"); b.type = "button";
+      b.textContent = `全部存起來（約 ${mb(st.bytes)} MB）`;
+      b.addEventListener("click", () => {
+        b.disabled = true;
+        Offline.saveAll((done, total) => { b.textContent = `存檔中 ${done}／${total}`; })
+          .then((r) => { if (r.fail) { b.disabled = false; b.textContent = `有 ${r.fail} 張沒存到，再按一次補`; } else render(); })
+          .catch(() => { b.disabled = false; b.textContent = "存檔失敗，連上網路再試一次"; });
+      });
+      el.appendChild(b);
+    }).catch(() => {});
+  }
+  const start = () => { if (window.Offline) render(); };   /* pwa.js 是 defer，等載入完再看 */
+  if (document.readyState === "complete") start(); else addEventListener("load", start);
 })();
 </script>
 </html>
