@@ -1828,6 +1828,9 @@ const YI_SPREADS = [
   { id:"yi-najia", name:"六爻・納甲筮法", count:2, cols:2, cast:true, najia:true,
     desc:"京房八宮、《火珠林》法：三錢六擲成卦，裝上納甲干支、世應、六親、六神，以起卦當下的月建、日辰論旺衰，依五行生剋斷事——不以卦爻辭為主。",
     positions:["本卦","變卦"], combos: () => [] },
+  { id:"yi-yilin", name:"易林・焦氏占法", count:2, cols:2, cast:true, yilin:true,
+    desc:"漢代焦延壽傳本《焦氏易林》：三錢六擲成卦，本卦配之卦，在四千零九十六條四言林辭中查出這一占的那一首，以林辭為主斷。",
+    positions:["本卦","之卦"], combos: () => [] },
 ];
 
 /* ── 紫微 三十六星曜（原創牌組・紫微斗數星義） ──

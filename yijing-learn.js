@@ -47,9 +47,9 @@
   /* ── 骨架 ── */
   const CH = [
     ["yinyang", "陰陽與四象"], ["yarrow", "揲蓍・大衍"], ["coins", "三枚銅錢"],
-    ["build", "從爻到卦"], ["prob", "兩法機率"], ["najia", "六爻納甲入門"],
+    ["build", "從爻到卦"], ["prob", "兩法機率"], ["najia", "六爻納甲入門"], ["yilin", "焦氏易林"],
   ];
-  const NUM = ["壹", "貳", "參", "肆", "伍", "陸"];
+  const NUM = ["壹", "貳", "參", "肆", "伍", "陸", "柒"];
   root.innerHTML = `
     <p class="section-label">入門教學</p>
     <p class="yl-intro">易經起卦只做一件事：<b>得出六個數</b>，每個數是六、七、八、九其中之一。<br>
@@ -401,6 +401,48 @@
     </ol>
     <p>這些排盤本館會自動替你算好，排在起卦結果裡，也寫進 AI 提示詞。要用就到<a href="#" data-go="yi-najia">起卦問事・六爻納甲</a>。</p>
     <p class="yl-note">周易讀法和納甲讀法是兩套系統，同一卦不要混著斷：選了哪一種起法，就照那一種讀。</p>`;
+
+  /* ════ 柒 焦氏易林 ════ */
+  const opts = YI_CARDS.map((c) => `<option value="${c.n}">${c.glyph} ${c.n}・${short(c.n)}</option>`).join("");
+  function yilinRender() {
+    const el = $c("yilin"), b = +el.querySelector(".yl-ben").value, z = +el.querySelector(".yl-zhi").value;
+    const v = window.YILIN && window.YILIN[b + "-" + z];
+    const bb = gua.bitsOf(b), zb = gua.bitsOf(z), diff = [0, 1, 2, 3, 4, 5].filter((i) => bb[i] !== zb[i]);
+    el.querySelector(".yl-out").innerHTML = `<div class="yl-k">${short(b)}之${short(z)}</div>
+      <p class="yl-big" style="line-height:2">${v ? v.replace(/([。！？])(?=.)/g, "$1<br>") : "（本館底本缺此條）"}</p>
+      <p class="yl-note">${b === z ? "本卦之本卦：六爻皆靜時查這一條。" : `從「${short(b)}」變到「${short(z)}」，要動的是${diff.map((i) => POS[i] + "爻").join("、")}（共 ${diff.length} 爻）。不論動幾爻，都只查這一條。`}</p>`;
+  }
+  gua.bitsOf = (n) => {   /* 卦序 → 六爻（由下而上） */
+    for (let lo = 0; lo < 8; lo++) for (let up = 0; up < 8; up++) if (DC.KW[lo][up] === n) return DC.TRIG_LINES[lo].concat(DC.TRIG_LINES[up]);
+    return [0, 0, 0, 0, 0, 0];
+  };
+  $c("yilin").innerHTML = `
+    <h3>焦氏易林</h3>
+    <p class="yl-quote">舊題漢・焦延壽撰：「以一卦變六十四，六十四卦之變共四千九十有六，各繫以詞，皆四言韻語。」</p>
+    <p>易林不是另一種起卦法，而是<b>另一種讀法</b>：起卦照樣用揲蓍或擲錢，得到本卦與之卦後，不依動爻多寡挑卦辭爻辭，而是直接查一張 64×64 的表——<b>本卦配之卦，一格一首四言詩</b>。</p>
+    <ul>
+      <li>本卦固定時，每一種動爻組合都會變出一個不同的之卦，所以六十四種動法剛好對六十四首詩：4096 首正好涵蓋所有起卦結果，每種一首。</li>
+      <li>六爻皆靜，就查「本卦之本卦」那一首。</li>
+      <li>林辭大量取材《詩經》、《左傳》與先秦兩漢故事，也有不少詩在不同組合重複出現。讀法重在意象與典故，而不是卦爻辭的義理。</li>
+    </ul>
+    <div class="yl-box">
+      <div class="yl-k">查一條林辭</div>
+      <div class="yl-row"><label>本卦 <select class="yl-ben">${opts}</select></label><span>之</span><label>之卦 <select class="yl-zhi">${opts}</select></label>
+        <button class="ghost-btn yl-from" type="button">用「從爻到卦」那一卦</button></div>
+      <div class="yl-out" aria-live="polite"></div>
+    </div>
+    <p class="yl-note">林辭以維基文庫所錄四部叢刊景元刊本為底本，校以今人排印本，異體字改為通行繁體。想用它問一件事，請到<a href="#" data-go="yi-yilin">起卦問事・易林占法</a>。</p>`;
+  (function wireYilin() {
+    const el = $c("yilin");
+    el.querySelector(".yl-ben").value = "1"; el.querySelector(".yl-zhi").value = "2";
+    el.querySelectorAll("select").forEach((s) => s.addEventListener("change", yilinRender));
+    el.querySelector(".yl-from").addEventListener("click", () => {
+      const G = gua(B.lines);
+      el.querySelector(".yl-ben").value = String(G.ben); el.querySelector(".yl-zhi").value = String(G.zhi || G.ben);
+      yilinRender();
+    });
+    yilinRender();
+  })();
 
   /* 跳轉連結：到起卦問事的指定起法 */
   root.addEventListener("click", (e) => {

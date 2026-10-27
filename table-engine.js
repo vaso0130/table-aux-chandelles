@@ -255,7 +255,7 @@ function resetTable() {
   $("#spread-title").textContent = spread.name;
   $("#spread-hint").textContent = spread.cast
     ? (spread.method === "yarrow" ? "分二、掛一、揲四、歸奇，三變成一爻。十八變之後，動爻與之卦自現。"
-      : spread.najia ? "三枚銅錢擲六次起卦。成卦當刻記為月建、日辰，裝卦排盤。" : "三枚銅錢擲六次起卦。擲出動爻，之卦自現。")
+      : spread.najia ? "三枚銅錢擲六次起卦。成卦當刻記為月建、日辰，裝卦排盤。" : spread.yilin ? "三枚銅錢擲六次起卦，本卦配之卦，查《焦氏易林》一條林辭。" : "三枚銅錢擲六次起卦。擲出動爻，之卦自現。")
     : spread.sig
     ? `可先指定一張指示牌置中，或不指定——${spread.count === 9 ? "九" : "五"}張全憑抽。`
     : spread.gt
@@ -630,6 +630,9 @@ function yiDerived(info) {
     zhiHu: info.zhi ? huOf(bits.map((b, i) => (info.moving.includes(i) ? 1 - b : b))) : null,
   };
 }
+/* 焦氏易林：林辭在 yilin-data.js（window.YILIN，鍵為「本卦序-之卦序」；六爻皆靜查本卦之本卦） */
+const yilinKey = (info) => `${yiShort(info.ben)}之${yiShort(info.zhi || info.ben)}`;
+const yilinOf = (info) => (window.YILIN && window.YILIN[`${info.ben}-${info.zhi || info.ben}`]) || null;
 /* 朱子變占表：DC.zhuRank（divine-core.js） */
 /* ── 六爻納甲：排盤在 divine-core.js DC.najia，此處只管起卦時刻與顯示格式 ── */
 function najiaChart(info) {
@@ -769,8 +772,10 @@ function finishCast() {
   }
   const nj = spread.najia ? najiaChart(castInfo) : null, njh = nj && najiaHead(nj, castInfo);
   target = zhi ? 2 : 1;
-  $("#cast-caption").textContent = nj
-    ? `得${njh.gua}${zhi ? `之「${yiShort(zhi)}」` : "，六爻安靜"}。世在${YAO_NAMES[nj.shi - 1]}、應在${YAO_NAMES[nj.ying - 1]}${moving.length ? `；動爻：${moving.map((i) => YAO_NAMES[i]).join("、")}` : ""}。${njh.month}、${njh.day}，旬空${njh.kong}。`
+  $("#cast-caption").textContent = spread.yilin
+    ? `得「${yilinKey(castInfo)}」。${yilinOf(castInfo) ? "林辭：" + yilinOf(castInfo) : ""}`
+    : nj
+    ?`得${njh.gua}${zhi ? `之「${yiShort(zhi)}」` : "，六爻安靜"}。世在${YAO_NAMES[nj.shi - 1]}、應在${YAO_NAMES[nj.ying - 1]}${moving.length ? `；動爻：${moving.map((i) => YAO_NAMES[i]).join("、")}` : ""}。${njh.month}、${njh.day}，旬空${njh.kong}。`
     : zhi
     ? `得「${yiShort(ben)}之${yiShort(zhi)}」。動爻：${moving.map((i) => YAO_NAMES[i]).join("、")}。本卦為貞，之卦為悔。${moving.length === 3
       ? `三爻變，依朱子變占表居第 ${DC.zhuRank(moving).rank} 卦，${DC.zhuRank(moving).zhen ? "前十卦主貞" : "後十卦主悔"}。` : ""}`
@@ -1302,7 +1307,17 @@ function finishReading() {
     elCombos.appendChild(block);
   }
 
-  if (spread.najia && castInfo && castInfo.at) {
+  if (spread.yilin && castInfo) {
+    /* 焦氏易林：本卦配之卦查一條林辭，為主斷 */
+    const v = yilinOf(castInfo);
+    const block = document.createElement("div");
+    block.className = "combo-block";
+    block.innerHTML = `<div class="cb-title">焦 氏 易 林 ・ 林 辭</div>
+      <p class="combo yilin-key"><b>${yilinKey(castInfo)}</b>${castInfo.moving.length ? "" : "　<small style=\"color:var(--ink-soft)\">六爻皆靜，查本卦之本卦</small>"}</p>
+      <p class="yilin-verse">${v ? v.replace(/([。！？])(?=.)/g, "$1<br>") : "本館底本缺此條林辭。"}</p>
+      <p class="combo" style="color:var(--ink-soft)">易林占法一占只查一條：本卦配之卦，以這首四言林辭為主斷，卦名只作背景。林辭多用《詩經》、春秋故事取象，看不懂的典故可以交給 AI 解。</p>`;
+    elCombos.appendChild(block);
+  } else if (spread.najia && castInfo && castInfo.at) {
     /* 六爻排盤：由上而下，與提示詞同源 */
     const c = najiaChart(castInfo), h = najiaHead(c, castInfo);
     const rows = [5, 4, 3, 2, 1, 0].map((i) => {
@@ -1386,7 +1401,9 @@ function buildAiPrompt() {
     kip:"你是一位經驗豐富的奇卜牌（Kipperkarten）占卜解讀師，熟悉三十六張牌的人物與情境語彙、方向與距離的讀法。請以繁體中文為我解讀以下牌陣。",
     gra:"你是一位經驗豐富的大雷諾曼（Grand Jeu de Mlle Lenormand）占卜解讀師，熟悉五十四張牌的撲克對應、神話系列象徵與位置意義。請以繁體中文為我解讀以下牌陣。",
     run:"你是一位經驗豐富的盧恩符文（Elder Futhark）占卜師，熟悉二十四符文的正逆位（merkstave）意涵與符文間的呼應。請以繁體中文為我解讀以下符陣。",
-    yi: spread.najia
+    yi: spread.yilin
+      ? "你是一位熟讀《焦氏易林》的解讀者，熟悉林辭的四言韻語、典故（《詩經》《左傳》與先秦兩漢故事）與以象取義的讀法，能把林辭落實到現代處境。請以繁體中文為我解讀以下這一占。"
+      : spread.najia
       ? "你是一位精通六爻納甲（京房八宮、《火珠林》、《增刪卜易》《卜筮正宗》一系）的斷卦師，擅長取用神、論旺衰、看動變與應期，能將斷語落實到現代處境。請以繁體中文為我斷以下這一卦。"
       : "你是一位精通周易的占卜解讀者，熟悉六十四卦的卦辭、象傳與義理，能將卦義落實到現代處境。請以繁體中文為我解讀以下卦陣。",
     zw:"你是一位經驗豐富的紫微斗數老師，熟悉十四主星、六吉六煞、四化與諸雜曜的星情，以及廟旺落陷的差異。請以繁體中文為我解讀以下星陣（正位視為入廟得力，逆位視為落陷失輝）。",
@@ -1505,7 +1522,12 @@ function buildAiPrompt() {
     L.push(`起卦方式：${castInfo.method === "yarrow"
       ? "大衍筮法（朱子掛扐法：五十策去一，分二掛一揲四歸奇，三變成一爻；老陰 1/16、少陽 5/16、少陰 7/16、老陽 3/16，陽爻易動、陰爻難動）"
       : "三枚銅錢六擲（《火珠林》系俗法：老陰、老陽各 1/8，少陽、少陰各 3/8）"}。六爻由下而上：${castInfo.lines.map((v, i) => `${YAO_NAMES[i]} ${v}（${vName(v)}）`).join("、")}。`);
-    if (spread.najia && castInfo.at) {
+    if (spread.yilin) {
+      const v = yilinOf(castInfo), k = yilinKey(castInfo);
+      L.push(`此占得「${k}」${castInfo.moving.length ? `（動爻：${castInfo.moving.map((i) => YAO_NAMES[i]).join("、")}）` : "（六爻皆靜，本卦之本卦）"}。`);
+      L.push(v ? `《焦氏易林》「${k}」林辭：${v}` : `《焦氏易林》「${k}」：本館底本缺此條，請依你所知的通行本林辭解讀，並註明出處版本。`);
+      L.push("斷法指引（易林占法）：本卦配之卦，六十四卦各變六十四，共四千零九十六條林辭；一占只查一條，即以此條林辭為主斷，不另依動爻多寡取卦爻辭。本卦、之卦卦名只作背景，不喧賓奪主。");
+    } else if (spread.najia && castInfo.at) {
       L.push(...DC.najiaPrompt(najiaChart(castInfo), najiaHead(najiaChart(castInfo), castInfo).time + "（裝置當地時間，23:00 換日）"));
     } else {
       L.push(castInfo.moving.length
@@ -1585,6 +1607,13 @@ function buildAiPrompt() {
 /* 易經的【請提供】：筮法依朱子動爻斷法定主從、納甲依用神旺衰（不套牌陣的位置／組合模板） */
 function yiRequests() {
   const advice = `給問卜者的具體建議（${currentTone()}）`;
+  if (spread.yilin && castInfo) return [
+    `逐句解釋「${yilinKey(castInfo)}」這條林辭：字義、意象，若有典故請說明出處與故事`,
+    "這條林辭整體的吉凶基調（吉、凶、先凶後吉等），並說明判斷理由",
+    "把林辭的意象對應到我所問之事：現在的處境、阻礙或助力、可能的走向",
+    "就我所問之事的斷語與時機提示（不迴避不利之象）",
+    advice,
+  ];
   if (spread.najia && castInfo && castInfo.at) return [
     "依我所問之事定用神（說明取此六親的理由），並指出原神、忌神、仇神所在",
     "用神旺衰：月建、日辰的生扶剋制，以及旬空、月破、入墓與否",
@@ -2200,6 +2229,16 @@ function showDictCard(i) {
         <p class="combo">第 ${c.n} 宮・${c.zh}宮（${c.keys.split("・")[0]}之所）——大版圖中落入此宮的牌，都${c.mod}。</p>
       </div>`;
   }
+  if (deckDef.id === "yi" && window.YILIN) {   /* 焦氏易林：此卦為本卦的六十四條林辭 */
+    const me = yiShort(c.n);
+    extra = `
+      <div class="dict-sec"><div class="cb-title">焦 氏 易 林 ・ ${me} 之 六 十 四</div>
+        <p class="ai-note" style="margin:0 0 6px">以「${me}」為本卦，變往六十四卦的林辭（${me}之${me}＝六爻皆靜）。起卦時查的就是其中一條。</p>
+        <details class="yilin-list"><summary>展開六十四條</summary>
+        ${YI_CARDS.map((z) => `<p class="combo"><b>${me}之${yiShort(z.n)}</b>　${window.YILIN[`${c.n}-${z.n}`] || "（底本缺）"}</p>`).join("")}
+        </details>
+      </div>`;
+  }
   const revBlock = deckDef.reversible && c.rtext
     ? `<div class="dict-sec"><div class="cb-title">${c.norev ? "正 逆 之 辨" : "逆 位 牌 義"}</div><p class="e-text">${c.rtext}</p></div>`
     : "";
@@ -2244,6 +2283,7 @@ function guideTip(s) {
   const rev = deckDef.reversible ? "此牌組有正逆位：逆位讀作該義受阻、遲滯或走向反面，不必一律當凶。" : "";
   if (s.gt) return `<b>先讀指示牌落點</b>，看它四周八張牌（右側是尚未走到的未來、左側是已經走過的過去），再依「轉宮環鏈」追你在意的主題牌：某牌落在某家，就跳去讀那一家的牌，串成一條故事線。左右對稱的欄互為鏡影，自指示牌走馬步（隔一格的 L 型）所落之牌是暗中牽動的因素。${s.id === "gt9" ? "九四式平鋪無命運四牌，第 5 欄為鏡軸。" : "底部四張各有其宮，另兼命運四牌，連讀作全局結語。"}${rev}`;
   if (s.najia) return `<b>先依所問取用神</b>：文書長輩看父母、工作官司看官鬼、錢財看妻財、子女平安看子孫、同輩競爭看兄弟。世爻是你、應爻是對方。用神得月建、日辰生扶為旺，受剋為衰；旬空、月破待填實出空才應。動爻生剋他爻，所化之爻回頭生剋本爻。用神不上卦，看伏神。`;
+  if (s.yilin) return `<b>一占只查一條林辭</b>：本卦配之卦（六爻皆靜就是本卦之本卦），在《焦氏易林》四千零九十六條中找到那一首四言韻語，以它為主斷。不依動爻多寡挑卦爻辭，卦名只作背景；林辭的典故多出自《詩經》與春秋故事，讀懂典故就讀懂了吉凶。`;
   if (s.cast) return `<b>先看有無動爻</b>。六爻皆靜以本卦卦辭為斷；有動爻依朱子斷法定主從：一爻動讀該爻爻辭，二爻動以上爻為主，三爻動本卦為貞、之卦為悔兼論，四五爻動改讀之卦不變之爻，六爻皆動讀之卦卦辭（乾坤用九用六）。`;
   if (s.id === "houses") return `<b>每宮一張</b>，以牌義對應該宮的人生領域；先看命宮（自我）、財帛、夫妻、官祿四宮，再看其餘。同一張牌落不同宮，說的是不同層面。${rev}`;
   if (s.sig) return `<b>指示牌代表這一問的主體</b>，置於中央。先讀 它相鄰的牌：左為來路、右為去向、上為所思（懸於心頭）、下為所踏（已在掌握）；再看左右鏡影與對角。不指定而全洗入抽，指示牌自然落陣的位置本身就是訊息。${rev}`;

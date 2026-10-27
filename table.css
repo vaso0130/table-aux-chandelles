@@ -669,6 +669,10 @@ body.has-back .cface.back::after { content: none; }
 .combo-block { border-top: 1px double rgba(138,114,69,.5); margin-top: 8px; padding-top: 20px; }
 .combo-block .cb-title { font-size: 12px; letter-spacing: .3em; color: var(--gold-dim); margin-bottom: 12px; }
 .combo { margin: 0 0 12px; font-size: 15px; max-width: 62ch; }
+.yilin-list summary { cursor: pointer; color: var(--ink-soft); font-size: 14px; margin-bottom: 10px; }
+/* 焦氏易林：一首四言林辭，逐句換行 */
+.yilin-key b { font-size: 18px; letter-spacing: .12em; }
+.yilin-verse { margin: 4px 0 16px; padding: 14px 18px; border-left: 3px double rgba(138,114,69,.6); font-size: 19px; line-height: 2; letter-spacing: .18em; color: var(--ink); max-width: 62ch; }
 .nj-scroll { overflow-x: auto; margin: 0 0 12px; }
 .nj-table { border-collapse: collapse; font-size: 14px; white-space: nowrap; }
 .nj-table th { font-size: 11px; font-weight: 400; letter-spacing: .1em; color: var(--gold-dim); padding: 0 5px 6px; text-align: left; }
