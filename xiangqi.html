@@ -230,9 +230,9 @@
 <script src="divine-ui.js?v=2026102801"></script>
 <script src="divine-io.js?v=2026102601"></script>
 <script src="divine-lore.js?v=2026102502"></script>
-<script src="xq-data.js?v=2026102702"></script>
+<script src="xq-data.js?v=2026102703"></script>
 <script src="xq-engine.js?v=2026102602"></script>
-<script src="xiangqi-learn.js?v=2026102704"></script>
+<script src="xiangqi-learn.js?v=2026102705"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const E = XQE, POSZ = E.POS_ZH, NUM = E.NUM;
@@ -261,7 +261,7 @@ const SYS = [
   { id: "single", name: "單卦問事", sub: "十字五張・一事一卦", n: 5, modes: QT.map((q) => [q[0], q[1], q[2]]) },
   { id: "year", name: "年運", sub: "十字五張・一年", n: 5, hint: "問「我今年（明年）的年運」，未指定以農曆年論，也可以問某個月。依狀態、互動關係、格局、收穫付出、健康五步讀。" },
   { id: "chart", name: "命盤", sub: "三十二張・一生", n: 32, hint: "不需生辰。三十二張依序翻完排成八局：總格看一生的主結構，接著學習、情感、事業，與每十年的運勢。命盤以第一次排的為主，請慎重。" },
-  { id: "gate", name: "傳統卦陣", sub: "開門卦・三才・五子・四種讀法", n: 5,
+  { id: "gate", name: "傳統卦陣", sub: "開門卦・三才・五子・五種讀法", n: 5,
     modes: [["gate", "五張開門卦", "中間主位看本體，四角依右上起、左上承、左下轉、右下收——常見的象棋卦入門卦法（擺法為本站讀法）。"],
       ["three", "三張・天地人", "三才法：天為己方、地為對方與環境、人為關鍵與過程——三張看你、對面與兩者之間。"],
       ["five", "五子單卦", "五張由左至右排成一列：本命、事業、主事、人際、結果——第三張主事位是全卦的核心。常與陰陽測字法搭配。"]] },
@@ -336,7 +336,7 @@ function updateForm() {
   $("f-type-w").querySelector("label").textContent = s.id === "gate" ? "卦陣" : "題型";
   $("p-title").textContent = s.name;
   $("p-hint").textContent = s.id === "single" ? "一個問題翻五張，排成十字：中、左、右、上、下。依題型用書中的判法。"
-    : s.id === "gate" ? "台灣民間常見的象棋卦陣，可選四種讀法：三才強度法、一般讀法、陰陽測字法、宮廟派。" : s.hint;
+    : s.id === "gate" ? "台灣民間常見的象棋卦陣，可選五種讀法：三才強度法、一般讀法、陰陽測字法、字義法、宮廟派。" : s.hint;
   $("f-school-w").hidden = s.id !== "gate";
   $("f-school-note").textContent = school()[2];
   const qt = s.id === "single" ? QT.find((q) => q[0] === modeId) : null;
@@ -1073,9 +1073,9 @@ function upWhy(ups) {
   return "靠自己的能力與努力，也可能得長輩上司之助";
 }
 
-/* ═══ 傳統卦陣：開門卦、三才、五子單卦（三才強度法／一般讀法／陰陽測字法／宮廟派） ═══ */
+/* ═══ 傳統卦陣：開門卦、三才、五子單卦（三才強度法／一般讀法／陰陽測字法／字義法／宮廟派） ═══ */
 function runGate(q) {
-  const ps = picks.map((ch) => XQ.CARDS.find((c) => c.ch === ch)), sch = school(), sy = sch[0] === "", yy = sch[0] === "yinyang", topic = $("f-topic").value || XQ.TOPICS[0];
+  const ps = picks.map((ch) => XQ.CARDS.find((c) => c.ch === ch)), sch = school(), sy = sch[0] === "", yy = sch[0] === "yinyang", zy = sch[0] === "ziyi", topic = $("f-topic").value || XQ.TOPICS[0];
   const row = rowMode(), three = need() === 3;
   const names = posNames(), hints = three ? ["你這一方的樣子", "對方或外在環境", "事情成不成的關鍵與過程"] : row ? XQ.ROW_HINTS : XQ.HINTS;
   const ana = XQ.analyze(ps, row ? "row" : "", sch[0]);
@@ -1083,33 +1083,40 @@ function runGate(q) {
     const y = c.sy, sx = XQ.sexNote(c.ch, sex());
     return `<div class="pat"><b>${names[i]}・${qz(c.ch, "sm")}</b>　<small style="color:var(--muted)">${hints[i]}</small><br>`
       + (sy ? `${XQ.CLS_ZH[y.cls]}・${XQ.power(c.ch)}。${y.core}<br>問${XQ.TOPIC_ZH[topic]}：${y.t[topic]}${sx ? "<br>" + sx : ""}`
-        : yy ? `<span style="color:var(--gold)">${XQ.YY_KEY[c.ch]}</span>〔${c.red ? "紅・陽" : "黑・陰"}〕——${XQ.YY_ZI[c.ch]}。<br><small>兵種象意（${XQ.YY[c.kind][0]}）：${XQ.YY[c.kind][1]}</small>`
+        : yy ? `<span style="color:var(--gold)">${XQ.YY[c.kind][0]}</span>〔${c.red ? "紅・陽" : "黑・陰"}〕——${XQ.YY[c.kind][1]}${XQ.YY_ZI[c.ch] ? `<br><small>測字：${XQ.YY_ZI[c.ch]}</small>` : ""}`
+        : zy ? `<span style="color:var(--gold)">${XQ.ZY_KEY[c.ch]}</span>〔${c.red ? "紅字・偏正向" : "黑字・偏警訊"}〕——${XQ.ZY_ZI[c.ch]}。`
         : `<span style="color:var(--gold)">${c.gkeys}</span>〔${XQ.POL_ZH[c.pol]}〕——${c.gtext}`) + "</div>";
   }).join("");
   const label = (three ? "三張・天地人" : row ? "五子單卦" : "五張開門卦") + "・" + sch[1];
-  const yyNote = yy ? `<p style="color:var(--muted);font-size:12.5px">${XQ.YY_COLOR.red}。${XQ.YY_COLOR.black}。</p>` : "";
+  const yyNote = yy ? `<p style="color:var(--muted);font-size:12.5px">${XQ.YY_COLOR.red}。${XQ.YY_COLOR.black}。</p>`
+    : zy ? `<p style="color:var(--muted);font-size:12.5px">紅字多為正向、黑字多為警訊；問事涉及人物時，兵代表女性、卒代表男性。</p>` : "";
   $("out").innerHTML = DC.card("傳統卦陣", label + (q ? "・" + esc(q) : ""), gateHtml(picks) + yyNote + rows)
-    + DC.card("棋局", three ? "紅黑與成組" : row ? "紅黑、成組、主事與結果" : "紅黑、成組與起承轉收", ana.map((t) => "<p>・" + t + "</p>").join("")
+    + DC.card("棋局", yy ? (row ? "陰陽、主事與結果" : "陰陽與象意") : zy ? (row ? "正向、警訊、主事與結果" : "正向與警訊") : three ? "紅黑與成組" : row ? "紅黑、成組、主事與結果" : "紅黑、成組與起承轉收", ana.map((t) => "<p>・" + t + "</p>").join("")
+      + (yy && !row ? '<p style="color:var(--muted);font-size:12.5px">陰陽測字法以五子單卦為主；搭配其他卦陣時只看陰陽與象意，不讀各位置。</p>' : "")
       + '<p style="color:var(--muted);font-size:12.5px">標「本站讀法」的棋型與卦陣擺法為本站自訂，請當參考。</p>');
   const L = [
     sy ? "你是一位熟悉台灣民間象棋占卜的解讀師，參考《象棋占卜祕笈》的體系（本站改寫）斷事：三大類（天、天人之間、人）、紅黑陰陽、能量強度、字音字形取象。"
       : yy ? "你是一位熟悉象棋占卜的解讀師，擅長以紅黑陰陽的消長、兵種象意，以及漢字的諧音與拆字來斷事。"
+      : zy ? "你是一位熟悉象棋占卜的解讀師，擅長從每個棋字的字義、字音與字形讀出它對人生處境的提示。"
       : "你是一位熟悉台灣民間象棋卦（象棋占卜）的解讀師，懂得以紅黑陰陽、將士象車馬炮兵的兵種象意、成組棋型與棋子所在的位置來斷事。",
     sy ? "讀法補充（三才強度法）：帥將屬天（神佛棋）、兵卒屬人（事在人為；兵代表女性、卒代表男性，與求問者性別相反為反常），皆不以紅黑論好壞；其餘紅好黑不好，看能量強度：仕士 100%、相象 90%、俥車 80%、傌馬 70%、炮包 60%。紅黑兩兩相對，能量相同、吉凶相反。字音字形取象是核心技法。"
-      : yy ? "讀法補充（陰陽測字法）：" + XQ.YY_COLOR.red + "；" + XQ.YY_COLOR.black + "。兩色交織看運勢消長。兵種象意：帥將＝決策核心、仕士＝幕僚親信、相象＝守成與房產、車＝衝勁遠行、馬＝波折與猶豫、炮包＝口舌與名聲起落、兵卒＝慢功與基層瑣事。每個字另有關鍵詞，紅字多正向、黑字多警訊；兵代表女性、卒代表男性。測字：字音諧音（相＝想、象＝現象、包＝出包）與字形拆字（俥＝有人駕車、車＝車上無人、傌＝有人騎馬）。"
+      : yy ? "讀法補充（陰陽測字法）：" + XQ.YY_COLOR.red + "；" + XQ.YY_COLOR.black + "。兩色交織看運勢消長。兵種象意：帥將＝決策核心、仕士＝幕僚親信、相象＝守成與房產、車＝衝勁遠行、馬＝波折與猶豫、炮包＝口舌與名聲起落、兵卒＝慢功與基層瑣事。測字：字音諧音（仕＝事、相＝想）與字形拆字（俥＝人＋車）。"
+      : zy ? "讀法補充（字義法）：十四個字各有一組關鍵詞，紅字多為正向（帥統帥、仕仕途智慧、相心想事成、俥行動機緣、傌權力錢財、炮名聲熱情），黑字多為警訊（將固執、士思慮過甚、象不好的現象、車空轉、馬負債、包出包）；問事涉及人物時，兵代表女性、卒代表男性。"
       : "讀法補充（象棋卦）：紅為陽、為明、為吉，黑為陰、為暗、為凶；但帥將與兵卒不以紅黑論吉凶——帥將看主事的核心在明處還是幕後，兵卒看小事與眾人的多寡。兵種象意：將帥＝主事者、仕士＝貼身之人、相象＝家宅守成、車＝主力強勢、馬＝奔波轉折、炮包＝借力或口舌、兵卒＝小事與眾人。也可依字音字形取象。",
     ...(sch[3] ? ["解讀流派：" + sch[3]] : []),
     DC.toneHead(), "",
     ...(q ? ["我的問題：" + q, ""] : []),
     `【卦陣】${label}${row ? "（五張由左至右排成一列）" : ""}；求問者${sex()}生${sy ? "；問題類別：" + XQ.TOPIC_ZH[topic] : ""}`,
-    ...ps.map((c, i) => `${i + 1}. ${names[i]}（${hints[i]}）：${c.ch}（${E.WX[c.kind]}）——` + (sy ? c.text + "〔" + XQ.syLine(c, topic) + "〕" + (XQ.sexNote(c.ch, sex()) ? " " + XQ.sexNote(c.ch, sex()) : "")
-      : yy ? XQ.yyLine(c) : `${c.gkeys}〔${XQ.POL_ZH[c.pol]}〕${c.gtext}`)),
+    ...ps.map((c, i) => `${i + 1}. ${names[i]}（${hints[i]}）：${c.ch}${yy || zy ? "" : `（${E.WX[c.kind]}）`}——` + (sy ? c.text + "〔" + XQ.syLine(c, topic) + "〕" + (XQ.sexNote(c.ch, sex()) ? " " + XQ.sexNote(c.ch, sex()) : "")
+      : yy ? XQ.yyLine(c) : zy ? XQ.zyLine(c) : `${c.gkeys}〔${XQ.POL_ZH[c.pol]}〕${c.gtext}`)),
     "", "【棋局判讀】（標「本站讀法」者為本站自訂）", ...ana.map((t) => "- " + t), "",
     "【請提供】",
-    ...(three ? ["三才逐一解讀：天（己方）、地（對方與環境）、人（關鍵與過程）", "三者的關係：誰強誰弱、關鍵落在哪一邊", "就我所問之事的斷語"]
-      : row ? ["依序讀五個位置：本命（處境與起因）、事業（資源與執行力）、主事（成敗關鍵、貴人或小人）、人際（周遭態度與感情互動）、結果（最後走向）", "紅黑陰陽在五個位置上怎麼消長", yy ? "每張棋的諧音與拆字，點出我生活裡對應的處境" : "棋局判讀中的棋型如何互相印證", "以主事位為軸，把五張串成一段因果", "就我所問之事的斷語：最後的走向與時機"]
+    ...(yy && !row ? ["看紅黑陰陽的消長，定全局基調", "逐張解讀每顆棋的兵種象意", "同一兵種陰陽並見、炮包與測字提點的意思", "就我所問之事的斷語：可否、順逆與時機"]
+      : zy && !row ? ["看紅字（正向）與黑字（警訊）的多寡，定全局基調", "逐張解讀每個字的關鍵詞與字義", "若所問之事牽涉到人，兵卒點出的是哪一位", "就我所問之事的斷語：可否、順逆與時機"]
+      : three ? ["三才逐一解讀：天（己方）、地（對方與環境）、人（關鍵與過程）", "三者的關係：誰強誰弱、關鍵落在哪一邊", "就我所問之事的斷語"]
+      : row ? ["依序讀五個位置：本命（處境與起因）、事業（資源與執行力）、主事（成敗關鍵、貴人或小人）、人際（周遭態度與感情互動）、結果（最後走向）", zy ? "正向的字與警訊的字落在哪些位置" : "紅黑陰陽在五個位置上怎麼消長", yy || zy ? "每張棋的字義、諧音與拆字，點出我生活裡對應的處境" : "棋局判讀中的棋型如何互相印證", "以主事位為軸，把五張串成一段因果", "就我所問之事的斷語：最後的走向與時機"]
       : ["看主位的顏色與兵種、紅黑多寡，定全局基調", "逐位解讀：主位與起、承、轉、收四角", "棋局判讀中的棋型如何互相印證", "起承轉收串讀成一段過程，看收在哪裡", "就我所問之事的斷語：可否、順逆與時機"]).map((t, i) => `${i + 1}. ${t}`),
-    `${three ? 4 : 6}. 給我的具體建議${row ? "（行動指南）" : ""}`,
+    `${(yy || zy) && !row ? 5 : three ? 4 : 6}. 給我的具體建議${row ? "（行動指南）" : ""}`,
   ];
   $("prompt-box").value = L.join("\n");
   $("prompt-sec").hidden = false;
