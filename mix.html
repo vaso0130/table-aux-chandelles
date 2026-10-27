@@ -163,7 +163,7 @@
 <script src="divine-ui.js?v=2026102801"></script>
 <script src="divine-io.js?v=2026102601"></script>
 <script src="divine-lore.js?v=2026102502"></script>
-<script src="xq-data.js?v=2026102605"></script>
+<script src="xq-data.js?v=2026102701"></script>
 <script src="shilun-data.js?v=2026102601"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -585,6 +585,9 @@ GEN["c-xq"] = () => {
       ...ps.map((p) => XQ.sexNote(p.ch, sex)).filter(Boolean).map((t) => "  " + t),
       ...(sex ? [] : ["  (求問者性別未填:兵卒只論事在人為,不論正常反常)"]),
       "  棋局:" + XQ.analyze(ps).join(";")]
+    : DC.schoolGet("xq") === "yinyang" ? ["象棋占卜（32 張棋牌蓋著洗勻翻五張；中為主位，四角依右上起、左上承、左下轉、右下收，擺法為本站讀法。棋義依陰陽測字法：紅陽黑陰看消長、兵種象意，再以諧音拆字取象）：",
+      ...ps.map((p, i) => "  " + XQ.POS[i] + ":" + p.name + "——" + XQ.yyLine(p)),
+      "  棋局:" + XQ.analyze(ps, "", "yinyang").join(";")]
     : ["象棋占卜（台灣民間象棋卦，32 張棋牌蓋著洗勻翻五張；中為主位，四角依右上起、左上承、左下轉、右下收；紅為陽為明為吉、黑為陰為暗為凶，帥將與兵卒不以紅黑論吉凶）：",
       ...ps.map((p, i) => "  " + XQ.POS[i] + ":" + p.name + "(" + p.gkeys + "," + XQ.POL_ZH[p.pol] + ")——" + p.gtext),
       "  棋局:" + XQ.analyze(ps).join(";")] };
