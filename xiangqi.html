@@ -95,6 +95,17 @@
   .bz-aux { display: flex; gap: 3px; justify-content: center; }
   .bz-aux .qz { --s: 24px; }
   .bz-hl { border-left: 3px solid var(--gold); padding-left: 10px; }
+  /* 解盤時一律用卡面（抽牌時的盤面仍用棋子） */
+  .chart.cards .xcard { --w: 42px; }
+  .chart.cards .xcard.dim { opacity: .55; }
+  .chart.cards .now { outline-offset: 3px; border-radius: 8px; }
+  .cross.mid .xcard { --w: 50px; }
+  .cross.mid .cell { min-width: 50px; }
+  .bz.cards .bz-main .xcard { --w: 60px; }
+  .bz.cards .bz-aux .xcard { --w: 32px; border-radius: 4px; }
+  .xcard.in { --w: 40px; vertical-align: middle; margin: 2px 2px 2px 0; }
+  .xcard.in.sm { --w: 32px; }
+  @media (max-width: 520px) { .chart.cards .xcard { --w: 34px; } .bz.cards .bz-main .xcard { --w: 50px; } .bz.cards .bz-aux .xcard { --w: 27px; } }
   .chart .now { outline: 2px solid var(--gold-bright); outline-offset: 2px; border-radius: 50%; }
   .board-wrap { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
 
@@ -457,8 +468,9 @@ $("btn-reset").onclick = () => { chain = []; optResults = []; qingOk = false; qi
 
 /* 盤位：十字（中左右上下的擺放順序）；命盤 33 位 */
 const CROSS_GRID = [[null, 3, null], [1, 0, 2], [null, 4, null]];   /* 列×欄 → 抽出序（0 起） */
-function crossHtml(list, big, labels) {
-  return `<div class="cross${big ? " big" : ""}">` + CROSS_GRID.flat().map((k) => {
+function crossHtml(list, big, labels, mid) {   /* mid：解盤中的小十字，也用卡面 */
+  if (mid) big = true;
+  return `<div class="cross${mid ? " mid" : big ? " big" : ""}">` + CROSS_GRID.flat().map((k) => {
     if (k === null) return '<div class="cell"></div>';
     const ch = list[k];
     return `<div class="cell">${labels && ch ? `<small>${NUM[k]}</small>` : ""}${ch ? (big ? xcard(ch.ch || ch) : qz(ch.ch || ch)) : `<span class="${big ? "xcard " : ""}qz slot${k === list.filter(Boolean).length ? " next" : ""}">${NUM[k]}</span>`}</div>`;
@@ -481,7 +493,7 @@ const CHART_POS = (() => {
   for (let k = 2; k <= 8; k++) { const r = 2 * k - 1; a.push([r, 1], [r, 0], [r, 2]); if (k < 8) a.push([r + 1, 1]); }
   return a;   // 32 個；第 33 位（列 16）補第 4 子
 })();
-function chartHtml(seq, nowAge) {
+function chartHtml(seq, nowAge, cards) {   /* cards：解盤時用卡面 */
   const grid = Array.from({ length: 17 }, () => [null, null, null]);
   seq.forEach((ch, i) => { if (ch) { const [r, c] = CHART_POS[i]; grid[r][c] = ch; } });
   if (seq[3] && seq.length >= 32) grid[16][1] = seq[3];
@@ -495,13 +507,13 @@ function chartHtml(seq, nowAge) {
       nowCell = rc[0] + "," + rc[1];
     }
   }
-  let h = '<div class="chart">';
+  let h = `<div class="chart${cards ? " cards" : ""}">`;
   for (let r = 0; r < 17; r++) {
     h += `<div class="lab">${lab(r)}</div>`;
     for (let c = 0; c < 3; c++) {
       const ch = grid[r][c], isCell = r % 2 === 1 || c === 1;
       const n = CHART_POS.findIndex(([rr, cc]) => rr === r && cc === c);
-      h += `<div class="cell${nowCell === r + "," + c ? " now" : ""}">${!isCell ? "" : ch ? qz(ch, r === 16 ? "dim" : "") : r === 16 ? `<span class="qz slot sm">④</span>` : `<span class="qz slot sm${n === seq.length ? " next" : ""}">${n + 1}</span>`}</div>`;
+      h += `<div class="cell${nowCell === r + "," + c ? " now" : ""}">${!isCell ? "" : ch ? (cards ? xcard(ch, r === 16 ? "dim" : "") : qz(ch, r === 16 ? "dim" : "")) : r === 16 ? `<span class="qz slot sm">④</span>` : `<span class="qz slot sm${n === seq.length ? " next" : ""}">${n + 1}</span>`}</div>`;
     }
   }
   return h + "</div>";
@@ -1014,7 +1026,7 @@ function runChart(q) {
   const totalExtra = E.chartTotalPats(T, sx);
   /* 總格 */
   const hl = healthLines(T, true);
-  cards.push(DC.card("命盤", "三十二張・八局", `<div class="board-wrap">${chartHtml(picks, nowAge)}<div style="flex:1 1 260px;max-width:460px">`
+  cards.push(DC.card("命盤", "三十二張・八局", `<div class="board-wrap">${chartHtml(picks, nowAge, true)}<div style="flex:1 1 260px;max-width:460px">`
     + `<p class="verdict">你是${qz(T.center.ch, "sm")}：${TRAIT[T.center.kind][0]}。</p><p>做事的能量：${TRAIT[T.center.kind][1]}。</p>`
     + (tf.notes.length ? `<p>總格是一生的「土壤」：${tf.notes.join("、")}，之後每十年的收穫都要打折（約剩 ${Math.round(tf.gain * 100)}%）。</p>` : "<p>總格沒有打折的格局，是一塊不錯的土壤。</p>")
     + (c.weakFromY !== null ? `<p>命盤中間一直排下來，連續五隻以上同色：${weakAge(c.weakFromY)}起，體質會轉弱，要多保養。</p>` : "") + "</div></div>"));
@@ -1057,7 +1069,7 @@ function runChart(q) {
     const dhl = healthLines(a, false);
     const nowHere = nowAge >= ages[3][0] && nowAge <= ages[3][1];
     cards.push(`<details class="result-card round-card"${nowHere || (k === 2 && !nowAge) ? " open" : ""}><summary><h3 style="display:inline">${r.name}${nowHere ? "（你現在在這裡）" : ""}<span class="score">+${g}／−${cst}${tf.gain < 1 ? `（打折後收穫約 +${Math.round(g * tf.gain)}）` : ""}</span></h3></summary>`
-      + crossHtml(a.pieces, false, true) + `<p style="color:var(--muted);font-size:12.5px">各位置對應的年歲（虛歲）：${posAge}</p>`
+      + crossHtml(a.pieces, false, true, true) + `<p style="color:var(--muted);font-size:12.5px">各位置對應的年歲（虛歲）：${posAge}</p>`
       + `<p>這十年的你是${qz(a.center.ch, "sm")}${a.pieces.slice(1).filter((p) => p.red === a.own).length ? "，帶著" + a.pieces.slice(1).filter((p) => p.red === a.own).map((p) => p.ch).join("、") + "的特質" : ""}。</p>`
       + notes.map((x) => "<p>・" + x + "</p>").join("") + rolesHtml(a, rl) + `<p class="section-label">格局</p>` + patsHtml(a)
       + (dhl.length ? `<p class="section-label">健康</p>` + dhl.map((x) => "<p>・" + x + "</p>").join("") : "")
@@ -1139,15 +1151,15 @@ function runGate(q) {
 }
 
 /* ═══ 八陣大卦（觀棋知命一派；計算在 xq-bazhen.js，除陣圖與棋子歸卦外皆為本站讀法） ═══ */
-function bazhenHtml(list) {
+function bazhenHtml(list, cards) {   /* cards：解盤時用卡面 */
   const g = Array.from({ length: 3 }, () => Array(3).fill(""));
   BZ.T.forEach((name, k) => {
     const [r, c] = BZ.CELL[k];
-    const pc = (i, cls) => { const ch = list[i]; return ch ? qz(ch, cls) : `<span class="qz slot ${cls}${i === list.filter(Boolean).length ? " next" : ""}">${i + 1}</span>`; };
+    const pc = (i, cls) => { const ch = list[i]; return ch ? (cards ? xcard(ch) : qz(ch, cls)) : `<span class="qz slot ${cls}${i === list.filter(Boolean).length ? " next" : ""}">${i + 1}</span>`; };
     g[r][c] = `<div class="bz-palace"><div class="bz-name">${DC.TRIG_SYM[k]} ${name}</div><div class="bz-main">${pc(k, "")}</div><div class="bz-aux">${[1, 2, 3].map((n) => pc(n * 8 + k, "sm")).join("")}</div></div>`;
   });
   g[1][1] = `<div class="bz-palace bz-center"><div class="bz-taiji">☯</div><div class="bz-name">太極・此事</div></div>`;
-  return `<div class="bz">${g.flat().join("")}</div>`;
+  return `<div class="bz${cards ? " cards" : ""}">${g.flat().join("")}</div>`;
 }
 function runBazhen(q) {
   const mv = $("f-palace").value, main = mv === "" ? null : +mv;
@@ -1156,11 +1168,11 @@ function runBazhen(q) {
   const pRow = (p) => {
     const flags = [p.rel.k === "歸位" ? "歸位" : "", p.opp ? "對宮落位" : "", p.shiHe ? "勢合" : "", p.shiNi ? "勢逆" : ""].filter(Boolean);
     return `<div class="pat${main === p.k ? " bz-hl" : ""}"><b>${p.sym} ${p.name}宮${main === p.k ? "（主宮）" : ""}</b>　<small style="color:var(--muted)">${BZ.PALACE[p.k].t}</small><br>`
-      + `主子 ${qz(p.m.ch, "sm")}（屬${nm(p.mg)}・${DC.TRIG_WX[p.mg]}）→ 宮卦<b>${p.hex}</b>；${p.rel.txt}${flags.length ? "　<span style=\"color:var(--gold)\">" + flags.join("、") + "</span>" : ""}<br>`
-      + `<small>輔子 ${p.ps.slice(1).map((c) => qz(c.ch, "sm")).join("")}：${p.auxRel.map((x) => x.k).join("、")}；陣卦${nm(p.zhen)}（紅陽黑陰由下而上）</small></div>`;
+      + `主子 ${xcard(p.m.ch, "in")}<b>${p.m.red ? "紅" : "黑"}${p.m.ch}</b>（屬${nm(p.mg)}・${DC.TRIG_WX[p.mg]}）→ 宮卦<b>${p.hex}</b>；${p.rel.txt}${flags.length ? "　<span style=\"color:var(--gold)\">" + flags.join("、") + "</span>" : ""}<br>`
+      + `<small>輔子 ${p.ps.slice(1).map((c) => xcard(c.ch, "in sm")).join("")}${p.ps.slice(1).map((c, i) => c.ch + "（" + p.auxRel[i].k + "）").join("、")}；陣卦${nm(p.zhen)}（紅陽黑陰由下而上）</small></div>`;
   };
   const order = main === null ? R.P : [R.P[main], R.P[BZ.OPP[main]], ...R.P.filter((p) => p.k !== main && p.k !== BZ.OPP[main])];
-  $("out").innerHTML = DC.card("八陣大卦", "觀棋知命" + (q ? "・" + esc(q) : ""), bazhenHtml(picks)
+  $("out").innerHTML = DC.card("八陣大卦", "觀棋知命" + (q ? "・" + esc(q) : ""), bazhenHtml(picks, true)
       + `<p style="color:var(--muted);font-size:12.5px">先天八卦陣與棋子歸卦依觀棋知命圖；排子順序、宮卦、體用生剋、陣卦、計分與應期為本站依《說卦傳》與易理推出的讀法，查無此派原規則，請當參考。</p>`)
     + DC.card("總卦", "乾宮主子為上、坤宮主子為下", `<p class="verdict">總卦 ${R.zong.name}　互卦 ${R.hu.name}</p>`
       + `<p>全局${R.verdict}（計分 ${R.total > 0 ? "+" : ""}${R.total}${main !== null ? "，主宮加倍" : ""}）。${R.kings.length ? "帥將落為" + R.kings.join("、") + "宮主子：此事有貴人或主事者介入。" : ""}</p>`
