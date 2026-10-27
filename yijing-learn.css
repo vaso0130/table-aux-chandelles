@@ -1,0 +1,123 @@
+/* 易經館・入門教學（互動）：揲蓍、三錢、從爻到卦、兩法機率、納甲入門。顏色沿用 table.css 的變數 */
+#learn { max-width: 860px; margin: 0 auto; }
+.yl-intro { color: var(--ivory-shade); font-size: 14.5px; text-align: center; max-width: 640px; margin: 0 auto 6px; }
+.yl-intro small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+
+.yl-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 22px 0 18px; }
+.yl-tab {
+  font: inherit; font-size: 13.5px; letter-spacing: .08em; cursor: pointer;
+  color: var(--muted); background: rgba(10,17,13,.4);
+  border: 1px solid var(--felt-line); border-radius: 2px; padding: 7px 12px 6px;
+}
+.yl-tab b { color: var(--gold-dim); font-weight: 400; margin-right: 6px; }
+.yl-tab:hover, .yl-tab:focus-visible { color: var(--gold-bright); border-color: var(--gold-dim); outline: none; }
+.yl-tab.on { color: var(--felt-950); background: linear-gradient(#E5CC8F, #C9A45C); border-color: var(--gold-bright); }
+.yl-tab.on b { color: var(--felt-900); }
+
+.yl-ch { border: 1px solid var(--felt-line); border-radius: 6px; padding: 20px 22px 22px; background: rgba(20,32,27,.55); }
+.yl-ch h3 { margin: 0 0 4px; color: var(--gold-bright); font-size: 20px; letter-spacing: .12em; font-weight: 600; }
+.yl-ch .yl-quote { color: var(--gold-dim); font-size: 13px; letter-spacing: .06em; margin: 0 0 14px; }
+.yl-ch p { font-size: 14.5px; margin: 8px 0; }
+.yl-ch p b, .yl-ch li b { color: var(--gold-bright); font-weight: 600; }
+.yl-ch ul, .yl-ch ol { padding-left: 1.4em; font-size: 14.5px; }
+.yl-note { color: var(--muted); font-size: 13px !important; }
+.yl-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 12px 0; }
+.yl-box {
+  border: 1px solid rgba(201,164,92,.28); border-radius: 6px; background: rgba(201,164,92,.04);
+  padding: 12px 16px; margin: 14px 0;
+}
+.yl-box .yl-k { color: var(--gold); font-size: 12px; letter-spacing: .3em; margin-bottom: 4px; }
+.yl-say { min-height: 3.4em; font-size: 14.5px; }
+.yl-ch a, .yl-intro a { color: var(--gold-bright); text-underline-offset: 3px; }
+.yl-big { font-size: 22px; color: var(--gold-bright); letter-spacing: .08em; }
+.yl-red { color: #E07A62; }
+
+/* 四象表 */
+.yl-four { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0; }
+.yl-four > div { border: 1px solid var(--felt-line); border-radius: 6px; padding: 12px 8px; text-align: center; background: rgba(10,17,13,.35); }
+.yl-four .n { font-size: 26px; color: var(--gold-bright); line-height: 1.1; }
+.yl-four .nm { font-size: 14px; color: var(--ivory); margin: 2px 0 6px; }
+.yl-four .ch { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.yl-four .mv { color: #E07A62; }
+
+/* 爻線 */
+.yl-line { display: inline-flex; gap: 10px; width: 92px; height: 12px; vertical-align: middle; }
+.yl-line i { flex: 1; background: var(--gold-bright); border-radius: 2px; }
+.yl-line.yin i:first-child { margin-right: 0; }
+.yl-line.mv i { background: #E07A62; }
+.yl-line.sm { width: 54px; height: 8px; gap: 7px; }
+
+/* 揲蓍台 */
+.yl-stage { display: flex; justify-content: center; align-items: flex-end; gap: 18px; flex-wrap: wrap; min-height: 132px; padding: 10px 0 4px; }
+.yl-pile { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.yl-pile .lab { font-size: 12px; color: var(--muted); letter-spacing: .1em; }
+.yl-pile .lab b { color: var(--gold-bright); }
+.yl-bars { display: flex; align-items: flex-end; gap: 3px; flex-wrap: wrap; justify-content: center; max-width: 320px; }
+.yl-bars i {
+  display: block; width: 3px; height: 70px; border-radius: 2px;
+  background: linear-gradient(180deg, #D9BE7E, #9A7A3C 70%, #6B5228);
+  box-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+.yl-bars.pick i { cursor: pointer; }
+.yl-bars.pick i:hover { filter: brightness(1.3); }
+.yl-bars i.cut { margin-right: 14px; }
+.yl-bars .grp { display: flex; gap: 2px; padding: 0 3px 3px; border-bottom: 1px solid rgba(201,164,92,.35); }
+.yl-bars .grp.rem { border-bottom-color: #E07A62; }
+.yl-bars .grp.rem i { background: linear-gradient(180deg, #F3B49F, #C0614A 70%, #7C3526); }
+.yl-bars i.hang { transform: rotate(14deg); background: linear-gradient(180deg, #F3B49F, #C0614A 70%, #7C3526); }
+.yl-bars.aside i { height: 34px; opacity: .55; }
+.yl-split { display: flex; align-items: center; gap: 10px; justify-content: center; flex-wrap: wrap; font-size: 13.5px; color: var(--muted); }
+.yl-split input[type=range] { width: min(280px, 70vw); accent-color: var(--gold); }
+.yl-steps { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 4px 0 10px; font-size: 12.5px; }
+.yl-steps span { color: var(--muted); padding: 2px 8px; border: 1px solid var(--felt-line); border-radius: 10px; }
+.yl-steps span.on { color: var(--felt-950); background: var(--gold); border-color: var(--gold); }
+.yl-steps span.done { color: var(--gold-dim); border-color: var(--gold-dim); }
+
+/* 六爻進度（揲蓍、擲錢共用） */
+.yl-prog { display: flex; flex-direction: column-reverse; gap: 5px; align-items: center; margin: 10px 0; }
+.yl-prog .r { display: flex; gap: 12px; align-items: center; font-size: 13px; color: var(--muted); }
+.yl-prog .r .i { width: 3em; text-align: right; color: var(--gold-dim); font-size: 12px; }
+.yl-prog .r .v { width: 10em; }
+.yl-prog .r.empty { opacity: .3; }
+
+/* 銅錢（沿用 table.css 的 .coin） */
+.yl-coins { display: flex; justify-content: center; gap: 26px; padding: 18px 0 8px; }
+.yl-coins .coin { cursor: pointer; }
+.yl-coins .coin:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 50%; }
+.yl-coinlab { display: flex; justify-content: center; gap: 26px; font-size: 13px; color: var(--muted); }
+.yl-coinlab span { width: 62px; text-align: center; }
+.yl-quiz .coinrow { font-size: 20px; letter-spacing: .4em; color: var(--gold-bright); margin: 6px 0 10px; }
+
+/* 從爻到卦 */
+.yl-build { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 20px; align-items: start; }
+.yl-yao { display: flex; flex-direction: column-reverse; gap: 6px; }
+.yl-yao button {
+  font: inherit; display: flex; align-items: center; gap: 12px; width: 100%;
+  background: rgba(10,17,13,.35); border: 1px solid var(--felt-line); border-radius: 4px;
+  color: var(--ivory); padding: 7px 10px; cursor: pointer; text-align: left;
+}
+.yl-yao button:hover, .yl-yao button:focus-visible { border-color: var(--gold-dim); outline: none; }
+.yl-yao .pos { width: 3.2em; color: var(--gold-bright); font-size: 14px; }
+.yl-yao .val { font-size: 12.5px; color: var(--muted); }
+.yl-yao .val.mv { color: #E07A62; }
+.yl-gua { display: flex; gap: 14px; flex-wrap: wrap; }
+.yl-gua figure { margin: 0; text-align: center; width: 118px; }
+.yl-gua img { width: 118px; height: 177px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(201,164,92,.45); box-shadow: 0 6px 16px rgba(0,0,0,.45); background: var(--felt-800); }
+.yl-gua figcaption { font-size: 13px; color: var(--ivory-shade); margin-top: 6px; line-height: 1.45; }
+.yl-gua figcaption small { display: block; color: var(--muted); font-size: 12px; }
+.yl-gua .none { width: 118px; height: 177px; display: grid; place-items: center; border: 1px dashed var(--felt-line); border-radius: 6px; color: var(--muted); font-size: 12.5px; padding: 10px; }
+
+/* 機率模擬 */
+.yl-prob { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 10px 0; }
+.yl-prob th, .yl-prob td { border-bottom: 1px solid var(--felt-line); padding: 7px 6px; text-align: left; }
+.yl-prob th { color: var(--gold); font-weight: 400; font-size: 12.5px; letter-spacing: .1em; }
+.yl-bar { height: 8px; border-radius: 4px; background: var(--gold); display: block; min-width: 2px; }
+.yl-bar.y { background: #7FA88C; }
+.yl-tbl { overflow-x: auto; }
+
+@media (max-width: 640px) {
+  .yl-ch { padding: 16px 14px 18px; }
+  .yl-four { grid-template-columns: repeat(2, 1fr); }
+  .yl-build { grid-template-columns: 1fr; }
+  .yl-coins, .yl-coinlab { gap: 16px; }
+}

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<title>燭光易齋 · 易經館</title>
+<link rel="icon" href="icons/yijing.svg?v=1" type="image/svg+xml">
+<link rel="icon" href="icons/yijing-32.png?v=1" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/yijing-180.png?v=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="燭光易經館：大衍揲蓍、三錢擲卦、六爻納甲與六十四卦牌，附可以親手操作的起卦入門教學。">
+<link rel="stylesheet" href="table.css?v=2026102701">
+<link rel="stylesheet" href="yijing-learn.css?v=2026102701">
+
+<div class="wrap">
+  <header>
+    <div class="plate">
+      <p class="eyebrow">Le Cabinet du Yi King</p>
+      <h1>燭光易齋</h1>
+      <p class="subtitle">一陰一陽之謂道——四十九根蓍草、三枚銅錢，替你問出此刻的那一卦。</p>
+    </div>
+  </header>
+
+  <nav class="halls-nav" aria-label="館別導覽">
+    <a title="回到燭光入口" href="index.html" class="home">燭光</a>
+    <a title="牌卡占卜：雷諾曼、塔羅、盧恩等九術" href="table.html">牌桌館</a>
+    <a title="揲蓍、擲錢、六爻納甲與六十四卦牌" href="yijing.html" class="here">易經館</a>
+    <a title="象棋卜卦：單卦問事、年運、命盤、一張問事" href="xiangqi.html">象棋館</a>
+    <a title="西洋/印度/卜卦占星與宿曜" href="astro.html">占星館</a>
+    <a title="八字、紫微、九星、唐四柱、人類圖、生命靈數——看生辰" href="bazi.html">八字館</a>
+    <a title="奇門、六壬、太乙、梅花、河洛——問此刻與時機" href="shi.html">式占館</a>
+    <a title="緬甸八曜、爪哇威頓、泰國佛日" href="nanyang.html">南洋館</a>
+    <a title="一句、翹傳、靈籤——開卷即答" href="kaijuan.html">開卷館</a>
+    <a title="時輪占——依此刻自動取牌的原創牌占" href="shilun.html">鐘樓館</a>
+    <a title="MBTI 十六型人格測驗——照見偏好" href="mbti.html">鏡廳</a>
+    <a title="任選三術同問一事，合議作答" href="mix.html">MIX 三術合參</a>
+  </nav>
+
+  <nav class="views" id="views" aria-label="頁面切換" role="tablist">
+    <button class="view-btn active" data-view="divine" role="tab" aria-selected="true" aria-controls="view-divine">起卦問事</button>
+    <button class="view-btn" data-view="dict" role="tab" aria-selected="false" aria-controls="dict" tabindex="-1">卦義字典</button>
+    <button class="view-btn" data-view="guide" role="tab" aria-selected="false" aria-controls="guide" tabindex="-1">起法讀法</button>
+    <button class="view-btn" data-view="learn" role="tab" aria-selected="false" aria-controls="learn" tabindex="-1">入門教學</button>
+  </nav>
+
+  <p class="first-guide">第一次起卦？先到<a href="#learn">入門教學</a>親手揲一次蓍草、擲一次銅錢，看陰陽和動爻怎麼來。想要梅花易數請往<a href="shi.html">式占館</a>，抽牌占卜請往<a href="table.html">牌桌館</a>。</p>
+
+  <div class="decks" id="decks" style="display:none"></div>
+
+  <div id="view-divine">
+  <p class="section-label">選擇起法</p>
+  <div class="spreads" id="spreads" role="group" aria-label="盤面選擇"></div>
+
+  <section id="table">
+    <div class="table-head">
+      <h2 id="spread-title"></h2>
+      <span class="hint" id="spread-hint"></span>
+      <span class="spacer"></span>
+      <button class="ghost-btn" id="btn-reset">重新洗牌</button>
+    </div>
+
+    <div class="question-row">
+      <label for="q-input">你的問題</label>
+      <input id="q-input" type="text" maxlength="200"
+        placeholder="默想，寫下你想問的事（選填）">
+    </div>
+
+    <div id="deck-area">
+      <div id="invocation" hidden>
+        <button id="inv-head" type="button" aria-expanded="true">起 卜 默 唸</button>
+        <p id="inv-text"></p>
+      </div>
+      <div id="sigpick" hidden>
+        <p class="deck-caption">要以指示牌開陣嗎？指定的牌代表這一問的主體，將置於陣中央——也可以不指定，全憑抽。</p>
+        <div id="sigpick-btns"></div>
+      </div>
+      <div id="cast" hidden>
+        <p class="deck-caption" id="cast-caption">三枚銅錢，擲六次——由下而上，六爻成卦。</p>
+        <div id="coin-stage" aria-hidden="true">
+          <div class="coin"><div class="coin-inner">
+            <div class="coin-face zi"><span class="cz t">乾</span><span class="cz b">隆</span><span class="cz r">通</span><span class="cz l">寶</span></div>
+            <div class="coin-face bei"></div>
+          </div></div>
+          <div class="coin"><div class="coin-inner">
+            <div class="coin-face zi"><span class="cz t">乾</span><span class="cz b">隆</span><span class="cz r">通</span><span class="cz l">寶</span></div>
+            <div class="coin-face bei"></div>
+          </div></div>
+          <div class="coin"><div class="coin-inner">
+            <div class="coin-face zi"><span class="cz t">乾</span><span class="cz b">隆</span><span class="cz r">通</span><span class="cz l">寶</span></div>
+            <div class="coin-face bei"></div>
+          </div></div>
+        </div>
+        <div id="stalk-stage" aria-hidden="true" hidden><div id="stalks"></div><p id="stalk-note">　</p></div>
+        <div id="cast-lines" aria-live="polite"></div>
+        <div class="deck-tools">
+          <button class="ghost-btn gold" id="btn-throw">擲 錢</button>
+        </div>
+      </div>
+      <div id="ritual">
+        <div id="ritual-steps" aria-hidden="true">
+          <span class="rstep" data-step="shuffle">① 洗牌</span><span class="rsep">──</span><span
+            class="rstep" data-step="cut">② 切牌<small>（可略）</small></span><span class="rsep">──</span><span
+            class="rstep" data-step="draw">③ 抽牌</span>
+        </div>
+        <p class="deck-caption" id="ritual-caption" aria-live="polite">先洗牌，把牌序交給你的手。切不切牌隨你，然後抽牌。</p>
+        <div id="stack-wrap">
+          <div id="stack"></div>
+        </div>
+        <div id="cut-piles" hidden></div>
+        <div id="cut-fan-scroll" hidden><div id="cut-fan"></div></div>
+        <div id="cut-tools" hidden><button class="ghost-btn" id="btn-cutmode">攤 牌 親 切</button></div>
+        <div class="deck-tools sticky-tools">
+          <button class="ghost-btn" id="btn-shuffle">洗 牌</button>
+          <button class="ghost-btn" id="btn-cut">切 牌</button>
+          <button class="ghost-btn gold" id="btn-begin" disabled title="請先洗牌至少一次">開 始 抽 牌</button>
+          <button class="ghost-btn" id="btn-quick" title="替你洗七次、切一刀，馬上能抽">替我洗好切好</button>
+        </div>
+      </div>
+      <p class="deck-caption" id="deck-caption" aria-live="polite" hidden></p>
+      <div id="draw-stage" hidden>
+        <div id="draw-pile-wrap">
+          <button id="draw-pile" aria-label="從牌堆頂抽一張牌">
+            <span id="pile-hint">抽 一 張</span>
+            <span id="pile-count"></span>
+          </button>
+        </div>
+        <div id="fan-scroll" hidden><a class="skip-link" href="#draw-tools">跳過牌扇，到抽牌工具列</a><div id="fan"></div></div>
+        <div class="deck-tools sticky-tools" id="draw-tools">
+          <button class="ghost-btn" id="btn-mode">攤 牌 親 挑</button>
+          <button class="ghost-btn" id="btn-auto" hidden>讓命運抽完剩下的牌</button>
+          <button class="ghost-btn" id="btn-extend" hidden>再抽兩張補牌（澄清）</button>
+        </div>
+      </div>
+    </div>
+
+    <a class="skip-link" href="#reading">跳過牌陣，到解讀</a>
+    <div id="slots-scroll"><div id="slots"></div></div>
+    <p id="scroll-hint" hidden>← 盤面比螢幕寬，可左右滑動 →</p>
+  </section>
+
+  <section id="reading">
+    <div class="paper">
+      <h3>解 讀</h3>
+      <p class="paper-sub" id="reading-sub"></p>
+      <div id="entries"></div>
+      <div id="combos"></div>
+      <div class="ai-block" id="ai-block" hidden>
+        <div class="cb-title">交 給 AI 解 讀</div>
+        <p class="ai-note">把整個牌陣寫成一段提示詞，貼給你信任的 AI，就能替你細讀。</p>
+        <div class="tone-row">
+          <label for="tone-select">建議語氣</label>
+          <select id="tone-select">
+            <option value="溫暖但誠實">溫暖但誠實</option>
+            <option value="直白犀利，不留情面">直白犀利，不留情面</option>
+            <option value="溫柔療癒，多些鼓勵">溫柔療癒，多些鼓勵</option>
+            <option value="冷靜理性，條理分析">冷靜理性，條理分析</option>
+            <option value="詩意神秘，如占卜師低語">詩意神秘，如占卜師低語</option>
+            <option value="__custom__">自訂…</option>
+          </select>
+          <input id="tone-custom" type="text" maxlength="40"
+            placeholder="寫下你想要的語氣，例如：像老朋友一樣直說" hidden>
+        </div>
+        <div class="ai-tools">
+          <button class="ghost-btn dark" id="btn-ai">寫成提示詞</button>
+          <button class="ghost-btn dark" id="btn-download">下載盤面圖</button>
+          <button class="ghost-btn dark" id="btn-share">分享文字</button>
+          <button class="ghost-btn dark" id="btn-copy" hidden>複製全文</button>
+          <span id="ai-links" hidden>
+            <a class="ghost-btn dark" href="https://chatgpt.com/" target="_blank" rel="noopener">開啟 ChatGPT</a>
+            <a class="ghost-btn dark" href="https://claude.ai/new" target="_blank" rel="noopener">開啟 Claude</a>
+          </span>
+        </div>
+        <textarea id="ai-prompt" readonly hidden spellcheck="false" aria-label="AI 解讀提示詞"></textarea>
+      </div>
+      <p class="closing" id="closing" hidden>❦ 牌已言盡，餘下的路由你來走 ❦</p>
+    </div>
+  </section>
+
+  <section id="history">
+    <p class="section-label">占卜歷史</p>
+    <div id="hist-list"></div>
+    <div class="deck-tools">
+      <button class="ghost-btn" id="btn-hist-clear" hidden>清空全部歷史</button>
+    </div>
+  </section>
+  </div><!-- /view-divine -->
+
+  <section id="dict" hidden>
+    <p class="section-label">牌義字典</p>
+    <p class="dict-hint">六十四卦依文王卦序都在這裡。點一卦，看卦義、關鍵詞，和它落在不同位置時怎麼讀。卦辭爻辭請以《周易》原文為準。</p>
+    <div id="dict-grid"></div>
+    <div id="dict-detail" class="paper" hidden></div>
+  </section>
+
+  <section id="guide" hidden>
+    <p class="section-label">起法讀法</p>
+    <p class="dict-hint">每一種起卦法與卦牌陣：怎麼起、各位置代表什麼、先讀哪裡。點標題展開。</p>
+    <div id="guide-list"></div>
+  </section>
+
+  <section id="learn" hidden></section>
+
+  <footer>燭光易齋 Le Cabinet du Yi King<br>筮法依朱子《易學啟蒙》，擲錢依《火珠林》系俗法，納甲依京房八宮。僅供靜心與娛樂。</footer>
+</div>
+
+<dialog id="note" class="note" aria-labelledby="note-text">
+  <form method="dialog">
+    <p id="note-text"></p>
+    <div class="note-actions">
+      <button class="ghost-btn dark" id="note-cancel" value="cancel" hidden></button>
+      <button class="ghost-btn dark" id="note-ok" value="ok">知道了</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="card-zoom.js?v=2026102701"></script>
+<script src="divine-core.js?v=2026102506"></script>
+<script src="cards-data.js?v=2026102601"></script>
+<script src="divine-io.js?v=2026102601"></script>
+<script>window.TABLE_HALL = { decks: ["yi"], lastKey: "yijing-last", titlePrefix: "燭光易齋" };</script>
+<script src="table-engine.js?v=2026102701"></script>
+<script src="yijing-learn.js?v=2026102701"></script>
+</html>
