@@ -199,6 +199,8 @@
         <div class="note" id="f-school-note"></div></div>
       <div class="field" id="f-topic-w" hidden><label for="f-topic">問題類別</label><select id="f-topic"></select></div>
       <div class="field" id="f-palace-w" hidden><label for="f-palace">問事類別（主宮）</label><select id="f-palace"></select></div>
+      <div class="field" id="f-bzread-w" hidden><label for="f-bzread">解讀方式（提示詞）</label><select id="f-bzread"></select>
+        <div class="note">排好之後也能換，結果與提示詞會跟著重算；重看舊紀錄時一樣。</div></div>
       <div class="field" id="f-pair-w" hidden><label for="f-pair">紅黑約定</label><select id="f-pair"></select></div>
     </div>
     <div id="chain" hidden></div>
@@ -254,7 +256,7 @@
 <script src="js/data/xq-data.js?v=2026102704"></script>
 <script src="js/xq-bazhen.js?v=2026102701"></script>
 <script src="js/xq-engine.js?v=2026102602"></script>
-<script src="js/learn/xiangqi-learn.js?v=2026102706"></script>
+<script src="js/learn/xiangqi-learn.js?v=2026102801"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const E = XQE, POSZ = E.POS_ZH, NUM = E.NUM;
@@ -368,6 +370,7 @@ function updateForm() {
   $("f-q").hidden = false;
   $("f-age-w").hidden = s.id !== "chart";
   $("f-palace-w").hidden = s.id !== "bazhen";
+  $("f-bzread-w").hidden = s.id !== "bazhen";
   $("f-pair-w").hidden = s.id !== "one";
   $("f-topic-w").hidden = !(s.id === "one" || (s.id === "gate" && school()[0] === ""));
   qingOk = false; qingN = 0;
@@ -848,7 +851,7 @@ function prayerHtml(items) {
 /* ═══ 歷史：存下重算所需的狀態；重看時依新版規則重新產生結果與提示詞 ═══ */
 let replaying = false;
 const curState = () => ({ sys: sysId, mode: modeId, picks: picks.slice(), q: $("q-input").value.trim(), sex: sex(), mar: $("f-mar").value, age: $("f-age").value,
-  faith: $("f-faith").value, school: $("f-school").value, topic: $("f-topic").value, pair: $("f-pair").value, palace: $("f-palace").value,
+  faith: $("f-faith").value, school: $("f-school").value, topic: $("f-topic").value, pair: $("f-pair").value, palace: $("f-palace").value, bzread: $("f-bzread").value,
   chain: chain.slice(), opts: optResults.map((o) => ({ q: o.q, picks: o.picks })) });
 function histSave(title, q) {
   if (replaying) return;
@@ -901,7 +904,7 @@ DC.histReplay = (r) => {
   renderSys(); updateForm();
   const set = (id, v) => { if (v !== undefined && v !== null && v !== "") $(id).value = v; };
   set("f-sex", st.sex); $("f-mar").value = st.mar || ""; set("f-age", st.age); set("f-faith", st.faith);
-  if (st.school !== undefined) $("f-school").value = st.school; set("f-topic", st.topic); set("f-pair", st.pair); if (st.palace !== undefined) $("f-palace").value = st.palace;
+  if (st.school !== undefined) $("f-school").value = st.school; set("f-topic", st.topic); set("f-pair", st.pair); if (st.palace !== undefined) $("f-palace").value = st.palace;   /* 解讀方式不跟著舊紀錄：用現在選的，舊紀錄也能換新提示詞 */
   updateForm();
   chain = (st.chain || []).slice();
   replaying = true; qingOk = true; washed = 1;
@@ -1161,46 +1164,68 @@ function bazhenHtml(list, cards) {   /* cards：解盤時用卡面 */
   g[1][1] = `<div class="bz-palace bz-center"><div class="bz-taiji">☯</div><div class="bz-name">太極・此事</div></div>`;
   return `<div class="bz${cards ? " cards" : ""}">${g.flat().join("")}</div>`;
 }
+/* 讀法（提示詞）：易理推演＝本站依易理推出；字象逐宮＝民間另一種讀法（先讀八子，再每宮三子依字音字義字形）；兩種都用＝合參。
+   盤面同一張；換讀法、換主宮都只重算結果與提示詞，不另存紀錄 */
+const BZ_READ = [["both", "兩種都用（合參）"], ["yili", "易理推演（本站讀法）"], ["zi", "字象逐宮（先讀八子，再每宮三子）"]];
 function runBazhen(q) {
-  const mv = $("f-palace").value, main = mv === "" ? null : +mv;
+  const mv = $("f-palace").value, main = mv === "" ? null : +mv, rd = $("f-bzread").value || "both";
+  const useY = rd !== "zi", useZ = rd !== "yili";
   const R = BZ.analyze(picks, XQ.CARDS, main);
   const nm = (k) => DC.TRIG[k];
+  const pName = (c) => (c.red ? "紅" : "黑") + c.ch;
   const pRow = (p) => {
     const flags = [p.rel.k === "歸位" ? "歸位" : "", p.opp ? "對宮落位" : "", p.shiHe ? "勢合" : "", p.shiNi ? "勢逆" : ""].filter(Boolean);
     return `<div class="pat${main === p.k ? " bz-hl" : ""}"><b>${p.sym} ${p.name}宮${main === p.k ? "（主宮）" : ""}</b>　<small style="color:var(--muted)">${BZ.PALACE[p.k].t}</small><br>`
-      + `主子 ${xcard(p.m.ch, "in")}<b>${p.m.red ? "紅" : "黑"}${p.m.ch}</b>（屬${nm(p.mg)}・${DC.TRIG_WX[p.mg]}）→ 宮卦<b>${p.hex}</b>；${p.rel.txt}${flags.length ? "　<span style=\"color:var(--gold)\">" + flags.join("、") + "</span>" : ""}<br>`
+      + `主子 ${xcard(p.m.ch, "in")}<b>${pName(p.m)}</b>（屬${nm(p.mg)}・${DC.TRIG_WX[p.mg]}）→ 宮卦<b>${p.hex}</b>；${p.rel.txt}${flags.length ? "　<span style=\"color:var(--gold)\">" + flags.join("、") + "</span>" : ""}<br>`
       + `<small>輔子 ${p.ps.slice(1).map((c) => xcard(c.ch, "in sm")).join("")}${p.ps.slice(1).map((c, i) => c.ch + "（" + p.auxRel[i].k + "）").join("、")}；陣卦${nm(p.zhen)}（紅陽黑陰由下而上）</small></div>`;
   };
+  const zRow = (p) => `<div class="pat${main === p.k ? " bz-hl" : ""}"><b>${p.sym} ${p.name}宮${main === p.k ? "（主宮）" : ""}</b>　<small style="color:var(--muted)">${BZ.PALACE[p.k].t}</small><br>`
+    + `主子 ${xcard(p.m.ch, "in")}<b>${pName(p.m)}</b>　三子 ${p.ps.slice(1).map((c) => xcard(c.ch, "in sm")).join("")}<b>${p.ps.slice(1).map(pName).join("・")}</b></div>`;
   const order = main === null ? R.P : [R.P[main], R.P[BZ.OPP[main]], ...R.P.filter((p) => p.k !== main && p.k !== BZ.OPP[main])];
-  $("out").innerHTML = DC.card("八陣大卦", "觀棋知命" + (q ? "・" + esc(q) : ""), bazhenHtml(picks, true)
-      + `<p style="color:var(--muted);font-size:12.5px">先天八卦陣與棋子歸卦依觀棋知命圖；排子順序、宮卦、體用生剋、陣卦、計分與應期為本站依《說卦傳》與易理推出的讀法，查無此派原規則，請當參考。</p>`)
-    + DC.card("總卦", "乾宮主子為上、坤宮主子為下", `<p class="verdict">總卦 ${R.zong.name}　互卦 ${R.hu.name}</p>`
+  const readNote = { both: "易理推演與字象逐宮兩種讀法合參", yili: "易理推演", zi: "字象逐宮" }[rd];
+  $("out").innerHTML = DC.card("八陣大卦", "觀棋知命・" + readNote + (q ? "・" + esc(q) : ""), bazhenHtml(picks, true)
+      + `<p style="color:var(--muted);font-size:12.5px">先天八卦陣與棋子歸卦依觀棋知命圖。`
+      + (useY ? "易理推演（排子順序、宮卦、體用生剋、陣卦、計分與應期）為本站依《說卦傳》與易理推出的讀法。" : "")
+      + (useZ ? "字象逐宮（先讀八子，再每宮三子依字音、字義、字形解）是民間流傳的另一種讀法。" : "")
+      + `此派查無公認的標準規則，請當參考；上方「解讀方式」可隨時切換，提示詞會跟著換。</p>`)
+    + (useY ? DC.card("總卦", "乾宮主子為上、坤宮主子為下", `<p class="verdict">總卦 ${R.zong.name}　互卦 ${R.hu.name}</p>`
       + `<p>全局${R.verdict}（計分 ${R.total > 0 ? "+" : ""}${R.total}${main !== null ? "，主宮加倍" : ""}）。${R.kings.length ? "帥將落為" + R.kings.join("、") + "宮主子：此事有貴人或主事者介入。" : ""}</p>`
-      + (R.ying ? `<p>應期傾向：${R.ying.text}。</p>` : `<p style="color:var(--muted)">未選問事類別：主宮與應期交給 AI 依問題判斷。</p>`))
-    + DC.card("八宮", main === null ? "依先天序" : "主宮、對宮，再看其餘", order.map(pRow).join(""));
-  const line = (p) => `${p.name}宮（${BZ.PALACE[p.k].t}）：主子${p.m.ch}（${p.m.red ? "紅" : "黑"}，屬${nm(p.mg)}，五行${DC.TRIG_WX[p.mg]}）→ 宮卦${p.hex}；${p.rel.txt}`
+      + (R.ying ? `<p>應期傾向：${R.ying.text}。</p>` : `<p style="color:var(--muted)">未選問事類別：主宮與應期交給 AI 依問題判斷。</p>`)) : "")
+    + (useY ? DC.card("八宮・易理推演", main === null ? "依先天序" : "主宮、對宮，再看其餘", order.map(pRow).join("")) : "")
+    + (useZ ? DC.card("八宮・字象逐宮", "先讀八子，再看每宮三子", `<p style="color:var(--muted);font-size:12.5px">先依各宮主題讀八顆主子的字音、字義、字形；再把每宮的三子當成一組，合起來拆字、諧音、組句。</p>` + order.map(zRow).join("")) : "");
+
+  const lineY = (p) => `${p.name}宮（${BZ.PALACE[p.k].t}）：主子${p.m.ch}（${p.m.red ? "紅" : "黑"}，屬${nm(p.mg)}，五行${DC.TRIG_WX[p.mg]}）→ 宮卦${p.hex}；${p.rel.txt}`
     + `；輔子 ${p.ps.slice(1).map((c, i) => c.ch + (c.red ? "紅" : "黑") + "（" + p.auxRel[i].k + "）").join("、")}；陣卦${nm(p.zhen)}${p.shiHe ? "（勢合）" : p.shiNi ? "（勢逆）" : ""}${p.opp ? "；對宮落位" : ""}`;
-  const L = [
-    "你是一位熟悉易經八卦類象與象棋占卜的解讀師。以下是「八陣大卦」（觀棋知命一派）：三十二張象棋牌全翻，排在先天八卦陣上。" + DC.toneHead(),
-    "規則說明：陣圖（乾上坤下、離左坎右）與棋子歸卦（帥將乾、仕士兌、相象離、俥車震、傌馬巽、炮包坎、兵艮、卒坤）依觀棋知命圖；其餘為本站讀法——前 8 張依先天序乾兌離震巽坎艮坤各為一宮「主子」，後 24 張照同序繞三圈為「輔子」（初、二、三輔）；宮卦＝宮為上卦、主子之卦為下卦；宮為體、子為用論五行生剋；三輔紅陽黑陰由下而上成「陣卦」，同主子之卦為勢合、為其對宮為勢逆；總卦＝乾宮主子為上、坤宮主子為下。",
+  const head = ["你是一位熟悉象棋占卜" + (useY ? "與易經八卦類象" : "與漢字字音字義字形") + "的解讀師。以下是「八陣大卦」（觀棋知命一派）：三十二張象棋牌全翻，排在先天八卦陣上。" + DC.toneHead(),
+    "排陣：陣圖（乾上坤下、離左坎右）與棋子歸卦（帥將乾、仕士兌、相象離、俥車震、傌馬巽、炮包坎、兵艮、卒坤）依觀棋知命圖；先翻 8 張依先天序乾兌離震巽坎艮坤各為一宮「主子」，再翻 24 張照同序繞三圈，每宮再得三子（本站排法）。此派查無公認標準規則。",
     "", ...(q ? ["我的問題：" + q, ""] : []),
-    `【主宮】${main === null ? "未指定——請依我的問題從八宮挑出最相關的一宮當主宮" : nm(main) + "宮（" + BZ.TOPICS.find((t) => t[0] === mv)[1].replace(/（.宮）$/, "") + "）"}`,
+    `【主宮】${main === null ? "未指定——請依我的問題從八宮挑出最相關的一宮當主宮" : nm(main) + "宮（" + BZ.TOPICS.find((t) => t[0] === mv)[1].replace(/（.宮）$/, "") + "）"}`, ""];
+  const Y = ["═══ 讀法一：易理推演（本站讀法）═══",
+    "規則：宮卦＝宮為上卦、主子之卦為下卦；宮為體、子為用論五行生剋；三子紅陽黑陰由下而上成「陣卦」，同主子之卦為勢合、為其對宮為勢逆；總卦＝乾宮主子為上、坤宮主子為下，互卦取二至四爻為下、三至五爻為上。",
     `【總卦】${R.zong.name}；互卦${R.hu.name}；全局${R.verdict}（本站計分 ${R.total}）${R.kings.length ? "；帥將落為" + R.kings.join("、") + "宮主子" : ""}`,
-    ...(R.ying ? [`【應期傾向】${R.ying.text}（本站讀法：數取主宮主子之先天數，輔子紅多以日旬計、黑多以月計；方位時節取《說卦傳》「帝出乎震」一段）`] : []),
-    "", "【八宮】", ...order.map(line), "",
-    "【八宮《說卦傳》】", ...R.P.map((p) => `${p.name}：「${BZ.PALACE[p.k].q}」`), "",
-    "【請提供】",
-    "1. 總卦與互卦：這件事的大局與過程",
-    "2. 主宮細讀：宮卦卦義、體用生剋、三輔的起中結與陣卦",
-    "3. 主宮的對宮：外在的牽制或助力",
-    "4. 其餘宮只挑特別的（歸位、受壓、勢逆、對宮落位）點評",
-    "5. 字音字形：主宮與特別宮的主子，可依棋字的字音、字形（拆字）取象，並配合五行",
-    "6. 就我所問之事的斷語與應期傾向，以及具體建議",
-    "每個判斷請說明依據；《說卦傳》只引用上面列出的原文。這是本站推出的讀法，請當參考，不要說成傳統古法；也不要套用其他象棋流派的規則（例如三大類、能量強度、十字吃子、命盤八局、男紅女黑、地支應期）。",
-  ];
+    ...(R.ying ? [`【應期傾向】${R.ying.text}（本站讀法：數取主宮主子之先天數，三子紅多以日旬計、黑多以月計；方位時節取《說卦傳》「帝出乎震」一段）`] : []),
+    "【八宮】", ...order.map(lineY),
+    "【八宮《說卦傳》】", ...R.P.map((p) => `${p.name}：「${BZ.PALACE[p.k].q}」`), ""];
+  const Z = ["═══ 讀法" + (useY ? "二" : "") + "：字象逐宮（民間另一種讀法）═══",
+    "規則：先讀八顆主子——每顆依它所在宮的主題，從字音（諧音）、字義、字形（拆字）解出這件事在那一方面的意思；再把每宮的三子當成一組，三個字合起來用拆字、諧音、字義串成一句話，補充那一宮的細節。紅黑可當陰陽、明暗參考；不算卦、不計分。",
+    "【八子】", ...order.map((p) => `${p.name}宮（${BZ.PALACE[p.k].t}）：${pName(p.m)}`),
+    "【八宮三子】", ...order.map((p) => `${p.name}宮：${p.ps.slice(1).map(pName).join("、")}`), ""];
+  const ask = rd === "yili" ? ["1. 總卦與互卦：這件事的大局與過程", "2. 主宮細讀：宮卦卦義、體用生剋、三子的起中結與陣卦", "3. 主宮的對宮：外在的牽制或助力",
+      "4. 其餘宮只挑特別的（歸位、受壓、勢逆、對宮落位）點評", "5. 字音字形：主宮與特別宮的主子，可依棋字的字音、字形（拆字）取象，並配合五行", "6. 就我所問之事的斷語與應期傾向，以及具體建議"]
+    : rd === "zi" ? ["1. 八子逐一：每顆主子在所在宮的主題下，字音、字義、字形各說了什麼（主宮先讀、讀細）", "2. 八宮三子：每宮的三個字合起來組成一句話，說明那一方面的細節", "3. 回到我的問題：主宮與相關宮串起來的斷語", "4. 具體建議"]
+    : ["1. 易理推演：總卦與互卦的大局；主宮的宮卦、體用生剋與陣卦；對宮與特別宮點評", "2. 字象逐宮：八子在各宮主題下的字音、字義、字形；主宮與相關宮的三子組句", "3. 合參：兩種讀法互相印證的地方、說法不同的地方，以及你最後採信哪一邊、為什麼",
+      "4. 就我所問之事的斷語" + (R.ying ? "與應期傾向" : "") + "，以及具體建議"];
+  const L = [...head, ...(useY ? Y : []), ...(useZ ? Z : []), "【請提供】", ...ask,
+    "每個判斷請說明依據" + (useY ? "；《說卦傳》只引用上面列出的原文" : "") + "。此派沒有公認標準，請當參考，不要說成唯一的傳統古法；也不要套用其他象棋流派的規則（例如三大類、能量強度、十字吃子、命盤八局、男紅女黑、地支應期）。"];
   $("prompt-box").value = L.join("\n");
   $("prompt-sec").hidden = false;
   histSave("八陣大卦" + (main === null ? "" : "・" + nm(main) + "宮"), q);
+}
+/* 換讀法或主宮：已排好的八陣直接重算結果與提示詞（重看舊紀錄後也可以換） */
+function bazhenRefresh() {
+  if (sysId !== "bazhen" || picks.length !== 32 || !done) return;
+  replaying = true;
+  try { runBazhen($("q-input").value.trim()); } finally { replaying = false; }
 }
 
 /* ═══ 一張問事（參考《象棋占卜祕笈》改寫） ═══ */
@@ -1236,6 +1261,11 @@ $("btn-copy").onclick = async () => {
   $("copy-ok").hidden = false; setTimeout(() => ($("copy-ok").hidden = true), 2500);
 };
 DC.toneInit(() => { if (!$("prompt-sec").hidden) $("prompt-box").value = $("prompt-box").value.replace(/語氣：「[^」]*」/, "語氣：「" + DC.toneValue() + "」"); });
+$("f-bzread").innerHTML = BZ_READ.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
+$("f-bzread").value = LS.get("dc-xq-bzread") || "both";
+if (!$("f-bzread").value) $("f-bzread").value = "both";
+$("f-bzread").onchange = () => { LS.set("dc-xq-bzread", $("f-bzread").value); bazhenRefresh(); };
+$("f-palace").addEventListener("change", bazhenRefresh);
 DC.histBind("象棋館");
 renderSys(); updateForm();
 
