@@ -1998,9 +1998,12 @@ function renderHistory() {
       <div class="h-cards">${glyphs}</div>
       <div class="h-actions">
         <button class="ghost-btn h-view">重看</button>
+        ${window.DIO && DIO.exportOne ? `<button class="ghost-btn h-export">匯出</button>` : ""}
         <button class="ghost-btn h-del">刪除</button>
       </div>`;
     item.querySelector(".h-view").addEventListener("click", () => replayReading(rec));
+    const bx = item.querySelector(".h-export");
+    if (bx) bx.addEventListener("click", () => DIO.exportOne(HIST_KEY, rec));
     item.querySelector(".h-del").addEventListener("click", () => {
       storeHist(loadHist().filter((r) => r.id !== rec.id));
       if (currentRecId === rec.id) currentRecId = null;

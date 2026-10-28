@@ -4,7 +4,8 @@
  *   金鑰＝PBKDF2(站內金鑰＋使用者密碼, salt)。不設密碼時金鑰寫在本檔，只防一般人打開、竄改（GCM 會驗出來）；
  *   設了密碼才是真正只有本人解得開。
  * 匯入：檔案合併進本機（歷史依時間去重合併、設定只補本機沒有的），或交給各館的手動輸入（DIO.manual）。
- * 各館：在 #hist-clear／#btn-hist-clear 旁自動加「匯出紀錄」「匯入」兩顆鈕；
+ * 單筆：DIO.exportOne(儲存鍵, 那一筆)——各館歷史每筆的「匯出」鈕呼叫，檔案格式相同，用同一個「匯入」讀回。
+ * 各館：在 #hist-clear／#btn-hist-clear 旁自動加「匯出全部」「匯入」兩顆鈕；
  *   有手動輸入的館設 DIO.manual = { label: "…", run: function () {…} }。 */
 (function () {
   var DIO = window.DIO = window.DIO || {};
@@ -124,9 +125,19 @@
   var INPUT = "display:block;width:100%;box-sizing:border-box;padding:9px 10px;font:inherit;font-size:15px;border:1px solid rgba(138,114,69,.6);border-radius:3px;background:rgba(255,255,255,.55);color:inherit;";
 
   /* ── 匯出 ── */
+  function stamp(t) { var d = new Date(t), pad = function (x) { return (x < 10 ? "0" : "") + x; }; return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + "-" + pad(d.getHours()) + pad(d.getMinutes()); }
   DIO.exportAll = function () {
     var o = collect(), nh = arr(o.data[HALL_HIST]).length + arr(o.data[TABLE_HIST]).length;
-    dialog('<p>匯出燭光紀錄</p><p style="font-size:13.5px;margin-top:-8px">會把這台裝置上各館的占卜歷史（' + nh + ' 筆）與偏好設定，存成一個「' + EXT + '」燭光專用檔，只有這個網站讀得開。<br>' +
+    exportDialog(o, "匯出全部紀錄", "會把這台裝置上各館的占卜歷史（" + nh + " 筆）與偏好設定", "chandelles-" + stamp(Date.now()));
+  };
+  /* 單筆：key 是紀錄所在的儲存鍵（dc-hall-history／lenormand-history），rec 是那一筆；匯入時照常合併、不帶設定 */
+  DIO.exportOne = function (key, rec) {
+    var data = {}; data[key] = JSON.stringify([rec]);
+    exportDialog({ app: "chandelles", v: VER, at: Date.now(), data: data }, "匯出這一筆紀錄", "會把這一筆占卜（含問題、結果與提示詞）",
+      "chandelles-1筆-" + stamp(rec.t || rec.id || Date.now()));
+  };
+  function exportDialog(o, title, what, base) {
+    dialog('<p>' + title + '</p><p style="font-size:13.5px;margin-top:-8px">' + what + '，存成一個「' + EXT + '」燭光專用檔，只有這個網站讀得開；在別台裝置按「匯入」就能讀回。<br>' +
       '想更保險，可以再加一組密碼；之後匯入時要輸入同一組密碼，忘了就打不開。</p>' +
       '<div class="note-actions"><button class="ghost-btn dark" value="cancel">取消</button><button class="ghost-btn dark dio-pw" value="pw">加密碼匯出</button><button class="ghost-btn dark dio-go" value="go">直接匯出</button></div>',
       function (dlg) {
@@ -139,16 +150,15 @@
       });
     function run(pass) {
       pack(o, pass).then(function (bytes) {
-        var d = new Date(), pad = function (x) { return (x < 10 ? "0" : "") + x; };
-        var name = "chandelles-" + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + "-" + pad(d.getHours()) + pad(d.getMinutes()) + EXT;
+        var name = base + EXT;
         var a = document.createElement("a");
         a.href = URL.createObjectURL(new Blob([bytes], { type: "application/octet-stream" }));
         a.download = name; document.body.appendChild(a); a.click();
         setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
-        DIO.lastExport = bytes;   /* 測試用 */
+        DIO.lastExport = bytes; DIO.lastExportName = name;   /* 測試用 */
       }).catch(function (e) { tell("匯出失敗：" + (e && e.message || e)); });
     }
-  };
+  }
 
   /* ── 匯入 ── */
   DIO.importBytes = function (bytes, pass) {   /* 回傳 Promise<{n, prefs}>；需要密碼而未給時丟 {needPass:true} */
@@ -199,7 +209,7 @@
     var anchor = document.getElementById("hist-clear") || document.getElementById("btn-hist-clear");
     if (!anchor || document.getElementById("dio-export")) return;
     var row = anchor.parentNode;
-    var be = document.createElement("button"); be.className = "ghost-btn"; be.id = "dio-export"; be.textContent = "匯出紀錄"; be.type = "button";
+    var be = document.createElement("button"); be.className = "ghost-btn"; be.id = "dio-export"; be.textContent = "匯出全部"; be.type = "button";
     var bi = document.createElement("button"); bi.className = "ghost-btn"; bi.id = "dio-import"; bi.textContent = "匯入"; bi.type = "button";
     be.onclick = DIO.exportAll; bi.onclick = DIO.importAll;
     row.insertBefore(bi, anchor); row.insertBefore(be, bi);

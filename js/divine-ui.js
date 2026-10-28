@@ -179,6 +179,11 @@ DC.histBind = function (page) { // 各館歷史各自獨立（同一儲存鍵，
       act.appendChild(bv);
       var ex = DC.histHook && DC.histHook(r);   /* 各館可替舊紀錄加一顆按鈕（鐘樓館：補抽流年） */
       if (ex) { var be = document.createElement("button"); be.className = "gold-btn"; be.textContent = ex.label; be.onclick = function () { ex.run(r); }; act.appendChild(be); }
+      if (window.DIO && DIO.exportOne) {   /* 單筆匯出（divine-io.js） */
+        var bx = document.createElement("button"); bx.className = "ghost-btn"; bx.textContent = "匯出";
+        bx.onclick = function () { DIO.exportOne(KEY, r); };
+        act.appendChild(bx);
+      }
       act.appendChild(bd);
       div.appendChild(info); div.appendChild(act);
       list.appendChild(div);
