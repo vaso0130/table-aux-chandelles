@@ -1,13 +1,13 @@
 /* 燭光・離線服務（Service Worker）
  * 安裝時：把十三個頁面，連同各頁引用的程式、樣式、圖示（照頁面上帶版本號的網址）一起存好——沒網路也能起卦、查字典。
  * 頁面：先上網拿最新版，斷線才用存檔。帶 ?v= 的程式／樣式：版本號一換就是新檔，存檔優先。
- * 牌面圖：看過就存（約百 MB，不在安裝時全抓）；首頁「離線版」可一次存齊（offline-files.json）。
+ * 牌面圖：看過就存（約百 MB，不在安裝時全抓）；首頁「離線版」可一次存齊（assets/offline-files.json）。
  * AI 提示詞只是文字，複製出去要連網的是 AI 網站本身，不經過這裡。 */
 "use strict";
-const CORE = "chandelles-core-v1", IMG = "chandelles-img-v1", FONT = "chandelles-font-v1";
+const CORE = "chandelles-core-v2", IMG = "chandelles-img-v2", FONT = "chandelles-font-v1";   /* v2：檔案搬進 css/ js/ assets/，舊路徑的存檔整批丟掉 */
 const PAGES = ["./", "index.html", "table.html", "yijing.html", "xiangqi.html", "astro.html", "bazi.html", "shi.html",
   "nanyang.html", "kaijuan.html", "shilun.html", "mbti.html", "mix.html", "numbers.html",
-  "manifest.webmanifest", "vendor/html2canvas.min.js", "icons/app-192.png", "icons/app-512.png"];
+  "manifest.webmanifest", "js/vendor/html2canvas.min.js", "assets/icons/app-192.png", "assets/icons/app-512.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil((async () => {

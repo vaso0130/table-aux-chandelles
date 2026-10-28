@@ -1,15 +1,15 @@
 <!doctype html>
 <html lang="zh-Hant">
 <title>燭光棋閣 · 象棋館</title>
-<link rel="icon" href="icons/xiangqi.svg?v=4" type="image/svg+xml">
-<link rel="icon" href="icons/xiangqi-32.png?v=4" sizes="32x32">
-<link rel="apple-touch-icon" href="icons/xiangqi-180.png?v=4">
+<link rel="icon" href="assets/icons/xiangqi.svg?v=4" type="image/svg+xml">
+<link rel="icon" href="assets/icons/xiangqi-32.png?v=4" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/icons/xiangqi-180.png?v=4">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0A110D">
-<script src="pwa.js?v=2026102801" defer></script>
-<link rel="stylesheet" href="hall.css?v=2026102702">
+<script src="js/pwa.js?v=2026102801" defer></script>
+<link rel="stylesheet" href="css/hall.css?v=2026102702">
 <style>
   /* ── 棋子 ── */
   .qz {
@@ -245,16 +245,16 @@
   </p>
 </div>
 
-<script src="share-image.js?v=2026102801"></script>
-<script src="card-zoom.js?v=2026102701"></script>
-<script src="divine-core.js?v=2026102506"></script>
-<script src="divine-ui.js?v=2026102801"></script>
-<script src="divine-io.js?v=2026102601"></script>
-<script src="divine-lore.js?v=2026102502"></script>
-<script src="xq-data.js?v=2026102704"></script>
-<script src="xq-bazhen.js?v=2026102701"></script>
-<script src="xq-engine.js?v=2026102602"></script>
-<script src="xiangqi-learn.js?v=2026102706"></script>
+<script src="js/share-image.js?v=2026102801"></script>
+<script src="js/card-zoom.js?v=2026102701"></script>
+<script src="js/divine-core.js?v=2026102506"></script>
+<script src="js/divine-ui.js?v=2026102801"></script>
+<script src="js/divine-io.js?v=2026102601"></script>
+<script src="js/divine-lore.js?v=2026102502"></script>
+<script src="js/data/xq-data.js?v=2026102704"></script>
+<script src="js/xq-bazhen.js?v=2026102701"></script>
+<script src="js/xq-engine.js?v=2026102602"></script>
+<script src="js/learn/xiangqi-learn.js?v=2026102706"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const E = XQE, POSZ = E.POS_ZH, NUM = E.NUM;
@@ -393,7 +393,7 @@ function resetTable(keepPool) {
   renderPool(); renderSlots(); updateInvocation(); checkQ(); renderChain();
 }
 function renderPool() {
-  $("pool").innerHTML = pool.map((ch, i) => `<button type="button" data-i="${i}"${ch === null ? ' class="gone" disabled' : ""} aria-label="蓋著的象棋牌"><span class="xcard back"><img src="cards-xq/back.jpg" alt="" onerror="this.remove()">${qz("", "back")}</span></button>`).join("");
+  $("pool").innerHTML = pool.map((ch, i) => `<button type="button" data-i="${i}"${ch === null ? ' class="gone" disabled' : ""} aria-label="蓋著的象棋牌"><span class="xcard back"><img src="assets/cards/xq/back.jpg" alt="" onerror="this.remove()">${qz("", "back")}</span></button>`).join("");
   $("pool").querySelectorAll("button").forEach((b) => {
     b.onclick = () => pick(+b.dataset.i);
   });

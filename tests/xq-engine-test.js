@@ -1,6 +1,6 @@
 /* 象棋卜卦引擎測試：以《改寫人生的象棋卜卦》書中例題的得分與格局為準。
  * 棋序一律為 [中, 左, 右, 上, 下]。書中少數例題省略了部分付出，只驗書上寫出的那一項。 */
-require("../xq-engine.js");
+require("../js/xq-engine.js");
 const A = (s) => XQE.analyzeCross(s.split(""));
 let fail = 0, n = 0;
 function check(label, a, exp) {

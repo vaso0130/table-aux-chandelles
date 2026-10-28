@@ -6,7 +6,7 @@
 (function () {
   "use strict";
   if (window.ShareImage) return;
-  var here = (document.currentScript && document.currentScript.src) || "share-image.js";
+  var here = (document.currentScript && document.currentScript.src) || "js/share-image.js";
   var LIB = new URL("vendor/html2canvas.min.js", here).href;
   var W = 720;          /* 分享卡的版面寬（CSS px） */
   var MAX_SCALE = 3;    /* 720 × 3 = 2160px 寬 */

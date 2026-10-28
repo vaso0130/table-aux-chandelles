@@ -567,7 +567,7 @@ h1 {
   box-shadow: 3px 3px 0 rgba(20,14,6,.9), 6px 6px 0 rgba(20,14,6,.55), 0 10px 26px rgba(0,0,0,.45);
   transition: transform .16s ease, box-shadow .16s ease;
 }
-body.has-back #draw-pile { background: #1E2A4A var(--back-url, url("cards/back.jpg")) center / cover no-repeat; border-color: rgba(201,164,92,.6); }
+body.has-back #draw-pile { background: #1E2A4A var(--back-url, url("../assets/cards/lenormand/back.jpg")) center / cover no-repeat; border-color: rgba(201,164,92,.6); }
 #draw-pile:hover:not(:disabled), #draw-pile:focus-visible { transform: translateY(-6px); box-shadow: 3px 9px 0 rgba(20,14,6,.9), 6px 12px 0 rgba(20,14,6,.55), 0 16px 30px rgba(0,0,0,.5); }
 #draw-pile:active:not(:disabled) { transform: translateY(2px) scale(.985); }
 #draw-pile:disabled { opacity: .45; cursor: default; }
@@ -627,7 +627,7 @@ body.has-back .fan-card,
 body.has-back .stack-card,
 body.has-back .fly-card,
 body.has-back .cface.back {
-  background: #1E2A4A var(--back-url, url("cards/back.jpg")) center / cover no-repeat;
+  background: #1E2A4A var(--back-url, url("../assets/cards/lenormand/back.jpg")) center / cover no-repeat;
   border-color: rgba(201,164,92,.55);
 }
 body.has-back .cface.back::after { content: none; }

@@ -1,15 +1,15 @@
 <!doctype html>
 <html lang="zh-Hant">
 <title>燭光鐘樓 · 鐘樓館</title>
-<link rel="icon" href="icons/shilun.svg?v=4" type="image/svg+xml">
-<link rel="icon" href="icons/shilun-32.png?v=4" sizes="32x32">
-<link rel="apple-touch-icon" href="icons/shilun-180.png?v=4">
+<link rel="icon" href="assets/icons/shilun.svg?v=4" type="image/svg+xml">
+<link rel="icon" href="assets/icons/shilun-32.png?v=4" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/icons/shilun-180.png?v=4">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0A110D">
-<script src="pwa.js?v=2026102801" defer></script>
-<link rel="stylesheet" href="hall.css?v=2026102702">
+<script src="js/pwa.js?v=2026102801" defer></script>
+<link rel="stylesheet" href="css/hall.css?v=2026102702">
 <style>
   /* ── 鐘樓配色：彩繪玻璃的夜，靛紫底 ── */
   :root {
@@ -53,7 +53,7 @@
   @keyframes spin { to { transform: rotate(240deg); } }
   .sc {
     position: absolute; left: 0; top: 0; width: var(--sw); height: calc(var(--sw) * 1.5); border-radius: calc(var(--sw) * .07);
-    background: #241c46 url("cards-shilun/back.jpg") center / cover;
+    background: #241c46 url("assets/cards/shilun/back.jpg") center / cover;
     box-shadow: 0 4px 10px rgba(0,0,0,.6), 0 0 0 1px rgba(229,204,143,.25);
     transition: transform .55s cubic-bezier(.2,.8,.25,1), box-shadow .3s, filter .3s, opacity .4s;
     cursor: default; will-change: transform;
@@ -80,7 +80,7 @@
   .scard.open .flip { transform: rotateY(180deg); }
   .scard .fc { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 8px; overflow: hidden;
     box-shadow: 0 8px 22px rgba(0,0,0,.6), 0 0 22px rgba(110,80,200,.3); }
-  .scard .fc.back { background: #241c46 url("cards-shilun/back.jpg") center / cover; opacity: 0; transition: opacity .3s; }
+  .scard .fc.back { background: #241c46 url("assets/cards/shilun/back.jpg") center / cover; opacity: 0; transition: opacity .3s; }
   .scard.filled .fc.back { opacity: 1; }
   .scard .fc.front { transform: rotateY(180deg); background: linear-gradient(160deg, #2b2257, #151030); border: 1px solid var(--gold-dim); }
   .scard .fc.front img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
@@ -90,7 +90,7 @@
   .sslot .so { font-size: 12px; color: var(--muted); opacity: 0; transition: opacity .6s; }
   .sslot .so.r { color: #E6A0A8; }
   .sslot.shown .sn, .sslot.shown .so { opacity: 1; }
-  .fly { position: fixed; z-index: 1000; border-radius: 8px; background: #241c46 url("cards-shilun/back.jpg") center / cover;
+  .fly { position: fixed; z-index: 1000; border-radius: 8px; background: #241c46 url("assets/cards/shilun/back.jpg") center / cover;
     box-shadow: 0 0 30px 8px rgba(229,204,143,.6); transition: all .8s cubic-bezier(.3,.7,.2,1); pointer-events: none; }
   /* 敲鐘：光環擴散 */
   #bell { display: flex; justify-content: center; margin: 18px 0 0; }
@@ -219,14 +219,14 @@
   </p>
 </div>
 
-<script src="share-image.js?v=2026102801"></script>
-<script src="card-zoom.js?v=2026102701"></script>
-<script src="divine-core.js?v=2026102506"></script>
-<script src="divine-ui.js?v=2026102801"></script>
-<script src="divine-io.js?v=2026102601"></script>
-<script src="divine-lore.js?v=2026102502"></script>
-<script src="shilun-data.js?v=2026102601"></script>
-<script src="shilun-learn.js?v=2026102702"></script>
+<script src="js/share-image.js?v=2026102801"></script>
+<script src="js/card-zoom.js?v=2026102701"></script>
+<script src="js/divine-core.js?v=2026102506"></script>
+<script src="js/divine-ui.js?v=2026102801"></script>
+<script src="js/divine-io.js?v=2026102601"></script>
+<script src="js/divine-lore.js?v=2026102502"></script>
+<script src="js/data/shilun-data.js?v=2026102601"></script>
+<script src="js/learn/shilun-learn.js?v=2026102702"></script>
 <script>
 const $ = id => document.getElementById(id);
 const S = window.SHILUN;

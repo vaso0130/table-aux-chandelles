@@ -1,5 +1,5 @@
 /* 牌面大圖預覽（全站共用，自帶樣式）
- * 點任何牌面圖（src 含 cards-、不是牌背、不在按鈕或連結裡）→ 全螢幕看大圖，附牌名與說明；Esc、點背景或「關閉」離開。
+ * 點任何牌面圖（src 在 assets/cards/ 底下、不是牌背、不在按鈕或連結裡）→ 全螢幕看大圖，附牌名與說明；Esc、點背景或「關閉」離開。
  * 牌桌館／易經館的牌陣由 table-engine.js 直接呼叫 CardZoom.open（帶正逆位與牌義）。 */
 (function () {
   "use strict";
@@ -56,7 +56,7 @@
   /* 一般牌面圖：自動可點 */
   function able(img) {
     var src = img.getAttribute("src") || "";
-    return /(^|\/)cards-/.test(src) && !/back\.(jpg|png|webp)$/.test(src) && !img.closest("button, a, .card3d, .cz-ov, .no-zoom");
+    return /(^|\/)assets\/cards\//.test(src) && !/back\.(jpg|png|webp)$/.test(src) && !img.closest("button, a, .card3d, .cz-ov, .no-zoom");
   }
   document.addEventListener("click", function (e) {
     var img = e.target.closest && e.target.closest("img");

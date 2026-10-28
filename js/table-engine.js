@@ -93,7 +93,7 @@ function applyDeckBack() {
   const probe = new Image();
   probe.onload = () => {
     document.body.classList.add("has-back");
-    document.body.style.setProperty("--back-url", `url("${src}")`);
+    document.body.style.setProperty("--back-url", `url("${new URL(src, location.href).href}")`)   /* 變數在 css/ 裡被引用，給絕對網址才不會被當成 css/ 底下的路徑 */;
   };
   probe.onerror = () => document.body.classList.remove("has-back");
   probe.src = src;

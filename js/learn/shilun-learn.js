@@ -86,8 +86,8 @@ function shilunBook() {
     cat: x.name,
     items: S.CARDS[x.id].map((c, i) => {
       const n = i + 1;
-      return { no: "第 " + n + " 張", t: c[1], s: c[2].split("・")[0], key: cardKey(x.id, n), img: "cards-shilun/" + c[0] + ".jpg",
-        html: '<div class="lb-detail"><img src="cards-shilun/' + c[0] + '.jpg" alt="' + c[1] + '" onerror="this.remove()"><div class="txt">' + E({
+      return { no: "第 " + n + " 張", t: c[1], s: c[2].split("・")[0], key: cardKey(x.id, n), img: "assets/cards/shilun/" + c[0] + ".jpg",
+        html: '<div class="lb-detail"><img src="assets/cards/shilun/' + c[0] + '.jpg" alt="' + c[1] + '" onerror="this.remove()"><div class="txt">' + E({
           sub: x.name + "・第 " + n + " 張（共 " + S.CARDS[x.id].length + " 張）", title: c[1] + S.extraNote({ layer: x, n }), keys: c[2],
           sections: [
             ["正位", c[3]],

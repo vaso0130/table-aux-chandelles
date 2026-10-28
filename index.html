@@ -2,13 +2,13 @@
 <html lang="zh-Hant">
 <meta charset="utf-8">
 <title>燭光 · La Lumière des Chandelles</title>
-<link rel="icon" href="icons/index.svg?v=4" type="image/svg+xml">
-<link rel="icon" href="icons/index-32.png?v=4" sizes="32x32">
-<link rel="apple-touch-icon" href="icons/index-180.png?v=4">
+<link rel="icon" href="assets/icons/index.svg?v=4" type="image/svg+xml">
+<link rel="icon" href="assets/icons/index-32.png?v=4" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/icons/index-180.png?v=4">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0A110D">
-<script src="pwa.js?v=2026102801" defer></script>
+<script src="js/pwa.js?v=2026102801" defer></script>
 <meta name="description" content="燭光——點一支蠟燭，走進十二館：牌桌、易經、象棋、占星、八字、式占、南洋、開卷、鐘樓、鏡廳與三術合參。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -553,7 +553,7 @@
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" || e.key === " ") { skip(); } }, { once: true });
 })();
 </script>
-<script src="card-zoom.js?v=2026102701"></script>
+<script src="js/card-zoom.js?v=2026102701"></script>
 <script>
 "use strict";
 /* 今日一牌／今日一卦：每天第一次打開時隨機抽（牌從牌桌館八副有圖的牌裡抽，卦從六十四卦抽），存在本機，當天再開都是同一張 */
@@ -562,7 +562,7 @@
   const p = (n) => String(n).padStart(2, "0");
   const d = new Date(), day = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
   const s = document.createElement("script");
-  s.src = "cards-data.js?v=2026102702";
+  s.src = "js/data/cards-data.js?v=2026102702";
   s.onload = () => {
     if (typeof DECKS === "undefined") return;
     const pool = DECKS.filter((k) => k.id !== "yi" && k.cards.some((c) => c.img));

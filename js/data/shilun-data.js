@@ -220,7 +220,7 @@
   function cardOf(L, P, n, rev) {
     const raw = CARDS[L.id][n - 1];
     return { layer: L, at: P[L.id], why: P.why[L.id], n, rev,
-      slug: raw[0], zh: raw[1], keys: raw[2], up: raw[3], rv: raw[4], pol: raw[5], img: "cards-shilun/" + raw[0] + ".jpg" };
+      slug: raw[0], zh: raw[1], keys: raw[2], up: raw[3], rv: raw[4], pol: raw[5], img: "assets/cards/shilun/" + raw[0] + ".jpg" };
   }
   function draw(decks, t) {
     const P = positionsAt(t);

@@ -57,18 +57,33 @@
 
 ## 檔案
 
+網頁留在根目錄(網址與主畫面捷徑不變),`sw.js` 也必須在根目錄才管得到所有頁面;其餘依類型分資料夾:
+
+```
+*.html            各館頁面          sw.js、manifest.webmanifest  離線版
+css/              hall.css(別館)、table.css(牌桌/易經館)、yijing-learn.css
+js/               共用程式:divine-core → divine-ui → divine-lore、divine-io、table-engine、
+                  share-image、card-zoom、pwa、xq-engine、xq-bazhen
+js/data/          資料:cards-data、qs-data、shilun-data、xq-data、yilin-data
+js/learn/         各館入門教學 *-learn.js
+js/vendor/        第三方(html2canvas)
+assets/cards/<牌組>/  牌面圖與卡背      assets/icons/  網站圖示
+assets/offline-files.json  離線「全部存起來」清單(scripts/make-offline-list.ps1 重產)
+tests/            node tests/audit-core.js、node tests/xq-engine-test.js(在專案根目錄執行)
+```
+
 | 路徑 | 說明 |
 | --- | --- |
 | `index.html` | 燭光入口:奇幻風點燭動畫首頁,燭火燃起後展開九館門廊(`?skip=1` 或再次造訪直接跳過動畫;尊重 prefers-reduced-motion) |
-| `table.html` + `xq-data.js` + `cards-data.js` | 牌桌館(儀式引擎,2026-09 自 index.html 獨立)+ 象棋資料 + 十套牌卡資料與盤面定義(易經由 `yijing.html` 收用)(缺檔會明示) |
-| `shilun.html` + `shilun-data.js` | 鐘樓館:時輪占(132 張牌義、取位與共鳴引擎) |
+| `table.html` + `js/table-engine.js` + `js/data/cards-data.js` | 牌桌館(儀式引擎,易經館 `yijing.html` 共用)+ 十套牌卡資料與盤面定義(缺檔會明示) |
+| `shilun.html` + `js/data/shilun-data.js` | 鐘樓館:時輪占(132 張牌義、取位與共鳴引擎) |
 | `astro.html`、`bazi.html`、`shi.html`、`nanyang.html`、`kaijuan.html`、`mbti.html`、`mix.html` | 占星館/八字館/式占館/南洋館/開卷館/鏡廳/MIX 合參 |
 | `numbers.html` | 數字館併館告示頁(2026-08 拆館:生命靈數→八字館、梅花+河洛→式占館) |
-| `divine-core.js` → `divine-ui.js` → `divine-lore.js` | 別館三連載:純計算引擎/UI 幫手(城市/語氣/歷史/教學+?selftest)/跨館文庫(DECKS_MINI 由 index?minidump=1 重生) |
-| `qs-data.js`、`hall.css` | 百首靈籤全文(開卷館)與別館樣式 |
-| `cards/`、`cards-sibilla/`、`cards-belline/`、`cards-kipper/`、`cards-grand/`、`cards-runes/` | 西方館牌面 + 卡背(600px 寬 JPEG) |
-| `cards-yijing/`、`cards-ziwei/`、`cards-dongtarot/` | 東方館牌面 + 卡背(600px 寬 JPEG) |
-| `cards-shilun/` | 時輪牌 132 張 + 卡背(哥德彩繪玻璃風,600px 寬 JPEG;檔名 y 十干/z 星座/g 寶石/d 七曜/h 象徵/m 萬象) |
+| `js/divine-core.js` → `js/divine-ui.js` → `js/divine-lore.js` | 別館三連載:純計算引擎/UI 幫手(城市/語氣/歷史/教學+?selftest)/跨館文庫(DECKS_MINI 由 index?minidump=1 重生) |
+| `js/data/qs-data.js`、`css/hall.css` | 百首靈籤全文(開卷館)與別館樣式 |
+| `assets/cards/lenormand/`、`assets/cards/sibilla/`、`assets/cards/belline/`、`assets/cards/kipper/`、`assets/cards/grand/`、`assets/cards/runes/` | 西方館牌面 + 卡背(600px 寬 JPEG) |
+| `assets/cards/yijing/`、`assets/cards/ziwei/`、`assets/cards/dongtarot/` | 東方館牌面 + 卡背(600px 寬 JPEG) |
+| `assets/cards/shilun/` | 時輪牌 132 張 + 卡背(哥德彩繪玻璃風,600px 寬 JPEG;檔名 y 十干/z 星座/g 寶石/d 七曜/h 象徵/m 萬象) |
 
 ## 牌面
 

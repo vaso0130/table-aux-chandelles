@@ -195,7 +195,7 @@
       latin: (red ? "紅方・" : "黑方・") + KIND_ZH[k[0]],
       keys: SY[red ? k[1] : k[2]].keys, text: SY[red ? k[1] : k[2]].core, sy: SY[red ? k[1] : k[2]],
       gkeys: red ? k[4] : k[7], gtext: red ? k[5] : k[8], pol: red ? k[6] : k[9],
-      img: "cards-xq/" + IMG[k[0]][red ? 0 : 1] + ".jpg",
+      img: "assets/cards/xq/" + IMG[k[0]][red ? 0 : 1] + ".jpg",
       glyph: glyph(red, red ? k[1] : k[2]), pks: red ? "紅方" : "黑方", pk: red ? "紅方・陽・明" : "黑方・陰・暗"
     });
   }));

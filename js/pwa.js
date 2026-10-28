@@ -17,14 +17,14 @@
   }).then(function () { return caches.keys(); }).then(function (ks) {
     return Promise.all(ks.map(function (k) { return caches.open(k).then(function (c) { return c.keys(); }).then(function (x) { return k + "=" + x.length; }); }));
   }).then(function (a) { document.title = "SW-OK " + (navigator.serviceWorker.controller ? "ctl " : "noctl ") + a.join(" "); });
-  var IMG = "chandelles-img-v1";
-  function list() { return fetch("offline-files.json", { cache: "no-cache" }).then(function (r) { return r.json(); }); }
+  var IMG = "chandelles-img-v2";
+  function list() { return fetch("assets/offline-files.json", { cache: "no-cache" }).then(function (r) { return r.json(); }); }
   window.Offline = {
     /* 回傳 { total, saved, bytes }：清單上的牌面圖已存幾張 */
     status: function () {
       return list().then(function (L) {
         return caches.open(IMG).then(function (c) { return c.keys(); }).then(function (keys) {
-          var have = new Set(keys.map(function (k) { return decodeURI(new URL(k.url).pathname).replace(/^.*?\/(cards[^/]*\/)/, "$1"); }));
+          var have = new Set(keys.map(function (k) { return decodeURI(new URL(k.url).pathname).replace(/^.*?\/(assets\/cards\/)/, "$1"); }));
           return { total: L.files.length, saved: L.files.filter(function (f) { return have.has(f); }).length, bytes: L.bytes };
         });
       });

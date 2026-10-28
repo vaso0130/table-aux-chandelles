@@ -8,7 +8,7 @@ const vm = require("node:vm");
 
 const box = { console, crypto, Date, Math, setTimeout };
 vm.createContext(box);
-for (const file of ["divine-core.js", "divine-lore.js"])
+for (const file of ["js/divine-core.js", "js/divine-lore.js"])
   vm.runInContext(fs.readFileSync(file, "utf8"), box, { filename: file });
 box.DC.TONES = ["一", "二", "三", "四", "五"];
 const DC = box.DC;
@@ -125,7 +125,7 @@ const sui = DC.najia([7, 8, 8, 7, 7, 8], 2026, 10, 25, 11, 3, 8);
 assert.equal(njRows(sui), "妻財丁未土應 官鬼丁酉金 父母丁亥水/伏子孫庚午 妻財庚辰土世 兄弟庚寅木 父母庚子水");
 
 // 式占館教學書的星門神將須與排盤用的名稱表一致（任一邊改名即報錯）。
-const shiLearn = fs.readFileSync("shi-learn.js", "utf8");
+const shiLearn = fs.readFileSync("js/learn/shi-learn.js", "utf8");
 for (const name of [...DC.QM_STAR, ...DC.QM_DOOR, ...DC.QM_GODS, ...DC.LR_JIANG].filter(Boolean))
   assert.ok(shiLearn.includes('["' + name + '"'), "shi-learn.js 缺「" + name + "」的解說");
 
@@ -151,7 +151,7 @@ assert.match(DC.jodoh(16, 16).result[0], /^Pesthi/);
 
 // 象棋聖元派：十四種棋都有資料，紅黑成對強度相同、數字相同（帥 1／將 9、兵 7／卒 8 例外），兵卒依性別論正常反常。
 box.window = box;
-vm.runInContext(fs.readFileSync("xq-data.js", "utf8"), box, { filename: "xq-data.js" });
+vm.runInContext(fs.readFileSync("js/data/xq-data.js", "utf8"), box, { filename: "js/data/xq-data.js" });
 const XQ = box.XQ;
 assert.equal(XQ.CARDS.length, 32);
 assert.equal(Object.keys(XQ.SY).length, 14);

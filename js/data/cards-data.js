@@ -126,7 +126,7 @@ const PK = ["紅心9","方塊6","黑桃10","紅心K","紅心7","梅花K","梅花
 const SLUGS = ["rider","clover","ship","house","tree","clouds","snake","coffin","bouquet","scythe","whip","birds","child","fox","bear","stars","stork","dog","tower","garden","mountain","crossroad","mice","heart","ring","book","letter","man","woman","lily","sun","moon","key","fish","anchor","cross"];
 LEN_CARDS.forEach((c, i) => {
   c.pk = PK[i];
-  c.img = "cards/" + String(c.n).padStart(2, "0") + "-" + SLUGS[i] + ".jpg";
+  c.img = "assets/cards/lenormand/" + String(c.n).padStart(2, "0") + "-" + SLUGS[i] + ".jpg";
 });
 
 const POL_MARK = { good:"✦ 吉", bad:"✧ 挑戰", mid:"◦ 中性" };
@@ -583,7 +583,7 @@ SIB_CARDS.forEach((c, i) => {
   const suit = SIB_SUITS[Math.floor(i / 13)], rank = SIB_RANKS[i % 13];
   c.pks = suit[0] + rank;          /* 牌面角標：♥A */
   c.pk = suit[1] + rank + "(本站序列式對應)"; /* 口語對應：紅心A */
-  c.img = "cards-sibilla/" + String(c.n).padStart(2, "0") + "-" + SIB_SLUGS[i] + ".jpg";
+  c.img = "assets/cards/sibilla/" + String(c.n).padStart(2, "0") + "-" + SIB_SLUGS[i] + ".jpg";
 });
 
 /* ── 盤面定義（西碧拉） ────────────────────── */
@@ -886,7 +886,7 @@ BEL_CARDS.forEach((c, i) => {
   const f = BEL_FAMILIES.find((x) => c.n >= x[2] && c.n <= x[3]);
   c.pks = c.n === 53 ? "❖" : f[0] + c.n;   /* 牌面角標：☉5 */
   c.pk = f[1];                              /* 口語：太陽家族 */
-  c.img = "cards-belline/" + String(c.n).padStart(2, "0") + "-" + BEL_SLUGS[i] + ".jpg";
+  c.img = "assets/cards/belline/" + String(c.n).padStart(2, "0") + "-" + BEL_SLUGS[i] + ".jpg";
 });
 
 /* ── 盤面定義（貝林神諭） ──────────────────── */
@@ -1062,7 +1062,7 @@ const KIP_CARDS = [
 ];
 KIP_CARDS.forEach((c, i) => {
   c.pk = `Nr. ${c.n}`;
-  c.img = "cards-kipper/" + String(c.n).padStart(2, "0") + "-" + ["hauptperson","hauptperson-w","ehestand","zusammenkunft","guter-herr","gute-dame","brief","falsche-person","veraenderung","reise","viel-geld","reiches-maedchen","junger-herr","traurige-nachricht","liebe-ausgang","gedanken","geschenk","kind","todesfall","haus","wohnzimmer","militaer","gericht","diebstahl","ehren","glueck","unverhofftes-geld","erwartung","gefaengnis","amtsperson","krankheit","kummer","truebe-gedanken","arbeit","weiter-weg","hoffnung"][i] + ".jpg";
+  c.img = "assets/cards/kipper/" + String(c.n).padStart(2, "0") + "-" + ["hauptperson","hauptperson-w","ehestand","zusammenkunft","guter-herr","gute-dame","brief","falsche-person","veraenderung","reise","viel-geld","reiches-maedchen","junger-herr","traurige-nachricht","liebe-ausgang","gedanken","geschenk","kind","todesfall","haus","wohnzimmer","militaer","gericht","diebstahl","ehren","glueck","unverhofftes-geld","erwartung","gefaengnis","amtsperson","krankheit","kummer","truebe-gedanken","arbeit","weiter-weg","hoffnung"][i] + ".jpg";
 });
 
 const KIP_SPREADS = [
@@ -1215,7 +1215,7 @@ const RUN_CARDS = [
 RUN_CARDS.forEach((c, i) => {
   c.pks = c.glyph;
   c.pk = `Elder Futhark・第 ${c.n} 符`;
-  c.img = "cards-runes/" + String(c.n).padStart(2, "0") + "-" + c.latin.toLowerCase() + ".jpg";
+  c.img = "assets/cards/runes/" + String(c.n).padStart(2, "0") + "-" + c.latin.toLowerCase() + ".jpg";
   if (/正逆同形/.test(c.rtext)) c.norev = true; // Gebo/Hagalaz/Isa/Jera/Eihwaz/Sowilo/Ingwaz/Dagaz 實體倒轉無別，恆讀本義
   c.aett = c.n <= 8 ? 0 : c.n <= 16 ? 1 : 2;   // 三族：弗雷/海姆達爾/提爾
 });
@@ -1501,7 +1501,7 @@ const GRA_CARDS = [
       c.pk = suit[1] + rank;
       c.myth = [GRA_MYTHS.coeur, GRA_MYTHS.trefle, GRA_MYTHS.carreau, GRA_MYTHS.pique][Math.floor((c.n - 3) / 13)];
     }
-    c.img = "cards-grand/" + String(c.n).padStart(2, "0") + "-" + slugs[i] + ".jpg";
+    c.img = "assets/cards/grand/" + String(c.n).padStart(2, "0") + "-" + slugs[i] + ".jpg";
   });
 })();
 
@@ -1652,7 +1652,7 @@ ESP_SUITS.forEach((s, si) => {
       glyph: s[2], pol: m[0], keys: m[1], text: m[2],
       pks: s[3] + (ri < 7 ? String(ri + 1) : r[0][0]),
       pk: s[0] + "・" + s[4],
-      img: "cards-esp/" + String(n).padStart(2, "0") + "-" + ["oros", "copas", "espadas", "bastos"][si] + "-" + ["1", "2", "3", "4", "5", "6", "7", "sota", "caballo", "rey"][ri] + ".jpg"
+      img: "assets/cards/esp/" + String(n).padStart(2, "0") + "-" + ["oros", "copas", "espadas", "bastos"][si] + "-" + ["1", "2", "3", "4", "5", "6", "7", "sota", "caballo", "rey"][ri] + ".jpg"
     });
   });
 });
@@ -1815,7 +1815,7 @@ const YI_CARDS = YI_DATA.map((d, i) => ({
 YI_CARDS.forEach((c, i) => {
   c.pks = c.glyph + c.n;
   c.pk = `第 ${c.n} 卦`;
-  c.img = "cards-yijing/" + String(c.n).padStart(2, "0") + ".jpg";
+  c.img = "assets/cards/yijing/" + String(c.n).padStart(2, "0") + ".jpg";
 });
 
 const YI_SPREADS = [
@@ -1952,7 +1952,7 @@ const ZW_CARDS = ZW_DATA.map((d, i) => ({
 }));
 const ZW_SLUGS = ["ziwei","tianji","taiyang","wuqu","tiantong","lianzhen","tianfu","taiyin","tanlang","jumen","tianxiang","tianliang","qisha","pojun","zuofu","youbi","wenchang","wenqu","tiankui","tianyue","qingyang","tuoluo","huoxing","lingxing","dikong","dijie","lucun","tianma","hualu","huaquan","huake","huaji","hongluan","tianxi","tianxing","tianyao"];
 ZW_CARDS.forEach((c, i) => {
-  c.img = "cards-ziwei/" + String(c.n).padStart(2, "0") + "-" + ZW_SLUGS[i] + ".jpg";
+  c.img = "assets/cards/ziwei/" + String(c.n).padStart(2, "0") + "-" + ZW_SLUGS[i] + ".jpg";
 });
 
 const ZW_SPREADS = [
@@ -2170,7 +2170,7 @@ DT_SUITS.forEach((s, si) => {
   });
 });
 DT_CARDS.forEach((c) => {
-  c.img = "cards-dongtarot/" + String(c.n).padStart(2, "0") + ".jpg";
+  c.img = "assets/cards/dongtarot/" + String(c.n).padStart(2, "0") + ".jpg";
 });
 
 const DT_SPREADS = [
@@ -2242,52 +2242,52 @@ const DECKS = [
     title:"雷諾曼占卜",
     sub:"燭已點好。三十六張牌裡，藏著你尚未聽見的答案。",
     cards: LEN_CARDS, spreads: LEN_SPREADS, reversible:false, preload:true,
-    back:"cards/back.jpg" },
+    back:"assets/cards/lenormand/back.jpg" },
   { id:"sib", hall:"west", name:"西碧拉", short:"Vera Sibilla · 52 張 · 正逆位",
     title:"西碧拉占卜",
     sub:"五十二張牌，正與逆之間，低語著命運的細節。",
     cards: SIB_CARDS, spreads: SIB_SPREADS, reversible:true, preload:true,
-    back:"cards-sibilla/back.jpg" },
+    back:"assets/cards/sibilla/back.jpg" },
   { id:"bel", hall:"west", name:"貝林神諭", short:"Oracle Belline · 53 張 · 正逆位",
     title:"貝林神諭占卜",
     sub:"七大星體、五十三道低語——星辰早已寫好給你的信。",
     cards: BEL_CARDS, spreads: BEL_SPREADS, reversible:true, preload:true,
-    back:"cards-belline/back.jpg" },
+    back:"assets/cards/belline/back.jpg" },
   { id:"kip", hall:"west", name:"奇卜", short:"Kipperkarten · 36 張",
     title:"奇卜占卜",
     sub:"三十六個人物與場景——你的故事，正在哪一幕上演。",
     cards: KIP_CARDS, spreads: KIP_SPREADS, reversible:false, preload:true,
-    back:"cards-kipper/back.jpg" },
+    back:"assets/cards/kipper/back.jpg" },
   { id:"gra", hall:"west", name:"大雷諾曼", short:"Grand Jeu · 54 張",
     title:"大雷諾曼占卜",
     sub:"金羊毛與特洛伊的餘燼——五十四片神話，占你此刻的戰局。",
     cards: GRA_CARDS, spreads: GRA_SPREADS, reversible:false, preload:true,
-    back:"cards-grand/back.jpg" },
+    back:"assets/cards/grand/back.jpg" },
   { id:"run", hall:"west", name:"盧恩符文", short:"Elder Futhark · 24 符 · 正逆位",
     title:"盧恩占卜",
     sub:"奧丁倒懸九夜換來的二十四個字——世界樹為你落下一枚。",
     cards: RUN_CARDS, spreads: RUN_SPREADS, reversible:true, preload:true,
-    back:"cards-runes/back.jpg" },
+    back:"assets/cards/runes/back.jpg" },
   { id:"esp", hall:"west", name:"西班牙牌", short:"Baraja Española · 40 張",
     title:"西班牙牌占卜",
     sub:"塞維亞的吉普賽人與馬尼拉的老太太，翻的是同一副牌。",
     cards: ESP_CARDS, spreads: ESP_SPREADS, reversible:false, preload:true,
-    back:"cards-esp/back.jpg" },
+    back:"assets/cards/esp/back.jpg" },
   { id:"yi", hall:"east", name:"易經", short:"周易 · 六十四卦",
     title:"易經占卜",
     sub:"一陰一陽之謂道——六十四卦裡，有你此刻的位置。",
     cards: YI_CARDS, spreads: YI_SPREADS, reversible:false, preload:true,
-    back:"cards-yijing/back.jpg" },
+    back:"assets/cards/yijing/back.jpg" },
   { id:"zw", hall:"east", name:"紫微", short:"紫微星曜 · 36 張 · 廟旺落陷",
     title:"紫微占卜",
     sub:"滿天星斗各司其職——今天，是哪顆星在你命宮值班。",
     cards: ZW_CARDS, spreads: ZW_SPREADS, reversible:true, preload:true,
-    back:"cards-ziwei/back.jpg" },
+    back:"assets/cards/ziwei/back.jpg" },
   { id:"dt", hall:"east", name:"東方塔羅", short:"四象塔羅 · 78 張 · 正逆位",
     title:"東方塔羅占卜",
     sub:"雲遊者踏出山徑，四象在牌中流轉——一副東方的塔羅。",
     cards: DT_CARDS, spreads: DT_SPREADS, reversible:true, preload:true,
-    back:"cards-dongtarot/back.jpg" },
+    back:"assets/cards/dongtarot/back.jpg" },
 ];
 /* ── 六牌陣・全景：各牌組通用盤面（易經以擲卦為本體，不加） ── */
 DECKS.forEach((d) => {
